@@ -50,4 +50,11 @@ dconf write /org/gnome/settings-daemon/plugins/media-keys/www "['<Super>b']"
 gnome-extensions enable "pop-shell@system76.com"
 
 echo "Restart shell!"
+if [ -n "$(which xdotool)" ]
+then
+    xdotool key alt+F2
+    sleep 0.5
+    xdotool key r Return
+fi
+
 journalctl -n 0 -f | grep pop-shell
