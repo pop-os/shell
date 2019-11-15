@@ -2,19 +2,19 @@
 <schemalist gettext-domain="pop-shell">
     <schema id="org.gnome.shell.extensions.pop-shell" path="/org/gnome/shell/extensions/pop-shell/">
         <key type="as" name="focus-left">
-            <default><![CDATA[['<Super>h']]]></default>
+            <default><![CDATA[['<Super>Left','<Super>h']]]></default>
             <summary>Focus left window</summary>
         </key>
         <key type="as" name="focus-down">
-            <default><![CDATA[['<Super>j']]]></default>
+            <default><![CDATA[['<Super>Down','<Super>j']]]></default>
             <summary>Focus down window</summary>
         </key>
         <key type="as" name="focus-up">
-            <default><![CDATA[['<Super>k']]]></default>
+            <default><![CDATA[['<Super>Up','<Super>k']]]></default>
             <summary>Focus up window</summary>
         </key>
         <key type="as" name="focus-right">
-            <default><![CDATA[['<Super>l']]]></default>
+            <default><![CDATA[['<Super>Right','<Super>l']]]></default>
             <summary>Focus right window</summary>
         </key>
         <key type="as" name="search">
