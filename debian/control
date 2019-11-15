@@ -1,0 +1,14 @@
+Source: pop-shell
+Section: gnome
+Priority: optional
+Maintainer: Jeremy Soller <jeremy@system76.com>
+Build-Depends: debhelper (>= 10)
+Standards-Version: 3.9.8
+Homepage: https://github.com/pop-os/shell
+Vcs-Git: https://github.com/pop-os/shell
+
+Package: pop-shell
+Architecture: all
+Depends:
+    ${misc:Depends}
+Description: Pop!_OS Shell

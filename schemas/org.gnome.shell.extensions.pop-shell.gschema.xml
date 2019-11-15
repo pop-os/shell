@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist gettext-domain="pop-shell">
+    <schema id="org.gnome.shell.extensions.pop-shell" path="/org/gnome/shell/extensions/pop-shell/">
+        <key type="as" name="search">
+            <default><![CDATA[['<Super>slash']]]></default>
+            <summary>Search key combo</summary>
+        </key>
+    </schema>
+</schemalist>

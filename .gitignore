@@ -1,0 +1,4 @@
+*.zip
+*.swp
+_build
+schemas/gschemas.compiled
