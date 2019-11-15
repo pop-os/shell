@@ -14,6 +14,10 @@ dconf write /org/gnome/mutter/wayland/keybindings/restore-shortcuts "@as []"
 dconf write /org/gnome/desktop/wm/keybindings/minimize "@as []"
 # Open the application menu: disable <Super>m
 dconf write /org/gnome/shell/keybindings/open-application-menu "@as []"
+# Switch to workspace left: disable <Super>Left
+dconf write /org/gnome/desktop/wm/keybindings/switch-to-workspace-left "@as []"
+# Switch to workspace right: disable <Super>Right
+dconf write /org/gnome/desktop/wm/keybindings/switch-to-workspace-right "@as []"
 
 # Super + direction keys, move window left and right monitors, or up and down workspaces
 # Move window one monitor to the left
