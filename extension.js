@@ -36,6 +36,15 @@ function window_app_name(win) {
     return name;
 }
 
+function window_distance(win_a, win_b) {
+    let a = win_a.get_frame_rect();
+    let b = win_b.get_frame_rect();
+    return Math.sqrt(
+        Math.pow(b.x - a.x, 2) +
+        Math.pow(b.y - a.y, 2)
+    );
+}
+
 function focus_left() {
     log("focus_left");
 
@@ -44,8 +53,46 @@ function focus_left() {
         .filter(function (win) {
             return win.get_frame_rect().x < focused.get_frame_rect().x;
         })
-        .sort(function (a, b) {
-            return b.get_frame_rect().x - a.get_frame_rect().x;
+        .sort(function(a, b) {
+            return window_distance(a, focused) - window_distance(b, focused);
+        });
+    windows.forEach(function (win, i) {
+        log("  " + win.get_title());
+        if (i == 0) {
+            win.activate(global.get_current_time());
+        }
+    });
+}
+
+function focus_down() {
+    log("focus_down");
+
+    let focused = global.display.focus_window;
+    let windows = global.display.get_tab_list(Meta.TabList.NORMAL, null)
+        .filter(function (win) {
+            return win.get_frame_rect().y > focused.get_frame_rect().y;
+        })
+        .sort(function(a, b) {
+            return window_distance(a, focused) - window_distance(b, focused);
+        });
+    windows.forEach(function (win, i) {
+        log("  " + win.get_title());
+        if (i == 0) {
+            win.activate(global.get_current_time());
+        }
+    });
+}
+
+function focus_up() {
+    log("focus_up");
+
+    let focused = global.display.focus_window;
+    let windows = global.display.get_tab_list(Meta.TabList.NORMAL, null)
+        .filter(function (win) {
+            return win.get_frame_rect().y < focused.get_frame_rect().y;
+        })
+        .sort(function(a, b) {
+            return window_distance(a, focused) - window_distance(b, focused);
         });
     windows.forEach(function (win, i) {
         log("  " + win.get_title());
@@ -63,8 +110,8 @@ function focus_right() {
         .filter(function (win) {
             return win.get_frame_rect().x > focused.get_frame_rect().x;
         })
-        .sort(function (a, b) {
-            return a.get_frame_rect().x - b.get_frame_rect().x;
+        .sort(function(a, b) {
+            return window_distance(a, focused) - window_distance(b, focused);
         });
     windows.forEach(function (win, i) {
         log("  " + win.get_title());
@@ -105,6 +152,22 @@ function enable() {
     );
 
     Main.wm.addKeybinding(
+        "focus-down",
+        settings(),
+        Meta.KeyBindingFlags.NONE,
+        Shell.ActionMode.NORMAL,
+        () => focus_down()
+    );
+
+    Main.wm.addKeybinding(
+        "focus-up",
+        settings(),
+        Meta.KeyBindingFlags.NONE,
+        Shell.ActionMode.NORMAL,
+        () => focus_up()
+    );
+
+    Main.wm.addKeybinding(
         "focus-right",
         settings(),
         Meta.KeyBindingFlags.NONE,
@@ -112,13 +175,13 @@ function enable() {
         () => focus_right()
     );
 
-    Main.wm.addKeybinding(
-        "search",
-        settings(),
-        Meta.KeyBindingFlags.NONE,
-        Shell.ActionMode.NORMAL,
-        () => search()
-    );
+    // Main.wm.addKeybinding(
+    //     "search",
+    //     settings(),
+    //     Meta.KeyBindingFlags.NONE,
+    //     Shell.ActionMode.NORMAL,
+    //     () => search()
+    // );
 }
 
 function disable() {
