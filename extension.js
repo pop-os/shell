@@ -121,6 +121,38 @@ function focus_right() {
     });
 }
 
+function focus_monitor_left() {
+    log("focus_monitor_left");
+
+    let focus_index = Main.layoutManager.focusIndex;
+    let windows = global.display.get_tab_list(Meta.TabList.NORMAL, null)
+        .filter(function (win) {
+            return (win.get_monitor() + 1) == focus_index;
+        });
+    windows.forEach(function (win, i) {
+        log("  " + win.get_title());
+        if (i == 0) {
+            win.activate(global.get_current_time());
+        }
+    });
+}
+
+function focus_monitor_right() {
+    log("focus_monitor_right");
+
+    let focus_index = Main.layoutManager.focusIndex;
+    let windows = global.display.get_tab_list(Meta.TabList.NORMAL, null)
+        .filter(function (win) {
+            return win.get_monitor() == (focus_index + 1);
+        });
+    windows.forEach(function (win, i) {
+        log("  " + win.get_title());
+        if (i == 0) {
+            win.activate(global.get_current_time());
+        }
+    });
+}
+
 function search() {
     log("search");
 
@@ -173,6 +205,22 @@ function enable() {
         Meta.KeyBindingFlags.NONE,
         Shell.ActionMode.NORMAL,
         () => focus_right()
+    );
+
+    Main.wm.addKeybinding(
+        "focus-monitor-left",
+        settings(),
+        Meta.KeyBindingFlags.NONE,
+        Shell.ActionMode.NORMAL,
+        () => focus_monitor_left()
+    );
+
+    Main.wm.addKeybinding(
+        "focus-monitor-right",
+        settings(),
+        Meta.KeyBindingFlags.NONE,
+        Shell.ActionMode.NORMAL,
+        () => focus_monitor_right()
     );
 
     // Main.wm.addKeybinding(
