@@ -49,7 +49,8 @@ function focus_left() {
     log("focus_left");
 
     let focused = global.display.focus_window;
-    let windows = global.display.get_tab_list(Meta.TabList.NORMAL, null)
+    let workspace = global.workspace_manager.get_active_workspace();
+    let windows = global.display.get_tab_list(Meta.TabList.NORMAL, workspace)
         .filter(function (win) {
             return win.get_frame_rect().x < focused.get_frame_rect().x;
         })
@@ -68,7 +69,8 @@ function focus_down() {
     log("focus_down");
 
     let focused = global.display.focus_window;
-    let windows = global.display.get_tab_list(Meta.TabList.NORMAL, null)
+    let workspace = global.workspace_manager.get_active_workspace();
+    let windows = global.display.get_tab_list(Meta.TabList.NORMAL, workspace)
         .filter(function (win) {
             return win.get_frame_rect().y > focused.get_frame_rect().y;
         })
@@ -87,7 +89,8 @@ function focus_up() {
     log("focus_up");
 
     let focused = global.display.focus_window;
-    let windows = global.display.get_tab_list(Meta.TabList.NORMAL, null)
+    let workspace = global.workspace_manager.get_active_workspace();
+    let windows = global.display.get_tab_list(Meta.TabList.NORMAL, workspace)
         .filter(function (win) {
             return win.get_frame_rect().y < focused.get_frame_rect().y;
         })
@@ -106,7 +109,8 @@ function focus_right() {
     log("focus_right");
 
     let focused = global.display.focus_window;
-    let windows = global.display.get_tab_list(Meta.TabList.NORMAL, null)
+    let workspace = global.workspace_manager.get_active_workspace();
+    let windows = global.display.get_tab_list(Meta.TabList.NORMAL, workspace)
         .filter(function (win) {
             return win.get_frame_rect().x > focused.get_frame_rect().x;
         })
@@ -125,9 +129,17 @@ function focus_monitor_left() {
     log("focus_monitor_left");
 
     let focus_index = Main.layoutManager.focusIndex;
-    let windows = global.display.get_tab_list(Meta.TabList.NORMAL, null)
+    let focused = global.display.focus_window;
+    let workspace = global.workspace_manager.get_active_workspace();
+    let windows = global.display.get_tab_list(Meta.TabList.NORMAL, workspace)
         .filter(function (win) {
-            return (win.get_monitor() + 1) == focus_index;
+            return win.get_monitor() != focus_index;
+        })
+        .filter(function (win) {
+            return win.get_frame_rect().x < focused.get_frame_rect().x;
+        })
+        .sort(function(a, b) {
+            return window_distance(a, focused) - window_distance(b, focused);
         });
     windows.forEach(function (win, i) {
         log("  " + win.get_title());
@@ -141,9 +153,17 @@ function focus_monitor_right() {
     log("focus_monitor_right");
 
     let focus_index = Main.layoutManager.focusIndex;
-    let windows = global.display.get_tab_list(Meta.TabList.NORMAL, null)
+    let focused = global.display.focus_window;
+    let workspace = global.workspace_manager.get_active_workspace();
+    let windows = global.display.get_tab_list(Meta.TabList.NORMAL, workspace)
         .filter(function (win) {
-            return win.get_monitor() == (focus_index + 1);
+            return win.get_monitor() != focus_index;
+        })
+        .filter(function (win) {
+            return win.get_frame_rect().x > focused.get_frame_rect().x;
+        })
+        .sort(function(a, b) {
+            return window_distance(a, focused) - window_distance(b, focused);
         });
     windows.forEach(function (win, i) {
         log("  " + win.get_title());
