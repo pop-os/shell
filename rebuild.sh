@@ -57,4 +57,4 @@ then
     xdotool key r Return
 fi
 
-journalctl -n 0 -f | grep pop-shell
+journalctl -n 0 -f "$(which gnome-shell)"
