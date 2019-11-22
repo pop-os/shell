@@ -66,6 +66,22 @@
             <default><![CDATA[['<Shift>Right','<Shift>l']]]></default>
             <summary>Resize window right</summary>
         </key>
+        <key type="as" name="tile-swap-left">
+            <default><![CDATA[['<Primary>Left','<Primary>h']]]></default>
+            <summary>Swap window left</summary>
+        </key>
+        <key type="as" name="tile-swap-down">
+            <default><![CDATA[['<Primary>Down','<Primary>j']]]></default>
+            <summary>Swap window down</summary>
+        </key>
+        <key type="as" name="tile-swap-up">
+            <default><![CDATA[['<Primary>Up','<Primary>k']]]></default>
+            <summary>Swap window up</summary>
+        </key>
+        <key type="as" name="tile-swap-right">
+            <default><![CDATA[['<Primary>Right','<Primary>l']]]></default>
+            <summary>Swap window right</summary>
+        </key>
         <key type="as" name="tile-accept">
             <default><![CDATA[['Return']]]></default>
             <summary>Accept tiling changes</summary>

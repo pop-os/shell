@@ -238,7 +238,6 @@ function tile_rect() {
     };
 }
 
-
 function tile_change(dx, dy, dw, dh) {
     log("tile_change(" + dx + "," + dy + "," + dw + "," + dh + ")");
 
@@ -362,6 +361,34 @@ function tile_resize_right() {
     tile_change(0, 0, 1, 0);
 }
 
+function tile_swap_left() {
+    log("tile_swap_left");
+    let rect = tile_rect();
+    if (!rect) return;
+    tile_change(-tiling_overlay.width/rect.width, 0, 0, 0);
+}
+
+function tile_swap_down() {
+    log("tile_swap_down");
+    let rect = tile_rect();
+    if (!rect) return;
+    tile_change(0, tiling_overlay.height/rect.height, 0, 0);
+}
+
+function tile_swap_up() {
+    log("tile_swap_up");
+    let rect = tile_rect();
+    if (!rect) return;
+    tile_change(0, -tiling_overlay.height/rect.height, 0, 0);
+}
+
+function tile_swap_right() {
+    log("tile_swap_right");
+    let rect = tile_rect();
+    if (!rect) return;
+    tile_change(tiling_overlay.width/rect.width, 0, 0, 0);
+}
+
 let tiling_keybindings = {
     "tile-move-left": () => tile_move_left(),
     "tile-move-down": () => tile_move_down(),
@@ -371,6 +398,10 @@ let tiling_keybindings = {
     "tile-resize-down": () => tile_resize_down(),
     "tile-resize-up": () => tile_resize_up(),
     "tile-resize-right": () => tile_resize_right(),
+    "tile-swap-left": () => tile_swap_left(),
+    "tile-swap-down": () => tile_swap_down(),
+    "tile-swap-up": () => tile_swap_up(),
+    "tile-swap-right": () => tile_swap_right(),
     "tile-accept": () => tile_accept(),
     "tile-reject": () => tile_exit(),
 };
