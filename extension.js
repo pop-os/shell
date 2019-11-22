@@ -219,20 +219,34 @@ function search() {
 
 let tiling_overlay;
 
-function tile_monitors() {
-    return Main.layoutManager.monitors.filter((monitor) => {
-        return (tiling_overlay.x + tiling_overlay.width) >= monitor.x &&
-            (tiling_overlay.y + tiling_overlay.height) >= monitor.y &&
-            tiling_overlay.x <= (monitor.x + monitor.width) &&
-            tiling_overlay.y <= (monitor.y + monitor.height);
+function tile_monitors(rect) {
+    log("tile_monitors(" + rect.x + ", " + rect.y + ", " + rect.width + ", " + rect.height);
+
+    let workspace = global.workspace_manager.get_active_workspace();
+    return Main.layoutManager.monitors.map((monitor, i) => {
+        return workspace.get_work_area_for_monitor(i);
+    }).filter((monitor) => {
+        return (rect.x + rect.width) > monitor.x &&
+            (rect.y + rect.height) > monitor.y &&
+            rect.x < (monitor.x + monitor.width) &&
+            rect.y < (monitor.y + monitor.height);
+    }).sort(function(a, b) {
+        // Sort by total size
+        return (a.width * a.height) - (b.width * b.height);
     });
-    //TODO: sort by amount of window on monitor
 }
 
 function tile_rect() {
-    let monitors = tile_monitors();
+    log("tile_rect");
+
+    if (!tiling_overlay.visible) return null;
+
+    let monitors = tile_monitors(tiling_overlay);
     if (monitors.length == 0) return null;
+
     return {
+        "x": monitors[0].x,
+        "y": monitors[0].y,
         "width": monitors[0].width / 8,
         "height": monitors[0].height / 8,
     };
@@ -240,8 +254,6 @@ function tile_rect() {
 
 function tile_change(dx, dy, dw, dh) {
     log("tile_change(" + dx + "," + dy + "," + dw + "," + dh + ")");
-
-    if (!tiling_overlay.visible) return;
 
     let rect = tile_rect();
     if (!rect) return;
@@ -253,11 +265,9 @@ function tile_change(dx, dy, dw, dh) {
         "height": tiling_overlay.height + dh * rect.height,
     };
 
-    //TODO: account for shell elements
-
     // Align to grid
-    changed.x = round_increment(changed.x, rect.width);
-    changed.y = round_increment(changed.y, rect.height);
+    changed.x = round_increment(changed.x - rect.x, rect.width) + rect.x;
+    changed.y = round_increment(changed.y - rect.y, rect.height) + rect.y;
     changed.width = round_increment(changed.width, rect.width);
     changed.height = round_increment(changed.height, rect.height);
 
@@ -272,12 +282,7 @@ function tile_change(dx, dy, dw, dh) {
     }
 
     // Check that corrected rectangle fits on monitors
-    let monitors = Main.layoutManager.monitors.filter((monitor) => {
-        return (changed.x + changed.width) >= monitor.x &&
-            (changed.y + changed.height) >= monitor.y &&
-            changed.x <= (monitor.x + monitor.width) &&
-            changed.y <= (monitor.y + monitor.height);
-    });
+    let monitors = tile_monitors(changed);
 
     // Do not use change if there are no matching displays
     if (monitors.length == 0) return;
