@@ -29,5 +29,50 @@
             <default><![CDATA[['<Super>slash']]]></default>
             <summary>Search key combo</summary>
         </key>
+        <key type="as" name="tile-enter">
+            <default><![CDATA[['<Super>Return']]]></default>
+            <summary>Enter tiling mode</summary>
+        </key>
+        <!-- Tiling Mode -->
+        <key type="as" name="tile-move-left">
+            <default><![CDATA[['Left','h']]]></default>
+            <summary>Move window left</summary>
+        </key>
+        <key type="as" name="tile-move-down">
+            <default><![CDATA[['Down','j']]]></default>
+            <summary>Move window down</summary>
+        </key>
+        <key type="as" name="tile-move-up">
+            <default><![CDATA[['Up','k']]]></default>
+            <summary>Move window up</summary>
+        </key>
+        <key type="as" name="tile-move-right">
+            <default><![CDATA[['Right','l']]]></default>
+            <summary>Move window right</summary>
+        </key>
+        <key type="as" name="tile-resize-left">
+            <default><![CDATA[['<Shift>Left','<Shift>h']]]></default>
+            <summary>Resize window left</summary>
+        </key>
+        <key type="as" name="tile-resize-down">
+            <default><![CDATA[['<Shift>Down','<Shift>j']]]></default>
+            <summary>Resize window down</summary>
+        </key>
+        <key type="as" name="tile-resize-up">
+            <default><![CDATA[['<Shift>Up','<Shift>k']]]></default>
+            <summary>Resize window up</summary>
+        </key>
+        <key type="as" name="tile-resize-right">
+            <default><![CDATA[['<Shift>Right','<Shift>l']]]></default>
+            <summary>Resize window right</summary>
+        </key>
+        <key type="as" name="tile-accept">
+            <default><![CDATA[['Return']]]></default>
+            <summary>Accept tiling changes</summary>
+        </key>
+        <key type="as" name="tile-reject">
+            <default><![CDATA[['Escape']]]></default>
+            <summary>Reject tiling changes</summary>
+        </key>
     </schema>
 </schemalist>
