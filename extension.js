@@ -220,7 +220,7 @@ function search() {
 let tiling_overlay;
 
 function tile_monitors(rect) {
-    log("tile_monitors(" + rect.x + ", " + rect.y + ", " + rect.width + ", " + rect.height);
+    log("tile_monitors(" + rect.x + ", " + rect.y + ", " + rect.width + ", " + rect.height + ")");
 
     let workspace = global.workspace_manager.get_active_workspace();
     return Main.layoutManager.monitors.map((monitor, i) => {
@@ -243,12 +243,26 @@ function tile_rect() {
 
     let monitors = tile_monitors(tiling_overlay);
     if (monitors.length == 0) return null;
+    let monitor = monitors[0];
+
+    let tile_width = monitor.width / 4;
+    let tile_height = monitor.height / 4;
+
+    // Anything above 21:9 is considered ultrawide
+    if (monitor.width * 9 >= monitor.height * 21) {
+      tile_width /= 2;
+    }
+
+    // Anything below 9:21 is probably a rotated ultrawide
+    if (monitor.height * 9 >= monitor.width * 21) {
+      tile_height /= 2;
+    }
 
     return {
-        "x": monitors[0].x,
-        "y": monitors[0].y,
-        "width": monitors[0].width / 8,
-        "height": monitors[0].height / 8,
+        "x": monitor.x,
+        "y": monitor.y,
+        "width": tile_width,
+        "height": tile_height,
     };
 }
 
