@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist gettext-domain="pop-shell">
     <schema id="org.gnome.shell.extensions.pop-shell" path="/org/gnome/shell/extensions/pop-shell/">
+        <key type="u" name="gap">
+            <default>16</default>
+            <summary>Gap between tiled windows</summary>
+        </key>
         <key type="as" name="focus-left">
             <default><![CDATA[['<Super>Left','<Super>h']]]></default>
             <summary>Focus left window</summary>

@@ -5,8 +5,13 @@ const Main = imports.ui.main;
 const Meta = imports.gi.Meta;
 const St = imports.gi.St;
 
+const TILES = 16;
+
 class Tiler {
     constructor() {
+        this.gap = Lib.settings.gap();
+        this.half_gap = this.gap / 2;
+        Lib.log("gap: " + this.gap);
         this.window = null;
         this.overlay = new St.BoxLayout({
             style_class: "tile-preview"
@@ -56,8 +61,8 @@ class Tiler {
         if (monitors.length == 0) return null;
         let monitor = monitors[0];
 
-        let tile_width = monitor.width / 16;
-        let tile_height = monitor.height / 16;
+        let tile_width = monitor.width / TILES;
+        let tile_height = monitor.height / TILES;
 
         // Anything above 21:9 is considered ultrawide
         if (monitor.width * 9 >= monitor.height * 21) {
@@ -144,6 +149,42 @@ class Tiler {
         if (changed.y < min_y) return;
         // Prevent moving too far down
         if ((changed.y + changed.height) > max_y) return;
+
+        let left_most = (changed.x % monitors[0].width) == 0;
+        let right_most = (changed.x % monitors[0].width) + changed.width >= (TILES - 1) * rect.width;
+
+        if (!(left_most && right_most)) {
+            if (left_most) {
+                Lib.log("left-most");
+                changed.width -= this.half_gap;
+            } else if (right_most) {
+                Lib.log("right-most");
+                changed.x += this.half_gap;
+                changed.width -= this.half_gap;
+            } else {
+                Lib.log("width-between");
+                changed.x += this.half_gap;
+                changed.width -= this.gap;
+            }
+        }
+
+        let top_most = (changed.y % monitors[0].height) < 28;
+        let bottom_most = (changed.y % monitors[0].height) + changed.height >= (TILES - 1) * rect.height
+
+        if (!(top_most && bottom_most)) {
+            if (top_most) {
+                Lib.log("top-most");
+                changed.height -= this.half_gap;
+            } else if (bottom_most) {
+                Lib.log("bottom-most");
+                changed.y += this.half_gap;
+                changed.height -= this.half_gap;
+            } else {
+                Lib.log("height-between");
+                changed.y += this.half_gap;
+                changed.height -= this.gap;
+            }
+        }
 
         this.overlay.x = changed.x;
         this.overlay.y = changed.y;

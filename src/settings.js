@@ -1,6 +1,5 @@
 const ExtensionUtils = imports.misc.extensionUtils;
 const Gio = imports.gi.Gio;
-
 class Settings {
     constructor() {
         const extension = ExtensionUtils.getCurrentExtension();
@@ -16,5 +15,9 @@ class Settings {
             throw new Error("Schema " + schema + " could not be found for extension "
                 + extension.metadata.uuid + ". Please check your installation.");
         this.inner = new Gio.Settings({ settings_schema: schemaObj });
+    }
+
+    gap() {
+        return this.inner.get_uint("gap");
     }
 }
