@@ -2,6 +2,7 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 const ExtensionUtils = imports.misc.extensionUtils;
 const Gio = imports.gi.Gio;
+const Gdk = imports.gi.Gdk;
 const Lib = Me.imports.lib;
 const Main = imports.ui.main;
 const Meta = imports.gi.Meta;
@@ -26,6 +27,16 @@ function focus(windows) {
             Lib.log("  " + win.get_title());
             if (i == 0) {
                 win.activate(global.get_current_time());
+
+                let rect = win.get_frame_rect();
+                let x = rect.x + rect.width / 2;
+                let y = rect.y + rect.height / 2;
+                    
+                let display = Gdk.DisplayManager.get().get_default_display();
+
+                display.get_default_seat()
+                    .get_pointer()
+                    .warp(display.get_default_screen(), x, y);
             }
         });
 }
