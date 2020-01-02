@@ -56,8 +56,8 @@ class Tiler {
         if (monitors.length == 0) return null;
         let monitor = monitors[0];
 
-        let tile_width = monitor.width / 4;
-        let tile_height = monitor.height / 4;
+        let tile_width = monitor.width / 16;
+        let tile_height = monitor.height / 16;
 
         // Anything above 21:9 is considered ultrawide
         if (monitor.width * 9 >= monitor.height * 21) {
