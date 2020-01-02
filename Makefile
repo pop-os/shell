@@ -12,7 +12,12 @@ $(info UUID is "$(UUID)")
 
 .PHONY: all clean install zip-file
 
-all: src/extension.js src/focus.js metadata.json schemas
+sources = src/extension.js \
+	src/focus.js \
+	src/lib.js \
+	src/tiling.js
+
+all: $(sources) metadata.json schemas
 	rm -rf _build
 	mkdir -p _build
 	cp -r $^ _build

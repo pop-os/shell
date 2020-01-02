@@ -20,7 +20,7 @@ function focus(windows) {
     let workspace = global.workspace_manager.get_active_workspace();
     windows(focused, global.display.get_tab_list(Meta.TabList.NORMAL, workspace))
         .forEach(function (win, i) {
-            log("  " + win.get_title());
+            Lib.log("  " + win.get_title());
             if (i == 0) {
                 win.activate(global.get_current_time());
             }
@@ -28,7 +28,7 @@ function focus(windows) {
 }
 
 function left() {
-    log("focus_left");
+    Lib.log("focus_left");
 
     focus(function (focused, windows) {
         return windows
@@ -42,7 +42,7 @@ function left() {
 }
 
 function down() {
-    log("focus_down");
+    Lib.log("focus_down");
 
     focus(function (focused, windows) {
         return windows
@@ -56,7 +56,7 @@ function down() {
 }
 
 function up() {
-    log("focus_up");
+    Lib.log("focus_up");
 
     focus(function (focused, windows) {
         return windows
@@ -71,7 +71,7 @@ function up() {
 }
 
 function right() {
-    log("focus_right");
+    Lib.log("focus_right");
 
     focus(function (focused, windows) {
         return windows
@@ -85,7 +85,7 @@ function right() {
 }
 
 function monitor_left() {
-    log("focus_monitor_left");
+    Lib.log("focus_monitor_left");
 
     focus(function (focused, windows) {
         return windows
@@ -102,7 +102,7 @@ function monitor_left() {
 }
 
 function monitor_right() {
-    log("focus_monitor_right");
+    Lib.log("focus_monitor_right");
 
     focus(function (focused, windows) {
         return windows
