@@ -10,20 +10,20 @@ function log(text) {
 }
 
 function settings() {
-  const extension = ExtensionUtils.getCurrentExtension();
-  const schema = extension.metadata["settings-schema"];
-  const GioSSS = Gio.SettingsSchemaSource;
-  const schemaDir = extension.dir.get_child("schemas");
-  let schemaSource = schemaDir.query_exists(null) ?
+    const extension = ExtensionUtils.getCurrentExtension();
+    const schema = extension.metadata["settings-schema"];
+    const GioSSS = Gio.SettingsSchemaSource;
+    const schemaDir = extension.dir.get_child("schemas");
+    let schemaSource = schemaDir.query_exists(null) ?
         GioSSS.new_from_directory(schemaDir.get_path(), GioSSS.get_default(), false) :
         GioSSS.get_default();
 
-  const schemaObj = schemaSource.lookup(schema, true);
-  if (!schemaObj)
-    throw new Error("Schema " + schema + " could not be found for extension "
-                    + extension.metadata.uuid + ". Please check your installation.");
-  let settings = new Gio.Settings({ settings_schema: schemaObj });
-  return settings;
+    const schemaObj = schemaSource.lookup(schema, true);
+    if (!schemaObj)
+        throw new Error("Schema " + schema + " could not be found for extension "
+            + extension.metadata.uuid + ". Please check your installation.");
+    let settings = new Gio.Settings({ settings_schema: schemaObj });
+    return settings;
 }
 
 function enable_keybindings(keybindings) {
@@ -50,11 +50,15 @@ function window_app_name(win) {
     let app = Shell.WindowTracker.get_default().get_window_app(win);
     let name = null;
     try {
-      name = app.get_name().replace(/&/g, "&amp;");
+        name = app.get_name().replace(/&/g, "&amp;");
     } catch (e) {
-      log("window_app_name: " + e);
+        log("window_app_name: " + e);
     }
     return name;
+}
+
+function round_increment(value, increment) {
+    return Math.round(value / increment) * increment;
 }
 
 function window_distance(win_a, win_b) {
@@ -66,139 +70,107 @@ function window_distance(win_a, win_b) {
     );
 }
 
-function round_increment(value, increment) {
-    return Math.round(value / increment) * increment;
+function focus(windows) {
+    let focused = global.display.focus_window;
+    if (!focused) return;
+    let workspace = global.workspace_manager.get_active_workspace();
+    windows(focused, global.display.get_tab_list(Meta.TabList.NORMAL, workspace))
+        .forEach(function (win, i) {
+            log("  " + win.get_title());
+            if (i == 0) {
+                win.activate(global.get_current_time());
+            }
+        });
 }
 
 function focus_left() {
     log("focus_left");
 
-    let focused = global.display.focus_window;
-    if (!focused) return;
-    let workspace = global.workspace_manager.get_active_workspace();
-    let windows = global.display.get_tab_list(Meta.TabList.NORMAL, workspace)
-        .filter(function (win) {
-            return win.get_frame_rect().x < focused.get_frame_rect().x;
-        })
-        .sort(function(a, b) {
-            return window_distance(a, focused) - window_distance(b, focused);
-        });
-    windows.forEach(function (win, i) {
-        log("  " + win.get_title());
-        if (i == 0) {
-            win.activate(global.get_current_time());
-        }
+    focus(function (focused, windows) {
+        return windows
+            .filter(function (win) {
+                return win.get_frame_rect().x < focused.get_frame_rect().x;
+            })
+            .sort(function (a, b) {
+                return window_distance(a, focused) - window_distance(b, focused);
+            });
     });
 }
 
 function focus_down() {
     log("focus_down");
 
-    let focused = global.display.focus_window;
-    if (!focused) return;
-    let workspace = global.workspace_manager.get_active_workspace();
-    let windows = global.display.get_tab_list(Meta.TabList.NORMAL, workspace)
-        .filter(function (win) {
-            return win.get_frame_rect().y > focused.get_frame_rect().y;
-        })
-        .sort(function(a, b) {
-            return window_distance(a, focused) - window_distance(b, focused);
-        });
-    windows.forEach(function (win, i) {
-        log("  " + win.get_title());
-        if (i == 0) {
-            win.activate(global.get_current_time());
-        }
+    focus(function (focused, windows) {
+        return windows
+            .filter(function (win) {
+                return win.get_frame_rect().y > focused.get_frame_rect().y;
+            })
+            .sort(function (a, b) {
+                return window_distance(a, focused) - window_distance(b, focused);
+            });
     });
 }
 
 function focus_up() {
     log("focus_up");
 
-    let focused = global.display.focus_window;
-    if (!focused) return;
-    let workspace = global.workspace_manager.get_active_workspace();
-    let windows = global.display.get_tab_list(Meta.TabList.NORMAL, workspace)
-        .filter(function (win) {
-            return win.get_frame_rect().y < focused.get_frame_rect().y;
-        })
-        .sort(function(a, b) {
-            return window_distance(a, focused) - window_distance(b, focused);
-        });
-    windows.forEach(function (win, i) {
-        log("  " + win.get_title());
-        if (i == 0) {
-            win.activate(global.get_current_time());
-        }
+    focus(function (focused, windows) {
+        return windows
+            .filter(function (win) {
+                return win.get_frame_rect().y < focused.get_frame_rect().y;
+            })
+            .sort(function (a, b) {
+                return window_distance(a, focused) - window_distance(b, focused);
+            });
+
     });
 }
 
 function focus_right() {
     log("focus_right");
 
-    let focused = global.display.focus_window;
-    if (!focused) return;
-    let workspace = global.workspace_manager.get_active_workspace();
-    let windows = global.display.get_tab_list(Meta.TabList.NORMAL, workspace)
-        .filter(function (win) {
-            return win.get_frame_rect().x > focused.get_frame_rect().x;
-        })
-        .sort(function(a, b) {
-            return window_distance(a, focused) - window_distance(b, focused);
-        });
-    windows.forEach(function (win, i) {
-        log("  " + win.get_title());
-        if (i == 0) {
-            win.activate(global.get_current_time());
-        }
+    focus(function (focused, windows) {
+        return windows
+            .filter(function (win) {
+                return win.get_frame_rect().x > focused.get_frame_rect().x;
+            })
+            .sort(function (a, b) {
+                return window_distance(a, focused) - window_distance(b, focused);
+            });
     });
 }
 
 function focus_monitor_left() {
     log("focus_monitor_left");
 
-    let focused = global.display.focus_window;
-    if (!focused) return;
-    let workspace = global.workspace_manager.get_active_workspace();
-    let windows = global.display.get_tab_list(Meta.TabList.NORMAL, workspace)
-        .filter(function (win) {
-            return win.get_monitor() != Main.layoutManager.focusIndex;
-        })
-        .filter(function (win) {
-            return win.get_frame_rect().x < focused.get_frame_rect().x;
-        })
-        .sort(function(a, b) {
-            return window_distance(a, focused) - window_distance(b, focused);
-        });
-    windows.forEach(function (win, i) {
-        log("  " + win.get_title());
-        if (i == 0) {
-            win.activate(global.get_current_time());
-        }
+    focus(function (focused, windows) {
+        return windows
+            .filter(function (win) {
+                return win.get_monitor() != Main.layoutManager.focusIndex;
+            })
+            .filter(function (win) {
+                return win.get_frame_rect().x < focused.get_frame_rect().x;
+            })
+            .sort(function (a, b) {
+                return window_distance(a, focused) - window_distance(b, focused);
+            });
     });
 }
 
 function focus_monitor_right() {
     log("focus_monitor_right");
 
-    let focused = global.display.focus_window;
-    if (!focused) return;
-    let workspace = global.workspace_manager.get_active_workspace();
-    let windows = global.display.get_tab_list(Meta.TabList.NORMAL, workspace)
-        .filter(function (win) {
-            return win.get_monitor() != Main.layoutManager.focusIndex;
-        })
-        .filter(function (win) {
-            return win.get_frame_rect().x > focused.get_frame_rect().x;
-        })
-        .sort(function(a, b) {
-            return window_distance(a, focused) - window_distance(b, focused);
-        });
-    windows.forEach(function (win, i) {
-        log("  " + win.get_title());
-        if (i == 0) {
-            win.activate(global.get_current_time());
-        }
+    focus(function (focused, windows) {
+        return windows
+            .filter(function (win) {
+                return win.get_monitor() != Main.layoutManager.focusIndex;
+            })
+            .filter(function (win) {
+                return win.get_frame_rect().x > focused.get_frame_rect().x;
+            })
+            .sort(function (a, b) {
+                return window_distance(a, focused) - window_distance(b, focused);
+            });
     });
 }
 
@@ -230,7 +202,7 @@ function tile_monitors(rect) {
             (rect.y + rect.height) > monitor.y &&
             rect.x < (monitor.x + monitor.width) &&
             rect.y < (monitor.y + monitor.height);
-    }).sort(function(a, b) {
+    }).sort(function (a, b) {
         // Sort by total size
         return (a.width * a.height) - (b.width * b.height);
     });
@@ -250,12 +222,12 @@ function tile_rect() {
 
     // Anything above 21:9 is considered ultrawide
     if (monitor.width * 9 >= monitor.height * 21) {
-      tile_width /= 2;
+        tile_width /= 2;
     }
 
     // Anything below 9:21 is probably a rotated ultrawide
     if (monitor.height * 9 >= monitor.width * 21) {
-      tile_height /= 2;
+        tile_height /= 2;
     }
 
     return {
@@ -392,7 +364,7 @@ function tile_swap_left() {
     log("tile_swap_left");
     let rect = tile_rect();
     if (!rect) return;
-    tile_change(-tiling_overlay.width/rect.width, 0, 0, 0);
+    tile_change(-tiling_overlay.width / rect.width, 0, 0, 0);
     tile_change(0, 0, 0, 0);
 }
 
@@ -400,7 +372,7 @@ function tile_swap_down() {
     log("tile_swap_down");
     let rect = tile_rect();
     if (!rect) return;
-    tile_change(0, tiling_overlay.height/rect.height, 0, 0);
+    tile_change(0, tiling_overlay.height / rect.height, 0, 0);
     tile_change(0, 0, 0, 0);
 }
 
@@ -408,7 +380,7 @@ function tile_swap_up() {
     log("tile_swap_up");
     let rect = tile_rect();
     if (!rect) return;
-    tile_change(0, -tiling_overlay.height/rect.height, 0, 0);
+    tile_change(0, -tiling_overlay.height / rect.height, 0, 0);
     tile_change(0, 0, 0, 0);
 }
 
@@ -416,7 +388,7 @@ function tile_swap_right() {
     log("tile_swap_right");
     let rect = tile_rect();
     if (!rect) return;
-    tile_change(tiling_overlay.width/rect.width, 0, 0, 0);
+    tile_change(tiling_overlay.width / rect.width, 0, 0, 0);
     tile_change(0, 0, 0, 0);
 }
 
