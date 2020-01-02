@@ -15,6 +15,7 @@ $(info UUID is "$(UUID)")
 sources = src/extension.js \
 	src/focus.js \
 	src/lib.js \
+	src/settings.js \
 	src/tiling.js
 
 all: $(sources) metadata.json schemas
