@@ -9,13 +9,67 @@ const Meta = imports.gi.Meta;
 const Shell = imports.gi.Shell;
 const St = imports.gi.St;
 
+function xend(rect) {
+    return rect.x + rect.width;
+}
+
+function xcenter(rect) {
+    return rect.x + rect.width / 2;
+}
+
+function yend(rect) {
+    return rect.y + rect.height;
+}
+
+function ycenter(rect) {
+    return rect.y + rect.height / 2;
+}
+
+function center(rect) {
+    return [xcenter(rect), ycenter(rect)];
+}
+
+function north(rect) {
+    return [xcenter(rect), rect.y];
+}
+
+function east(rect) {
+    return [xend(rect), ycenter(rect)];
+}
+
+function south(rect) {
+    return [xcenter(rect), yend(rect)];
+}
+
+function west(rect) {
+    return [rect.x, ycenter(rect)];
+}
+
+function directional_distance(win_a, win_b, fn_a, fn_b) {
+    let [ax, ay] = fn_a(win_a.get_frame_rect());
+    let [bx, by] = fn_b(win_b.get_frame_rect());
+
+    return Math.sqrt(Math.pow(bx - ax, 2) + Math.pow(by - ay, 2));
+}
+
 function window_distance(win_a, win_b) {
-    let a = win_a.get_frame_rect();
-    let b = win_b.get_frame_rect();
-    return Math.sqrt(
-        Math.pow(b.x - a.x, 2) +
-        Math.pow(b.y - a.y, 2)
-    );
+    return directional_distance(win_a, win_b, center, center);
+}
+
+function upward_distance(win_a, win_b) {
+    return directional_distance(win_a, win_b, south, north);
+}
+
+function rightward_distance(win_a, win_b) {
+    return directional_distance(win_a, win_b, west, east);
+}
+
+function downward_distance(win_a, win_b) {
+    return directional_distance(win_a, win_b, north, south);
+}
+
+function leftward_distance(win_a, win_b) {
+    return directional_distance(win_a, win_b, east, west);
 }
 
 function focus(windows) {
@@ -29,8 +83,8 @@ function focus(windows) {
                 win.activate(global.get_current_time());
 
                 let rect = win.get_frame_rect();
-                let x = rect.x + rect.width / 2;
-                let y = rect.y + rect.height / 2;
+                let x = xcenter(rect);
+                let y = ycenter(rect);
                     
                 let display = Gdk.DisplayManager.get().get_default_display();
 
@@ -50,7 +104,7 @@ function left() {
                 return win.get_frame_rect().x < focused.get_frame_rect().x;
             })
             .sort(function (a, b) {
-                return window_distance(a, focused) - window_distance(b, focused);
+                return leftward_distance(a, focused) - leftward_distance(b, focused);
             });
     });
 }
@@ -64,7 +118,7 @@ function down() {
                 return win.get_frame_rect().y > focused.get_frame_rect().y;
             })
             .sort(function (a, b) {
-                return window_distance(a, focused) - window_distance(b, focused);
+                return downward_distance(a, focused) - downward_distance(b, focused);
             });
     });
 }
@@ -78,7 +132,7 @@ function up() {
                 return win.get_frame_rect().y < focused.get_frame_rect().y;
             })
             .sort(function (a, b) {
-                return window_distance(a, focused) - window_distance(b, focused);
+                return upward_distance(a, focused) - upward_distance(b, focused);
             });
 
     });
@@ -93,7 +147,7 @@ function right() {
                 return win.get_frame_rect().x > focused.get_frame_rect().x;
             })
             .sort(function (a, b) {
-                return window_distance(a, focused) - window_distance(b, focused);
+                return rightward_distance(a, focused) - rightward_distance(b, focused);
             });
     });
 }
