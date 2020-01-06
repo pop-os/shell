@@ -5,6 +5,7 @@ const Meta = imports.gi.Meta;
 const Shell = imports.gi.Shell;
 const Settings = Me.imports.settings;
 
+var Geom = Me.imports.geom;
 var Keybindings = Me.imports.keybindings;
 
 function log(text) {

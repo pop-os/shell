@@ -14,6 +14,7 @@ $(info UUID is "$(UUID)")
 
 sources = src/extension.js \
 	src/focus.js \
+	src/geom.js \
 	src/keybindings.js \
 	src/lib.js \
 	src/settings.js \
