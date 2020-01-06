@@ -79,6 +79,8 @@ function disable() {
 // Snaps all windows to the window grid
 function snap_windows() {
     tiler.snap_windows(
-        Meta.get_window_actors(global.display).map((win) => win.get_meta_window())
+        Meta.get_window_actors(global.display)
+            .map((win) => win.get_meta_window())
+            .filter((win) => !win.is_override_redirect())
     );
 }
