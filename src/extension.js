@@ -3,7 +3,7 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 const ExtensionUtils = imports.misc.extensionUtils;
 const Focus = Me.imports.focus;
 const Gio = imports.gi.Gio;
-const Lib = Me.imports.lib;
+const { log, Keybindings } = Me.imports.lib;
 const Main = imports.ui.main;
 const Meta = imports.gi.Meta;
 const Shell = imports.gi.Shell;
@@ -16,13 +16,13 @@ function window_app_name(win) {
     try {
       name = app.get_name().replace(/&/g, "&amp;");
     } catch (e) {
-      Lib.log("window_app_name: " + e);
+      log("window_app_name: " + e);
     }
     return name;
 }
 
 function search() {
-    Lib.log("search");
+    log("search");
 
     let windows = global.display.get_tab_list(Meta.TabList.NORMAL, null);
     windows.forEach(function (win) {
@@ -32,7 +32,7 @@ function search() {
             title += name + ": ";
         }
         title += win.get_title();
-        Lib.log("  " + title);
+        log("  " + title);
     });
 }
 
@@ -50,15 +50,15 @@ let global_keybindings = {
 };
 
 function init() {
-    Lib.log("init");
+    log("init");
 }
 
 function enable() {
-    Lib.log("enable");
+    log("enable");
     // Add tiling overlay
     Main.uiGroup.add_actor(tiler.overlay);
     // Enable global keybindings
-    Lib.enable_keybindings(global_keybindings);
+    Keybindings.enable(global_keybindings);
 }
 
 function disable() {
@@ -68,5 +68,5 @@ function disable() {
     // Exit tiling mode if necessary
     tiler.exit();
     // Disable global keybindings
-    Lib.disable_keybindings(global_keybindings);
+    Keybindings.disable(global_keybindings);
 }
