@@ -313,17 +313,19 @@ function monitor_rect(monitor, columns, rows) {
 }
 
 function snap(window, rect) {
-    // Unmaximize
-    window.unmaximize(Meta.MaximizeFlags.HORIZONTAL);
-    window.unmaximize(Meta.MaximizeFlags.VERTICAL);
-    window.unmaximize(Meta.MaximizeFlags.HORIZONTAL | Meta.MaximizeFlags.VERTICAL);
+    // Unmaximize, if managed by mutter
+    if (!window.is_override_redirect()) {
+        window.unmaximize(Meta.MaximizeFlags.HORIZONTAL);
+        window.unmaximize(Meta.MaximizeFlags.VERTICAL);
+        window.unmaximize(Meta.MaximizeFlags.HORIZONTAL | Meta.MaximizeFlags.VERTICAL);
 
-    // Apply changes
-    window.move_resize_frame(
-        true,
-        rect.x,
-        rect.y,
-        rect.width,
-        rect.height
-    );
+        // Apply changes
+        window.move_resize_frame(
+            true,
+            rect.x,
+            rect.y,
+            rect.width,
+            rect.height
+        );
+    }
 }
