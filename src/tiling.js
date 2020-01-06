@@ -253,7 +253,10 @@ var Tiler = class Tiler {
     }
 
     accept() {
-        if (this.window) snap(this.window, this.overlay);
+        if (this.window) {
+            snap(this.window, this.overlay);
+        }
+
         this.exit();
     }
 

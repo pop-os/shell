@@ -59,6 +59,11 @@ function enable() {
     Main.uiGroup.add_actor(tiler.overlay);
     // Enable global keybindings
     Keybindings.enable(global_keybindings);
+
+    // Code to execute after the shell has finished initializing everything.
+    global.run_at_leisure(() => {
+        snap_windows();
+    });
 }
 
 function disable() {
@@ -69,4 +74,11 @@ function disable() {
     tiler.exit();
     // Disable global keybindings
     Keybindings.disable(global_keybindings);
+}
+
+// Snaps all windows to the window grid
+function snap_windows() {
+    tiler.snap_windows(
+        Meta.get_window_actors(global.display).map((win) => win.get_meta_window())
+    );
 }
