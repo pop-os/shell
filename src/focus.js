@@ -1,7 +1,7 @@
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 const { Gio, Gdk, Meta, Shell, St } = imports.gi;
-const { Geom } = Me.imports.lib;
+const { activate_window, Geom } = Me.imports.lib;
 const Main = imports.ui.main;
 
 function focus(windows) {
@@ -9,20 +9,7 @@ function focus(windows) {
     if (!focused) return;
     let workspace = global.workspace_manager.get_active_workspace();
     let sorted = windows(focused, global.display.get_tab_list(Meta.TabList.NORMAL, workspace))
-    if (sorted.length > 0) {
-        let win = sorted[0];
-        win.activate(global.get_current_time());
-
-        let rect = win.get_frame_rect();
-        let x = Geom.xcenter(rect);
-        let y = Geom.ycenter(rect);
-
-        let display = Gdk.DisplayManager.get().get_default_display();
-
-        display.get_default_seat()
-            .get_pointer()
-            .warp(display.get_default_screen(), x, y);
-    }
+    if (sorted.length > 0) activate_window(sorted[0]);
 }
 
 function left() {
