@@ -2,41 +2,14 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 const ExtensionUtils = imports.misc.extensionUtils;
 const Focus = Me.imports.focus;
-const Gio = imports.gi.Gio;
+const { Gio, Meta, St } = imports.gi;
 const { log, Keybindings } = Me.imports.lib;
-const Main = imports.ui.main;
-const Meta = imports.gi.Meta;
-const Shell = imports.gi.Shell;
-const St = imports.gi.St;
-const Tiling = Me.imports.tiling;
+const { _defaultCssStylesheet, uiGroup } = imports.ui.main;
+const { WindowSearch } = Me.imports.window_search;
+const { Tiler } = Me.imports.tiling;
 
-function window_app_name(win) {
-    let app = Shell.WindowTracker.get_default().get_window_app(win);
-    let name = null;
-    try {
-      name = app.get_name().replace(/&/g, "&amp;");
-    } catch (e) {
-      log("window_app_name: " + e);
-    }
-    return name;
-}
-
-function search() {
-    log("search");
-
-    let windows = global.display.get_tab_list(Meta.TabList.NORMAL, null);
-    windows.forEach(function (win) {
-        let name = window_app_name(win);
-        let title = "";
-        if (name) {
-            title += name + ": ";
-        }
-        title += win.get_title();
-        log("  " + title);
-    });
-}
-
-var tiler = new Tiling.Tiler();
+var window_search = new WindowSearch();
+var tiler = new Tiler();
 
 let global_keybindings = {
     "focus-left": () => Focus.left(),
@@ -45,7 +18,7 @@ let global_keybindings = {
     "focus-right": () => Focus.right(),
     "focus-monitor-left": () => Focus.monitor_left(),
     "focus-monitor-right": () => Focus.monitor_right(),
-    //"search": () => search(),
+    "search": () => window_search.open(),
     "tile-enter": () => tiler.enter(),
 };
 
@@ -55,9 +28,11 @@ function init() {
 
 function enable() {
     log("enable");
-    // Add tiling overlay
-    Main.uiGroup.add_actor(tiler.overlay);
-    // Enable global keybindings
+    
+    load_theme();
+
+    uiGroup.add_actor(tiler.overlay);
+
     Keybindings.enable(global_keybindings);
 
     // Code to execute after the shell has finished initializing everything.
@@ -68,11 +43,11 @@ function enable() {
 
 function disable() {
     log("disable");
-    // Remove tiling overlay
-    Main.uiGroup.remove_actor(tiler.overlay);
-    // Exit tiling mode if necessary
+
+    uiGroup.remove_actor(tiler.overlay);
+
     tiler.exit();
-    // Disable global keybindings
+
     Keybindings.disable(global_keybindings);
 }
 
@@ -83,4 +58,18 @@ function snap_windows() {
             .map((win) => win.get_meta_window())
             .filter((win) => !win.is_override_redirect())
     );
+}
+
+// Supplements the GNOME Shell theme with the extension's theme.
+function load_theme() {
+    try {
+        let theme = new St.Theme({
+            application_stylesheet: Gio.File.new_for_path(Me.path + "/stylesheet.css"),
+            theme_stylesheet: _defaultCssStylesheet,
+        });
+
+        St.ThemeContext.get_for_stage(global.stage).set_theme(theme);
+    } catch (e) {
+        log("stylesheet: " + e);
+    }
 }

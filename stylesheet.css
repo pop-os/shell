@@ -1,0 +1,29 @@
+.pop-shell-search {
+    background: #eee;
+    color: #333
+}
+
+.pop-shell-search-label {
+    margin-left: 2em
+}
+
+.pop-shell-search-list {
+    margin-top: 1em
+}
+
+.pop-shell-search-element {
+    border-bottom-width: .1em;
+    padding-left: 1em;
+    padding-top: .25em;
+    padding-bottom: .25em;
+}
+
+.pop-shell-separator {
+    background: #aaa;
+    padding-bottom: .1em;
+}
+
+.pop-shell-search-active {
+    background: #FFAD00;
+    color: #000
+}

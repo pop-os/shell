@@ -1,6 +1,7 @@
 const ExtensionUtils = imports.misc.extensionUtils;
 const Gio = imports.gi.Gio;
-class Settings {
+
+var Settings = class Settings {
     constructor() {
         const extension = ExtensionUtils.getCurrentExtension();
         const schema = extension.metadata["settings-schema"];

@@ -17,8 +17,12 @@ sources = src/extension.js \
 	src/geom.js \
 	src/keybindings.js \
 	src/lib.js \
+	src/search.js \
 	src/settings.js \
-	src/tiling.js
+	src/tiling.js \
+	src/window_app.js \
+	src/window_search.js \
+	stylesheet.css
 
 all: $(sources) metadata.json schemas
 	rm -rf _build
