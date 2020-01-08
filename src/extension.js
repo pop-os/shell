@@ -19,6 +19,10 @@ let global_keybindings = {
     "focus-monitor-left": () => Focus.monitor_left(),
     "focus-monitor-right": () => Focus.monitor_right(),
     "search": () => window_search.open(),
+    "swap-above": () => Focus.swap(Focus.window_up),
+    "swap-below": () => Focus.swap(Focus.window_down),
+    "swap-left": () => Focus.swap(Focus.window_left),
+    "swap-right": () => Focus.swap(Focus.window_right),
     "tile-enter": () => tiler.enter(),
 };
 

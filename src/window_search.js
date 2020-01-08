@@ -1,7 +1,7 @@
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 const { Gio, GObject, Meta, Shell } = imports.gi;
-const { activate_window } = Me.imports.lib;
+const { Window } = Me.imports.lib;
 const { Search } = Me.imports.search;
 const { uiGroup } = imports.ui.main;
 const { WindowApp } = Me.imports.window_app;
@@ -39,7 +39,7 @@ var WindowSearch = GObject.registerClass(
                     .filter((app) => null != app);
             };
 
-            let apply = (id) => activate_window(this.windows[id]);
+            let apply = (id) => Window.activate(this.windows[id]);
 
             super._init(search, apply);
         }

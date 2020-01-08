@@ -20,6 +20,7 @@ sources = src/extension.js \
 	src/search.js \
 	src/settings.js \
 	src/tiling.js \
+	src/window.js \
 	src/window_app.js \
 	src/window_search.js \
 	stylesheet.css
