@@ -13,6 +13,7 @@ $(info UUID is "$(UUID)")
 .PHONY: all clean install zip-file
 
 sources = src/extension.js \
+	src/autotile.js \
 	src/focus.js \
 	src/geom.js \
 	src/keybindings.js \
@@ -20,6 +21,7 @@ sources = src/extension.js \
 	src/search.js \
 	src/settings.js \
 	src/tiling.js \
+	src/window.js \
 	src/window_app.js \
 	src/window_search.js \
 	stylesheet.css
