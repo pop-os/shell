@@ -1,21 +1,19 @@
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
-const { log, round_increment, Keybindings } = Me.imports.lib;
+const { log, round_increment } = Me.imports.lib;
 const Main = imports.ui.main;
 const { Meta, St } = imports.gi;
 
 
 var Tiler = class Tiler {
-    constructor() {
-        this.gap = Keybindings.settings.gap();
-        this.half_gap = this.gap / 2;
+    constructor(ext) {
         this.columns = 16;
         this.rows = 16;
 
+        this.set_gap(ext.settings.gap());
+        this.ext = ext;
+
         this.window = null;
-        this.overlay = new St.BoxLayout({
-            style_class: "tile-preview"
-        });
 
         this.keybindings = {
             "tile-move-left": () => this.move_left(),
@@ -35,27 +33,15 @@ var Tiler = class Tiler {
         };
     }
 
-    monitors(rect) {
-        log("tile_monitors(" + rect.x + ", " + rect.y + ", " + rect.width + ", " + rect.height + ")");
-
-        let total_size = (a, b) => (a.width * a.height) - (b.width * b.height);
-
-        let workspace = global.workspace_manager.get_active_workspace();
-        return Main.layoutManager.monitors
-            .map((monitor, i) => workspace.get_work_area_for_monitor(i))
-            .filter((monitor) => {
-                return (rect.x + rect.width) > monitor.x &&
-                    (rect.y + rect.height) > monitor.y &&
-                    rect.x < (monitor.x + monitor.width) &&
-                    rect.y < (monitor.y + monitor.height);
-            })
-            .sort(total_size);
+    set_gap(gap) {
+        this.gap = gap;
+        this.half_gap = this.gap / 2;
     }
 
     rect() {
-        if (!this.overlay.visible) return null;
+        if (!this.ext.overlay.visible) return null;
 
-        let monitors = this.monitors(this.overlay);
+        let monitors = tile_monitors(this.ext.overlay);
         if (monitors.length == 0) return null;
 
         return monitor_rect(monitors[0], this.columns, this.rows);
@@ -90,7 +76,7 @@ var Tiler = class Tiler {
         }
 
         // Check that corrected rectangle fits on monitors
-        let monitors = this.monitors(changed);
+        let monitors = tile_monitors(changed);
 
         // Do not use change if there are no matching displays
         if (monitors.length == 0) return;
@@ -165,71 +151,71 @@ var Tiler = class Tiler {
     }
 
     move_left() {
-        this.change(this.overlay, this.rect(), -1, 0, 0, 0);
-        this.change(this.overlay, this.rect(), 0, 0, 0, 0);
+        this.change(this.ext.overlay, this.rect(), -1, 0, 0, 0);
+        this.change(this.ext.overlay, this.rect(), 0, 0, 0, 0);
     }
 
     move_down() {
-        this.change(this.overlay, this.rect(), 0, 1, 0, 0);
-        this.change(this.overlay, this.rect(), 0, 0, 0, 0);
+        this.change(this.ext.overlay, this.rect(), 0, 1, 0, 0);
+        this.change(this.ext.overlay, this.rect(), 0, 0, 0, 0);
     }
 
     move_up() {
-        this.change(this.overlay, this.rect(), 0, -1, 0, 0);
-        this.change(this.overlay, this.rect(), 0, 0, 0, 0);
+        this.change(this.ext.overlay, this.rect(), 0, -1, 0, 0);
+        this.change(this.ext.overlay, this.rect(), 0, 0, 0, 0);
     }
 
     move_right() {
-        this.change(this.overlay, this.rect(), 1, 0, 0, 0);
-        this.change(this.overlay, this.rect(), 0, 0, 0, 0);
+        this.change(this.ext.overlay, this.rect(), 1, 0, 0, 0);
+        this.change(this.ext.overlay, this.rect(), 0, 0, 0, 0);
     }
 
     resize_left() {
-        this.change(this.overlay, this.rect(), 0, 0, -1, 0);
-        this.change(this.overlay, this.rect(), 0, 0, 0, 0);
+        this.change(this.ext.overlay, this.rect(), 0, 0, -1, 0);
+        this.change(this.ext.overlay, this.rect(), 0, 0, 0, 0);
     }
 
     resize_down() {
-        this.change(this.overlay, this.rect(), 0, 0, 0, 1);
-        this.change(this.overlay, this.rect(), 0, 0, 0, 0);
+        this.change(this.ext.overlay, this.rect(), 0, 0, 0, 1);
+        this.change(this.ext.overlay, this.rect(), 0, 0, 0, 0);
     }
 
     resize_up() {
-        this.change(this.overlay, this.rect(), 0, 0, 0, -1);
-        this.change(this.overlay, this.rect(), 0, 0, 0, 0);
+        this.change(this.ext.overlay, this.rect(), 0, 0, 0, -1);
+        this.change(this.ext.overlay, this.rect(), 0, 0, 0, 0);
     }
 
     resize_right() {
-        this.change(this.overlay, this.rect(), 0, 0, 1, 0);
-        this.change(this.overlay, this.rect(), 0, 0, 0, 0);
+        this.change(this.ext.overlay, this.rect(), 0, 0, 1, 0);
+        this.change(this.ext.overlay, this.rect(), 0, 0, 0, 0);
     }
 
     swap_left() {
         let rect = this.rect();
         if (!rect) return;
-        this.change(this.overlay, this.rect(), -1, 0, 0, 0);
-        this.change(this.overlay, this.rect(), 0, 0, 0, 0);
+        this.change(this.ext.overlay, this.rect(), -1, 0, 0, 0);
+        this.change(this.ext.overlay, this.rect(), 0, 0, 0, 0);
     }
 
     swap_down() {
         let rect = this.rect();
         if (!rect) return;
-        this.change(this.overlay, this.rect(), 0, 1, 0, 0);
-        this.change(this.overlay, this.rect(), 0, 0, 0, 0);
+        this.change(this.ext.overlay, this.rect(), 0, 1, 0, 0);
+        this.change(this.ext.overlay, this.rect(), 0, 0, 0, 0);
     }
 
     swap_up() {
         let rect = this.rect();
         if (!rect) return;
-        this.change(this.overlay, this.rect(), 0, -1, 0, 0);
-        this.change(this.overlay, this.rect(), 0, 0, 0, 0);
+        this.change(this.ext.overlay, this.rect(), 0, -1, 0, 0);
+        this.change(this.ext.overlay, this.rect(), 0, 0, 0, 0);
     }
 
     swap_right() {
         let rect = this.rect();
         if (!rect) return;
-        this.change(this.overlay, this.rect(), 1, 0, 0, 0);
-        this.change(this.overlay, this.rect(), 0, 0, 0, 0);
+        this.change(this.ext.overlay, this.rect(), 1, 0, 0, 0);
+        this.change(this.ext.overlay, this.rect(), 0, 0, 0, 0);
     }
 
     enter() {
@@ -239,22 +225,22 @@ var Tiler = class Tiler {
 
             // Set overlay to match window
             let rect = this.window.get_frame_rect();
-            this.overlay.x = rect.x;
-            this.overlay.y = rect.y;
-            this.overlay.width = rect.width;
-            this.overlay.height = rect.height;
-            this.overlay.visible = true;
+            this.ext.overlay.x = rect.x;
+            this.ext.overlay.y = rect.y;
+            this.ext.overlay.width = rect.width;
+            this.ext.overlay.height = rect.height;
+            this.ext.overlay.visible = true;
 
             // Make sure overlay is valid
-            this.change(this.overlay, this.rect(), 0, 0, 0, 0);
+            this.change(this.ext.overlay, this.rect(), 0, 0, 0, 0);
 
-            Keybindings.enable(this.keybindings);
+            this.ext.keybindings_enable(this.keybindings);
         }
     }
 
     accept() {
         if (this.window) {
-            snap(this.window, this.overlay);
+            place_window(this.window, this.ext.overlay);
         }
 
         this.exit();
@@ -265,32 +251,32 @@ var Tiler = class Tiler {
             this.window = null;
 
             // Disable overlay
-            this.overlay.visible = false;
+            this.ext.overlay.visible = false;
 
             // Disable tiling keybindings
-            Keybindings.disable(this.keybindings);
+            this.ext.keybindings_disable(this.keybindings);
         }
     }
 
     snap_windows(windows) {
         windows.forEach((win, i) => {
-            let mon_geom = global.display.get_monitor_geometry(win.get_monitor());
+            let mon_geom = global.display.get_monitor_geometry(win.window.get_monitor());
             if (mon_geom) {
-                var rect = win.get_frame_rect();
+                var rect = win.window.get_frame_rect();
                 this.change(
                     rect,
                     monitor_rect(mon_geom, this.columns, this.rows),
                     0, 0, 0, 0
                 );
 
-                snap(win, rect);
+                place_window(win.window, rect);
             }
         });
     }
 };
 
 function monitor_rect(monitor, columns, rows) {
-    log("monitor_rect(" + monitor.x + ", " + monitor.y + ")");
+    log(`monitor_rect(${monitor.x},${monitor.y},${monitor.width},${monitor.height})`);
     let tile_width = monitor.width / columns;
     let tile_height = monitor.height / rows;
 
@@ -312,7 +298,24 @@ function monitor_rect(monitor, columns, rows) {
     };
 }
 
-function snap(window, rect) {
+function tile_monitors(rect) {
+    log(`tile monitors(${rect.x},${rect.y},${rect.width},${rect.height})`);
+
+    let total_size = (a, b) => (a.width * a.height) - (b.width * b.height);
+
+    let workspace = global.workspace_manager.get_active_workspace();
+    return Main.layoutManager.monitors
+        .map((monitor, i) => workspace.get_work_area_for_monitor(i))
+        .filter((monitor) => {
+            return (rect.x + rect.width) > monitor.x &&
+                (rect.y + rect.height) > monitor.y &&
+                rect.x < (monitor.x + monitor.width) &&
+                rect.y < (monitor.y + monitor.height);
+        })
+        .sort(total_size);
+}
+
+function place_window(window, rect) {
     window.unmaximize(Meta.MaximizeFlags.HORIZONTAL);
     window.unmaximize(Meta.MaximizeFlags.VERTICAL);
     window.unmaximize(Meta.MaximizeFlags.HORIZONTAL | Meta.MaximizeFlags.VERTICAL);

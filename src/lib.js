@@ -3,7 +3,6 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 const Main = imports.ui.main;
 
 var Geom = Me.imports.geom;
-var Keybindings = Me.imports.keybindings;
 var Window = Me.imports.window;
 
 function current_monitor() {

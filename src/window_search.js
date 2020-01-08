@@ -4,7 +4,7 @@ const { Gio, GObject, Meta, Shell } = imports.gi;
 const { Window } = Me.imports.lib;
 const { Search } = Me.imports.search;
 const { uiGroup } = imports.ui.main;
-const { WindowApp } = Me.imports.window_app;
+const { ShellWindow } = Window;
 
 var WindowSearch = GObject.registerClass(
     class WindowSearch extends Search {
@@ -17,7 +17,7 @@ var WindowSearch = GObject.registerClass(
                 return global.display.get_tab_list(Meta.TabList.NORMAL, null)
                     .slice(0, 5)
                     .map((win) => {
-                        let app = new WindowApp(win);
+                        let app = new ShellWindow(win);
 
                         var name = app.name();
                         let title = win.get_title();

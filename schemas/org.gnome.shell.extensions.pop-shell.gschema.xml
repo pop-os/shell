@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist gettext-domain="pop-shell">
     <schema id="org.gnome.shell.extensions.pop-shell" path="/org/gnome/shell/extensions/pop-shell/">
-        <key type="u" name="gap">
+        <key type="u" name="gap-inner">
             <default>16</default>
             <summary>Gap between tiled windows</summary>
         </key>

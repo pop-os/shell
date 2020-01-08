@@ -15,13 +15,11 @@ $(info UUID is "$(UUID)")
 sources = src/extension.js \
 	src/focus.js \
 	src/geom.js \
-	src/keybindings.js \
 	src/lib.js \
 	src/search.js \
 	src/settings.js \
 	src/tiling.js \
 	src/window.js \
-	src/window_app.js \
 	src/window_search.js \
 	stylesheet.css
 
