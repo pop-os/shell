@@ -23,6 +23,10 @@ function activate_window(win) {
         .warp(display.get_default_screen(), x, y);
 }
 
+function current_monitor() {
+    return global.display.get_monitor_geometry(global.display.get_current_monitor());
+}
+
 function log(text) {
     global.log("pop-shell: " + text);
 }

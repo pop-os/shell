@@ -12,10 +12,9 @@
 }
 
 .pop-shell-search-element {
-    border-bottom-width: .1em;
     padding-left: 1em;
-    padding-top: .25em;
-    padding-bottom: .25em;
+    padding-top: .1em;
+    padding-bottom: .1em;
 }
 
 .pop-shell-separator {

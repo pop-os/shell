@@ -1,5 +1,6 @@
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
+const { current_monitor } = Me.imports.lib;
 const { Clutter, GObject, Pango, St } = imports.gi;
 const { ModalDialog } = imports.ui.modalDialog;
 const ShellEntry = imports.ui.shellEntry;
@@ -15,6 +16,7 @@ var Search = GObject.registerClass(
                 shouldFadeOut: false,
             });
 
+            this.search = search;
             this.active_id = 0;
             this.widgets = [];
 
@@ -41,9 +43,7 @@ var Search = GObject.registerClass(
                 this.clear();
 
                 let text = entry.get_text();
-                if (text.length != 0) {
-                    this.update_search_list(search(text.toLowerCase()));
-                }
+                this.update_search_list(search(text.toLowerCase()));
             });
 
             this.text.connect('key-press-event', (_, event) => {
@@ -100,7 +100,9 @@ var Search = GObject.registerClass(
 
         show() {
             this.show_all();
+            this.clear();
             this.entry.grab_key_focus();
+            this.update_search_list(this.search(''));
         }
 
         select() {
@@ -128,7 +130,7 @@ var Search = GObject.registerClass(
 
                 container.add(icon, { y_fill: false, y_align: St.Align.MIDDLE });
                 container.add(label, { y_fill: false, y_align: St.Align.MIDDLE });
-                
+
                 if (this.widgets.length != 0) {
                     this.list.add(new St.BoxLayout({styleClass: 'pop-shell-separator', x_expand: true }));
                 }
@@ -144,7 +146,3 @@ var Search = GObject.registerClass(
         }
     }
 );
-
-function current_monitor() {
-    return global.display.get_monitor_geometry(global.display.get_current_monitor());
-}
