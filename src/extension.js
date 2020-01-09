@@ -3,6 +3,7 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 const Mainloop = imports.mainloop;
 const Focus = Me.imports.focus;
 const { Gio, Meta, Shell, St } = imports.gi;
+const { bind } = imports.lang;
 const { log } = Me.imports.lib;
 const { _defaultCssStylesheet, uiGroup, wm } = imports.ui.main;
 const { ShellWindow } = Me.imports.window;
@@ -18,23 +19,31 @@ var Ext = class Ext {
             style_class: "tile-preview"
         });
 
-        this.window_search = new WindowSearch();
+        this.window_search = new WindowSearch(this);
         this.tiler = new Tiler(this);
 
+        this.windows = {};
+
         this.global_keybindings = {
-            "focus-left": () => Focus.left(),
-            "focus-down": () => Focus.down(),
-            "focus-up": () => Focus.up(),
-            "focus-right": () => Focus.right(),
-            "focus-monitor-left": () => Focus.monitor_left(),
-            "focus-monitor-right": () => Focus.monitor_right(),
+            "focus-left": () => this.focus_shift_left(),
+            "focus-down": () => this.focus_shift_down(),
+            "focus-up": () => this.focus_shift_up(),
+            "focus-right": () => this.focus_shift_right(),
+            "focus-monitor-left": () => this.focus_shift_monitor_left(),
+            "focus-monitor-right": () => this.focus_shift_monitor_right(),
             "search": () => this.window_search.open(),
-            "swap-above": () => Focus.swap(Focus.window_up),
-            "swap-below": () => Focus.swap(Focus.window_down),
-            "swap-left": () => Focus.swap(Focus.window_left),
-            "swap-right": () => Focus.swap(Focus.window_right),
+            "swap-above": () => this.window_swap_above(),
+            "swap-below": () => this.window_swap_below(),
+            "swap-left": () => this.window_swap_left(),
+            "swap-right": () => this.window_swap_right(),
             "tile-enter": () => this.tiler.enter(),
         };
+
+        global.display.connect('window_created', this.on_window_create);
+    }
+
+    connect_window(win) {
+
     }
 
     keybindings_enable(keybindings) {
@@ -55,8 +64,76 @@ var Ext = class Ext {
         }
     }
 
+    focus_shift(direction) {
+        let workspace = global.workspace_manager.get_active_workspace();
+        let window_list = this.tab_list(Meta.TabList.NORMAL, workspace);
+        Focus.focus(direction, (win) => win.activate(), this.focus_window(), window_list);
+    }
+
+    focus_shift_down() {
+        this.focus_shift(Focus.window_down);
+    }
+
+    focus_shift_left() {
+        this.focus_shift(Focus.window_left);
+    }
+
+    focus_shift_right() {
+        this.focus_shift(Focus.window_right);
+    }
+
+    focus_shift_up() {
+        this.focus_shift(Focus.window_up);
+    }
+
+    focus_shift_monitor_left() {
+        this.focus_shift(Focus.window_monitor_left);
+    }
+
+    focus_shift_monitor_right() {
+        this.focus_shift(Focus.window_monitor_right);
+    }
+
+    focus_window() {
+        return this.get_window(global.display.get_focus_window());
+    }
+
+    get_window(meta) {
+        if (!meta) {
+            return null;
+        }
+
+        let id = meta.get_stable_sequence();
+
+        var win = this.windows[id];
+        if (typeof (win) == "undefined") {
+            win = this.windows[id] = new ShellWindow(meta, this);
+        }
+
+        return win;
+    }
+
     load_settings() {
         this.tiler.set_gap(settings.gap());
+    }
+
+    on_window_create(display, window, second_try) {
+        let actor = window.get_compositor_private();
+        if (!actor) {
+            if (!second_try) {
+                Mainloop.idle_add(bind(this, () => {
+                    this.on_window_create(display, window, true);
+                    return false;
+                }));
+            }
+            return;
+        }
+
+
+        var win = this.get_window(window);
+        if (win && win.can_be_tiled()) {
+            this.connect_window(win, actor);
+        }
     }
 
     // Snaps all windows to the window grid
@@ -66,6 +143,33 @@ var Ext = class Ext {
                 .map((win) => new ShellWindow(win.get_meta_window()))
                 .filter((win) => win.is_tilable())
         );
+    }
+
+    tab_list(tablist, workspace) {
+        return global.display.get_tab_list(tablist, workspace).map((win) => this.get_window(win));
+    }
+
+    window_swap(direction) {
+        let workspace = global.workspace_manager.get_active_workspace();
+        let window_list = this.tab_list(Meta.TabList.NORMAL, workspace);
+        let focused = this.focus_window();
+        Focus.focus(direction, (win) => focused.swap(win), focused, window_list);
+    }
+
+    window_swap_above() {
+        this.window_swap(Focus.window_up);
+    }
+
+    window_swap_below() {
+        this.window_swap(Focus.window_down);
+    }
+
+    window_swap_left() {
+        this.window_swap(Focus.window_left);
+    }
+
+    window_swap_right() {
+        this.window_swap(Focus.window_right);
     }
 }
 

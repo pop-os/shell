@@ -220,11 +220,11 @@ var Tiler = class Tiler {
 
     enter() {
         if (!this.window) {
-            this.window = global.display.focus_window;
+            this.window = this.ext.focus_window();
             if (!this.window) return;
 
             // Set overlay to match window
-            let rect = this.window.get_frame_rect();
+            let rect = this.window.meta.get_frame_rect();
             this.ext.overlay.x = rect.x;
             this.ext.overlay.y = rect.y;
             this.ext.overlay.width = rect.width;
@@ -240,7 +240,7 @@ var Tiler = class Tiler {
 
     accept() {
         if (this.window) {
-            place_window(this.window, this.ext.overlay);
+            this.window.move(this.ext.overlay);
         }
 
         this.exit();
@@ -260,16 +260,16 @@ var Tiler = class Tiler {
 
     snap_windows(windows) {
         windows.forEach((win, i) => {
-            let mon_geom = global.display.get_monitor_geometry(win.window.get_monitor());
+            let mon_geom = global.display.get_monitor_geometry(win.meta.get_monitor());
             if (mon_geom) {
-                var rect = win.window.get_frame_rect();
+                var rect = win.meta.get_frame_rect();
                 this.change(
                     rect,
                     monitor_rect(mon_geom, this.columns, this.rows),
                     0, 0, 0, 0
                 );
 
-                place_window(win.window, rect);
+                win.move(rect);
             }
         });
     }
@@ -313,18 +313,4 @@ function tile_monitors(rect) {
                 rect.y < (monitor.y + monitor.height);
         })
         .sort(total_size);
-}
-
-function place_window(window, rect) {
-    window.unmaximize(Meta.MaximizeFlags.HORIZONTAL);
-    window.unmaximize(Meta.MaximizeFlags.VERTICAL);
-    window.unmaximize(Meta.MaximizeFlags.HORIZONTAL | Meta.MaximizeFlags.VERTICAL);
-
-    window.move_resize_frame(
-        true,
-        rect.x,
-        rect.y,
-        rect.width,
-        rect.height
-    );
 }

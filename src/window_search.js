@@ -8,19 +8,17 @@ const { ShellWindow } = Window;
 
 var WindowSearch = GObject.registerClass(
     class WindowSearch extends Search {
-        _init() {
+        _init(ext) {
             this.windows = [];
 
             let search = (pattern) => {
                 this.windows = [];
 
-                return global.display.get_tab_list(Meta.TabList.NORMAL, null)
+                return ext.tab_list(Meta.TabList.NORMAL, null)
                     .slice(0, 5)
                     .map((win) => {
-                        let app = new ShellWindow(win);
-
-                        var name = app.name();
-                        let title = win.get_title();
+                        var name = win.name();
+                        let title = win.meta.get_title();
 
                         if (name != title) {
                             name += ": " + title;
@@ -34,12 +32,12 @@ var WindowSearch = GObject.registerClass(
 
                         this.windows.push(win);
 
-                        return [name, app.icon(32)];
+                        return [name, win.icon(32)];
                     })
-                    .filter((app) => null != app);
+                    .filter((win) => null != win);
             };
 
-            let apply = (id) => Window.activate(this.windows[id]);
+            let apply = (id) => this.windows[id].activate();
 
             super._init(search, apply);
         }

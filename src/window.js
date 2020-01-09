@@ -2,7 +2,6 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 const { Gdk, Meta, Shell, St } = imports.gi;
 
-const { place_window } = Me.imports.tiling;
 
 /// Activates a window, and moves the mouse point to the center of it.
 function activate(win) {
@@ -24,15 +23,6 @@ function place_pointer_on(win) {
         .warp(display.get_default_screen(), x, y);
 }
 
-function swap(a, b) {
-    let ar = a.get_frame_rect();
-    let br = b.get_frame_rect();
-
-    place_window(a, br);
-    place_window(b, ar);
-    place_pointer_on(a);
-}
-
 var ShellWindow = class ShellWindow {
     constructor(window) {
         this._icon = null;
@@ -40,39 +30,51 @@ var ShellWindow = class ShellWindow {
         this._window_tracker = Shell.WindowTracker.get_default();
         this._window_app = null;
 
-        this.window = window;
+        this.meta = window;
     }
     
     activate() {
-        activate(this.window);
+        activate(this.meta);
     }
 
     icon(size) {
-        if (!this._icon) {
-            this._icon = this.window_app().create_icon_texture(size);
+        let icon = this.window_app().create_icon_texture(size);
 
-            if (!this._icon) {
-                this._icon = new St.Icon({
-                    icon_name: 'applications-other',
-                    icon_type: St.IconType.FULLCOLOR,
-                    icon_size: size
-                });
-            }
+        if (!icon) {
+            icon = new St.Icon({
+                icon_name: 'applications-other',
+                icon_type: St.IconType.FULLCOLOR,
+                icon_size: size
+            });
         }
 
-        return this._icon;
+        return icon;
     }
 
     is_tilable() {
-        if (this.window.is_skip_taskbar()) {
+        if (this.meta.is_skip_taskbar()) {
             return;
         }
 
-        if (blacklisted(this.window.get_wm_class())) {
+        if (blacklisted(this.meta.get_wm_class())) {
             return
         }
 
-        return this.window['window-type'] == Meta.WindowType.NORMAL;
+        return this.meta['window-type'] == Meta.WindowType.NORMAL;
+    }
+
+    move(rect) {
+        this.meta.unmaximize(Meta.MaximizeFlags.HORIZONTAL);
+        this.meta.unmaximize(Meta.MaximizeFlags.VERTICAL);
+        this.meta.unmaximize(Meta.MaximizeFlags.HORIZONTAL | Meta.MaximizeFlags.VERTICAL);
+
+        this.meta.move_resize_frame(
+            true,
+            rect.x,
+            rect.y,
+            rect.width,
+            rect.height
+        );
     }
 
     name() {
@@ -89,12 +91,17 @@ var ShellWindow = class ShellWindow {
     }
 
     swap(other) {
-        swap(this.window, other.window);
+        let ar = this.meta.get_frame_rect();
+        let br = other.meta.get_frame_rect();
+
+        this.move(br);
+        other.move(ar);
+        place_pointer_on(this.meta);
     }
 
     window_app() {
         if (!this._window_app) {
-            this._window_tracker.get_window_app(window)
+            this._window_app = this._window_tracker.get_window_app(this.meta)
         }
 
         return this._window_app;
