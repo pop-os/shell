@@ -2,3 +2,9 @@
 *.swp
 _build
 schemas/gschemas.compiled
+debian/*
+!debian/source
+!debian/changelog
+!debian/control
+!debian/copyright
+!debian/rules
