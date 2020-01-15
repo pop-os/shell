@@ -8,6 +8,7 @@ const { log } = Me.imports.lib;
 const { _defaultCssStylesheet, uiGroup, wm } = imports.ui.main;
 const { ShellWindow } = Me.imports.window;
 const { WindowSearch } = Me.imports.window_search;
+const Tags = Me.imports.tags;
 const { Tiler } = Me.imports.tiling;
 const { ExtensionSettings, Settings } = Me.imports.settings;
 const { Storage, World } = Me.imports.ecs;
@@ -48,6 +49,9 @@ var Ext = class Ext {
     connect_window(win, actor) {
         win.meta.connect('size-changed', () => {
             log(`window size changed on: ${win.name()}`);
+            if (this.world.contains_tag(win.entity, Tags.Tiled)) {
+                log(`tiled window size changed: ${win.name()}`);
+            }
         });
     }
 
