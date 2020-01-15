@@ -13,6 +13,7 @@ $(info UUID is "$(UUID)")
 .PHONY: all clean install zip-file
 
 sources = src/extension.js \
+	src/ecs.js \
 	src/focus.js \
 	src/geom.js \
 	src/lib.js \
