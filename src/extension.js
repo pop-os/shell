@@ -42,11 +42,13 @@ var Ext = class Ext {
             "tile-enter": () => this.tiler.enter(),
         };
 
-        global.display.connect('window_created', this.on_window_create);
+        global.display.connect('window_created', (display, win) => this.on_window_create(display, win));
     }
 
-    connect_window(win) {
-
+    connect_window(win, actor) {
+        win.meta.connect('size-changed', () => {
+            log(`window size changed on: ${win.name()}`);
+        });
     }
 
     keybindings_enable(keybindings) {
@@ -144,7 +146,7 @@ var Ext = class Ext {
         }
 
         let win = this.get_window(window);
-        if (win && win.can_be_tiled()) {
+        if (win && win.is_tilable()) {
             this.connect_window(win, actor);
         }
     }
@@ -153,7 +155,7 @@ var Ext = class Ext {
     snap_windows() {
         this.tiler.snap_windows(
             Meta.get_window_actors(global.display)
-                .map((win) => new ShellWindow(win.get_meta_window()))
+                .map((win) => this.get_window(win.get_meta_window()))
                 .filter((win) => win.is_tilable())
         );
     }

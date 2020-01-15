@@ -24,13 +24,14 @@ function place_pointer_on(win) {
 }
 
 var ShellWindow = class ShellWindow {
-    constructor(window) {
+    constructor(entity, window) {
         this._icon = null;
         this._name = null;
         this._window_tracker = Shell.WindowTracker.get_default();
         this._window_app = null;
 
         this.managed = false;
+        this.entity = entity;
         this.meta = window;
     }
     
