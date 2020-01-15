@@ -3,7 +3,7 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 const { log, round_increment } = Me.imports.lib;
 const Main = imports.ui.main;
 const { Meta, St } = imports.gi;
-
+const Tags = Me.imports.tags;
 
 var Tiler = class Tiler {
     constructor(ext) {
@@ -241,6 +241,7 @@ var Tiler = class Tiler {
     accept() {
         if (this.window) {
             this.window.move(this.ext.overlay);
+            this.ext.world.add_tag(this.window.entity, Tags.Tiled);
         }
 
         this.exit();

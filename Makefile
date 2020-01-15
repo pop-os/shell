@@ -19,6 +19,7 @@ sources = src/extension.js \
 	src/lib.js \
 	src/search.js \
 	src/settings.js \
+	src/tags.js \
 	src/tiling.js \
 	src/window.js \
 	src/window_search.js \
