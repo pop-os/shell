@@ -20,6 +20,8 @@ var WindowSearch = GObject.registerClass(
                 this.active.splice(0);
 
                 let window_list = ext.tab_list(Meta.TabList.NORMAL, null);
+                window_list.sort((a, b) => a.name() > b.name());
+
                 for (const win of window_list) {
                     let name = win.name();
                     let title = win.meta.get_title();
@@ -40,6 +42,8 @@ var WindowSearch = GObject.registerClass(
                         break
                     }
                 }
+
+                
 
                 return this.active;
             };
