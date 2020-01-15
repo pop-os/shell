@@ -262,7 +262,7 @@ var Tiler = class Tiler {
         windows.forEach((win, i) => {
             let mon_geom = global.display.get_monitor_geometry(win.meta.get_monitor());
             if (mon_geom) {
-                var rect = win.meta.get_frame_rect();
+                let rect = win.meta.get_frame_rect();
                 this.change(
                     rect,
                     monitor_rect(mon_geom, this.columns, this.rows),

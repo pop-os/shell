@@ -10,6 +10,7 @@ const { ShellWindow } = Me.imports.window;
 const { WindowSearch } = Me.imports.window_search;
 const { Tiler } = Me.imports.tiling;
 const { ExtensionSettings, Settings } = Me.imports.settings;
+const { Storage, World } = Me.imports.ecs;
 
 var Ext = class Ext {
     constructor() {
@@ -22,7 +23,9 @@ var Ext = class Ext {
         this.window_search = new WindowSearch(this);
         this.tiler = new Tiler(this);
 
-        this.windows = {};
+        this.world = new World();
+        this.world.ids = new Storage();
+        this.world.windows = new Storage();
 
         this.global_keybindings = {
             "focus-left": () => this.focus_shift_left(),
@@ -47,7 +50,7 @@ var Ext = class Ext {
     }
 
     keybindings_enable(keybindings) {
-        for (var name in keybindings) {
+        for (let name in keybindings) {
             wm.addKeybinding(
                 name,
                 this.settings.inner,
@@ -59,7 +62,7 @@ var Ext = class Ext {
     }
 
     keybindings_disable(keybindings) {
-        for (var name in keybindings) {
+        for (let name in keybindings) {
             wm.removeKeybinding(name);
         }
     }
@@ -98,19 +101,30 @@ var Ext = class Ext {
         return this.get_window(global.display.get_focus_window());
     }
 
+    /// Fetches the window component from the entity associated with the metacity window metadata.
     get_window(meta) {
-        if (!meta) {
-            return null;
-        }
+        // TODO: Deprecate this
+        return this.world.windows.get(this.window(meta));
+    }
+
+    /// Fetches the window entity which is associated with the metacity window metadata.
+    window(meta) {
+        if (!meta) return null;
 
         let id = meta.get_stable_sequence();
 
-        var win = this.windows[id];
-        if (typeof (win) == "undefined") {
-            win = this.windows[id] = new ShellWindow(meta, this);
+        // Locate the window entity with the matching ID
+        let entity = this.world.ids.find(id)[0];
+
+        // If not found, create a new entity with a ShellWindow component.
+        if (!entity) {
+            entity = this.world.create_entity();
+            let win = new ShellWindow(entity, meta);
+            this.world.windows.insert(entity, win);
+            this.world.ids.insert(entity, id);
         }
 
-        return win;
+        return entity;
     }
 
     load_settings() {
@@ -129,8 +143,7 @@ var Ext = class Ext {
             return;
         }
 
-
-        var win = this.get_window(window);
+        let win = this.get_window(window);
         if (win && win.can_be_tiled()) {
             this.connect_window(win, actor);
         }

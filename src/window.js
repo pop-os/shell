@@ -30,6 +30,7 @@ var ShellWindow = class ShellWindow {
         this._window_tracker = Shell.WindowTracker.get_default();
         this._window_app = null;
 
+        this.managed = false;
         this.meta = window;
     }
     

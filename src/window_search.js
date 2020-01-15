@@ -17,7 +17,7 @@ var WindowSearch = GObject.registerClass(
                 return ext.tab_list(Meta.TabList.NORMAL, null)
                     .slice(0, 5)
                     .map((win) => {
-                        var name = win.name();
+                        let name = win.name();
                         let title = win.meta.get_title();
 
                         if (name != title) {
