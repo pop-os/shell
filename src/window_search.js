@@ -6,35 +6,42 @@ const { Search } = Me.imports.search;
 const { uiGroup } = imports.ui.main;
 const { ShellWindow } = Window;
 
+const LIST_MAX = 5;
+const ICON_SIZE = 32;
+
 var WindowSearch = GObject.registerClass(
     class WindowSearch extends Search {
         _init(ext) {
             this.windows = [];
+            this.active = [];
 
             let search = (pattern) => {
-                this.windows = [];
+                this.windows.splice(0);
+                this.active.splice(0);
 
-                return ext.tab_list(Meta.TabList.NORMAL, null)
-                    .slice(0, 5)
-                    .map((win) => {
-                        let name = win.name();
-                        let title = win.meta.get_title();
+                let window_list = ext.tab_list(Meta.TabList.NORMAL, null);
+                for (const win of window_list) {
+                    let name = win.name();
+                    let title = win.meta.get_title();
 
-                        if (name != title) {
-                            name += ": " + title;
-                        }
+                    if (name != title) {
+                        name += ": " + title;
+                    }
 
-                        name = name.toLowerCase();
+                    name = name.toLowerCase();
 
-                        if (!name.includes(pattern)) {
-                            return null;
-                        }
+                    if (!name.includes(pattern)) {
+                        continue
+                    }
 
-                        this.windows.push(win);
+                    this.windows.push(win);
+                    this.active.push([name, win.icon(ICON_SIZE)]);
+                    if (this.active.length == LIST_MAX) {
+                        break
+                    }
+                }
 
-                        return [name, win.icon(32)];
-                    })
-                    .filter((win) => null != win);
+                return this.active;
             };
 
             let apply = (id) => this.windows[id].activate();
