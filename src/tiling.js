@@ -242,7 +242,7 @@ var Tiler = class Tiler {
     accept() {
         if (this.window) {
             this.window.move(this.ext.overlay);
-            this.ext.world.add_tag(this.window.entity, Tags.Tiled);
+            this.ext.add_tag(this.window.entity, Tags.Tiled);
         }
 
         this.exit();

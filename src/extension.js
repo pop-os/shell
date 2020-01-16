@@ -16,8 +16,9 @@ const { Storage, World } = Me.imports.ecs;
 const WINDOW_CHANGED_POSITION = 0;
 const WINDOW_CHANGED_SIZE = 1;
 
-var Ext = class Ext {
+var Ext = class Ext extends World {
     constructor() {
+        super();
         this.settings = new ExtensionSettings();
 
         this.overlay = new St.BoxLayout({
@@ -27,9 +28,8 @@ var Ext = class Ext {
         this.window_search = new WindowSearch(this);
         this.tiler = new Tiler(this);
 
-        this.world = new World();
-        this.world.ids = new Storage();
-        this.world.windows = new Storage();
+        this.ids = new Storage();
+        this.windows = new Storage();
 
         this.global_keybindings = {
             "focus-left": () => this.focus_shift_left(),
@@ -111,7 +111,7 @@ var Ext = class Ext {
     /// Fetches the window component from the entity associated with the metacity window metadata.
     get_window(meta) {
         // TODO: Deprecate this
-        return this.world.windows.get(this.window(meta));
+        return this.windows.get(this.window(meta));
     }
 
     /// Fetches the window entity which is associated with the metacity window metadata.
@@ -121,14 +121,14 @@ var Ext = class Ext {
         let id = meta.get_stable_sequence();
 
         // Locate the window entity with the matching ID
-        let entity = this.world.ids.find(id)[0];
+        let entity = this.ids.find(id)[0];
 
         // If not found, create a new entity with a ShellWindow component.
         if (!entity) {
-            entity = this.world.create_entity();
+            entity = this.create_entity();
             let win = new ShellWindow(entity, meta);
-            this.world.windows.insert(entity, win);
-            this.world.ids.insert(entity, id);
+            this.windows.insert(entity, win);
+            this.ids.insert(entity, id);
             log(`added window (${win.entity}): ${win.name()}`);
         }
 
@@ -140,11 +140,11 @@ var Ext = class Ext {
     }
 
     tiled_windows() {
-        return this.world.entities.filter((entity) => this.world.contains_tag(entity, Tags.Tiled));
+        return this.entities.filter((entity) => this.contains_tag(entity, Tags.Tiled));
     }
 
     on_window_changed(win, event) {
-        if (!this.world.contains_tag(win.entity, Tags.Tiled)) {
+        if (!this.contains_tag(win.entity, Tags.Tiled)) {
             return;
         }
 
@@ -167,7 +167,7 @@ var Ext = class Ext {
         if (win) {
             win.meta.get_compositor_private().connect('destroy', () => {
                 log(`destroying window (${win.entity}): ${win.name()}`);
-                this.world.delete_entity(win.entity);
+                this.delete_entity(win.entity);
             });
 
             if (win.is_tilable()) {
