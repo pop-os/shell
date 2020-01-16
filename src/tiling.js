@@ -235,6 +235,7 @@ var Tiler = class Tiler {
             // Make sure overlay is valid
             this.change(this.ext.overlay, this.rect(), 0, 0, 0, 0);
 
+            this.ext.keybindings_disable(this.ext.window_swap_keybindings);
             this.ext.keybindings_enable(this.keybindings);
         }
     }
@@ -257,6 +258,7 @@ var Tiler = class Tiler {
 
             // Disable tiling keybindings
             this.ext.keybindings_disable(this.keybindings);
+            this.ext.keybindings_enable(this.ext.window_swap_keybindings);
         }
     }
 

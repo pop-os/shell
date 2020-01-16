@@ -52,11 +52,14 @@ var Ext = class Ext extends World {
             "focus-monitor-left": () => this.focus_switcher.monitor_left(this.active_window_list()),
             "focus-monitor-right": () => this.focus_switcher.monitor_right(this.active_window_list()),
             "search": () => this.window_search.open(),
+            "tile-enter": () => this.tiler.enter(),
+        };
+
+        this.window_swap_keybindings = {
             "swap-above": () => this.window_swap_above(),
             "swap-below": () => this.window_swap_below(),
             "swap-left": () => this.window_swap_left(),
             "swap-right": () => this.window_swap_right(),
-            "tile-enter": () => this.tiler.enter(),
         };
 
         // Signals
@@ -217,6 +220,7 @@ function enable() {
     uiGroup.add_actor(ext.overlay);
 
     ext.keybindings_enable(ext.global_keybindings);
+    ext.keybindings_enable(ext.window_swap_keybindings);
 
     // Code to execute after the shell has finished initializing everything.
     global.run_at_leisure(() => {
@@ -232,6 +236,7 @@ function disable() {
     ext.tiler.exit();
 
     ext.keybindings_disable(ext.global_keybindings);
+    ext.keybindings_disable(ext.window_swap_keybindings);
 }
 
 // Supplements the GNOME Shell theme with the extension's theme.
