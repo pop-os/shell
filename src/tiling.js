@@ -85,7 +85,8 @@ var Tiler = class Tiler {
         let min_y = null;
         let max_x = null;
         let max_y = null;
-        monitors.forEach((monitor) => {
+
+        for (const monitor of monitors) {
             if (min_x === null || monitor.x < min_x) {
                 min_x = monitor.x;
             }
@@ -98,7 +99,7 @@ var Tiler = class Tiler {
             if (max_y === null || (monitor.y + monitor.height) < max_y) {
                 max_y = monitor.y + monitor.height;
             }
-        });
+        }
 
         // Do not use change if maxima cannot be found
         if (min_x === null || min_y === null || max_x === null || max_y === null) {
@@ -260,7 +261,7 @@ var Tiler = class Tiler {
     }
 
     snap_windows(windows) {
-        windows.forEach((win, i) => {
+        for (const win of windows) {
             let mon_geom = global.display.get_monitor_geometry(win.meta.get_monitor());
             if (mon_geom) {
                 let rect = win.meta.get_frame_rect();
@@ -272,7 +273,7 @@ var Tiler = class Tiler {
 
                 win.move(rect);
             }
-        });
+        }
     }
 };
 

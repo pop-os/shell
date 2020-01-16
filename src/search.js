@@ -114,7 +114,7 @@ var Search = GObject.registerClass(
         }
 
         update_search_list(list) {
-            list.forEach((element) => {
+            for (const element of list) {
                 const [title, icon] = element;
 
                 let label = new St.Label({
@@ -132,12 +132,12 @@ var Search = GObject.registerClass(
                 container.add(label, { y_fill: false, y_align: St.Align.MIDDLE });
 
                 if (this.widgets.length != 0) {
-                    this.list.add(new St.BoxLayout({styleClass: 'pop-shell-separator', x_expand: true }));
+                    this.list.add(new St.BoxLayout({ styleClass: 'pop-shell-separator', x_expand: true }));
                 }
 
                 this.widgets.push(container);
                 this.list.add(container);
-            });
+            }
 
             this.list.show();
             if (this.widgets.length != 0) {
