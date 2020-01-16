@@ -19,25 +19,38 @@ const WINDOW_CHANGED_SIZE = 1;
 var Ext = class Ext extends World {
     constructor() {
         super();
+
+        // Misc
+
         this.settings = new ExtensionSettings();
 
         this.overlay = new St.BoxLayout({
             style_class: "tile-preview"
         });
 
-        this.window_search = new WindowSearch(this);
-        this.tiler = new Tiler(this);
+        // Storages
 
         this.ids = new Storage();
         this.windows = new Storage();
 
+        // Dialogs
+
+        this.window_search = new WindowSearch(this);
+
+        // Systems
+
+        this.focus_switcher = new Focus.FocusSwitcher(this);
+        this.tiler = new Tiler(this);
+
+        // Keybindings
+
         this.global_keybindings = {
-            "focus-left": () => this.focus_shift_left(),
-            "focus-down": () => this.focus_shift_down(),
-            "focus-up": () => this.focus_shift_up(),
-            "focus-right": () => this.focus_shift_right(),
-            "focus-monitor-left": () => this.focus_shift_monitor_left(),
-            "focus-monitor-right": () => this.focus_shift_monitor_right(),
+            "focus-left": () => this.focus_switcher.left(),
+            "focus-down": () => this.focus_switcher.down(this.active_window_list()),
+            "focus-up": () => this.focus_switcher.up(this.active_window_list()),
+            "focus-right": () => this.focus_switcher.right(this.active_window_list()),
+            "focus-monitor-left": () => this.focus_switcher.monitor_left(this.active_window_list()),
+            "focus-monitor-right": () => this.focus_switcher.monitor_right(this.active_window_list()),
             "search": () => this.window_search.open(),
             "swap-above": () => this.window_swap_above(),
             "swap-below": () => this.window_swap_below(),
@@ -45,6 +58,8 @@ var Ext = class Ext extends World {
             "swap-right": () => this.window_swap_right(),
             "tile-enter": () => this.tiler.enter(),
         };
+
+        // Signals
 
         global.display.connect('window_created', (display, win) => this.on_window_create(display, win));
     }
@@ -74,34 +89,9 @@ var Ext = class Ext extends World {
         }
     }
 
-    focus_shift(direction) {
+    active_window_list() {
         let workspace = global.workspace_manager.get_active_workspace();
-        let window_list = this.tab_list(Meta.TabList.NORMAL, workspace);
-        Focus.focus(direction, (win) => win.activate(), this.focus_window(), window_list);
-    }
-
-    focus_shift_down() {
-        this.focus_shift(Focus.window_down);
-    }
-
-    focus_shift_left() {
-        this.focus_shift(Focus.window_left);
-    }
-
-    focus_shift_right() {
-        this.focus_shift(Focus.window_right);
-    }
-
-    focus_shift_up() {
-        this.focus_shift(Focus.window_up);
-    }
-
-    focus_shift_monitor_left() {
-        this.focus_shift(Focus.window_monitor_left);
-    }
-
-    focus_shift_monitor_right() {
-        this.focus_shift(Focus.window_monitor_right);
+        return this.tab_list(Meta.TabList.NORMAL, workspace);
     }
 
     focus_window() {
