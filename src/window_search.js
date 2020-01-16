@@ -30,9 +30,7 @@ var WindowSearch = GObject.registerClass(
                         name += ": " + title;
                     }
 
-                    name = name.toLowerCase();
-
-                    if (!name.includes(pattern)) {
+                    if (!name.toLowerCase().includes(pattern)) {
                         continue
                     }
 
