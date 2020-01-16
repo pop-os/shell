@@ -27,7 +27,7 @@ var Search = GObject.registerClass(
 
             // ShellEntry.addContextMenu(this.entry);
             this.text = this.entry.clutter_text;
-            this.setInitialKeyFocus(this.text)
+            this.setInitialKeyFocus(this.text);
 
             this.text.connect('activate', (_) => {
                 if (this.active_id < this.widgets.length) {
@@ -75,7 +75,7 @@ var Search = GObject.registerClass(
                         this.select();
                     }
                 }
-                
+
                 select(this.active_id);
             });
 

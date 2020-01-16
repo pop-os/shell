@@ -6,6 +6,7 @@ const { Gio, Meta, Shell, St } = imports.gi;
 const { bind } = imports.lang;
 const { log } = Me.imports.lib;
 const { _defaultCssStylesheet, uiGroup, wm } = imports.ui.main;
+const { Keybindings } = Me.imports.keybindings;
 const { ShellWindow } = Me.imports.window;
 const { WindowSearch } = Me.imports.window_search;
 const Tags = Me.imports.tags;
@@ -23,6 +24,7 @@ var Ext = class Ext extends World {
 
         // Misc
 
+        this.keybindings = new Keybindings(this);
         this.settings = new ExtensionSettings();
 
         this.overlay = new St.BoxLayout({
@@ -47,29 +49,6 @@ var Ext = class Ext extends World {
         this.swapper = new Swapper(this);
         this.tiler = new Tiler(this);
 
-        // Keybindings
-
-        this.global_keybindings = {
-            "search": () => this.window_search.open(),
-            "tile-enter": () => this.tiler.enter()
-        };
-
-        this.window_focus_keybindings = {
-            "focus-left": () => this.focus_switcher.left(),
-            "focus-down": () => this.focus_switcher.down(this.active_window_list()),
-            "focus-up": () => this.focus_switcher.up(this.active_window_list()),
-            "focus-right": () => this.focus_switcher.right(this.active_window_list()),
-            "focus-monitor-left": () => this.focus_switcher.monitor_left(this.active_window_list()),
-            "focus-monitor-right": () => this.focus_switcher.monitor_right(this.active_window_list())
-        };
-
-        this.window_swap_keybindings = {
-            "swap-above": () => this.swapper.above(),
-            "swap-below": () => this.swapper.below(),
-            "swap-left": () => this.swapper.left(),
-            "swap-right": () => this.swapper.right()
-        };
-
         // Signals
 
         global.display.connect('window_created', (display, win) => this.on_window_create(display, win));
@@ -78,26 +57,6 @@ var Ext = class Ext extends World {
     connect_window(win, actor) {
         win.meta.connect('position-changed', () => this.on_window_changed(win, WINDOW_CHANGED_POSITION));
         win.meta.connect('size-changed', () => this.on_window_changed(win, WINDOW_CHANGED_SIZE));
-    }
-
-    keybindings_enable(keybindings) {
-        for (const name in keybindings) {
-            log(`adding ${name}`);
-            wm.addKeybinding(
-                name,
-                this.settings.inner,
-                Meta.KeyBindingFlags.NONE,
-                Shell.ActionMode.NORMAL,
-                keybindings[name]
-            );
-        }
-    }
-
-    keybindings_disable(keybindings) {
-        for (const name in keybindings) {
-            log(`removing ${name}`);
-            wm.removeKeybinding(name);
-        }
     }
 
     active_window_list() {
@@ -204,9 +163,9 @@ function enable() {
 
     uiGroup.add_actor(ext.overlay);
 
-    ext.keybindings_enable(ext.global_keybindings);
-    ext.keybindings_enable(ext.window_focus_keybindings);
-    ext.keybindings_enable(ext.window_swap_keybindings);
+    ext.keybindings.enable(ext.keybindings.global)
+        .enable(ext.keybindings.window_focus)
+        .enable(ext.keybindings.window_swap);
 
     // Code to execute after the shell has finished initializing everything.
     global.run_at_leisure(() => {
@@ -221,9 +180,9 @@ function disable() {
 
     ext.tiler.exit();
 
-    ext.keybindings_disable(ext.global_keybindings);
-    ext.keybindings_disable(ext.window_focus_keybindings);
-    ext.keybindings_disable(ext.window_swap_keybindings);
+    ext.keybindings.disable(ext.keybindings.global)
+        .disable(ext.keybindings.window_focus)
+        .disable(ext.keybindings.window_swap);
 }
 
 // Supplements the GNOME Shell theme with the extension's theme.

@@ -14,7 +14,7 @@ var Tiler = class Tiler {
         this.ext = ext;
 
         this.window = null;
-        
+
         this.keybindings = {
             "tile-move-left": () => this.move_left(),
             "tile-move-down": () => this.move_down(),
@@ -149,74 +149,91 @@ var Tiler = class Tiler {
         overlay.y = changed.y;
         overlay.width = changed.width;
         overlay.height = changed.height;
+        return this;
     }
 
     move_left() {
-        this.change(this.ext.overlay, this.rect(), -1, 0, 0, 0);
-        this.change(this.ext.overlay, this.rect(), 0, 0, 0, 0);
+        let rect = this.rect();
+        if (!rect) return;
+        this.change(this.ext.overlay, rect, -1, 0, 0, 0)
+            .change(this.ext.overlay, rect, 0, 0, 0, 0);
     }
 
     move_down() {
-        this.change(this.ext.overlay, this.rect(), 0, 1, 0, 0);
-        this.change(this.ext.overlay, this.rect(), 0, 0, 0, 0);
+        let rect = this.rect();
+        if (!rect) return;
+        this.change(this.ext.overlay, rect, 0, 1, 0, 0)
+            .change(this.ext.overlay, rect, 0, 0, 0, 0);
     }
 
     move_up() {
-        this.change(this.ext.overlay, this.rect(), 0, -1, 0, 0);
-        this.change(this.ext.overlay, this.rect(), 0, 0, 0, 0);
+        let rect = this.rect();
+        if (!rect) return;
+        this.change(this.ext.overlay, rect, 0, -1, 0, 0)
+            .change(this.ext.overlay, rect, 0, 0, 0, 0);
     }
 
     move_right() {
-        this.change(this.ext.overlay, this.rect(), 1, 0, 0, 0);
-        this.change(this.ext.overlay, this.rect(), 0, 0, 0, 0);
+        let rect = this.rect();
+        if (!rect) return;
+        this.change(this.ext.overlay, rect, 1, 0, 0, 0)
+            .change(this.ext.overlay, rect, 0, 0, 0, 0);
     }
 
     resize_left() {
-        this.change(this.ext.overlay, this.rect(), 0, 0, -1, 0);
-        this.change(this.ext.overlay, this.rect(), 0, 0, 0, 0);
+        let rect = this.rect();
+        if (!rect) return;
+        this.change(this.ext.overlay, rect, 0, 0, -1, 0)
+            .change(this.ext.overlay, rect, 0, 0, 0, 0);
     }
 
     resize_down() {
-        this.change(this.ext.overlay, this.rect(), 0, 0, 0, 1);
-        this.change(this.ext.overlay, this.rect(), 0, 0, 0, 0);
+        let rect = this.rect();
+        if (!rect) return;
+        this.change(this.ext.overlay, rect, 0, 0, 0, 1)
+            .change(this.ext.overlay, rect, 0, 0, 0, 0);
     }
 
     resize_up() {
-        this.change(this.ext.overlay, this.rect(), 0, 0, 0, -1);
-        this.change(this.ext.overlay, this.rect(), 0, 0, 0, 0);
+        let rect = this.rect();
+        if (!rect) return;
+        this.change(this.ext.overlay, rect, 0, 0, 0, -1)
+            .change(this.ext.overlay, rect, 0, 0, 0, 0);
     }
 
     resize_right() {
-        this.change(this.ext.overlay, this.rect(), 0, 0, 1, 0);
-        this.change(this.ext.overlay, this.rect(), 0, 0, 0, 0);
+        let rect = this.rect();
+        if (!rect) return;
+        this.change(this.ext.overlay, rect, 0, 0, 1, 0)
+            .change(this.ext.overlay, rect, 0, 0, 0, 0);
     }
 
     swap_left() {
         let rect = this.rect();
         if (!rect) return;
-        this.change(this.ext.overlay, this.rect(), -1, 0, 0, 0);
-        this.change(this.ext.overlay, this.rect(), 0, 0, 0, 0);
+        this.change(this.ext.overlay, rect, -1, 0, 0, 0)
+            .change(this.ext.overlay, rect, 0, 0, 0, 0);
     }
 
     swap_down() {
         let rect = this.rect();
         if (!rect) return;
-        this.change(this.ext.overlay, this.rect(), 0, 1, 0, 0);
-        this.change(this.ext.overlay, this.rect(), 0, 0, 0, 0);
+        this.change(this.ext.overlay, rect, 0, 1, 0, 0)
+            .change(this.ext.overlay, rect, 0, 0, 0, 0);
     }
 
     swap_up() {
         let rect = this.rect();
         if (!rect) return;
-        this.change(this.ext.overlay, this.rect(), 0, -1, 0, 0);
-        this.change(this.ext.overlay, this.rect(), 0, 0, 0, 0);
+        this.change(this.ext.overlay, rect, 0, -1, 0, 0)
+            .change(this.ext.overlay, rect, 0, 0, 0, 0);
     }
 
     swap_right() {
         let rect = this.rect();
         if (!rect) return;
-        this.change(this.ext.overlay, this.rect(), 1, 0, 0, 0);
-        this.change(this.ext.overlay, this.rect(), 0, 0, 0, 0);
+        this.change(this.ext.overlay, rect, 1, 0, 0, 0)
+            .change(this.ext.overlay, rect, 0, 0, 0, 0);
     }
 
     enter() {
@@ -235,9 +252,9 @@ var Tiler = class Tiler {
             // Make sure overlay is valid
             this.change(this.ext.overlay, this.rect(), 0, 0, 0, 0);
 
-            this.ext.keybindings_disable(this.ext.window_focus_keybindings);
-            this.ext.keybindings_disable(this.ext.window_swap_keybindings);
-            this.ext.keybindings_enable(this.keybindings);
+            this.ext.keybindings.disable(this.ext.keybindings.window_focus)
+                .disable(this.ext.keybindings.window_swap)
+                .enable(this.keybindings);
         }
     }
 
@@ -258,9 +275,9 @@ var Tiler = class Tiler {
             this.ext.overlay.visible = false;
 
             // Disable tiling keybindings
-            this.ext.keybindings_disable(this.keybindings);
-            this.ext.keybindings_enable(this.ext.window_focus_keybindings);
-            this.ext.keybindings_enable(this.ext.window_swap_keybindings);
+            this.ext.keybindings.disable(this.keybindings)
+                .enable(this.ext.keybindings.window_focus)
+                .enable(this.ext.keybindings.window_swap);
         }
     }
 

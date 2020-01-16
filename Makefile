@@ -16,6 +16,7 @@ sources = src/extension.js \
 	src/ecs.js \
 	src/focus.js \
 	src/geom.js \
+	src/keybindings.js \
 	src/lib.js \
 	src/search.js \
 	src/settings.js \
