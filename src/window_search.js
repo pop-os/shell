@@ -15,6 +15,10 @@ var WindowSearch = GObject.registerClass(
             this.windows = [];
             this.active = [];
 
+            let cancel = () => {
+                ext.overlay.visible = false;
+            };
+
             let search = (pattern) => {
                 this.windows.splice(0);
                 this.active.splice(0);
@@ -41,14 +45,24 @@ var WindowSearch = GObject.registerClass(
                     }
                 }
 
-                
-
                 return this.active;
             };
 
-            let apply = (id) => this.windows[id].activate();
+            let select = (id) => {
+                let rect = this.windows[id].meta.get_frame_rect();
+                ext.overlay.x = rect.x
+                ext.overlay.y = rect.y;
+                ext.overlay.width = rect.width;
+                ext.overlay.height = rect.height;
+                ext.overlay.visible = true;
+            };
 
-            super._init(search, apply);
+            let apply = (id) => {
+                this.windows[id].activate();
+                ext.overlay.visible = false;
+            };
+
+            super._init(cancel, search, select, apply);
         }
     }
 );

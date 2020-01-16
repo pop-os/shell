@@ -7,7 +7,7 @@ const ShellEntry = imports.ui.shellEntry;
 
 var Search = GObject.registerClass(
     class Search extends ModalDialog {
-        _init(search, apply) {
+        _init(cancel, search, select, apply) {
             super._init({
                 styleClass: 'pop-shell-search',
                 destroyOnClose: false,
@@ -58,6 +58,8 @@ var Search = GObject.registerClass(
                     this.reset();
                     this.popModal();
                     this.close();
+                    cancel();
+                    return;
                 } else if (c == 111) {
                     // Up arrow was pressed
                     if (0 < this.active_id) {
@@ -73,6 +75,8 @@ var Search = GObject.registerClass(
                         this.select();
                     }
                 }
+                
+                select(this.active_id);
             });
 
             this.list = new St.BoxLayout({
