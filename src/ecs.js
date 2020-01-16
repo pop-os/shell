@@ -48,12 +48,22 @@ var Storage = class Storage {
 
         let value = this._store[id];
 
-        // If the generation is not a match, unset the component.
-        if (value[0] != gen) {
-            return null;
-        }
+        if (!value || value[0] != gen) return null;
 
         return value[1];
+    }
+
+    /// Fetches the component, and initializing it if it is missing.
+    get_or(entity, init) {
+        let value = this.get(entity);
+
+        if (!value) {
+            value = init();
+            if (!value) return null;
+            this.insert(entity, value);
+        }
+
+        return value;
     }
 
     /// Assigns component to an entity

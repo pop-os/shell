@@ -31,7 +31,10 @@ var Ext = class Ext extends World {
 
         // Storages
 
+        this.icons = new Storage();
         this.ids = new Storage();
+        this.names = new Storage();
+        this.tilable = new Storage();
         this.windows = new Storage();
 
         // Dialogs
@@ -124,7 +127,7 @@ var Ext = class Ext extends World {
         // If not found, create a new entity with a ShellWindow component.
         if (!entity) {
             entity = this.create_entity();
-            let win = new ShellWindow(entity, meta);
+            let win = new ShellWindow(entity, meta, this);
             this.windows.insert(entity, win);
             this.ids.insert(entity, id);
             log(`added window (${win.entity}): ${win.name()}`);
@@ -186,8 +189,6 @@ var Ext = class Ext extends World {
     tab_list(tablist, workspace) {
         return global.display.get_tab_list(tablist, workspace).map((win) => this.get_window(win));
     }
-
-    
 }
 
 var ext = new Ext();

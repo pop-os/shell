@@ -23,45 +23,46 @@ function place_pointer_on(win) {
         .warp(display.get_default_screen(), x, y);
 }
 
+const window_tracker = Shell.WindowTracker.get_default();
+
 var ShellWindow = class ShellWindow {
-    constructor(entity, window) {
-        this._icon = null;
-        this._name = null;
-        this._window_tracker = Shell.WindowTracker.get_default();
+    constructor(entity, window, ext) {
         this._window_app = null;
+        this.ext = ext;
 
         this.entity = entity;
         this.meta = window;
     }
-    
+
     activate() {
         activate(this.meta);
     }
 
     icon(size) {
-        let icon = this.window_app().create_icon_texture(size);
+        return this.ext.icons.get_or(this.entity, () => {
+            let app = this.window_app();
+            if (!app) return null;
 
-        if (!icon) {
-            icon = new St.Icon({
-                icon_name: 'applications-other',
-                icon_type: St.IconType.FULLCOLOR,
-                icon_size: size
-            });
-        }
+            let icon = app.create_icon_texture(size);
 
-        return icon;
+            if (!icon) {
+                icon = new St.Icon({
+                    icon_name: 'applications-other',
+                    icon_type: St.IconType.FULLCOLOR,
+                    icon_size: size
+                });
+            }
+
+            return icon;
+        });
     }
 
     is_tilable() {
-        if (this.meta.is_skip_taskbar()) {
-            return;
-        }
-
-        if (blacklisted(this.meta.get_wm_class())) {
-            return
-        }
-
-        return this.meta['window-type'] == Meta.WindowType.NORMAL;
+        return this.ext.tilable.get_or(this.entity, () => {
+            return this.meta.is_skip_taskbar()
+                && blacklisted(this.meta.get_wm_class())
+                && this.meta['window-type'] == Meta.WindowType.NORMAL;
+        });
     }
 
     move(rect) {
@@ -79,16 +80,13 @@ var ShellWindow = class ShellWindow {
     }
 
     name() {
-        if (!this._name) {
+        return this.ext.names.get_or(this.entity, () => {
             try {
-                this._name = this.window_app().get_name().replace(/&/g, "&amp;");
+                return this.window_app().get_name().replace(/&/g, "&amp;");
             } catch (e) {
-                log("window_app_name: " + e);
-                this._name = "unknown";
+                return "unknown";
             }
-        }
-
-        return this._name;
+        });
     }
 
     reflow(other) {
@@ -96,7 +94,7 @@ var ShellWindow = class ShellWindow {
         let their_rect = other.meta.get_frame_rect();
 
         switch (Geom.overlap(our_rect, their_rect)) {
-            
+
         }
     }
 
@@ -111,7 +109,7 @@ var ShellWindow = class ShellWindow {
 
     window_app() {
         if (!this._window_app) {
-            this._window_app = this._window_tracker.get_window_app(this.meta)
+            this._window_app = window_tracker.get_window_app(this.meta)
         }
 
         return this._window_app;

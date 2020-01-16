@@ -1,6 +1,6 @@
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
-const { current_monitor } = Me.imports.lib;
+const { current_monitor, recursive_remove_children } = Me.imports.lib;
 const { Clutter, GObject, Pango, St } = imports.gi;
 const { ModalDialog } = imports.ui.modalDialog;
 const ShellEntry = imports.ui.shellEntry;
@@ -91,7 +91,7 @@ var Search = GObject.registerClass(
         }
 
         clear() {
-            this.list.destroy_all_children();
+            recursive_remove_children(this.list);
             this.list.hide();
             this.widgets = [];
             this.active_id = 0;
