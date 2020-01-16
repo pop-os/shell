@@ -23,6 +23,7 @@ sources = src/extension.js \
 	src/tiling.js \
 	src/window.js \
 	src/window_search.js \
+	src/swapper.js \
 	stylesheet.css
 
 all: $(sources) metadata.json schemas

@@ -12,6 +12,7 @@ const Tags = Me.imports.tags;
 const { Tiler } = Me.imports.tiling;
 const { ExtensionSettings, Settings } = Me.imports.settings;
 const { Storage, World } = Me.imports.ecs;
+const { Swapper } = Me.imports.swapper;
 
 const WINDOW_CHANGED_POSITION = 0;
 const WINDOW_CHANGED_SIZE = 1;
@@ -40,6 +41,7 @@ var Ext = class Ext extends World {
         // Systems
 
         this.focus_switcher = new Focus.FocusSwitcher(this);
+        this.swapper = new Swapper(this);
         this.tiler = new Tiler(this);
 
         // Keybindings
@@ -59,10 +61,10 @@ var Ext = class Ext extends World {
         };
 
         this.window_swap_keybindings = {
-            "swap-above": () => this.window_swap_above(),
-            "swap-below": () => this.window_swap_below(),
-            "swap-left": () => this.window_swap_left(),
-            "swap-right": () => this.window_swap_right()
+            "swap-above": () => this.swapper.above(),
+            "swap-below": () => this.swapper.below(),
+            "swap-left": () => this.swapper.left(),
+            "swap-right": () => this.swapper.right()
         };
 
         // Signals
@@ -185,28 +187,7 @@ var Ext = class Ext extends World {
         return global.display.get_tab_list(tablist, workspace).map((win) => this.get_window(win));
     }
 
-    window_swap(direction) {
-        let workspace = global.workspace_manager.get_active_workspace();
-        let window_list = this.tab_list(Meta.TabList.NORMAL, workspace);
-        let focused = this.focus_window();
-        Focus.focus(direction, (win) => focused.swap(win), focused, window_list);
-    }
-
-    window_swap_above() {
-        this.window_swap(Focus.window_up);
-    }
-
-    window_swap_below() {
-        this.window_swap(Focus.window_down);
-    }
-
-    window_swap_left() {
-        this.window_swap(Focus.window_left);
-    }
-
-    window_swap_right() {
-        this.window_swap(Focus.window_right);
-    }
+    
 }
 
 var ext = new Ext();
