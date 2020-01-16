@@ -30,7 +30,6 @@ var ShellWindow = class ShellWindow {
         this._window_tracker = Shell.WindowTracker.get_default();
         this._window_app = null;
 
-        this.managed = false;
         this.entity = entity;
         this.meta = window;
     }
@@ -90,6 +89,15 @@ var ShellWindow = class ShellWindow {
         }
 
         return this._name;
+    }
+
+    reflow(other) {
+        let our_rect = this.meta.get_frame_rect();
+        let their_rect = other.meta.get_frame_rect();
+
+        switch (Geom.overlap(our_rect, their_rect)) {
+            
+        }
     }
 
     swap(other) {

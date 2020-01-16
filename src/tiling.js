@@ -14,7 +14,7 @@ var Tiler = class Tiler {
         this.ext = ext;
 
         this.window = null;
-
+        
         this.keybindings = {
             "tile-move-left": () => this.move_left(),
             "tile-move-down": () => this.move_down(),

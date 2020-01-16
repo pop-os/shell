@@ -13,6 +13,9 @@ const { Tiler } = Me.imports.tiling;
 const { ExtensionSettings, Settings } = Me.imports.settings;
 const { Storage, World } = Me.imports.ecs;
 
+const WINDOW_CHANGED_POSITION = 0;
+const WINDOW_CHANGED_SIZE = 1;
+
 var Ext = class Ext {
     constructor() {
         this.settings = new ExtensionSettings();
@@ -47,16 +50,13 @@ var Ext = class Ext {
     }
 
     connect_window(win, actor) {
-        win.meta.connect('size-changed', () => {
-            log(`window size changed on: ${win.name()}`);
-            if (this.world.contains_tag(win.entity, Tags.Tiled)) {
-                log(`tiled window size changed: ${win.name()}`);
-            }
-        });
+        win.meta.connect('position-changed', () => this.on_window_changed(win, WINDOW_CHANGED_POSITION));
+        win.meta.connect('size-changed', () => this.on_window_changed(win, WINDOW_CHANGED_SIZE));
     }
 
     keybindings_enable(keybindings) {
-        for (let name in keybindings) {
+        for (const name in keybindings) {
+            log(`adding ${name}`);
             wm.addKeybinding(
                 name,
                 this.settings.inner,
@@ -68,7 +68,8 @@ var Ext = class Ext {
     }
 
     keybindings_disable(keybindings) {
-        for (let name in keybindings) {
+        for (const name in keybindings) {
+            log(`removing ${name}`);
             wm.removeKeybinding(name);
         }
     }
@@ -128,6 +129,7 @@ var Ext = class Ext {
             let win = new ShellWindow(entity, meta);
             this.world.windows.insert(entity, win);
             this.world.ids.insert(entity, id);
+            log(`added window (${win.entity}): ${win.name()}`);
         }
 
         return entity;
@@ -135,6 +137,18 @@ var Ext = class Ext {
 
     load_settings() {
         this.tiler.set_gap(settings.gap());
+    }
+
+    tiled_windows() {
+        return this.world.entities.filter((entity) => this.world.contains_tag(entity, Tags.Tiled));
+    }
+
+    on_window_changed(win, event) {
+        if (!this.world.contains_tag(win.entity, Tags.Tiled)) {
+            return;
+        }
+
+        log(`tiled window size changed: ${win.name()}`);
     }
 
     on_window_create(display, window, second_try) {
@@ -150,8 +164,15 @@ var Ext = class Ext {
         }
 
         let win = this.get_window(window);
-        if (win && win.is_tilable()) {
-            this.connect_window(win, actor);
+        if (win) {
+            win.meta.get_compositor_private().connect('destroy', () => {
+                log(`destroying window (${win.entity}): ${win.name()}`);
+                this.world.delete_entity(win.entity);
+            });
+
+            if (win.is_tilable()) {
+                this.connect_window(win, actor);
+            }
         }
     }
 

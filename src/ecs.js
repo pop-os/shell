@@ -8,7 +8,7 @@
 ///
 /// - The first 32-bit integer is the index.
 /// - The second 32-bit integer is the generation.
-const Entity = new Uint32Array(64);
+const Entity = new Uint32Array(2);
 
 function entity_new(pos, gen) {
     let entity = new Uint32Array(Entity);
@@ -19,7 +19,7 @@ function entity_new(pos, gen) {
 
 /// Storages hold components of a specific type, and define these associations on entities.
 ///
-/// # Implementation notes
+/// # Implementation Notes
 ///
 /// Consists of an `Array` which uses the entity ID as the index into that array. Each
 /// value in the array is an array which contains the entity's generation, and the
@@ -33,18 +33,6 @@ var Storage = class Storage {
     /// Iterates across each stored component, and their entities
     components() {
         return this._store.map((value, pos) => [entity_new(pos, value[0]), value[1]]);
-    }
-
-    /// Assigns component to an entity
-    insert(entity, component) {
-        let [id, gen] = entity;
-
-        let length = this._store.length;
-        if (length >= id) {
-            this._store.fill(null, length, id);
-        }
-
-        this._store[id] = [gen, component];
     }
 
     /// Finds values which the matching component
@@ -68,12 +56,30 @@ var Storage = class Storage {
         return value[1];
     }
 
+    /// Assigns component to an entity
+    insert(entity, component) {
+        let [id, gen] = entity;
+
+        let length = this._store.length;
+        if (length >= id) {
+            this._store.fill(null, length, id);
+        }
+
+        this._store[id] = [gen, component];
+    }
+
     /// Removes the component for this entity, if it exists.
     remove(entity) {
         this._store[entity] = null;
     }
 }
 
+/// The world maintains all of the entities, which have their components associated in storages.
+///
+/// # Implementation Notes
+///
+/// This implementation consists of two arrays. One for storing entities, and another for storing tags for each entity.
+/// Tags are similar to array-backed storages, but are sets containing miscellaneous bits of sparse data.
 var World = class World {
     constructor() {
         this.entities = new Array();
