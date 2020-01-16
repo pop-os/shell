@@ -45,21 +45,24 @@ var Ext = class Ext extends World {
         // Keybindings
 
         this.global_keybindings = {
+            "search": () => this.window_search.open(),
+            "tile-enter": () => this.tiler.enter()
+        };
+
+        this.window_focus_keybindings = {
             "focus-left": () => this.focus_switcher.left(),
             "focus-down": () => this.focus_switcher.down(this.active_window_list()),
             "focus-up": () => this.focus_switcher.up(this.active_window_list()),
             "focus-right": () => this.focus_switcher.right(this.active_window_list()),
             "focus-monitor-left": () => this.focus_switcher.monitor_left(this.active_window_list()),
-            "focus-monitor-right": () => this.focus_switcher.monitor_right(this.active_window_list()),
-            "search": () => this.window_search.open(),
-            "tile-enter": () => this.tiler.enter(),
+            "focus-monitor-right": () => this.focus_switcher.monitor_right(this.active_window_list())
         };
 
         this.window_swap_keybindings = {
             "swap-above": () => this.window_swap_above(),
             "swap-below": () => this.window_swap_below(),
             "swap-left": () => this.window_swap_left(),
-            "swap-right": () => this.window_swap_right(),
+            "swap-right": () => this.window_swap_right()
         };
 
         // Signals
@@ -220,6 +223,7 @@ function enable() {
     uiGroup.add_actor(ext.overlay);
 
     ext.keybindings_enable(ext.global_keybindings);
+    ext.keybindings_enable(ext.window_focus_keybindings);
     ext.keybindings_enable(ext.window_swap_keybindings);
 
     // Code to execute after the shell has finished initializing everything.
@@ -236,6 +240,7 @@ function disable() {
     ext.tiler.exit();
 
     ext.keybindings_disable(ext.global_keybindings);
+    ext.keybindings_disable(ext.window_focus_keybindings);
     ext.keybindings_disable(ext.window_swap_keybindings);
 }
 
