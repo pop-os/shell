@@ -1,6 +1,6 @@
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
-const { current_monitor, recursive_remove_children, separator } = Me.imports.lib;
+const { current_monitor, join, recursive_remove_children, separator } = Me.imports.lib;
 const { Clutter, GObject, Pango, St } = imports.gi;
 const { ModalDialog } = imports.ui.modalDialog;
 const ShellEntry = imports.ui.shellEntry;
@@ -118,30 +118,30 @@ var Search = GObject.registerClass(
         }
 
         update_search_list(list) {
-            for (const element of list) {
-                const [title, icon] = element;
+            join(
+                list,
+                (element) => {
+                    const [title, icon] = element;
 
-                let label = new St.Label({
-                    text: title,
-                    styleClass: 'pop-shell-search-label'
-                });
+                    let label = new St.Label({
+                        text: title,
+                        styleClass: 'pop-shell-search-label'
+                    });
 
-                label.clutter_text.set_ellipsize(Pango.EllipsizeMode.END);
+                    label.clutter_text.set_ellipsize(Pango.EllipsizeMode.END);
 
-                let container = new St.BoxLayout({
-                    styleClass: 'pop-shell-search-element',
-                });
+                    let container = new St.BoxLayout({
+                        styleClass: 'pop-shell-search-element',
+                    });
 
-                container.add(icon, { y_fill: false, y_align: St.Align.MIDDLE });
-                container.add(label, { y_fill: false, y_align: St.Align.MIDDLE });
+                    container.add(icon, { y_fill: false, y_align: St.Align.MIDDLE });
+                    container.add(label, { y_fill: false, y_align: St.Align.MIDDLE });
 
-                if (this.widgets.length != 0) {
-                    this.list.add(separator());
-                }
-
-                this.widgets.push(container);
-                this.list.add(container);
-            }
+                    this.widgets.push(container);
+                    this.list.add(container);
+                },
+                () => this.list.add(separator())
+            );
 
             this.list.show();
             if (this.widgets.length != 0) {

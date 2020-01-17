@@ -1,7 +1,7 @@
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
-const { St } = imports.gi;
 const Main = imports.ui.main;
+const { St } = imports.gi;
 
 var Geom = Me.imports.geom;
 var Window = Me.imports.window;
@@ -18,6 +18,18 @@ function* get_children(actor) {
     while (nth < children) {
         yield actor.get_child_at_index(nth);
         nth += 1;
+    }
+}
+
+function join(iterable, next_func, between_func) {
+    let iterator = iterable.values();
+    let first = iterator.next().value;
+    if (first) {
+        next_func(first);
+        for (const item of iterator) {
+            between_func();
+            next_func(item);
+        }
     }
 }
 
