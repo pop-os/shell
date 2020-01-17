@@ -1,5 +1,6 @@
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
+const { St } = imports.gi;
 const Main = imports.ui.main;
 
 var Geom = Me.imports.geom;
@@ -20,6 +21,10 @@ function* get_children(actor) {
     }
 }
 
+function log(text) {
+    global.log("pop-shell: " + text);
+}
+
 /// Useful in the event that you want to reuse an actor in the future
 function recursive_remove_children(actor) {
     for (const child of get_children(actor)) {
@@ -29,10 +34,10 @@ function recursive_remove_children(actor) {
     actor.remove_all_children();
 }
 
-function log(text) {
-    global.log("pop-shell: " + text);
-}
-
 function round_increment(value, increment) {
     return Math.round(value / increment) * increment;
+}
+
+function separator() {
+    return new St.BoxLayout({ styleClass: 'pop-shell-separator', x_expand: true });
 }

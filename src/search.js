@@ -1,6 +1,6 @@
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
-const { current_monitor, recursive_remove_children } = Me.imports.lib;
+const { current_monitor, recursive_remove_children, separator } = Me.imports.lib;
 const { Clutter, GObject, Pango, St } = imports.gi;
 const { ModalDialog } = imports.ui.modalDialog;
 const ShellEntry = imports.ui.shellEntry;
@@ -136,7 +136,7 @@ var Search = GObject.registerClass(
                 container.add(label, { y_fill: false, y_align: St.Align.MIDDLE });
 
                 if (this.widgets.length != 0) {
-                    this.list.add(new St.BoxLayout({ styleClass: 'pop-shell-separator', x_expand: true }));
+                    this.list.add(separator());
                 }
 
                 this.widgets.push(container);
