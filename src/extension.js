@@ -51,6 +51,10 @@ var Ext = class Ext extends World {
         // Signals
 
         global.display.connect('window_created', (_, win) => this.on_window_create(win));
+
+        for (const window of this.tab_list(Meta.TabList.NORMAL, null)) {
+            this.on_window_create(window);
+        }
     }
 
     connect_window(win, actor) {
@@ -148,7 +152,7 @@ var Ext = class Ext extends World {
     }
 }
 
-var ext = new Ext();
+var ext = null;
 
 function init() {
     log("init");
@@ -159,6 +163,7 @@ function enable() {
 
     load_theme();
 
+    ext = new Ext();
     uiGroup.add_actor(ext.overlay);
 
     ext.keybindings.enable(ext.keybindings.global)
@@ -182,6 +187,8 @@ function disable() {
     ext.keybindings.disable(ext.keybindings.global)
         .disable(ext.keybindings.window_focus)
         .disable(ext.keybindings.window_swap);
+
+    ext = null;
 }
 
 // Supplements the GNOME Shell theme with the extension's theme.
