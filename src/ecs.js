@@ -31,15 +31,30 @@ var Storage = class Storage {
     }
 
     /// Iterates across each stored component, and their entities
-    components() {
-        return this._store.map((value, pos) => [entity_new(pos, value[0]), value[1]]);
+    * iter() {
+        let idx = 0;
+        for (const [gen, value] of this._store) {
+            yield [entity_new(idx, gen), value];
+            idx += 1;
+        }
+    }
+
+    /// Iterates across each stored component
+    * iter_values() {
+        for (const [_, value] of this._store) {
+            yield value;
+        }
     }
 
     /// Finds values which the matching component
-    find(component) {
-        return this.components()
-            .filter((slot) => slot[1] == component)
-            .map((slot) => slot[0])
+    * find(component) {
+        let idx = 0;
+        for (const [gen, value] of this._store) {
+            if (value == component) {
+                yield entity_new(idx, gen);
+            }
+            idx += 1;
+        }
     }
 
     /// Fetches the component for this entity, if it exists.
