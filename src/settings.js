@@ -28,6 +28,10 @@ var ExtensionSettings = class ExtensionSettings extends Settings {
     }
 
     gap() {
-        return this.inner.get_uint("gap-inner");
+        return this.inner.get_uint('gap-inner');
+    }
+
+    tile_by_default() {
+        return this.inner.get_boolean('tile-by-default');
     }
 }

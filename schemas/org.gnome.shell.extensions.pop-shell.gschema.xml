@@ -5,6 +5,12 @@
             <default>16</default>
             <summary>Gap between tiled windows</summary>
         </key>
+
+        <key type="b" name="tile-by-default">
+            <default>false</default>
+            <summary>Tile launched windows by default</summary>
+        </key>
+
         <key type="as" name="focus-left">
             <default><![CDATA[['<Super>Left','<Super>h']]]></default>
             <summary>Focus left window</summary>
@@ -121,6 +127,6 @@
                 <![CDATA[['<Super><Shift>Right','<Super><Shift>l']]]>
             </default>
             <summary>Swap location of window with the right window</summary>
-        </key>        
+        </key>
     </schema>
 </schemalist>
