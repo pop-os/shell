@@ -48,8 +48,6 @@ var Tiler = class Tiler {
     }
 
     change(overlay, rect, dx, dy, dw, dh) {
-        log("tile_change(" + dx + "," + dy + "," + dw + "," + dh + ")");
-
         if (!rect) return;
 
         let changed = {
@@ -281,25 +279,22 @@ var Tiler = class Tiler {
         }
     }
 
-    snap_windows(windows) {
-        for (const win of windows) {
-            let mon_geom = global.display.get_monitor_geometry(win.meta.get_monitor());
-            if (mon_geom) {
-                let rect = win.meta.get_frame_rect();
-                this.change(
-                    rect,
-                    monitor_rect(mon_geom, this.columns, this.rows),
-                    0, 0, 0, 0
-                );
+    snap(win) {
+        let mon_geom = this.ext.monitor_work_area(win.meta.get_monitor());
+        if (mon_geom) {
+            let rect = win.meta.get_frame_rect();
+            this.change(
+                rect,
+                monitor_rect(mon_geom, this.columns, this.rows),
+                0, 0, 0, 0
+            );
 
-                win.move(rect);
-            }
+            win.move(rect);
         }
     }
 };
 
 function monitor_rect(monitor, columns, rows) {
-    log(`monitor_rect(${monitor.x},${monitor.y},${monitor.width},${monitor.height})`);
     let tile_width = monitor.width / columns;
     let tile_height = monitor.height / rows;
 
@@ -322,8 +317,6 @@ function monitor_rect(monitor, columns, rows) {
 }
 
 function tile_monitors(rect) {
-    log(`tile monitors(${rect.x},${rect.y},${rect.width},${rect.height})`);
-
     let total_size = (a, b) => (a.width * a.height) - (b.width * b.height);
 
     let workspace = global.workspace_manager.get_active_workspace();

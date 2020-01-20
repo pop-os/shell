@@ -59,8 +59,8 @@ var ShellWindow = class ShellWindow {
 
     is_tilable() {
         return this.ext.tilable.get_or(this.entity, () => {
-            return this.meta.is_skip_taskbar()
-                && blacklisted(this.meta.get_wm_class())
+            return !this.meta.is_skip_taskbar()
+                && !blacklisted(this.meta.get_wm_class())
                 && this.meta['window-type'] == Meta.WindowType.NORMAL;
         });
     }

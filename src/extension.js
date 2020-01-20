@@ -1,8 +1,7 @@
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
-const Mainloop = imports.mainloop;
 const Focus = Me.imports.focus;
-const { Gio, Meta, Shell, St } = imports.gi;
+const { Gio, GLib, Meta, Shell, St } = imports.gi;
 const { bind } = imports.lang;
 const { log } = Me.imports.lib;
 const { _defaultCssStylesheet, uiGroup, wm } = imports.ui.main;
@@ -51,7 +50,7 @@ var Ext = class Ext extends World {
 
         // Signals
 
-        global.display.connect('window_created', (display, win) => this.on_window_create(display, win));
+        global.display.connect('window_created', (_, win) => this.on_window_create(win));
     }
 
     connect_window(win, actor) {
@@ -99,8 +98,10 @@ var Ext = class Ext extends World {
         this.tiler.set_gap(settings.gap());
     }
 
-    tiled_windows() {
-        return this.entities.filter((entity) => this.contains_tag(entity, Tags.Tiled));
+    monitor_work_area(monitor) {
+        return global.display.get_workspace_manager()
+            .get_active_workspace()
+            .get_work_area_for_monitor(monitor)
     }
 
     on_window_changed(win, event) {
@@ -111,42 +112,39 @@ var Ext = class Ext extends World {
         log(`tiled window size changed: ${win.name()}`);
     }
 
-    on_window_create(display, window, second_try) {
-        let actor = window.get_compositor_private();
-        if (!actor) {
-            if (!second_try) {
-                Mainloop.idle_add(bind(this, () => {
-                    this.on_window_create(display, window, true);
-                    return false;
-                }));
-            }
-            return;
-        }
+    on_window_create(window) {
+        GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
+            let win = this.get_window(window);
+            let actor = window.get_compositor_private();
+            if (win && actor) {
+                actor.connect('destroy', () => {
+                    log(`destroying window (${win.entity}): ${win.name()}`);
+                    this.delete_entity(win.entity);
+                });
 
-        let win = this.get_window(window);
-        if (win) {
-            win.meta.get_compositor_private().connect('destroy', () => {
-                log(`destroying window (${win.entity}): ${win.name()}`);
-                this.delete_entity(win.entity);
-            });
-
-            if (win.is_tilable()) {
-                this.connect_window(win, actor);
+                if (win.is_tilable()) {
+                    this.connect_window(win, actor);
+                }
             }
-        }
+
+            return false;
+        });
     }
 
     // Snaps all windows to the window grid
     snap_windows() {
-        this.tiler.snap_windows(
-            Meta.get_window_actors(global.display)
-                .map((win) => this.get_window(win.get_meta_window()))
-                .filter((win) => win.is_tilable())
-        );
+        log(`snapping windows`);
+        for (const window of this.windows.iter_values()) {
+            if (window.is_tilable()) this.tiler.snap(window);
+        }
     }
 
     tab_list(tablist, workspace) {
         return global.display.get_tab_list(tablist, workspace).map((win) => this.get_window(win));
+    }
+
+    tiled_windows() {
+        return this.entities.filter((entity) => this.contains_tag(entity, Tags.Tiled));
     }
 }
 
@@ -168,8 +166,9 @@ function enable() {
         .enable(ext.keybindings.window_swap);
 
     // Code to execute after the shell has finished initializing everything.
-    global.run_at_leisure(() => {
+    GLib.idle_add(GLib.PRIORITY_LOW, () => {
         ext.snap_windows();
+        return false;
     });
 }
 
