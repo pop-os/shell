@@ -1,7 +1,7 @@
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 const { Gio, Gdk, Meta, Shell, St } = imports.gi;
-const { Geom, Window } = Me.imports.lib;
+const { Geom, Window, or_else } = Me.imports.lib;
 const Main = imports.ui.main;
 
 var FocusSelector = class FocusSelector {
@@ -9,33 +9,34 @@ var FocusSelector = class FocusSelector {
         this.ext = ext;
     }
 
-    select(direction) {
+    select(direction, window = null) {
+        window = or_else(window, () => this.ext.focus_window());
         let window_list = this.ext.active_window_list();
-        return select(direction, this.ext.focus_window(), window_list);
+        return select(direction, window, window_list);
     }
 
-    down() {
-        return this.select(window_down);
+    down(window=null) {
+        return this.select(window_down, window);
     }
 
-    left() {
-        return this.select(window_left);
+    left(window=null) {
+        return this.select(window_left, window);
     }
 
-    right() {
-        return this.select(window_right);
+    right(window=null) {
+        return this.select(window_right, window);
     }
 
-    up() {
-        return this.select(window_up);
+    up(window=null) {
+        return this.select(window_up, window);
     }
 
-    monitor_left() {
-        return this.select(window_monitor_left);
+    monitor_left(window=null) {
+        return this.select(window_monitor_left, window);
     }
 
-    monitor_right() {
-        return this.select(window_monitor_right);
+    monitor_right(window=null) {
+        return this.select(window_monitor_right, window);
     }
 }
 
