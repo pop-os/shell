@@ -6,6 +6,18 @@ const { Meta, St } = imports.gi;
 var Geom = Me.imports.geom;
 var Window = Me.imports.window;
 
+function ok(input, func) {
+    return input ? func(input) : null;
+}
+
+function ok_or_else(input, ok_func, or_func) {
+    return input ? ok_func(input) : or_func();
+}
+
+function or_else(input, func) {
+    return input ? input : func();
+}
+
 function current_monitor() {
     return global.display.get_monitor_geometry(global.display.get_current_monitor());
 }
@@ -29,14 +41,14 @@ function* get_children(actor) {
 
 function join(iterable, next_func, between_func) {
     let iterator = iterable.values();
-    let first = iterator.next().value;
-    if (first) {
+    ok(iterator.next().value, (first) => {
         next_func(first);
+
         for (const item of iterator) {
             between_func();
             next_func(item);
         }
-    }
+    });
 }
 
 function log(text) {
