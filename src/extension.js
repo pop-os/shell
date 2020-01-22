@@ -74,7 +74,7 @@ var Ext = class Ext extends World {
         return this.tab_list(Meta.TabList.NORMAL, workspace);
     }
 
-    connect_window(win, actor) {
+    connect_window(win) {
         win.meta.connect('position-changed', () => this.on_window_changed(win, WINDOW_CHANGED_POSITION));
         win.meta.connect('size-changed', () => this.on_window_changed(win, WINDOW_CHANGED_SIZE));
     }
@@ -139,7 +139,7 @@ var Ext = class Ext extends World {
                 });
 
                 if (win.is_tilable()) {
-                    this.connect_window(win, actor);
+                    this.connect_window(win);
                 }
             }
 
