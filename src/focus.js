@@ -4,44 +4,43 @@ const { Gio, Gdk, Meta, Shell, St } = imports.gi;
 const { Geom, Window } = Me.imports.lib;
 const Main = imports.ui.main;
 
-var FocusSwitcher = class FocusSwitcher {
+var FocusSelector = class FocusSelector {
     constructor(ext) {
         this.ext = ext;
     }
 
-    shift(direction) {
+    select(direction) {
         let window_list = this.ext.active_window_list();
-        focus(direction, (win) => win.activate(), this.ext.focus_window(), window_list);
+        return select(direction, this.ext.focus_window(), window_list);
     }
 
     down() {
-        this.shift(window_down);
+        return this.select(window_down);
     }
 
     left() {
-        this.shift(window_left);
+        return this.select(window_left);
     }
 
     right() {
-        this.shift(window_right);
+        return this.select(window_right);
     }
 
     up() {
-        this.shift(window_up);
+        return this.select(window_up);
     }
 
     monitor_left() {
-        this.shift(window_monitor_left);
+        return this.select(window_monitor_left);
     }
 
     monitor_right() {
-        this.shift(window_monitor_right);
+        return this.select(window_monitor_right);
     }
 }
 
-function focus(windows, func, focused, window_list) {
-    let sorted = windows(focused, window_list)
-    if (sorted.length > 0) func(sorted[0]);
+function select(windows, focused, window_list) {
+    return windows(focused, window_list)[0];
 }
 
 function window_down(focused, windows) {

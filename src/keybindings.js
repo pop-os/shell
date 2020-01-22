@@ -10,12 +10,12 @@ var Keybindings = class Keybindings {
         };
 
         this.window_focus = {
-            "focus-left": () => ext.focus_switcher.left(),
-            "focus-down": () => ext.focus_switcher.down(ext.active_window_list()),
-            "focus-up": () => ext.focus_switcher.up(ext.active_window_list()),
-            "focus-right": () => ext.focus_switcher.right(ext.active_window_list()),
-            "focus-monitor-left": () => ext.focus_switcher.monitor_left(ext.active_window_list()),
-            "focus-monitor-right": () => ext.focus_switcher.monitor_right(ext.active_window_list())
+            "focus-left": () => ext.activate_window(ext.focus_selector.left()),
+            "focus-down": () => ext.activate_window(ext.focus_selector.down()),
+            "focus-up": () => ext.activate_window(ext.focus_selector.up()),
+            "focus-right": () => ext.activate_window(ext.focus_selector.right()),
+            "focus-monitor-left": () => ext.activate_window(ext.focus_selector.monitor_left()),
+            "focus-monitor-right": () => ext.activate_window(ext.focus_selector.monitor_right())
         };
     }
 

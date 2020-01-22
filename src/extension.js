@@ -3,7 +3,7 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 const Focus = Me.imports.focus;
 const { Gio, GLib, Meta, Shell, St } = imports.gi;
 const { bind } = imports.lang;
-const { cursor_rect, log } = Me.imports.lib;
+const { ok, cursor_rect, log } = Me.imports.lib;
 const { _defaultCssStylesheet, uiGroup, wm } = imports.ui.main;
 const { Keybindings } = Me.imports.keybindings;
 const { ShellWindow } = Me.imports.window;
@@ -54,7 +54,7 @@ var Ext = class Ext extends World {
 
         // Systems
 
-        this.focus_switcher = new Focus.FocusSwitcher(this);
+        this.focus_selector = new Focus.FocusSelector(this);
         this.tiler = new Tiler(this);
 
         // Signals
@@ -66,6 +66,10 @@ var Ext = class Ext extends World {
         for (const window of this.tab_list(Meta.TabList.NORMAL, null)) {
             this.on_window_create(window);
         }
+    }
+
+    activate_window(window) {
+        ok(window, (win) => win.activate());
     }
 
     active_window_list() {
