@@ -21,7 +21,7 @@ function entity_new(pos, gen) {
     return entity;
 }
 
-/// Storages hold components of a specific type, and define these associations on entities.
+/// Storages hold components of a specific type, and define these associations on entities
 ///
 /// # Implementation Notes
 ///
@@ -64,18 +64,14 @@ var Storage = class Storage {
         }
     }
 
-    /// Fetches the component for this entity, if it exists.
+    /// Fetches the component for this entity, if it exists
     get(entity) {
         let [id, gen] = entity;
-
-        let value = this._store[id];
-
-        if (!value || value[0] != gen) return null;
-
-        return value[1];
+        const val = this._store[id];
+        return (val && val[0] == gen) ? val[1] : null;
     }
 
-    /// Fetches the component, and initializing it if it is missing.
+    /// Fetches the component, and initializing it if it is missing
     get_or(entity, init) {
         let value = this.get(entity);
 
@@ -100,9 +96,17 @@ var Storage = class Storage {
         this._store[id] = [gen, component];
     }
 
-    /// Removes the component for this entity, if it exists.
+    /// Removes the component for this entity, if it exists
     remove(entity) {
+        let comp = this._store[entity];
         this._store[entity] = null;
+        return comp;
+    }
+
+    /// Apply a function to the component when it exists
+    with(entity, func) {
+        const component = this.get(entity);
+        return component ? func(component) : null
     }
 }
 
