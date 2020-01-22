@@ -1,6 +1,6 @@
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
-const { log, round_increment } = Me.imports.lib;
+const { log, ok, round_increment, take } = Me.imports.lib;
 const Main = imports.ui.main;
 const { Meta, St } = imports.gi;
 const Tags = Me.imports.tags;
@@ -14,6 +14,7 @@ var Tiler = class Tiler {
         this.ext = ext;
 
         this.window = null;
+        this.swap_window = null;
 
         this.keybindings = {
             "tile-move-left": () => this.move_left(),
@@ -151,6 +152,7 @@ var Tiler = class Tiler {
     }
 
     move_left() {
+        this.swap_window = null;
         let rect = this.rect();
         if (!rect) return;
         this.change(this.ext.overlay, rect, -1, 0, 0, 0)
@@ -158,6 +160,7 @@ var Tiler = class Tiler {
     }
 
     move_down() {
+        this.swap_window = null;
         let rect = this.rect();
         if (!rect) return;
         this.change(this.ext.overlay, rect, 0, 1, 0, 0)
@@ -165,6 +168,7 @@ var Tiler = class Tiler {
     }
 
     move_up() {
+        this.swap_window = null;
         let rect = this.rect();
         if (!rect) return;
         this.change(this.ext.overlay, rect, 0, -1, 0, 0)
@@ -172,6 +176,7 @@ var Tiler = class Tiler {
     }
 
     move_right() {
+        this.swap_window = null;
         let rect = this.rect();
         if (!rect) return;
         this.change(this.ext.overlay, rect, 1, 0, 0, 0)
@@ -179,6 +184,7 @@ var Tiler = class Tiler {
     }
 
     resize_left() {
+        this.swap_window = null;
         let rect = this.rect();
         if (!rect) return;
         this.change(this.ext.overlay, rect, 0, 0, -1, 0)
@@ -186,6 +192,7 @@ var Tiler = class Tiler {
     }
 
     resize_down() {
+        this.swap_window = null;
         let rect = this.rect();
         if (!rect) return;
         this.change(this.ext.overlay, rect, 0, 0, 0, 1)
@@ -193,6 +200,7 @@ var Tiler = class Tiler {
     }
 
     resize_up() {
+        this.swap_window = null;
         let rect = this.rect();
         if (!rect) return;
         this.change(this.ext.overlay, rect, 0, 0, 0, -1)
@@ -200,38 +208,34 @@ var Tiler = class Tiler {
     }
 
     resize_right() {
+        this.swap_window = null;
         let rect = this.rect();
         if (!rect) return;
         this.change(this.ext.overlay, rect, 0, 0, 1, 0)
             .change(this.ext.overlay, rect, 0, 0, 0, 0);
     }
 
+    swap(selector) {
+        ok(selector, (win) => {
+            this.ext.set_overlay(win.meta.get_frame_rect());
+            this.swap_window = win;
+        });
+    }
+
     swap_left() {
-        let rect = this.rect();
-        if (!rect) return;
-        this.change(this.ext.overlay, rect, -1, 0, 0, 0)
-            .change(this.ext.overlay, rect, 0, 0, 0, 0);
+        this.swap(this.ext.focus_selector.left(this.swap_window));
     }
 
     swap_down() {
-        let rect = this.rect();
-        if (!rect) return;
-        this.change(this.ext.overlay, rect, 0, 1, 0, 0)
-            .change(this.ext.overlay, rect, 0, 0, 0, 0);
+        this.swap(this.ext.focus_selector.down(this.swap_window));
     }
 
     swap_up() {
-        let rect = this.rect();
-        if (!rect) return;
-        this.change(this.ext.overlay, rect, 0, -1, 0, 0)
-            .change(this.ext.overlay, rect, 0, 0, 0, 0);
+        this.swap(this.ext.focus_selector.up(this.swap_window));
     }
 
     swap_right() {
-        let rect = this.rect();
-        if (!rect) return;
-        this.change(this.ext.overlay, rect, 1, 0, 0, 0)
-            .change(this.ext.overlay, rect, 0, 0, 0, 0);
+        this.swap(this.ext.focus_selector.right(this.swap_window));
     }
 
     enter() {
@@ -240,11 +244,7 @@ var Tiler = class Tiler {
             if (!this.window) return;
 
             // Set overlay to match window
-            let rect = this.window.meta.get_frame_rect();
-            this.ext.overlay.x = rect.x;
-            this.ext.overlay.y = rect.y;
-            this.ext.overlay.width = rect.width;
-            this.ext.overlay.height = rect.height;
+            this.ext.set_overlay(this.window.meta.get_frame_rect());
             this.ext.overlay.visible = true;
 
             // Make sure overlay is valid
@@ -257,6 +257,11 @@ var Tiler = class Tiler {
 
     accept() {
         if (this.window) {
+            if (this.swap_window) {
+                this.swap_window.move(this.window.meta.get_frame_rect());
+                this.swap_window = null;
+            }
+
             this.window.move(this.ext.overlay);
             this.ext.add_tag(this.window.entity, Tags.Tiled);
         }

@@ -21,13 +21,13 @@ dconf write /org/gnome/desktop/wm/keybindings/switch-to-workspace-right "@as []"
 
 # Super + direction keys, move window left and right monitors, or up and down workspaces
 # Move window one monitor to the left
-dconf write /org/gnome/desktop/wm/keybindings/move-to-monitor-left "['<Primary><Shift><Super>Left','<Primary><Shift><Super>${left}']"
+dconf write /org/gnome/desktop/wm/keybindings/move-to-monitor-left "['<Shift><Super>Left','<Shift><Super>${left}']"
 # Move window one workspace down
-dconf write /org/gnome/desktop/wm/keybindings/move-to-workspace-down "['<Primary><Shift><Super>Down','<Primary><Shift><Super>${down}']"
+dconf write /org/gnome/desktop/wm/keybindings/move-to-workspace-down "['<Shift><Super>Down','<Shift><Super>${down}']"
 # Move window one workspace up
-dconf write /org/gnome/desktop/wm/keybindings/move-to-workspace-up "['<Primary><Shift><Super>Up','<Primary><Shift><Super>${up}']"
+dconf write /org/gnome/desktop/wm/keybindings/move-to-workspace-up "['<Shift><Super>Up','<Shift><Super>${up}']"
 # Move window one monitor to the right
-dconf write /org/gnome/desktop/wm/keybindings/move-to-monitor-right "['<Primary><Shift><Super>Right','<Primary><Shift><Super>${right}']"
+dconf write /org/gnome/desktop/wm/keybindings/move-to-monitor-right "['<Shift><Super>Right','<Shift><Super>${right}']"
 
 # Super + Ctrl + direction keys, change workspaces, move focus between monitors
 # Move to workspace below
