@@ -44,6 +44,7 @@ var Ext = class Ext extends World {
 
         this.icons = this.register_storage();
         this.ids = this.register_storage();
+        this.monitors = this.register_storage();
         this.names = this.register_storage();
         this.tilable = this.register_storage();
         this.windows = this.register_storage();
@@ -90,6 +91,25 @@ var Ext = class Ext extends World {
         return entity ? this.windows.get(entity) : null;
     }
 
+    /// Finds the largest window on a monitor.
+    largest_window_on(monitor) {
+        let largest = null;
+        let largest_size = 0;
+
+        for (const entity of this.monitors.find((m) => m == monitor)) {
+            this.windows.with(entity, (window) => {
+                let rect = window.meta.get_frame_rect();
+                let window_size = rect.width * rect.height;
+                if (largest_size < window_size) {
+                    largest = window;
+                    largest_size = window_size;
+                }
+            });
+        }
+
+        return largest;
+    }
+
     load_settings() {
         this.tiler.set_gap(settings.gap());
     }
@@ -123,9 +143,7 @@ var Ext = class Ext extends World {
     }
 
     on_window_changed(win, event) {
-        // if (win.is_tilable()) {
-        //     log(`tiled window size changed: ${win.name()}`);
-        // }
+        this.window_monitor_change(win);
     }
 
     on_window_create(window) {
@@ -175,13 +193,27 @@ var Ext = class Ext extends World {
         // If not found, create a new entity with a ShellWindow component.
         if (!entity) {
             entity = this.create_entity();
+
             let win = new ShellWindow(entity, meta, this);
+
             this.windows.insert(entity, win);
             this.ids.insert(entity, id);
+            this.monitors.insert(entity, win.meta.get_monitor());
+
             log(`added window (${win.entity}): ${win.name()}`);
         }
 
         return entity;
+    }
+
+    /// Handles the event of a window moving from one monitor to another.
+    window_monitor_change(win) {
+        let expected_monitor = this.monitors.get(win.entity);
+        let actual_monitor = win.meta.get_monitor();
+        if (expected_monitor != actual_monitor) {
+            log(`window ${win.name()} moved from display ${expected_monitor} to ${actual_monitor}`);
+            this.monitors.insert(win.entity, actual_monitor);
+        }
     }
 }
 
