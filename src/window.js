@@ -81,6 +81,11 @@ var ShellWindow = class ShellWindow {
         );
     }
 
+    move_snap(rect) {
+        this.move(rect);
+        this.ext.tiler.snap(this);
+    }
+
     name() {
         return this.ext.names.get_or(this.entity, () => {
             try {
