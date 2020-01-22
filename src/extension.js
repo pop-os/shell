@@ -17,18 +17,28 @@ const { Swapper } = Me.imports.swapper;
 const WINDOW_CHANGED_POSITION = 0;
 const WINDOW_CHANGED_SIZE = 1;
 
+var GrabOp = class GrabOp {
+    constructor(entity, xpos, ypos) {
+        this.entity = entity;
+        this.xpos = xpos;
+        this.ypos = ypos;
+    }
+
+    pos() {
+        return [this.xpos, this.ypos];
+    }
+}
+
 var Ext = class Ext extends World {
     constructor() {
         super();
 
         // Misc
 
+        this.grab_op = null;
         this.keybindings = new Keybindings(this);
         this.settings = new ExtensionSettings();
-
-        this.overlay = new St.BoxLayout({
-            style_class: "tile-preview"
-        });
+        this.overlay = new St.BoxLayout({ style_class: "tile-preview" });
 
         // Storages
 
@@ -51,6 +61,8 @@ var Ext = class Ext extends World {
         // Signals
 
         global.display.connect('window_created', (_, win) => this.on_window_create(win));
+        global.display.connect('grab-op-begin', (_, _display, win, op) => this.on_grab_start(win, op));
+        global.display.connect('grab-op-end', (_, _display, win, op) => this.on_grab_end(win, op));
 
         for (const window of this.tab_list(Meta.TabList.NORMAL, null)) {
             this.on_window_create(window);
@@ -85,6 +97,18 @@ var Ext = class Ext extends World {
         return global.display.get_workspace_manager()
             .get_active_workspace()
             .get_work_area_for_monitor(monitor)
+    }
+
+    on_grab_end(meta, op) {
+
+    }
+
+    on_grab_start(meta, op) {
+        let win = this.window(meta);
+        if (win) {
+            let rect = meta.get_frame_rect();
+            this.grab_op = new GrabOp(win, rect.x, rect.y);
+        }
     }
 
     on_window_changed(win, event) {
