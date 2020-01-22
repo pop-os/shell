@@ -1,7 +1,7 @@
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
+const { log } = Me.imports.lib;
 const { Gdk, Meta, Shell, St } = imports.gi;
-
 
 /// Activates a window, and moves the mouse point to the center of it.
 function activate(win) {
@@ -61,7 +61,7 @@ var ShellWindow = class ShellWindow {
         return this.ext.tilable.get_or(this.entity, () => {
             return !this.meta.is_skip_taskbar()
                 && !blacklisted(this.meta.get_wm_class())
-                && this.meta['window-type'] == Meta.WindowType.NORMAL;
+                && this.meta.window_type == Meta.WindowType.NORMAL;
         });
     }
 
@@ -69,6 +69,8 @@ var ShellWindow = class ShellWindow {
         this.meta.unmaximize(Meta.MaximizeFlags.HORIZONTAL);
         this.meta.unmaximize(Meta.MaximizeFlags.VERTICAL);
         this.meta.unmaximize(Meta.MaximizeFlags.HORIZONTAL | Meta.MaximizeFlags.VERTICAL);
+
+        log(`moving ${this.name()} to (${rect.x},${rect.y},${rect.width},${rect.height})`);
 
         this.meta.move_resize_frame(
             true,
