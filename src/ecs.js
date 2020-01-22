@@ -124,6 +124,21 @@ var World = class World {
         this._free_slots = new Array();
     }
 
+    /// The total capacity of the entity array
+    get capacity() {
+        return this.entities.length;
+    }
+
+    /// The number of unallocated entity slots
+    get free() {
+        return this._free_slots.length;
+    }
+
+    /// The number of allocated entities
+    get length() {
+        return this.capacity() - this.free();
+    }
+
     /// Fetches tags associated with an entity
     ///
     /// Tags are essentially a dense set of small components
