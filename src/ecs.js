@@ -34,18 +34,25 @@ var Storage = class Storage {
         this._store = new Array();
     }
 
+    /// Private method for iterating across allocated slots
+    * _iter() {
+        let idx = 0;
+        for (const slot of this._store) {
+            if (slot) yield [idx, slot];
+            idx += 1;
+        }
+    }
+
     /// Iterates across each stored component, and their entities
     * iter() {
-        let idx = 0;
-        for (const [gen, value] of this._store) {
+        for (const [idx, [gen, value]] of this._iter()) {
             yield [entity_new(idx, gen), value];
-            idx += 1;
         }
     }
 
     /// Iterates across each stored component
     * iter_values() {
-        for (const [_, value] of this._store) {
+        for (const [_idx, [_gen, value]] of this._iter()) {
             yield value;
         }
     }
