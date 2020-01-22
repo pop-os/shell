@@ -86,7 +86,8 @@ var Ext = class Ext extends World {
     /// Fetches the window component from the entity associated with the metacity window metadata.
     get_window(meta) {
         // TODO: Deprecate this
-        return this.windows.get(this.window(meta));
+        let entity = this.window(meta);
+        return entity ? this.windows.get(entity) : null;
     }
 
     load_settings() {
