@@ -46,6 +46,18 @@ dconf write /org/gnome/settings-daemon/plugins/media-keys/email "['<Super>e']"
 # Launch web browser
 dconf write /org/gnome/settings-daemon/plugins/media-keys/www "['<Super>b']"
 
+if test "$1" = 'tile-by-default'; then
+    echo 'enabling tile by default'
+    gsettings \
+        --schemadir ~/.local/share/gnome-shell/extensions/pop-shell@system76.com/schemas/ \
+        set org.gnome.shell.extensions.pop-shell tile-by-default true
+else
+    echo 'disabling tile by default'
+    gsettings \
+        --schemadir ~/.local/share/gnome-shell/extensions/pop-shell@system76.com/schemas/ \
+        set org.gnome.shell.extensions.pop-shell tile-by-default false
+fi
+
 # Enable extension
 gnome-extensions enable "pop-shell@system76.com"
 
