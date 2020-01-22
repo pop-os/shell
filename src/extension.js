@@ -3,7 +3,7 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 const Focus = Me.imports.focus;
 const { Gio, GLib, Meta, Shell, St } = imports.gi;
 const { bind } = imports.lang;
-const { log } = Me.imports.lib;
+const { cursor_rect, log } = Me.imports.lib;
 const { _defaultCssStylesheet, uiGroup, wm } = imports.ui.main;
 const { Keybindings } = Me.imports.keybindings;
 const { ShellWindow } = Me.imports.window;
@@ -216,6 +216,20 @@ var Ext = class Ext extends World {
         if (expected_monitor != actual_monitor) {
             log(`window ${win.name()} moved from display ${expected_monitor} to ${actual_monitor}`);
             this.monitors.insert(win.entity, actual_monitor);
+        }
+    }
+
+    /// Returns the window(s) that the mouse pointer is currently hoving above.
+    * windows_at_pointer() {
+        let cursor = cursor_rect();
+        let monitor = global.display.get_monitor_index_for_rect(cursor);
+
+        for (const entity of this.monitors.find((m) => m == monitor)) {
+            let window = this.windows.with(entity, (window) => {
+                return window.meta.get_frame_rect().contains_rect(cursor) ? window : null;
+            });
+
+            if (window) yield window;
         }
     }
 }
