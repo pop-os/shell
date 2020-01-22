@@ -169,7 +169,7 @@ var Ext = class Ext extends World {
         let id = meta.get_stable_sequence();
 
         // Locate the window entity with the matching ID
-        let entity = this.ids.find(id).next().value;
+        let entity = this.ids.find((comp) => comp == id).next().value;
 
         // If not found, create a new entity with a ShellWindow component.
         if (!entity) {

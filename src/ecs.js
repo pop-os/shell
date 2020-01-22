@@ -57,14 +57,10 @@ var Storage = class Storage {
         }
     }
 
-    /// Finds values which the matching component
-    * find(component) {
-        let idx = 0;
-        for (const [gen, value] of this._store) {
-            if (value == component) {
-                yield entity_new(idx, gen);
-            }
-            idx += 1;
+    /// Finds values with the matching component
+    * find(func) {
+        for (const [idx, [gen, value]] of this._iter()) {
+            if (func(value)) yield entity_new(idx, gen);
         }
     }
 
