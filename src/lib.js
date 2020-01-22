@@ -1,13 +1,19 @@
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 const Main = imports.ui.main;
-const { St } = imports.gi;
+const { Meta, St } = imports.gi;
 
 var Geom = Me.imports.geom;
 var Window = Me.imports.window;
 
 function current_monitor() {
     return global.display.get_monitor_geometry(global.display.get_current_monitor());
+}
+
+// Fetch a `Meta.Rectangle` that represents the pointer.
+function cursor_rect() {
+    let [x, y] = global.get_pointer();
+    return new Meta.Rectangle({ x: x, y: y, width: 1, height: 1 });
 }
 
 /// Missing from the Clutter API is an Actor children iterator
