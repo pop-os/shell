@@ -42,11 +42,11 @@ var Ext = class Ext extends World {
 
         // Storages
 
-        this.icons = new Storage();
-        this.ids = new Storage();
-        this.names = new Storage();
-        this.tilable = new Storage();
-        this.windows = new Storage();
+        this.icons = this.register_storage();
+        this.ids = this.register_storage();
+        this.names = this.register_storage();
+        this.tilable = this.register_storage();
+        this.windows = this.register_storage();
 
         // Dialogs
 
