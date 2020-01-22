@@ -25,7 +25,6 @@ sources = src/extension.js \
 	src/window.js \
 	src/window_search.js \
 	src/shortcut_overlay.js \
-	src/swapper.js \
 	stylesheet.css
 
 all: $(sources) metadata.json schemas

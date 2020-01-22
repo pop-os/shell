@@ -12,7 +12,6 @@ const Tags = Me.imports.tags;
 const { Tiler } = Me.imports.tiling;
 const { ExtensionSettings, Settings } = Me.imports.settings;
 const { Storage, World, entity_eq } = Me.imports.ecs;
-const { Swapper } = Me.imports.swapper;
 
 const WINDOW_CHANGED_POSITION = 0;
 const WINDOW_CHANGED_SIZE = 1;
@@ -56,7 +55,6 @@ var Ext = class Ext extends World {
         // Systems
 
         this.focus_switcher = new Focus.FocusSwitcher(this);
-        this.swapper = new Swapper(this);
         this.tiler = new Tiler(this);
 
         // Signals
@@ -250,7 +248,6 @@ function enable() {
 
     ext.keybindings.enable(ext.keybindings.global)
         .enable(ext.keybindings.window_focus)
-        .enable(ext.keybindings.window_swap);
 
     // Code to execute after the shell has finished initializing everything.
     GLib.idle_add(GLib.PRIORITY_LOW, () => {
@@ -268,7 +265,6 @@ function disable() {
 
     ext.keybindings.disable(ext.keybindings.global)
         .disable(ext.keybindings.window_focus)
-        .disable(ext.keybindings.window_swap);
 
     ext = null;
 }

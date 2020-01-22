@@ -17,13 +17,6 @@ var Keybindings = class Keybindings {
             "focus-monitor-left": () => ext.focus_switcher.monitor_left(ext.active_window_list()),
             "focus-monitor-right": () => ext.focus_switcher.monitor_right(ext.active_window_list())
         };
-
-        this.window_swap = {
-            "swap-above": () => ext.swapper.above(),
-            "swap-below": () => ext.swapper.below(),
-            "swap-left": () => ext.swapper.left(),
-            "swap-right": () => ext.swapper.right()
-        };
     }
 
     enable(keybindings) {

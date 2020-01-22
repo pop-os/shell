@@ -100,33 +100,5 @@
             <default><![CDATA[['Escape']]]></default>
             <summary>Reject tiling changes</summary>
         </key>
-
-        <key type="as" name="swap-above">
-            <default>
-                <![CDATA[['<Super><Shift>Up','<Super><Shift>h']]]>
-            </default>
-            <summary>Swap location of window with the window above</summary>
-        </key>
-
-        <key type="as" name="swap-below">
-            <default>
-                <![CDATA[['<Super><Shift>Down','<Super><Shift>j']]]>
-            </default>
-            <summary>Swap location of window with the window below</summary>
-        </key>
-
-        <key type="as" name="swap-left">
-            <default>
-                <![CDATA[['<Super><Shift>Left','<Super><Shift>h']]]>
-            </default>
-            <summary>Swap location of window with the left window</summary>
-        </key>
-
-        <key type="as" name="swap-right">
-            <default>
-                <![CDATA[['<Super><Shift>Right','<Super><Shift>l']]]>
-            </default>
-            <summary>Swap location of window with the right window</summary>
-        </key>
     </schema>
 </schemalist>

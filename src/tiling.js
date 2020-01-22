@@ -251,7 +251,6 @@ var Tiler = class Tiler {
             this.change(this.ext.overlay, this.rect(), 0, 0, 0, 0);
 
             this.ext.keybindings.disable(this.ext.keybindings.window_focus)
-                .disable(this.ext.keybindings.window_swap)
                 .enable(this.keybindings);
         }
     }
@@ -274,8 +273,7 @@ var Tiler = class Tiler {
 
             // Disable tiling keybindings
             this.ext.keybindings.disable(this.keybindings)
-                .enable(this.ext.keybindings.window_focus)
-                .enable(this.ext.keybindings.window_swap);
+                .enable(this.ext.keybindings.window_focus);
         }
     }
 
