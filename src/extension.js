@@ -11,7 +11,7 @@ const { WindowSearch } = Me.imports.window_search;
 const Tags = Me.imports.tags;
 const { Tiler } = Me.imports.tiling;
 const { ExtensionSettings, Settings } = Me.imports.settings;
-const { Storage, World } = Me.imports.ecs;
+const { Storage, World, entity_eq } = Me.imports.ecs;
 const { Swapper } = Me.imports.swapper;
 
 const WINDOW_CHANGED_POSITION = 0;
@@ -100,7 +100,17 @@ var Ext = class Ext extends World {
     }
 
     on_grab_end(meta, op) {
+        let win = this.get_window(meta);
 
+        if (win && this.grab_op && entity_eq(this.grab_op.entity, win.entity)) {
+            let opos = this.grab_op.pos();
+            let crect = win.meta.get_frame_rect()
+
+            if (opos != [crect.x, crect.y]) {
+                log(`win: ${win.name()}; op: ${op}; from (${opos[0]},${opos[1]}) to (${crect.x},${crect.y})`);
+                this.tiler.snap(win);
+            }
+        }
     }
 
     on_grab_start(meta, op) {
@@ -112,11 +122,9 @@ var Ext = class Ext extends World {
     }
 
     on_window_changed(win, event) {
-        if (!this.contains_tag(win.entity, Tags.Tiled)) {
-            return;
-        }
-
-        log(`tiled window size changed: ${win.name()}`);
+        // if (win.is_tilable()) {
+        //     log(`tiled window size changed: ${win.name()}`);
+        // }
     }
 
     on_window_create(window) {
