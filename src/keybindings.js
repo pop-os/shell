@@ -28,7 +28,6 @@ var Keybindings = class Keybindings {
 
     enable(keybindings) {
         for (const name in keybindings) {
-            log(`adding ${name}`);
             wm.addKeybinding(
                 name,
                 this.ext.settings.inner,
@@ -43,7 +42,6 @@ var Keybindings = class Keybindings {
 
     disable(keybindings) {
         for (const name in keybindings) {
-            log(`removing ${name}`);
             wm.removeKeybinding(name);
         }
 
