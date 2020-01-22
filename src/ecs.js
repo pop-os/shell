@@ -106,34 +106,47 @@ var Storage = class Storage {
     }
 }
 
-/// The world maintains all of the entities, which have their components associated in storages.
+/// The world maintains all of the entities, which have their components associated in storages
 ///
 /// # Implementation Notes
 ///
-/// This implementation consists of two arrays. One for storing entities, and another for storing tags for each entity.
-/// Tags are similar to array-backed storages, but are sets containing miscellaneous bits of sparse data.
+/// This implementation consists of:
+///
+/// - An array for storing entities
+/// - An array for containing a list of free slots to allocate
+/// - An array for storing tags associated with an entity
 var World = class World {
     constructor() {
         this.entities = new Array();
         this._tags = new Array();
+        this._free_slots = new Array();
     }
 
+    /// Fetches tags associated with an entity
+    ///
+    /// Tags are essentially a dense set of small components
     tags(entity) {
         return this._tags[entity[0]];
     }
 
-    /// Create a new entity in the world.
+    /// Iterates across entities in the world
+    * entities() {
+        for (const entity in this.entities) {
+            if (null != entity[0]) yield entity;
+        }
+    }
+
+    /// Create a new entity in the world
     ///
     /// Find the first available slot, and increment the generation.
     create_entity() {
-        let entity = this.entities.find((slot) => slot[0] == null);
+        let slot = this._free_slots.pop();
 
-        if (entity) {
-            // Reuse the slot; incrementing the generation. It's acceptable to overflow after `MAXUINT32`.
+        if (slot) {
+            var entity = this.entities[slot];
             entity[1] += 1;
         } else {
-            // Create a new slot to append our new entity to.
-            entity = entity_new(this.entities.length, 0);
+            var entity = entity_new(this.entities.length, 0);
             this.entities.push(entity);
             this._tags.push(new Set());
         }
@@ -141,22 +154,30 @@ var World = class World {
         return entity;
     }
 
-    /// Deletes an entity from the world.
+    /// Deletes an entity from the world
     ///
     /// Sets the `id` of the entity to `null`, thus marking its slot as unused.
     delete_entity(entity) {
+        for (const storage of this.storages) {
+            storage.remove(entity);
+        }
+
         this.entities[entity[0]][0] = null;
         this.tags(entity).clear();
+        this._free_slots.push(entity[0]);
     }
 
+    /// Adds a new tag to the given entity
     add_tag(entity, tag) {
         this.tags(entity).add(tag);
     }
 
+    /// Returns `true` if this tag exists for the given entity
     contains_tag(entity, tag) {
         return this.tags(entity).has(tag);
     }
 
+    /// Deletes a tag from the given entity
     delete_tag(entity, tag) {
         this.tags(entity).delete(tag);
     }
