@@ -57,14 +57,14 @@ var Ext = class Ext extends World {
         }
     }
 
-    connect_window(win, actor) {
-        win.meta.connect('position-changed', () => this.on_window_changed(win, WINDOW_CHANGED_POSITION));
-        win.meta.connect('size-changed', () => this.on_window_changed(win, WINDOW_CHANGED_SIZE));
-    }
-
     active_window_list() {
         let workspace = global.workspace_manager.get_active_workspace();
         return this.tab_list(Meta.TabList.NORMAL, workspace);
+    }
+
+    connect_window(win, actor) {
+        win.meta.connect('position-changed', () => this.on_window_changed(win, WINDOW_CHANGED_POSITION));
+        win.meta.connect('size-changed', () => this.on_window_changed(win, WINDOW_CHANGED_SIZE));
     }
 
     focus_window() {
@@ -75,27 +75,6 @@ var Ext = class Ext extends World {
     get_window(meta) {
         // TODO: Deprecate this
         return this.windows.get(this.window(meta));
-    }
-
-    /// Fetches the window entity which is associated with the metacity window metadata.
-    window(meta) {
-        if (!meta) return null;
-
-        let id = meta.get_stable_sequence();
-
-        // Locate the window entity with the matching ID
-        let entity = this.ids.find(id).next().value;
-
-        // If not found, create a new entity with a ShellWindow component.
-        if (!entity) {
-            entity = this.create_entity();
-            let win = new ShellWindow(entity, meta, this);
-            this.windows.insert(entity, win);
-            this.ids.insert(entity, id);
-            log(`added window (${win.entity}): ${win.name()}`);
-        }
-
-        return entity;
     }
 
     load_settings() {
@@ -149,6 +128,27 @@ var Ext = class Ext extends World {
 
     tiled_windows() {
         return this.entities.filter((entity) => this.contains_tag(entity, Tags.Tiled));
+    }
+
+    /// Fetches the window entity which is associated with the metacity window metadata.
+    window(meta) {
+        if (!meta) return null;
+
+        let id = meta.get_stable_sequence();
+
+        // Locate the window entity with the matching ID
+        let entity = this.ids.find(id).next().value;
+
+        // If not found, create a new entity with a ShellWindow component.
+        if (!entity) {
+            entity = this.create_entity();
+            let win = new ShellWindow(entity, meta, this);
+            this.windows.insert(entity, win);
+            this.ids.insert(entity, id);
+            log(`added window (${win.entity}): ${win.name()}`);
+        }
+
+        return entity;
     }
 }
 
