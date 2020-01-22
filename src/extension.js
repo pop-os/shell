@@ -120,6 +120,12 @@ var Ext = class Ext extends World {
             .get_work_area_for_monitor(monitor)
     }
 
+    on_destroy(win) {
+        log(`destroying window (${win.entity}): ${win.name()}`);
+
+        this.delete_entity(win.entity);
+    }
+
     on_grab_end(meta, op) {
         let win = this.get_window(meta);
 
@@ -151,10 +157,7 @@ var Ext = class Ext extends World {
             let win = this.get_window(window);
             let actor = window.get_compositor_private();
             if (win && actor) {
-                actor.connect('destroy', () => {
-                    log(`destroying window (${win.entity}): ${win.name()}`);
-                    this.delete_entity(win.entity);
-                });
+                actor.connect('destroy', () => this.on_destroy(win));
 
                 if (win.is_tilable()) {
                     this.connect_window(win);
