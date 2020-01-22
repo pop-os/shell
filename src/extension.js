@@ -170,6 +170,13 @@ var Ext = class Ext extends World {
         });
     }
 
+    set_overlay(rect) {
+        this.overlay.x = rect.x;
+        this.overlay.y = rect.y;
+        this.overlay.width = rect.width;
+        this.overlay.height = rect.height;
+    }
+
     // Snaps all windows to the window grid
     snap_windows() {
         log(`snapping windows`);
