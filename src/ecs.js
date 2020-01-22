@@ -10,6 +10,10 @@
 /// - The second 32-bit integer is the generation.
 const Entity = new Uint32Array(2);
 
+function entity_eq(a, b) {
+    return a[0] == b[0] && b[1] == b[1];
+}
+
 function entity_new(pos, gen) {
     let entity = new Uint32Array(Entity);
     entity[0] = pos;
