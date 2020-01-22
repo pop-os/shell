@@ -113,11 +113,13 @@ var Storage = class Storage {
 /// This implementation consists of:
 ///
 /// - An array for storing entities
+/// - An array for storing a list of registered storages
 /// - An array for containing a list of free slots to allocate
 /// - An array for storing tags associated with an entity
 var World = class World {
     constructor() {
         this.entities = new Array();
+        this.storages = new Array();
         this._tags = new Array();
         this._free_slots = new Array();
     }
@@ -180,5 +182,14 @@ var World = class World {
     /// Deletes a tag from the given entity
     delete_tag(entity, tag) {
         this.tags(entity).delete(tag);
+    }
+
+    /// Registers a new component storage for our world
+    ///
+    /// This will be used to easily remove components when deleting an entity.
+    register_storage() {
+        let storage = new Storage();
+        this.storages.push(storage);
+        return storage;
     }
 }
