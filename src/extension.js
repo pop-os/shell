@@ -37,7 +37,7 @@ var Ext = class Ext extends World {
         this.grab_op = null;
         this.keybindings = new Keybindings(this);
         this.settings = new ExtensionSettings();
-        this.overlay = new St.BoxLayout({ style_class: "tile-preview" });
+        this.overlay = new St.BoxLayout({ style_class: "tile-preview", visible: false });
 
         // Storages
 
