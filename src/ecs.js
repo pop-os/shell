@@ -64,6 +64,15 @@ var Storage = class Storage {
         }
     }
 
+    /**
+     * Checks if the component associated with this entity exists
+     *
+     * @param {Entity} entity
+     */
+    contains(entity) {
+        return this.get(entity) != null;
+    }
+
     /// Fetches the component for this entity, if it exists
     get(entity) {
         let [id, gen] = entity;
@@ -101,6 +110,17 @@ var Storage = class Storage {
         let comp = this._store[entity];
         this._store[entity] = null;
         return comp;
+    }
+
+    /**
+     * Takes the component associated with the `entity`, and passes it into the `func` callback
+     *
+     * @param {Entity} entity
+     * @param {function} func
+     */
+    take_with(entity, func) {
+        const component = this.remove(entity);
+        return component ? func(component) : null;
     }
 
     /// Apply a function to the component when it exists
@@ -211,4 +231,19 @@ var World = class World {
         this.storages.push(storage);
         return storage;
     }
+
+    /// Unregisters an old component storage from our world
+    unregister_storage(storage) {
+        let matched = this.storages.indexOf(storage);
+        if (matched) {
+            log(`unregistering a storage`);
+            swap_remove(this.storages, matched);
+        }
+    }
+}
+
+function swap_remove(array, index) {
+    const last = array.length - 1;
+    array[index] = array[last];
+    return array.pop();
 }
