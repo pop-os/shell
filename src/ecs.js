@@ -201,12 +201,11 @@ var World = class World {
     ///
     /// Sets the `id` of the entity to `null`, thus marking its slot as unused.
     delete_entity(entity) {
+        this.tags(entity).clear();
         for (const storage of this.storages) {
             storage.remove(entity);
         }
 
-        this.entities[entity[0]][0] = null;
-        this.tags(entity).clear();
         this._free_slots.push(entity[0]);
     }
 
