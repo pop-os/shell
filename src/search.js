@@ -87,7 +87,9 @@ var Search = GObject.registerClass(
 
             this.contentLayout.add(this.entry);
             this.contentLayout.add(this.list);
-            this.contentLayout.width = current_monitor().width / 4;
+
+            // Ensure that the width is at least 480 pixels wide.
+            this.contentLayout.width = Math.max(current_monitor().width / 4, 480);
         }
 
         clear() {
