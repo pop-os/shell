@@ -107,8 +107,10 @@ var Storage = class Storage {
 
     /// Removes the component for this entity, if it exists
     remove(entity) {
-        let comp = this._store[entity];
-        this._store[entity] = null;
+        const comp = this.get(entity);
+        if (comp) {
+            this._store[entity[0]] = null;
+        };
         return comp;
     }
 
