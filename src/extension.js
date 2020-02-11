@@ -12,6 +12,7 @@ const Tags = Me.imports.tags;
 const { Tiler } = Me.imports.tiling;
 const { ExtensionSettings, Settings } = Me.imports.settings;
 const { Storage, World, entity_eq } = Me.imports.ecs;
+const { Indicator } = Me.imports.panel_settings;
 
 const WINDOW_CHANGED_POSITION = 0;
 const WINDOW_CHANGED_SIZE = 1;
@@ -248,7 +249,8 @@ var Ext = class Ext extends World {
     }
 }
 
-var ext = null;
+let ext;
+let indicator;
 
 function init() {
     log("init");
@@ -259,7 +261,11 @@ function enable() {
 
     load_theme();
 
-    ext = new Ext();
+    if (!indicator) {
+        indicator = new Indicator(ext);
+        panel.addToStatusArea('pop-shell', indicator);
+    }
+
     uiGroup.add_actor(ext.overlay);
 
     ext.keybindings.enable(ext.keybindings.global)
@@ -275,14 +281,21 @@ function enable() {
 function disable() {
     log("disable");
 
-    uiGroup.remove_actor(ext.overlay);
+    if (indicator) {
+        indicator.destroy();
+        indicator = null;
+    }
 
-    ext.tiler.exit();
+    if (ext) {
+        uiGroup.remove_actor(ext.overlay);
 
-    ext.keybindings.disable(ext.keybindings.global)
-        .disable(ext.keybindings.window_focus)
+        ext.tiler.exit();
 
-    ext = null;
+        ext.settings.sync();
+
+        ext.keybindings.disable(ext.keybindings.global)
+            .disable(ext.keybindings.window_focus)
+    }
 }
 
 // Supplements the GNOME Shell theme with the extension's theme.

@@ -31,6 +31,10 @@ var ExtensionSettings = class ExtensionSettings extends Settings {
         return this.inner.get_uint('gap-inner');
     }
 
+    set_gap(gap) {
+        this.inner.set_uint('gap-inner', gap);
+    }
+
     tile_by_default() {
         return this.inner.get_boolean('tile-by-default');
     }

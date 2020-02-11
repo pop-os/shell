@@ -18,6 +18,7 @@ sources = src/extension.js \
 	src/geom.js \
 	src/keybindings.js \
 	src/lib.js \
+	src/panel_settings.js \
 	src/search.js \
 	src/settings.js \
 	src/tags.js \
