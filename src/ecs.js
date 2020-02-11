@@ -144,7 +144,7 @@ var Storage = class Storage {
 /// - An array for storing tags associated with an entity
 var World = class World {
     constructor() {
-        this.entities = new Array();
+        this._entities = new Array();
         this.storages = new Array();
         this._tags = new Array();
         this._free_slots = new Array();
@@ -152,7 +152,7 @@ var World = class World {
 
     /// The total capacity of the entity array
     get capacity() {
-        return this.entities.length;
+        return this._entities.length;
     }
 
     /// The number of unallocated entity slots
@@ -174,8 +174,8 @@ var World = class World {
 
     /// Iterates across entities in the world
     * entities() {
-        for (const entity in this.entities) {
-            if (null != entity[0]) yield entity;
+        for (const entity in this._entities) {
+            if (!this._free_slots.contains(entity[0])) yield entity;
         }
     }
 
@@ -186,11 +186,11 @@ var World = class World {
         let slot = this._free_slots.pop();
 
         if (slot) {
-            var entity = this.entities[slot];
+            var entity = this._entities[slot];
             entity[1] += 1;
         } else {
-            var entity = entity_new(this.entities.length, 0);
-            this.entities.push(entity);
+            var entity = entity_new(this.capacity, 0);
+            this._entities.push(entity);
             this._tags.push(new Set());
         }
 
