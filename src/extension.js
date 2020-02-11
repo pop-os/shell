@@ -36,6 +36,7 @@ var Ext = class Ext extends World {
 
         this.grab_op = null;
         this.keybindings = new Keybindings(this);
+        this.last_focused = null;
         this.settings = new ExtensionSettings();
         this.overlay = new St.BoxLayout({ style_class: "tile-preview", visible: false });
 
@@ -83,7 +84,11 @@ var Ext = class Ext extends World {
     }
 
     focus_window() {
-        return this.get_window(global.display.get_focus_window());
+        let focused = this.get_window(global.display.get_focus_window())
+        if (!focused && this.last_focused) {
+            focused = this.windows.get(this.last_focused);
+        }
+        return focused;
     }
 
     /// Fetches the window component from the entity associated with the metacity window metadata.
