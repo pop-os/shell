@@ -66,11 +66,13 @@ var Ext = class Ext extends World {
         this.focus_selector = new Focus.FocusSelector(this);
         this.tiler = new Tiler(this);
 
-        // Signals
+        // Signals: We record these so that we may detach them
 
         global.display.connect('window_created', (_, win) => this.on_window_create(win));
         global.display.connect('grab-op-begin', (_, _display, win, op) => this.on_grab_start(win, op));
         global.display.connect('grab-op-end', (_, _display, win, op) => this.on_grab_end(win, op));
+
+        // Post-init
 
         for (const window of this.tab_list(Meta.TabList.NORMAL, null)) {
             this.on_window_create(window);
@@ -81,9 +83,17 @@ var Ext = class Ext extends World {
         ok(window, (win) => win.activate());
     }
 
+    active_monitor() {
+        return global.display.get_current_monitor();
+    }
+
     active_window_list() {
         let workspace = global.workspace_manager.get_active_workspace();
         return this.tab_list(Meta.TabList.NORMAL, workspace);
+    }
+
+    active_workspace() {
+        return global.workspace_manager.get_active_workspace_index();
     }
 
     connect_window(win) {
@@ -166,10 +176,6 @@ var Ext = class Ext extends World {
         }
     }
 
-    on_window_changed(win, event) {
-        this.window_monitor_change(win);
-    }
-
     on_window_create(window) {
         GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
             let win = this.get_window(window);
@@ -243,9 +249,9 @@ var Ext = class Ext extends World {
 
             this.windows.insert(entity, win);
             this.ids.insert(entity, id);
-            this.monitors.insert(entity, win.meta.get_monitor());
+            this.monitors.insert(entity, [win.meta.get_monitor(), win.meta.get_workspace().index()]);
 
-            log(`added window (${win.entity}): ${win.name()}`);
+            log(`created window (${win.entity}): ${win.name()}: ${id}`);
         }
 
         return entity;
@@ -262,11 +268,8 @@ var Ext = class Ext extends World {
     }
 
     /// Returns the window(s) that the mouse pointer is currently hoving above.
-    * windows_at_pointer() {
-        let cursor = cursor_rect();
-        let monitor = global.display.get_monitor_index_for_rect(cursor);
-
-        for (const entity of this.monitors.find((m) => m == monitor)) {
+    * windows_at_pointer(cursor, monitor, workspace) {
+        for (const entity of this.monitors.find((m) => m[0] == monitor && m[1] == workspace)) {
             let window = this.windows.with(entity, (window) => {
                 return window.meta.get_frame_rect().contains_rect(cursor) ? window : null;
             });
