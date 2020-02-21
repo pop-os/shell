@@ -50,17 +50,17 @@ var Storage = class Storage {
         }
     }
 
-    /// Iterates across each stored component
-    * iter_values() {
-        for (const [_idx, [_gen, value]] of this._iter()) {
-            yield value;
-        }
-    }
-
     /// Finds values with the matching component
     * find(func) {
         for (const [idx, [gen, value]] of this._iter()) {
             if (func(value)) yield entity_new(idx, gen);
+        }
+    }
+
+    /// Iterates across each stored component
+    * values() {
+        for (const [_idx, [_gen, value]] of this._iter()) {
+            yield value;
         }
     }
 

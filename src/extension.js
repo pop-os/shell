@@ -186,7 +186,7 @@ var Ext = class Ext extends World {
     // Snaps all windows to the window grid
     snap_windows() {
         log(`snapping windows`);
-        for (const window of this.windows.iter_values()) {
+        for (const window of this.windows.values()) {
             if (window.is_tilable()) this.tiler.snap(window);
         }
     }
