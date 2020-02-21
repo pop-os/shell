@@ -74,10 +74,6 @@ function is_move_op(op) {
     return [Meta.GrabOp.WINDOW_BASE, Meta.GrabOp.MOVING, Meta.GrabOp.KEYBOARD_MOVING].includes(op);
 }
 
-function log(text) {
-    global.log("pop-shell: " + text);
-}
-
 function orientation_as_str(value) {
     return value == 0 ? "Orientation::Horizontal" : "Orientation::Vertical";
 }

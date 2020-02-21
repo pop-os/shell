@@ -2,7 +2,8 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 const { entity_eq, Storage, World } = Me.imports.ecs;
 const Lib = Me.imports.lib;
-const { ORIENTATION_HORIZONTAL, ORIENTATION_VERTICAL, log, orientation_as_str } = Lib;
+const { ORIENTATION_HORIZONTAL, ORIENTATION_VERTICAL, orientation_as_str } = Lib;
+const Log = Me.imports.log;
 
 var FORK = 0;
 var WINDOW = 1;
@@ -45,14 +46,15 @@ var AutoTiler = class AutoTiler extends World {
      * @param {Entity} new_entity
      */
     attach_window(onto_entity, new_entity) {
-        log(`attaching Window(${new_entity}) onto Window(${onto_entity})`);
+        Log.debug(`attaching Window(${new_entity}) onto Window(${onto_entity})`);
+
         for (const [entity, fork] of this.forks.iter()) {
             if (fork.left.is_window(onto_entity)) {
                 const node = TilingNode.window(new_entity);
                 if (fork.right) {
                     const result = this.create_fork(fork.left, node);
                     fork.left = TilingNode.fork(result[0]);
-                    log(`attached Fork(${result[0]}) to Fork(${entity}).left`);
+                    Log.debug(`attached Fork(${result[0]}) to Fork(${entity}).left`);
                     result[1].set_parent(entity);
                     return this._attach(onto_entity, new_entity, this.on_attach, entity, fork, result);
                 } else {
@@ -62,7 +64,7 @@ var AutoTiler = class AutoTiler extends World {
             } else if (fork.right && fork.right.is_window(onto_entity)) {
                 const result = this.create_fork(fork.right, TilingNode.window(new_entity));
                 fork.right = TilingNode.fork(result[0]);
-                log(`attached Fork(${result[0]}) to Fork(${entity}).right`);
+                Log.debug(`attached Fork(${result[0]}) to Fork(${entity}).right`);
                 result[1].set_parent(entity);
                 return this._attach(onto_entity, new_entity, this.on_attach, entity, fork, result);
             }
@@ -89,7 +91,6 @@ var AutoTiler = class AutoTiler extends World {
      */
     create_entity() {
         const entity = super.create_entity();
-        log(`created fork (${entity})`);
         this.string_reps.insert(entity, `${entity}`);
         return entity;
     }
@@ -104,7 +105,6 @@ var AutoTiler = class AutoTiler extends World {
         const entity = this.create_entity();
         const fork = new TilingFork(left, right);
         this.forks.insert(entity, fork);
-        log(`inserted fork(${entity})`);
         return [entity, fork];
     }
 
@@ -126,12 +126,9 @@ var AutoTiler = class AutoTiler extends World {
      * @param {Entity} entity
      */
     delete_entity(entity) {
-        log(`deleting fork (${entity})`);
-
         const fork = this.forks.remove(entity);
         if (fork.is_toplevel) {
             let deleted = this.toplevel.delete(this.string_reps.get(entity));
-            log(`deleted fork (${entity}): ${deleted}`);
         }
 
         super.delete_entity(entity);
@@ -148,11 +145,11 @@ var AutoTiler = class AutoTiler extends World {
         let reflow_fork = null;
 
         this.forks.with(fork_entity, (fork) => {
-            log(`detaching Window(${window}) from Fork(${fork_entity})`);
+            Log.debug(`detaching Window(${window}) from Fork(${fork_entity})`);
 
             if (fork.left.is_window(window)) {
                 if (fork.parent) {
-                    log(`detaching Fork(${fork_entity}) and holding Window(${fork.right.entity}) for reassignment`);
+                    Log.debug(`detaching Fork(${fork_entity}) and holding Window(${fork.right.entity}) for reassignment`);
                     reflow_fork = [fork.parent, this.reassign_child_to_parent(fork_entity, fork.parent, fork.right)];
                 } else if (fork.right) {
                     reflow_fork = [fork_entity, fork];
@@ -164,13 +161,13 @@ var AutoTiler = class AutoTiler extends World {
                         this.reassign_children_to_parent(fork_entity, fork.right.entity, fork);
                     }
                 } else {
-                    log(`deleting childless and parentless Fork(${fork_entity})`);
+                    Log.debug(`deleting childless and parentless Fork(${fork_entity})`);
                     this.delete_entity(fork_entity);
                 }
             } else if (fork.right && fork.right.is_window(window)) {
                 // Same as the `fork.left` branch.
                 if (fork.parent) {
-                    log(`detaching Fork(${fork_entity}) and holding Window(${fork.left.entity}) for reassignment`);
+                    Log.debug(`detaching Fork(${fork_entity}) and holding Window(${fork.left.entity}) for reassignment`);
                     reflow_fork = [fork.parent, this.reassign_child_to_parent(fork_entity, fork.parent, fork.left)];
                 } else {
                     reflow_fork = [fork_entity, fork];
@@ -185,7 +182,7 @@ var AutoTiler = class AutoTiler extends World {
         });
 
         if (reflow_fork) {
-            log(`reflowing Fork(${reflow_fork[0]})`);
+            Log.debug(`reflowing Fork(${reflow_fork[0]})`);
         }
 
         return reflow_fork;
@@ -205,7 +202,7 @@ var AutoTiler = class AutoTiler extends World {
 
         // NOTE: Display as hiearachy from toplevel forks
         for (const [entity, _] of this.toplevel.values()) {
-            log(`display fork (${entity})`);
+            Log.debug(`displaying fork (${entity})`);
             fmt += '  ' + this._display_fork(entity, this.forks.get(entity), 1) + '\n';
         }
 
@@ -238,7 +235,7 @@ var AutoTiler = class AutoTiler extends World {
      * @param {bool} is_left Defines if the window that grew was the left sibling
      */
     grow_fork_by_sibling(ext, fork_e, fork_c, crect, is_left) {
-        log(`growing Fork(${fork_e})`);
+        Log.debug(`growing Fork(${fork_e})`);
 
         let child = fork_c;
         let child_entity = fork_e;
@@ -254,10 +251,10 @@ var AutoTiler = class AutoTiler extends World {
             this.resize_parent(parent, child, is_left);
 
             if (parent_exceeds(parent.area, child.area)) {
-                log(`Fork(${parent_entity}) exceeded`);
+                Log.debug(`Fork(${parent_entity}) exceeded`);
                 resize_node(parent, is_left, child.area);
             } else {
-                log(`Fork(${parent_entity}) did not exceed`);
+                Log.debug(`Fork(${parent_entity}) did not exceed`);
                 // break
             }
 
@@ -283,40 +280,40 @@ var AutoTiler = class AutoTiler extends World {
     grow_sibling(ext, fork_e, fork_c, is_left, movement, crect) {
         if (fork_c.is_horizontal()) {
             if ((movement & (Lib.MOVEMENT_DOWN | Lib.MOVEMENT_UP)) != 0) {
-                log(`growing fork up/down`);
+                Log.debug(`growing Fork(${fork_e}) up/down`);
                 this.resize_fork_in_direction(ext, fork_e, fork_c, is_left, false, crect, 3);
             } else if (is_left) {
                 if ((movement & Lib.MOVEMENT_RIGHT) != 0) {
-                    log(`growing left child from left to right`);
+                    Log.debug(`growing left child of Fork(${fork_e}) from left to right`);
                     this.readjust_fork_ratio_by_left(ext, crect.width, fork_c, fork_c.area[2]);
                 } else {
-                    log(`growing left child from right to left`);
+                    Log.debug(`growing left child of Fork(${fork_e}) from right to left`);
                     this.resize_fork_in_direction(ext, fork_e, fork_c, is_left, true, crect, 2);
                 }
             } else if ((movement & Lib.MOVEMENT_RIGHT) != 0) {
-                log(`growing right child from left to right`);
+                Log.debug(`growing right child of Fork(${fork_e}) from left to right`);
                 this.resize_fork_in_direction(ext, fork_e, fork_c, is_left, true, crect, 2);
             } else {
-                log(`growing right child from right to left`);
+                Log.debug(`growing right child of Fork(${fork_e}) from right to left`);
                 this.readjust_fork_ratio_by_right(ext, crect.width, fork_c, fork_c.area[2]);
             }
         } else {
             if ((movement & (Lib.MOVEMENT_LEFT | Lib.MOVEMENT_RIGHT)) != 0) {
-                log(`growing fork left/right`);
+                Log.debug(`growing Fork(${fork_e}) left/right`);
                 this.resize_fork_in_direction(ext, fork_e, fork_c, is_left, false, crect, 2);
             } else if (is_left) {
                 if ((movement & Lib.MOVEMENT_DOWN) != 0) {
-                    log(`growing left child from top to bottom`);
+                    Log.debug(`growing left child of Fork(${fork_e}) from top to bottom`);
                     this.readjust_fork_ratio_by_left(ext, crect.height, fork_c, fork_c.area[3]);
                 } else {
-                    log(`growing left child from bottom to top`);
+                    Log.debug(`growing left child of Fork(${fork_e}) from bottom to top`);
                     this.resize_fork_in_direction(ext, fork_e, fork_c, is_left, true, crect, 3);
                 }
             } else if ((movement & Lib.MOVEMENT_DOWN) != 0) {
-                log(`growing right child from top to bottom`);
+                Log.debug(`growing right child of Fork(${fork_e}) from top to bottom`);
                 this.resize_fork_in_direction(ext, fork_e, fork_c, is_left, true, crect, 3);
             } else {
-                log(`growing right child from bottom to top`);
+                Log.debug(`growing right child of Fork(${fork_e}) from bottom to top`);
                 this.readjust_fork_ratio_by_right(ext, crect.height, fork_c, fork_c.area[3]);
             }
         }
@@ -383,15 +380,15 @@ var AutoTiler = class AutoTiler extends World {
      * @param {*} child_fork
      */
     reassign_child_to_parent(child_entity, parent_entity, branch) {
-        log(`reassigning Fork(${child_entity}) to parent Fork(${parent_entity})`);
+        Log.debug(`reassigning Fork(${child_entity}) to parent Fork(${parent_entity})`);
         const parent = this.forks.get(parent_entity);
 
         if (parent.left.is_fork(child_entity)) {
             parent.left = branch;
-            log(`reassigned Fork(${parent_entity}).left to (${parent.left.entity})`);
+            Log.debug(`reassigned Fork(${parent_entity}).left to (${parent.left.entity})`);
         } else {
             parent.right = branch;
-            log(`reassigned Fork(${parent_entity}).right to (${parent.right.entity})`);
+            Log.debug(`reassigned Fork(${parent_entity}).right to (${parent.right.entity})`);
         }
 
         this.reassign_sibling(branch, parent_entity);
@@ -424,7 +421,7 @@ var AutoTiler = class AutoTiler extends World {
      * @param {TilingFork} parent_fork
      */
     reassign_children_to_parent(parent_entity, child_entity, p_fork) {
-        log(`reassigning children of Fork(${child_entity}) to Fork(${parent_entity})`);
+        Log.debug(`reassigning children of Fork(${child_entity}) to Fork(${parent_entity})`);
 
         const c_fork = this.forks.get(child_entity);
         p_fork.left = c_fork.left;
@@ -443,7 +440,7 @@ var AutoTiler = class AutoTiler extends World {
      * @param {Entity} child
      */
     reassign_parent(parent, child) {
-        log(`assigning parent of Fork(${child}) to Fork(${parent})`);
+        Log.debug(`assigning parent of Fork(${child}) to Fork(${parent})`);
         this.forks.get(child).set_parent(parent);
     }
 
@@ -465,14 +462,14 @@ var AutoTiler = class AutoTiler extends World {
     }
 
     resize_parent(parent, child, is_left) {
-        log(`before ratio: ${parent.ratio}; (${child.area} : ${parent.area})`);
+        Log.debug(`before ratio: ${parent.ratio}; (${child.area} : ${parent.area})`);
 
         const measure = parent.is_horizontal() ? 2 : 3;
         parent.ratio = is_left
             ? child.area[measure] / parent.area[measure]
             : (parent.area[measure] - child.area[measure]) / parent.area[measure];
 
-        log(`after ratio: ${parent.ratio}`);
+        Log.debug(`after ratio: ${parent.ratio}`);
     }
 
     /// Readjusts the division of space between the left and right siblings of a fork
@@ -488,7 +485,7 @@ var AutoTiler = class AutoTiler extends World {
     }
 
     resize_fork_in_direction(ext, child_e, child, is_left, consider_sibling, crect, measure) {
-        log(`resizing fork in direction ${measure}: considering ${consider_sibling}`);
+        Log.debug(`resizing fork in direction ${measure}: considering ${consider_sibling}`);
         let length = (measure == 2 ? crect.width : crect.height);
 
         if (consider_sibling) {
@@ -498,7 +495,7 @@ var AutoTiler = class AutoTiler extends World {
         }
 
         while (child.parent) {
-            log(`length = ${length}`);
+            Log.debug(`length = ${length}`);
             const parent = this.forks.get(child.parent);
 
             child.area[measure] = length
@@ -529,40 +526,40 @@ var AutoTiler = class AutoTiler extends World {
     shrink_sibling(ext, fork_e, fork_c, is_left, movement, crect) {
         if (fork_c.is_horizontal()) {
             if ((movement & (Lib.MOVEMENT_DOWN | Lib.MOVEMENT_UP)) != 0) {
-                log(`shrinking fork up/down`);
+                Log.debug(`shrinking Fork(${fork_e}) up/down`);
                 this.resize_fork_in_direction(ext, fork_e, fork_c, is_left, false, crect, 3);
             } else if (is_left) {
                 if ((movement & Lib.MOVEMENT_LEFT) != 0) {
-                    log(`shrinking left child from right to left`);
+                    Log.debug(`shrinking left child of Fork(${fork_e}) from right to left`);
                     this.readjust_fork_ratio_by_left(ext, crect.width, fork_c, fork_c.area[2]);
                 } else {
-                    log(`shrinking left child from left to right`);
+                    Log.debug(`shrinking left child of Fork(${fork_e}) from left to right`);
                     this.resize_fork_in_direction(ext, fork_e, fork_c, is_left, true, crect, 2);
                 }
             } else if ((movement & Lib.MOVEMENT_LEFT) != 0) {
-                log(`shrinking right child from right to left`);
+                Log.debug(`shrinking right child of Fork(${fork_e}) from right to left`);
                 this.resize_fork_in_direction(ext, fork_e, fork_c, is_left, true, crect, 2);
             } else {
-                log(`shrinking right child from left to right`);
+                Log.debug(`shrinking right child of Fork(${fork_e}) from left to right`);
                 this.readjust_fork_ratio_by_right(ext, crect.width, fork_c, fork_c.area[2]);
             }
         } else {
             if ((movement & (Lib.MOVEMENT_LEFT | Lib.MOVEMENT_RIGHT)) != 0) {
-                log(`shrinking fork left/right`);
+                Log.debug(`shrinking Fork(${fork_e}) left/right`);
                 this.resize_fork_in_direction(ext, fork_e, fork_c, is_left, false, crect, 2);
             } else if (is_left) {
                 if ((movement & Lib.MOVEMENT_UP) != 0) {
-                    log(`shrinking left child from bottom to top`);
+                    Log.debug(`shrinking left child of Fork(${fork_e}) from bottom to top`);
                     this.readjust_fork_ratio_by_left(ext, crect.height, fork_c, fork_c.area[3]);
                 } else {
-                    log(`shrinking left child from top to bottom`);
+                    Log.debug(`shrinking left child of Fork(${fork_e}) from top to bottom`);
                     this.resize_fork_in_direction(ext, fork_e, fork_c, is_left, true, crect, 3);
                 }
             } else if ((movement & Lib.MOVEMENT_UP) != 0) {
-                log(`shrinking right child from bottom to top`);
+                Log.debug(`shrinking right child of Fork(${fork_e}) from bottom to top`);
                 this.resize_fork_in_direction(ext, fork_e, fork_c, is_left, true, crect, 3);
             } else {
-                log(`shrinking right child from top to bottom`);
+                Log.debug(`shrinking right child of Fork(${fork_e}) from top to bottom`);
                 this.readjust_fork_ratio_by_right(ext, crect.height, fork_c, fork_c.area[3]);
             }
         }
@@ -669,7 +666,7 @@ var TilingFork = class TilingFork {
 
     set_ratio(left_length, fork_length) {
         this.ratio = left_length / fork_length;
-        log(`new ratio: ${this.ratio}`);
+        Log.debug(`new ratio: ${this.ratio}`);
         return this;
     }
 
@@ -797,10 +794,10 @@ var TilingNode = class TilingNode {
      */
     tile(tiler, ext, area, workspace) {
         if (FORK == this.kind) {
-            log(`tiling Fork(${this.entity}) into [${area}]`);
+            Log.debug(`tiling Fork(${this.entity}) into [${area}]`);
             tiler.forks.get(this.entity).tile(tiler, ext, area, workspace);
         } else {
-            log(`tiling Window(${this.entity}) into [${area}]`);
+            Log.debug(`tiling Window(${this.entity}) into [${area}]`);
             const window = ext.windows.get(this.entity);
 
             window.move({
@@ -827,7 +824,7 @@ function parent_exceeds(parent, child) {
 }
 
 function resize_node(fork, is_left, child_area) {
-    log(`before: (${fork.area}) (${child_area})`);
+    Log.debug(`before: (${fork.area}) (${child_area})`);
     fork.area[0] = Math.min(fork.area[0], child_area[0]);
     fork.area[1] = Math.min(fork.area[1], child_area[1]);
 
@@ -844,5 +841,5 @@ function resize_node(fork, is_left, child_area) {
     fork.area[2] = width;
     fork.area[3] = height;
 
-    log(`after: (${fork.area})`);
+    Log.debug(`after: (${fork.area})`);
 }

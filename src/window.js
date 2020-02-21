@@ -1,7 +1,7 @@
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
-const { log } = Me.imports.lib;
 const { Gdk, Meta, Shell, St } = imports.gi;
+const Log = Me.imports.log;
 
 /// Activates a window, and moves the mouse point to the center of it.
 function activate(win) {
@@ -113,6 +113,6 @@ var ShellWindow = class ShellWindow {
 }
 
 function blacklisted(window_class) {
-    log(`window class: ${window_class}`);
+    Log.debug(`window class: ${window_class}`);
     return ['Conky', 'Gnome-screenshot'].includes(window_class);
 }

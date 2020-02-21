@@ -237,7 +237,6 @@ var World = class World {
     unregister_storage(storage) {
         let matched = this.storages.indexOf(storage);
         if (matched) {
-            log(`unregistering a storage`);
             swap_remove(this.storages, matched);
         }
     }

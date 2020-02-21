@@ -1,6 +1,6 @@
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
-const { log, ok, round_increment } = Me.imports.lib;
+const { ok, round_increment } = Me.imports.lib;
 const Main = imports.ui.main;
 const { Meta, St } = imports.gi;
 const Tags = Me.imports.tags;

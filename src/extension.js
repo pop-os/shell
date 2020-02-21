@@ -4,7 +4,7 @@ const Focus = Me.imports.focus;
 const { Gio, GLib, Meta, Shell, St } = imports.gi;
 const { bind } = imports.lang;
 const Lib = Me.imports.lib;
-const { ORIENTATION_HORIZONTAL, ORIENTATION_VERTICAL, fmt_rect, ok, ok_or_else, cursor_rect, is_move_op, log } = Lib;
+const { ORIENTATION_HORIZONTAL, ORIENTATION_VERTICAL, fmt_rect, ok, ok_or_else, cursor_rect, is_move_op } = Lib;
 const { _defaultCssStylesheet, panel, uiGroup, wm } = imports.ui.main;
 const { Keybindings } = Me.imports.keybindings;
 const { ShellWindow } = Me.imports.window;
@@ -16,6 +16,7 @@ const { ExtensionSettings, Settings } = Me.imports.settings;
 const { Storage, World, entity_eq } = Me.imports.ecs;
 const { Indicator } = Me.imports.panel_settings;
 const { GrabOp } = Me.imports.grab_op;
+const Log = Me.imports.log;
 
 const WINDOW_CHANGED_POSITION = 0;
 const WINDOW_CHANGED_SIZE = 1;
@@ -79,13 +80,13 @@ var Ext = class Ext extends World {
         // Modes
 
         if (this.settings.tile_by_default()) {
-            log(`tile by default enabled`);
+            Log.info(`tile by default enabled`);
             this.mode = Lib.MODE_AUTO_TILE;
             this.attached = this.register_storage();
 
             this.auto_tiler = new AutoTiler()
                 .connect_on_attach((entity, window) => {
-                    log(`attached Window(${window}) to Fork(${entity})`);
+                    Log.debug(`attached Window(${window}) to Fork(${entity})`);
                     this.attached.insert(window, entity);
                 });
         }
@@ -98,7 +99,7 @@ var Ext = class Ext extends World {
 
         GLib.timeout_add(1000, GLib.PRIORITY_DEFAULT, () => {
             this.init = false;
-            log(`init complete`);
+            Log.debug(`init complete`);
             return false;
         });
     }
@@ -154,10 +155,10 @@ var Ext = class Ext extends World {
         const [entity, fork] = this.auto_tiler.create_toplevel(win.entity, workspace_id)
         this.attached.insert(win.entity, entity);
 
-        log(`attached Window(${win.entity}) to Fork(${entity}) on Monitor(${workspace_id})`);
+        Log.debug(`attached Window(${win.entity}) to Fork(${entity}) on Monitor(${workspace_id})`);
 
         this.attach_update(fork, this.monitor_work_area(workspace_id[0]), workspace_id[1]);
-        log(this.auto_tiler.display('\n\n'));
+        Log.info(this.auto_tiler.display('\n\n'));
     }
 
     /**
@@ -167,7 +168,7 @@ var Ext = class Ext extends World {
      * @param {ShellWindow} attacher The window to attach with
      */
     attach_to_window(attachee, attacher) {
-        log(`attempting to attach ${attacher.name()} to ${attachee.name()}`);
+        Log.debug(`attempting to attach ${attacher.name()} to ${attachee.name()}`);
 
         let result = this.auto_tiler.attach_window(attachee.entity, attacher.entity);
 
@@ -175,11 +176,11 @@ var Ext = class Ext extends World {
             const [_e, fork] = result;
             const [_, workspace] = this.monitors.get(attachee.entity);
             this.attach_update(fork, attachee.meta.get_frame_rect(), workspace);
-            log(this.auto_tiler.display('\n\n'));
+            Log.info(this.auto_tiler.display('\n\n'));
             return true;
         }
 
-        log(this.auto_tiler.display('\n\n'));
+        Log.info(this.auto_tiler.display('\n\n'));
 
         return false;
     }
@@ -191,7 +192,7 @@ var Ext = class Ext extends World {
      * @param {[u32, 4]} area The area to tile with
      */
     attach_update(fork, area, workspace) {
-        log(`setting attach area to (${area.x},${area.y}), (${area.width},${area.height})`);
+        Log.debug(`setting attach area to (${area.x},${area.y}), (${area.width},${area.height})`);
         fork.set_orientation(area.width > area.height ? ORIENTATION_HORIZONTAL : ORIENTATION_VERTICAL);
         this.tile(fork, [area.x, area.y, area.width, area.height], workspace);
     }
@@ -239,7 +240,7 @@ var Ext = class Ext extends World {
      * - If no window is present, tile onto the monitor
      */
     auto_tile_on_drop(win) {
-        log(`dropped Window(${win.entity})`);
+        Log.debug(`dropped Window(${win.entity})`);
         if (this.dropped_on_sibling(win.entity)) return;
 
         const [cursor, monitor] = this.cursor_status();
@@ -256,7 +257,7 @@ var Ext = class Ext extends World {
         this.detach_window(win.entity);
 
         if (attach_to) {
-            log(`found Window(${attach_to.entity}) at pointer`);
+            Log.debug(`found Window(${attach_to.entity}) at pointer`);
             this.attach_to_window(attach_to, win);
         } else {
             const toplevel = this.auto_tiler.find_toplevel([monitor, workspace]);
@@ -273,13 +274,13 @@ var Ext = class Ext extends World {
     }
 
     auto_tile_on_workspace(win, id) {
-        log(`workspace id: ${id}`);
+        Log.debug(`workspace id: ${id}`);
         const toplevel = this.auto_tiler.find_toplevel(id);
 
         if (toplevel) {
-            log(`found toplevel at ${toplevel}`);
+            Log.debug(`found toplevel at ${toplevel}`);
             const onto = this.auto_tiler.largest_window_on(this, toplevel);
-            log(`largest window = ${onto.entity}`);
+            Log.debug(`largest window = ${onto.entity}`);
             if (onto && this.attach_to_window(onto, win)) {
                 return;
             }
@@ -305,7 +306,7 @@ var Ext = class Ext extends World {
 
         this.connect(win.meta, 'size-changed', () => {
             if (this.attached)  {
-                log(`size changed: ${win.name()}`);
+                Log.debug(`size changed: ${win.name()}`);
                 if (this.grab_op) {
 
                 } else if (!this.tiling) {
@@ -316,7 +317,7 @@ var Ext = class Ext extends World {
 
         this.connect(win.meta, 'position-changed', () => {
             if (this.attached && !this.grab_op && !this.tiling) {
-                log(`position changed: ${win.name()}`);
+                Log.debug(`position changed: ${win.name()}`);
                 this.reflow(win.entity);
             }
         });
@@ -331,7 +332,7 @@ var Ext = class Ext extends World {
         this.attached.take_with(win, (prev_fork) => {
             const reflow_fork = this.auto_tiler.detach(prev_fork, win);
 
-            log(this.auto_tiler.display('\n\n'));
+            Log.info(this.auto_tiler.display('\n\n'));
 
             if (reflow_fork) {
                 const fork = reflow_fork[1];
@@ -358,7 +359,7 @@ var Ext = class Ext extends World {
                 if (fork.left.is_window(win)) {
                     const sibling = this.windows.get(fork.right.entity);
                     if (sibling.meta.get_frame_rect().contains_rect(cursor)) {
-                        log(`${this.names.get(win)} was dropped onto ${sibling.name()}`);
+                        Log.debug(`${this.names.get(win)} was dropped onto ${sibling.name()}`);
                         fork.left.entity = fork.right.entity;
                         fork.right.entity = win;
                         this.tile(fork, fork.area, fork.workspace);
@@ -367,7 +368,7 @@ var Ext = class Ext extends World {
                 } else if (fork.right.is_window(win)) {
                     const sibling = this.windows.get(fork.left.entity);
                     if (sibling.meta.get_frame_rect().contains_rect(cursor)) {
-                        log(`${this.names.get(win)} was dropped onto ${sibling.name()}`);
+                        Log.debug(`${this.names.get(win)} was dropped onto ${sibling.name()}`);
                         fork.right.entity = fork.left.entity;
                         fork.left.entity = win;
 
@@ -410,7 +411,7 @@ var Ext = class Ext extends World {
     }
 
     on_destroy(win) {
-        log(`destroying window (${win.entity}): ${win.name()}`);
+        Log.debug(`destroying window (${win.entity}): ${win.name()}`);
 
         if (this.auto_tiler) this.detach_window(win.entity);
 
@@ -434,7 +435,7 @@ var Ext = class Ext extends World {
             msg += `  fork: (${this.attached.get(win.entity)}),\n`;
         }
 
-        log(msg + '}');
+        Log.info(msg + '}');
     }
 
     /**
@@ -456,10 +457,10 @@ var Ext = class Ext extends World {
             if (this.mode == Lib.MODE_AUTO_TILE) {
                 const rect = this.grab_op.rect;
                 if (is_move_op(op)) {
-                    log(`win: ${win.name()}; op: ${op}; from (${rect.x},${rect.y}) to (${crect.x},${crect.y})`);
+                    Log.debug(`win: ${win.name()}; op: ${op}; from (${rect.x},${rect.y}) to (${crect.x},${crect.y})`);
 
                     this.on_monitor_changed(win, (changed_from, changed_to, workspace) => {
-                        log(`window ${win.name()} moved from display ${changed_from} to ${changed_to}`);
+                        Log.debug(`window ${win.name()} moved from display ${changed_from} to ${changed_to}`);
                         this.monitors.insert(win.entity, [changed_to, workspace]);
                     });
 
@@ -475,18 +476,18 @@ var Ext = class Ext extends World {
                     if (fork) {
                         const movement = this.grab_op.operation(crect);
 
-                        log(`resizing window: from [${fmt_rect(rect)} to ${fmt_rect(crect)}]`);
+                        Log.debug(`resizing window: from [${fmt_rect(rect)} to ${fmt_rect(crect)}]`);
                         this.auto_tiler.resize(this, fork, win.entity, movement, crect);
-                        log(`changed to: ${this.auto_tiler.display('')}`);
+                        Log.debug(`changed to: ${this.auto_tiler.display('')}`);
                     } else {
-                        log(`no fork found`);
+                        Log.error(`no fork found`);
                     }
                 }
             } else {
                 this.tiler.snap(win);
             }
         } else {
-            log(`mismatch on grab op entity`);
+            Log.error(`mismatch on grab op entity`);
         }
 
         this.grab_op = null;
@@ -502,7 +503,7 @@ var Ext = class Ext extends World {
         let win = this.get_window(meta);
         if (win && win.is_tilable()) {
             let entity = win.entity;
-            log(`grabbed Window(${entity}): ${this.names.get(entity)}`);
+            Log.debug(`grabbed Window(${entity}): ${this.names.get(entity)}`);
             let rect = meta.get_frame_rect();
             this.grab_op = new GrabOp(entity, rect);
         }
@@ -536,7 +537,7 @@ var Ext = class Ext extends World {
 
     on_workspace_changed(win) {
         if (!this.grab_op) {
-            log(`workspace changed for ${win.name()}`);
+            Log.debug(`workspace changed for ${win.name()}`);
             const id = this.workspace_id(win);
             const prev_id = this.monitors.get(win.entity);
 
@@ -633,7 +634,7 @@ var Ext = class Ext extends World {
             this.ids.insert(entity, id);
             this.monitors.insert(entity, [win.meta.get_monitor(), win.meta.get_workspace().index()]);
 
-            log(`created window (${win.entity}): ${win.name()}: ${id}`);
+            Log.debug(`created window (${win.entity}): ${win.name()}: ${id}`);
             if (this.mode == Lib.MODE_AUTO_TILE && win.is_tilable()) this.auto_tile(win, this.init);
         }
 
@@ -658,14 +659,15 @@ var Ext = class Ext extends World {
     }
 
     workspace_id(window = null) {
-        log(`fetching workspace ID`);
+        Log.debug(`fetching workspace ID`);
+
         if (window) {
             var id = [window.meta.get_monitor(), window.meta.get_workspace().index()];
         } else {
             var id = [this.active_monitor(), this.active_workspace()];
         }
 
-        log(`found ID of ${id}`);
+        Log.debug(`found workspace ID: ${id}`);
 
         return id;
     }
@@ -675,7 +677,7 @@ let ext;
 let indicator;
 
 function init() {
-    log("init");
+    Log.info("init");
 
     ext = new Ext();
     uiGroup.add_actor(ext.overlay);
@@ -688,7 +690,7 @@ function init() {
 }
 
 function enable() {
-    log("enable");
+    Log.info("enable");
 
     load_theme();
 
@@ -704,7 +706,7 @@ function enable() {
 }
 
 function disable() {
-    log("disable");
+    Log.info("disable");
 
     if (indicator) {
         indicator.destroy();
@@ -731,6 +733,6 @@ function load_theme() {
 
         St.ThemeContext.get_for_stage(global.stage).set_theme(theme);
     } catch (e) {
-        log("stylesheet: " + e);
+        Log.debug("stylesheet: " + e);
     }
 }

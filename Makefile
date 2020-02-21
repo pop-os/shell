@@ -20,6 +20,7 @@ sources = src/extension.js \
 	src/grab_op.js \
 	src/keybindings.js \
 	src/lib.js \
+	src/log.js \
 	src/panel_settings.js \
 	src/search.js \
 	src/settings.js \

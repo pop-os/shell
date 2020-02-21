@@ -5,7 +5,7 @@ const { PopupMenu, PopupMenuItem, PopupSeparatorMenuItem, PopupSwitchMenuItem } 
 const { Button } = imports.ui.panelMenu;
 
 const Lib = Me.imports.lib;
-const { log } = Lib;
+const Log = Me.imports.log;
 
 const { AutoTiler } = Me.imports.auto_tiler;
 
@@ -26,6 +26,7 @@ var Indicator = GObject.registerClass(
 
             this.menu.addMenuItem(number_entry(ext, _("Inner Gap"), ext.set_gap_inner, ext.settings.set_gap_inner, () => ext.gap_inner, (prev, current) => {
                 if (current - prev != 0) {
+                    Log.info(`inner gap changed to ${current}`);
                     if (ext.auto_tiler) {
                         for (const [entity, _] of ext.auto_tiler.toplevel.values()) {
                             const fork = ext.auto_tiler.forks.get(entity);
@@ -42,6 +43,7 @@ var Indicator = GObject.registerClass(
             this.menu.addMenuItem(number_entry(ext, _("Outer Gap"), ext.set_gap_outer, ext.settings.set_gap_outer, () => ext.gap_outer, (prev, current) => {
                 const diff = current - prev;
                 if (diff != 0) {
+                    Log.info(`outer gap changed to ${current}`);
                     if (ext.auto_tiler) {
                         for (const [entity, _] of ext.auto_tiler.toplevel.values()) {
                             const fork = ext.auto_tiler.forks.get(entity);
@@ -105,19 +107,19 @@ function tiled(ext) {
 
     tiled.connect('toggled', (item) => {
         if (ext.auto_tiler) {
-            log(`tile by default disabled`);
+            Log.info(`tile by default disabled`);
             ext.mode = Lib.MODE_DEFAULT;
             ext.auto_tiler = null;
             ext.unregister_storage(ext.attached);
             ext.settings.set_tile_by_default(false);
         } else {
-            log(`tile by default enabled`);
+            Log.info(`tile by default enabled`);
             ext.mode = Lib.MODE_AUTO_TILE;
             ext.attached = ext.register_storage();
             ext.settings.set_tile_by_default(true);
             ext.auto_tiler = new AutoTiler()
                 .connect_on_attach((entity, window) => {
-                    log(`attached Window(${window}) to Fork(${entity})`);
+                    Log.debug(`attached Window(${window}) to Fork(${entity})`);
                     ext.attached.insert(window, entity);
                 });
         }
