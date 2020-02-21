@@ -6,6 +6,10 @@ const { Meta, St } = imports.gi;
 var Geom = Me.imports.geom;
 var Window = Me.imports.window;
 
+function fmt_rect(rect) {
+    return `Rect(${[rect.x, rect.y, rect.width, rect.height]})`;
+}
+
 function ok(input, func) {
     return input ? func(input) : null;
 }

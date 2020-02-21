@@ -111,6 +111,8 @@ var Ext = class Ext extends World {
     connect_window(win) {
         win.meta.connect('position-changed', () => this.on_window_changed(win, WINDOW_CHANGED_POSITION));
         win.meta.connect('size-changed', () => this.on_window_changed(win, WINDOW_CHANGED_SIZE));
+
+        this.connect(win.meta, 'focus', () => this.on_focused(win));
     }
 
     focus_window() {
@@ -164,6 +166,20 @@ var Ext = class Ext extends World {
         log(`destroying window (${win.entity}): ${win.name()}`);
 
         this.delete_entity(win.entity);
+    }
+
+    /**
+     * Triggered when a window has been focused
+     *
+     * @param {ShellWindow} win
+     */
+    on_focused(win) {
+        let msg = `focused Window(${win.entity}) {\n`
+            + `  name: ${win.name()},\n`
+            + `  rect: ${fmt_rect(win.meta.get_frame_rect())},\n`
+            + `  wm_class: "${win.meta.get_wm_class()}",\n`;
+
+        log(msg + '}');
     }
 
     on_grab_end(meta, op) {
