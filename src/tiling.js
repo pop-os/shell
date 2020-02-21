@@ -1,6 +1,6 @@
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
-const { log, ok, round_increment, take } = Me.imports.lib;
+const { log, ok, round_increment } = Me.imports.lib;
 const Main = imports.ui.main;
 const { Meta, St } = imports.gi;
 const Tags = Me.imports.tags;
@@ -10,7 +10,6 @@ var Tiler = class Tiler {
         this.columns = 16;
         this.rows = 16;
 
-        this.set_gap(ext.settings.gap());
         this.ext = ext;
 
         this.window = null;
@@ -32,11 +31,6 @@ var Tiler = class Tiler {
             "tile-accept": () => this.accept(),
             "tile-reject": () => this.exit(),
         };
-    }
-
-    set_gap(gap) {
-        this.gap = gap;
-        this.half_gap = this.gap / 2;
     }
 
     rect() {
@@ -114,34 +108,38 @@ var Tiler = class Tiler {
         // Prevent moving too far down
         if ((changed.y + changed.height) > max_y) return;
 
-        let left_most = (changed.x % monitors[0].width) == 0;
-        let right_most = (changed.x % monitors[0].width) + changed.width >= (this.columns - 1) * rect.width;
+        const left_most = changed.x < this.ext.column_size;
+        const right_most = changed.x + changed.width >= monitors[0].height - this.ext.column_size;
 
-        if (!(left_most && right_most)) {
-            if (left_most) {
-                changed.width -= this.half_gap;
-            } else if (right_most) {
-                changed.x += this.half_gap;
-                changed.width -= this.half_gap;
-            } else {
-                changed.x += this.half_gap;
-                changed.width -= this.gap;
-            }
+        if (left_most && right_most) {
+            changed.x += this.ext.gap_outer;
+            changed.width -= (this.ext.gap_outer * 2);
+        } else if (left_most) {
+            changed.x += this.ext.gap_outer;
+            changed.width -= this.ext.gap_inner_half + this.ext.gap_outer;
+        } else if (right_most) {
+            changed.x += this.ext.gap_inner_half;
+            changed.width -= this.ext.gap_inner_half + this.ext.gap_outer;
+        } else {
+            changed.x += this.ext.gap_inner_half;
+            changed.width -= this.ext.gap_inner;
         }
 
-        let top_most = (changed.y % monitors[0].height) < 28;
-        let bottom_most = (changed.y % monitors[0].height) + changed.height >= (this.rows - 1) * rect.height
+        const top_most = changed.y < this.ext.row_size;
+        const bottom_most = changed.y + changed.height >= monitors[0].height - this.ext.row_size;
 
-        if (!(top_most && bottom_most)) {
-            if (top_most) {
-                changed.height -= this.half_gap;
-            } else if (bottom_most) {
-                changed.y += this.half_gap;
-                changed.height -= this.half_gap;
-            } else {
-                changed.y += this.half_gap;
-                changed.height -= this.gap;
-            }
+        if (top_most && bottom_most) {
+            changed.y += this.ext.gap_outer;
+            changed.height -= (this.ext.gap_outer * 2);
+        } else if (top_most) {
+            changed.y += this.ext.gap_outer;
+            changed.height -= this.ext.gap_inner_half + this.ext.gap_outer;
+        } else if (bottom_most) {
+            changed.y += this.ext.gap_inner_half;
+            changed.height -= this.ext.gap_inner_half + this.ext.gap_outer;
+        } else {
+            changed.y += this.ext.gap_inner_half;
+            changed.height -= this.ext.gap_inner;
         }
 
         overlay.x = changed.x;

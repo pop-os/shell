@@ -22,20 +22,45 @@ var Settings = class Settings {
     }
 }
 
+const COLUMN_SIZE = 'column-size';
+const GAP_INNER = 'gap-inner';
+const GAP_OUTER = 'gap-outer';
+const ROW_SIZE = 'row-size';
+
 var ExtensionSettings = class ExtensionSettings extends Settings {
     constructor() {
         super(extension.metadata['settings-schema']);
     }
 
-    gap() {
-        return this.inner.get_uint('gap-inner');
+    column_size() {
+        return this.inner.get_uint(COLUMN_SIZE);
     }
 
-    set_gap(gap) {
-        this.inner.set_uint('gap-inner', gap);
+    gap_inner() {
+        return this.inner.get_uint(GAP_INNER);
     }
 
-    tile_by_default() {
-        return this.inner.get_boolean('tile-by-default');
+    gap_outer() {
+        return this.inner.get_uint(GAP_OUTER);
+    }
+
+    row_size() {
+        return this.inner.get_uint(ROW_SIZE);
+    }
+
+    set_column_size(size) {
+        this.inner.set_uint(COLUMN_SIZE, size);
+    }
+
+    set_gap_inner(gap) {
+        this.inner.set_uint(GAP_INNER, gap);
+    }
+
+    set_gap_outer(gap) {
+        this.inner.set_uint(GAP_OUTER, gap);
+    }
+
+    set_row_size(size) {
+        this.inner.set_uint(ROW_SIZE, size);
     }
 }

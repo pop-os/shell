@@ -35,11 +35,17 @@ var Ext = class Ext extends World {
 
         // Misc
 
+        this.column_size = 128;
+        this.set_gap_inner(8);
+        this.set_gap_outer(8);
         this.grab_op = null;
         this.keybindings = new Keybindings(this);
         this.last_focused = null;
-        this.settings = new ExtensionSettings();
         this.overlay = new St.BoxLayout({ style_class: "tile-preview", visible: false });
+        this.row_size = 128;
+        this.settings = new ExtensionSettings();
+
+        this.load_settings();
 
         // Storages
 
@@ -120,7 +126,10 @@ var Ext = class Ext extends World {
     }
 
     load_settings() {
-        this.tiler.set_gap(settings.gap());
+        this.set_gap_inner(this.settings.gap_inner())
+        this.set_gap_outer(this.settings.gap_outer());
+        this.column_size = this.settings.column_size();
+        this.row_size = this.settings.row_size();
     }
 
     monitor_work_area(monitor) {
@@ -175,6 +184,16 @@ var Ext = class Ext extends World {
 
             return false;
         });
+    }
+
+    set_gap_inner(gap) {
+        this.gap_inner = gap - (gap % 4);
+        this.gap_inner_half = this.gap_inner / 2;
+    }
+
+    set_gap_outer(gap) {
+        this.gap_outer = gap - (gap % 4);
+        this.gap_outer_half = this.gap_outer / 2;
     }
 
     set_overlay(rect) {
@@ -298,8 +317,6 @@ function disable() {
         uiGroup.remove_actor(ext.overlay);
 
         ext.tiler.exit();
-
-        ext.settings.sync();
 
         ext.keybindings.disable(ext.keybindings.global)
             .disable(ext.keybindings.window_focus)
