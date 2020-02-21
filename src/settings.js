@@ -26,6 +26,7 @@ const COLUMN_SIZE = 'column-size';
 const GAP_INNER = 'gap-inner';
 const GAP_OUTER = 'gap-outer';
 const ROW_SIZE = 'row-size';
+const TILE_BY_DEFAULT = 'tile-by-default';
 
 var ExtensionSettings = class ExtensionSettings extends Settings {
     constructor() {
@@ -48,6 +49,10 @@ var ExtensionSettings = class ExtensionSettings extends Settings {
         return this.inner.get_uint(ROW_SIZE);
     }
 
+    tile_by_default() {
+        return this.inner.get_boolean(TILE_BY_DEFAULT);
+    }
+
     set_column_size(size) {
         this.inner.set_uint(COLUMN_SIZE, size);
     }
@@ -62,5 +67,9 @@ var ExtensionSettings = class ExtensionSettings extends Settings {
 
     set_row_size(size) {
         this.inner.set_uint(ROW_SIZE, size);
+    }
+
+    set_tile_by_default(set) {
+        this.inner.set_boolean(TILE_BY_DEFAULT, set);
     }
 }

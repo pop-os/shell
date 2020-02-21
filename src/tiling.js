@@ -4,6 +4,7 @@ const { log, ok, round_increment } = Me.imports.lib;
 const Main = imports.ui.main;
 const { Meta, St } = imports.gi;
 const Tags = Me.imports.tags;
+const { GrabOp } = Me.imports.grab_op;
 
 var Tiler = class Tiler {
     constructor(ext) {
@@ -149,68 +150,85 @@ var Tiler = class Tiler {
         return this;
     }
 
+    move(x, y, w, h) {
+        if (this.ext.auto_tiler) {
+            const entity = this.ext.attached.get(this.window.entity);
+            const fork = this.ext.auto_tiler.forks.get(entity);
+            if (fork) {
+                const grab_op = new GrabOp(this.window.entity, this.window.meta.get_frame_rect());
+
+                let xadj = x * this.ext.row_size;
+                let yadj = y * this.ext.column_size;
+
+                let crect = grab_op.rect.copy();
+
+                if (fork.left.is_window(this.window.entity)) {
+                    crect.width += xadj;
+                    crect.height += yadj;
+                } else if (fork.is_horizontal()) {
+                    xadj *= -1;
+                    crect.width += xadj;
+                    crect.height += yadj;
+                    crect.x += -1 * xadj;
+                } else {
+                    yadj *= -1;
+                    crect.width += xadj;
+                    crect.height += yadj;
+                    crect.y += yadj;
+                }
+
+                this.ext.auto_tiler.resize(this.ext, entity, this.window.entity, grab_op.operation(crect), crect);
+                this.ext.set_overlay(this.window.meta.get_frame_rect());
+            }
+        } else {
+            this.swap_window = null;
+            let rect = this.rect();
+            if (!rect) return;
+            this.change(this.ext.overlay, rect, x, y, w, h)
+                .change(this.ext.overlay, rect, 0, 0, 0, 0);
+        }
+    }
+
     move_left() {
-        this.swap_window = null;
-        let rect = this.rect();
-        if (!rect) return;
-        this.change(this.ext.overlay, rect, -1, 0, 0, 0)
-            .change(this.ext.overlay, rect, 0, 0, 0, 0);
+        this.move(-1, 0, 0, 0);
     }
 
     move_down() {
-        this.swap_window = null;
-        let rect = this.rect();
-        if (!rect) return;
-        this.change(this.ext.overlay, rect, 0, 1, 0, 0)
-            .change(this.ext.overlay, rect, 0, 0, 0, 0);
+        this.move(0, 1, 0, 0);
     }
 
     move_up() {
-        this.swap_window = null;
-        let rect = this.rect();
-        if (!rect) return;
-        this.change(this.ext.overlay, rect, 0, -1, 0, 0)
-            .change(this.ext.overlay, rect, 0, 0, 0, 0);
+        this.move(0, -1, 0, 0);
     }
 
     move_right() {
-        this.swap_window = null;
-        let rect = this.rect();
-        if (!rect) return;
-        this.change(this.ext.overlay, rect, 1, 0, 0, 0)
-            .change(this.ext.overlay, rect, 0, 0, 0, 0);
+        this.move(1, 0, 0, 0);
+    }
+
+    resize(x, y, w, h) {
+        if (!this.ext.auto_tiler) {
+            this.swap_window = null;
+            let rect = this.rect();
+            if (!rect) return;
+            this.change(this.ext.overlay, rect, x, y, w, h)
+                .change(this.ext.overlay, rect, 0, 0, 0, 0);
+        }
     }
 
     resize_left() {
-        this.swap_window = null;
-        let rect = this.rect();
-        if (!rect) return;
-        this.change(this.ext.overlay, rect, 0, 0, -1, 0)
-            .change(this.ext.overlay, rect, 0, 0, 0, 0);
+        this.resize(0, 0, -1, 0);
     }
 
     resize_down() {
-        this.swap_window = null;
-        let rect = this.rect();
-        if (!rect) return;
-        this.change(this.ext.overlay, rect, 0, 0, 0, 1)
-            .change(this.ext.overlay, rect, 0, 0, 0, 0);
+        this.resize(0, 0, 0, 1);
     }
 
     resize_up() {
-        this.swap_window = null;
-        let rect = this.rect();
-        if (!rect) return;
-        this.change(this.ext.overlay, rect, 0, 0, 0, -1)
-            .change(this.ext.overlay, rect, 0, 0, 0, 0);
+        this.resize(0, 0, 0, -1);
     }
 
     resize_right() {
-        this.swap_window = null;
-        let rect = this.rect();
-        if (!rect) return;
-        this.change(this.ext.overlay, rect, 0, 0, 1, 0)
-            .change(this.ext.overlay, rect, 0, 0, 0, 0);
+        this.resize(0, 0, 1, 0);
     }
 
     swap(selector) {
@@ -245,8 +263,10 @@ var Tiler = class Tiler {
             this.ext.set_overlay(this.window.meta.get_frame_rect());
             this.ext.overlay.visible = true;
 
-            // Make sure overlay is valid
-            this.change(this.ext.overlay, this.rect(), 0, 0, 0, 0);
+            if (!this.ext.auto_tiler) {
+                // Make sure overlay is valid
+                this.change(this.ext.overlay, this.rect(), 0, 0, 0, 0);
+            }
 
             this.ext.keybindings.disable(this.ext.keybindings.window_focus)
                 .enable(this.keybindings);
@@ -256,6 +276,9 @@ var Tiler = class Tiler {
     accept() {
         if (this.window) {
             if (this.swap_window) {
+                if (this.ext.auto_tiler) {
+                    this.ext.attach_swap(this.swap_window.entity, this.window.entity);
+                }
                 this.swap_window.move(this.window.meta.get_frame_rect());
                 this.swap_window = null;
             }

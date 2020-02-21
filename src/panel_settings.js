@@ -7,6 +7,8 @@ const { Button } = imports.ui.panelMenu;
 const Lib = Me.imports.lib;
 const { log } = Lib;
 
+const { AutoTiler } = Me.imports.auto_tiler;
+
 var Indicator = GObject.registerClass(
     class Indicator extends Button {
         _init(ext) {
@@ -19,6 +21,7 @@ var Indicator = GObject.registerClass(
 
             this.add_actor(this.icon);
 
+            this.menu.addMenuItem(tiled(ext));
             this.menu.addMenuItem(new PopupSeparatorMenuItem());
 
             this.menu.addMenuItem(number_entry(ext, _("Inner Gap"), ext.set_gap_inner, ext.settings.set_gap_inner, () => ext.gap_inner, (prev, current) => {
@@ -92,4 +95,35 @@ function number_entry(ext, label, ext_method, settings_method, get_method, post_
     item.add_child(entry);
 
     return item;
+}
+
+function tiled(ext) {
+    let tiled = new PopupSwitchMenuItem(_("Launch Windows Tiled"));
+    tiled.label.set_y_align(Clutter.ActorAlign.CENTER);
+
+    tiled.setToggleState(null != ext.auto_tiler);
+
+    tiled.connect('toggled', (item) => {
+        if (ext.auto_tiler) {
+            log(`tile by default disabled`);
+            ext.mode = Lib.MODE_DEFAULT;
+            ext.auto_tiler = null;
+            ext.unregister_storage(ext.attached);
+            ext.settings.set_tile_by_default(false);
+        } else {
+            log(`tile by default enabled`);
+            ext.mode = Lib.MODE_AUTO_TILE;
+            ext.attached = ext.register_storage();
+            ext.settings.set_tile_by_default(true);
+            ext.auto_tiler = new AutoTiler()
+                .connect_on_attach((entity, window) => {
+                    log(`attached Window(${window}) to Fork(${entity})`);
+                    ext.attached.insert(window, entity);
+                });
+        }
+
+        return true;
+    });
+
+    return tiled;
 }

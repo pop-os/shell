@@ -6,6 +6,21 @@ const { Meta, St } = imports.gi;
 var Geom = Me.imports.geom;
 var Window = Me.imports.window;
 
+var MODE_AUTO_TILE = 0;
+var MODE_DEFAULT = 1;
+
+var MOVEMENT_NONE   = 0
+var MOVEMENT_MOVED  = 0b1;
+var MOVEMENT_GROW   = 0b10;
+var MOVEMENT_SHRINK = 0b100;
+var MOVEMENT_LEFT   = 0b1000;
+var MOVEMENT_UP     = 0b10000;
+var MOVEMENT_RIGHT  = 0b100000;
+var MOVEMENT_DOWN   = 0b1000000;
+
+var ORIENTATION_HORIZONTAL = 0;
+var ORIENTATION_VERTICAL = 1;
+
 function fmt_rect(rect) {
     return `Rect(${[rect.x, rect.y, rect.width, rect.height]})`;
 }
@@ -55,8 +70,16 @@ function join(iterable, next_func, between_func) {
     });
 }
 
+function is_move_op(op) {
+    return [Meta.GrabOp.WINDOW_BASE, Meta.GrabOp.MOVING, Meta.GrabOp.KEYBOARD_MOVING].includes(op);
+}
+
 function log(text) {
     global.log("pop-shell: " + text);
+}
+
+function orientation_as_str(value) {
+    return value == 0 ? "Orientation::Horizontal" : "Orientation::Vertical";
 }
 
 /// Useful in the event that you want to reuse an actor in the future

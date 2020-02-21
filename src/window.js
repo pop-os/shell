@@ -70,8 +70,6 @@ var ShellWindow = class ShellWindow {
         this.meta.unmaximize(Meta.MaximizeFlags.VERTICAL);
         this.meta.unmaximize(Meta.MaximizeFlags.HORIZONTAL | Meta.MaximizeFlags.VERTICAL);
 
-        log(`moving ${this.name()} to (${rect.x},${rect.y},${rect.width},${rect.height})`);
-
         this.meta.move_resize_frame(
             true,
             rect.x,
@@ -94,15 +92,6 @@ var ShellWindow = class ShellWindow {
                 return "unknown";
             }
         });
-    }
-
-    reflow(other) {
-        let our_rect = this.meta.get_frame_rect();
-        let their_rect = other.meta.get_frame_rect();
-
-        switch (Geom.overlap(our_rect, their_rect)) {
-
-        }
     }
 
     swap(other) {
