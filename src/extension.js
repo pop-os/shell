@@ -589,6 +589,24 @@ var Ext = class Ext extends World {
         return this.entities.filter((entity) => this.contains_tag(entity, Tags.Tiled));
     }
 
+    toggle_orientation() {
+        if (!this.auto_tiler) return;
+        const focused = this.focus_window();
+        if (!focused) return;
+
+        this.attached.with(focused.entity, (fork_entity) => {
+            this.auto_tiler.forks.with(fork_entity, (fork) => {
+                fork.toggle_orientation();
+
+                for (const child of this.auto_tiler.iter(fork_entity, FORK)) {
+                    this.auto_tiler.forks.get(child.entity).toggle_orientation();
+                }
+
+                this.tile(fork, fork.area, fork.workspace);
+            });
+        });
+    }
+
     update_snapped() {
         for (const entity of ext.snapped.find((val) => val)) {
             const window = ext.windows.get(entity);

@@ -72,6 +72,10 @@
             <default><![CDATA[['Right','l']]]></default>
             <summary>Move window right</summary>
         </key>
+        <key type="as" name="tile-orientation">
+            <default><![CDATA[['<Super>backslash']]]></default>
+            <summary>Toggle tiling orientation</summary>
+        </key>
         <key type="as" name="tile-resize-left">
             <default><![CDATA[['<Shift>Left','<Shift>h']]]></default>
             <summary>Resize window left</summary>

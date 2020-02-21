@@ -15,7 +15,8 @@ var Keybindings = class Keybindings {
             "focus-up": () => ext.activate_window(ext.focus_selector.up()),
             "focus-right": () => ext.activate_window(ext.focus_selector.right()),
             "focus-monitor-left": () => ext.activate_window(ext.focus_selector.monitor_left()),
-            "focus-monitor-right": () => ext.activate_window(ext.focus_selector.monitor_right())
+            "focus-monitor-right": () => ext.activate_window(ext.focus_selector.monitor_right()),
+            "tile-orientation": () => ext.toggle_orientation()
         };
     }
 
