@@ -44,6 +44,7 @@ var Ext = class Ext extends World {
         this.overlay = new St.BoxLayout({ style_class: "tile-preview", visible: false });
         this.row_size = 128;
         this.settings = new ExtensionSettings();
+        this.signals = new Array();
 
         this.load_settings();
 
@@ -68,9 +69,9 @@ var Ext = class Ext extends World {
 
         // Signals: We record these so that we may detach them
 
-        global.display.connect('window_created', (_, win) => this.on_window_create(win));
-        global.display.connect('grab-op-begin', (_, _display, win, op) => this.on_grab_start(win, op));
-        global.display.connect('grab-op-end', (_, _display, win, op) => this.on_grab_end(win, op));
+        this.connect(global.display, 'window_created', (_, win) => this.on_window_create(win));
+        this.connect(global.display, 'grab-op-begin', (_, _display, win, op) => this.on_grab_start(win, op));
+        this.connect(global.display, 'grab-op-end', (_, _display, win, op) => this.on_grab_end(win, op));
 
         // Post-init
 
@@ -94,6 +95,17 @@ var Ext = class Ext extends World {
 
     active_workspace() {
         return global.workspace_manager.get_active_workspace_index();
+    }
+
+    /**
+     * Connects a callback signal to a GObject, and records the signal.
+     *
+     * @param {GObject.Object} object
+     * @param {string} property
+     * @param {function} callback
+     */
+    connect(object, property, callback) {
+        this.signals.push(object.connect(property, callback));
     }
 
     connect_window(win) {
