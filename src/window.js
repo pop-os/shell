@@ -2,6 +2,11 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 const { Gdk, Meta, Shell, St } = imports.gi;
 const Log = Me.imports.log;
+const Util = imports.misc.util;
+
+const MOTIF_HINTS = '_MOTIF_WM_HINTS';
+const HIDE_FLAGS = ['0x2', '0x0', '0x2', '0x0', '0x0'];
+const SHOW_FLAGS = ['0x2', '0x0', '0x1', '0x0', '0x0'];
 
 /// Activates a window, and moves the mouse point to the center of it.
 function activate(win) {
@@ -32,10 +37,28 @@ var ShellWindow = class ShellWindow {
 
         this.entity = entity;
         this.meta = window;
+
+        if (!window.is_client_decorated()) {
+            if (ext.settings.show_title()) {
+                log(`showing decorations`);
+                this.decoration_show();
+            } else {
+                log(`hiding decorations`);
+                this.decoration_hide();
+            }
+        }
     }
 
     activate() {
         activate(this.meta);
+    }
+
+    decoration_hide() {
+        set_hint(this.xid(), MOTIF_HINTS, HIDE_FLAGS);
+    }
+
+    decoration_show() {
+        set_hint(this.xid(), MOTIF_HINTS, SHOW_FLAGS);
     }
 
     icon(size) {
@@ -110,9 +133,19 @@ var ShellWindow = class ShellWindow {
 
         return this._window_app;
     }
+
+    xid() {
+        const desc = this.meta.get_description();
+        const match = desc && desc.match(/0x[0-9a-f]+/);
+        return match && match[0];
+    }
 }
 
 function blacklisted(window_class) {
     Log.debug(`window class: ${window_class}`);
     return ['Conky', 'Gnome-screenshot'].includes(window_class);
+}
+
+function set_hint(xid, hint, value) {
+    Util.spawn(['xprop', '-id', xid, '-f', hint, '32c', '-set', hint, value.join(', ')]);
 }

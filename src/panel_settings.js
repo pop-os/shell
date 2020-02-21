@@ -22,6 +22,7 @@ var Indicator = GObject.registerClass(
             this.add_actor(this.icon);
 
             this.menu.addMenuItem(tiled(ext));
+            this.menu.addMenuItem(title_bars(ext));
             this.menu.addMenuItem(new PopupSeparatorMenuItem());
 
             this.menu.addMenuItem(number_entry(ext, _("Inner Gap"), ext.set_gap_inner, ext.settings.set_gap_inner, () => ext.gap_inner, (prev, current) => {
@@ -122,6 +123,30 @@ function tiled(ext) {
                     Log.debug(`attached Window(${window}) to Fork(${entity})`);
                     ext.attached.insert(window, entity);
                 });
+        }
+
+        return true;
+    });
+
+    return tiled;
+}
+
+function title_bars(ext) {
+    let tiled = new PopupSwitchMenuItem(_("Show Window Titles"));
+    tiled.label.set_y_align(Clutter.ActorAlign.CENTER);
+
+    tiled.setToggleState(ext.settings.show_title());
+
+    tiled.connect('toggled', () => {
+        ext.settings.set_show_title(tiled.state);
+        for (const window of ext.windows.values()) {
+            if (window.meta.is_client_decorated()) continue;
+
+            if (tiled.state) {
+                window.decoration_show();
+            } else {
+                window.decoration_hide();
+            }
         }
 
         return true;

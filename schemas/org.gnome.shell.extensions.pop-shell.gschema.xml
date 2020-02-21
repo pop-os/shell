@@ -18,6 +18,11 @@
             <summary>Size of a row in the display grid</summary>
         </key>
 
+        <key type="b" name="show-title">
+            <default>true</default>
+            <summary>Show title bars on windows with server-side decorations</summary>
+        </key>
+
         <key type="b" name="tile-by-default">
             <default>false</default>
             <summary>Tile launched windows by default</summary>
