@@ -124,5 +124,6 @@ var ShellWindow = class ShellWindow {
 }
 
 function blacklisted(window_class) {
-    return ['Conky'].includes(window_class);
+    log(`window class: ${window_class}`);
+    return ['Conky', 'Gnome-screenshot'].includes(window_class);
 }
