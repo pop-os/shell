@@ -680,7 +680,6 @@ function init() {
     Log.info("init");
 
     ext = new Ext();
-    uiGroup.add_actor(ext.overlay);
 
     // Code to execute after the shell has finished initializing everything.
     GLib.idle_add(GLib.PRIORITY_LOW, () => {
@@ -694,12 +693,12 @@ function enable() {
 
     load_theme();
 
+    uiGroup.add_actor(ext.overlay);
+
     if (!indicator) {
         indicator = new Indicator(ext);
         panel.addToStatusArea('pop-shell', indicator);
     }
-
-    uiGroup.add_actor(ext.overlay);
 
     ext.keybindings.enable(ext.keybindings.global)
         .enable(ext.keybindings.window_focus);
@@ -714,9 +713,9 @@ function disable() {
     }
 
     if (ext) {
-        uiGroup.remove_actor(ext.overlay);
-
         ext.tiler.exit();
+
+        uiGroup.remove_actor(ext.overlay);
 
         ext.keybindings.disable(ext.keybindings.global)
             .disable(ext.keybindings.window_focus)
