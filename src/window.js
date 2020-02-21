@@ -143,7 +143,11 @@ var ShellWindow = class ShellWindow {
 
 function blacklisted(window_class) {
     Log.debug(`window class: ${window_class}`);
-    return ['Conky', 'Gnome-screenshot'].includes(window_class);
+    return [
+        'Conky',
+        'Com.github.donadigo.eddy',
+        'Gnome-screenshot'
+    ].includes(window_class);
 }
 
 function set_hint(xid, hint, value) {
