@@ -1,10 +1,12 @@
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
-const { ok, round_increment } = Me.imports.lib;
+const Lib = Me.imports.lib;
+const { ok, round_increment } = Lib;
 const Main = imports.ui.main;
 const { Meta, St } = imports.gi;
 const Tags = Me.imports.tags;
 const { GrabOp } = Me.imports.grab_op;
+const Log = Me.imports.log;
 
 var Tiler = class Tiler {
     constructor(ext) {
@@ -152,34 +154,7 @@ var Tiler = class Tiler {
 
     move(x, y, w, h) {
         if (this.ext.auto_tiler) {
-            const entity = this.ext.attached.get(this.window.entity);
-            const fork = this.ext.auto_tiler.forks.get(entity);
-            if (fork) {
-                const grab_op = new GrabOp(this.window.entity, this.window.meta.get_frame_rect());
-
-                let xadj = x * this.ext.row_size;
-                let yadj = y * this.ext.column_size;
-
-                let crect = grab_op.rect.copy();
-
-                if (fork.left.is_window(this.window.entity)) {
-                    crect.width += xadj;
-                    crect.height += yadj;
-                } else if (fork.is_horizontal()) {
-                    xadj *= -1;
-                    crect.width += xadj;
-                    crect.height += yadj;
-                    crect.x += -1 * xadj;
-                } else {
-                    yadj *= -1;
-                    crect.width += xadj;
-                    crect.height += yadj;
-                    crect.y += yadj;
-                }
-
-                this.ext.auto_tiler.resize(this.ext, entity, this.window.entity, grab_op.operation(crect), crect);
-                this.ext.set_overlay(this.window.meta.get_frame_rect());
-            }
+            this.move_auto(x, y);
         } else {
             this.swap_window = null;
             let rect = this.rect();
@@ -187,6 +162,71 @@ var Tiler = class Tiler {
             this.change(this.ext.overlay, rect, x, y, w, h)
                 .change(this.ext.overlay, rect, 0, 0, 0, 0);
         }
+    }
+
+    move_auto_(func) {
+        const entity = this.ext.attached.get(this.window.entity);
+        const fork = this.ext.auto_tiler.forks.get(entity);
+        if (fork) {
+            const grab_op = new GrabOp(this.window.entity, this.window.meta.get_frame_rect());
+
+            let crect = grab_op.rect.copy();
+            func(fork, crect);
+
+            const [monitor, _] = this.ext.monitors.get(this.window.entity);
+            Lib.meta_rect_clamp(this.ext.monitor_work_area(monitor), crect, this.ext.gap_outer);
+
+            if (crect.equal(grab_op.rect)) {
+                return;
+            }
+
+            this.ext.auto_tiler.resize(this.ext, entity, this.window.entity, grab_op.operation(crect), crect);
+            this.ext.set_overlay(this.window.meta.get_frame_rect());
+        }
+    }
+
+    move_auto(x, y) {
+        this.move_auto_((fork, crect) => {
+            let xadj = x * this.ext.row_size;
+            let yadj = y * this.ext.column_size;
+
+            if (fork.left.is_window(this.window.entity)) {
+                Log.debug(`left window move`);
+                crect.width += xadj;
+                crect.height += yadj;
+            } else if (fork.is_horizontal()) {
+                Log.debug(`right window horizontal move`);
+                crect.width += xadj;
+                crect.height += yadj;
+            } else {
+                Log.debug(`right window vertical move`);
+                crect.width += xadj;
+                crect.height += yadj;
+            }
+        });
+    }
+
+    resize_auto(x, y) {
+        this.move_auto_((fork, crect) => {
+            let xadj = x * this.ext.row_size;
+            let yadj = y * this.ext.column_size;
+
+            if (fork.left.is_window(this.window.entity)) {
+                Log.debug(`left window resize`);
+                crect.width += xadj;
+                crect.height += yadj;
+            } else if (fork.is_horizontal()) {
+                Log.debug(`right window horizontal resize`);
+                crect.width += -1 * xadj;
+                crect.height += yadj;
+                crect.x += xadj;
+            } else {
+                Log.debug(`right window vertical resize`);
+                crect.width += xadj;
+                crect.height += -1 * yadj;
+                crect.y += yadj;
+            }
+        });
     }
 
     move_left() {
@@ -206,7 +246,9 @@ var Tiler = class Tiler {
     }
 
     resize(x, y, w, h) {
-        if (!this.ext.auto_tiler) {
+        if (this.ext.auto_tiler) {
+            this.resize_auto(w, h);
+        } else {
             this.swap_window = null;
             let rect = this.rect();
             if (!rect) return;

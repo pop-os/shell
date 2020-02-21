@@ -74,6 +74,23 @@ function is_move_op(op) {
     return [Meta.GrabOp.WINDOW_BASE, Meta.GrabOp.MOVING, Meta.GrabOp.KEYBOARD_MOVING].includes(op);
 }
 
+function meta_rect_clamp(reference, rect, outer_gap) {
+    rect.x = Math.max(0, rect.x);
+    rect.y = Math.max(0, rect.y);
+
+    const xend = rect.x + rect.width;
+    const work_width = reference.width - outer_gap;
+    if (xend > work_width) {
+        rect.width = work_width - rect.x;
+    }
+
+    const yend = rect.y + rect.height;
+    const work_height = reference.height - outer_gap;
+    if (yend > work_height) {
+        rect.height = work_height - rect.y;
+    }
+}
+
 function orientation_as_str(value) {
     return value == 0 ? "Orientation::Horizontal" : "Orientation::Vertical";
 }
