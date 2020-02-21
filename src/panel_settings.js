@@ -48,6 +48,8 @@ function gaps(ext, current) {
                         const fork = ext.auto_tiler.forks.get(entity);
                         fork.tile(ext.auto_tiler, ext, fork.area, fork.workspace);
                     }
+                } else {
+                    ext.update_snapped();
                 }
             } else {
                 text.text = "";
