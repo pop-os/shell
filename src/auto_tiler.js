@@ -226,49 +226,6 @@ var AutoTiler = class AutoTiler extends World {
     }
 
     /**
-     * Grows a fork based on the new size of one of its siblings
-     *
-     * @param {Ext} ext
-     * @param {Entity} fork_e Entity of fork to grow
-     * @param {TilingFork} fork_c Component of fork to grow
-     * @param {Array} crect Dimensions of the window which grew
-     * @param {bool} is_left Defines if the window that grew was the left sibling
-     */
-    grow_fork_by_sibling(ext, fork_e, fork_c, crect, is_left) {
-        Log.debug(`growing Fork(${fork_e})`);
-
-        let child = fork_c;
-        let child_entity = fork_e;
-        let parent_entity = child.parent;
-        let parent;
-
-        resize_node(child, is_left, [crect.x, crect.y, crect.width, crect.height]);
-
-        while (parent_entity) {
-            parent = this.forks.get(parent_entity);
-            is_left = parent.left.is_fork(child_entity);
-
-            this.resize_parent(parent, child, is_left);
-
-            if (parent_exceeds(parent.area, child.area)) {
-                Log.debug(`Fork(${parent_entity}) exceeded`);
-                resize_node(parent, is_left, child.area);
-            } else {
-                Log.debug(`Fork(${parent_entity}) did not exceed`);
-                // break
-            }
-
-            parent_entity = parent.parent;
-            child = parent;
-            child_entity = parent_entity;
-        }
-
-        if (parent) {
-            parent.tile(this, ext, parent.area, parent.workspace);
-        }
-    }
-
-    /**
      * Grows a sibling a fork
      *
      * @param {Ext} ext
@@ -464,6 +421,8 @@ var AutoTiler = class AutoTiler extends World {
     resize_parent(parent, child, is_left) {
         Log.debug(`before ratio: ${parent.ratio}; (${child.area} : ${parent.area})`);
 
+        if (rect_eq(child.area, parent.area)) return;
+
         const measure = parent.is_horizontal() ? 2 : 3;
         parent.ratio = is_left
             ? child.area[measure] / parent.area[measure]
@@ -486,6 +445,7 @@ var AutoTiler = class AutoTiler extends World {
 
     resize_fork_in_direction(ext, child_e, child, is_left, consider_sibling, crect, measure) {
         Log.debug(`resizing fork in direction ${measure}: considering ${consider_sibling}`);
+        const original = [crect.x, crect.y, crect.width, crect.height];
         let length = (measure == 2 ? crect.width : crect.height);
 
         if (consider_sibling) {
@@ -494,20 +454,40 @@ var AutoTiler = class AutoTiler extends World {
                 : child.area_left[measure];
         }
 
-        while (child.parent) {
+        const shrinking = length < child.area[measure];
+        Log.debug(`shrinking? ${shrinking}`);
+
+        let done = false;
+        while (child.parent && !done) {
             Log.debug(`length = ${length}`);
             const parent = this.forks.get(child.parent);
 
-            child.area[measure] = length
-            this.resize_parent(parent, child, parent.left.is_fork(child_e));
-
-            child = parent;
-
-            if (parent_exceeds(parent.area, child.area)) {
-                break
+            if (rect_contains(parent.area, original)) {
+                if (shrinking) {
+                    Log.debug(`Fork(${child_e}) area before: ${child.area}`);
+                    child.area[measure] = length;
+                    Log.debug(`Fork(${child_e}) area after ${child.area}`);
+                } else {
+                    Log.info("breaking");
+                    child.area[measure] = length;
+                    this.resize_parent(parent, child, parent.left.is_fork(child_e));
+                    done = true;
+                }
+            } else if (shrinking) {
+                Log.info("breaking");
+                this.resize_parent(parent, child, parent.left.is_fork(child_e));
+                done = true;
+            } else {
+                Log.debug(`Fork(${child_e}) area before: ${child.area}`);
+                child.area[measure] = length;
+                parent.area[measure] = length;
+                Log.debug(`Fork(${child_e}) area after ${child.area}`);
             }
 
+            this.resize_parent(parent, child, parent.left.is_fork(child_e));
+
             child_e = child.parent;
+            child = parent;
         }
 
         child.tile(this, ext, child.area, child.workspace);
@@ -816,11 +796,16 @@ function node_variant_as_string(value) {
     return value == FORK ? "NodeVariant::Fork" : "NodeVariant::Window";
 }
 
-function parent_exceeds(parent, child) {
-    return parent[0] >= child[0]
-        && parent[1] >= child[1]
-        && (parent[0] + parent[2]) <= (child[0] + child[2])
-        && (parent[1] + parent[3]) <= (child[1] + child[3]);
+function rect_contains(a, b) {
+    Log.debug(`a(${a}) contains b(${b})`);
+    return a[0] <= b[0]
+        && a[1] <= b[1]
+        && (a[0] + a[2]) >= (b[0] + b[2])
+        && (a[1] + a[3]) >= (b[1] + b[3]);
+}
+
+function rect_eq(a, b) {
+    return a[0] == b[0] && a[1] == b[1] && a[2] == b[2] && a[3] == b[3];
 }
 
 function resize_node(fork, is_left, child_area) {

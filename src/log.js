@@ -5,7 +5,7 @@ function log(text) {
 }
 
 function info(text) {
-    if (log_level > 0) log("[INFO] " + text);
+    if (log_level > 0) log(" [INFO] " + text);
 }
 
 function error(text) {
@@ -13,7 +13,7 @@ function error(text) {
 }
 
 function warn(text) {
-    if (log_level > 2) log("[WARN] " + text);
+    if (log_level > 2) log(" [WARN] " + text);
 }
 
 function debug(text) {
