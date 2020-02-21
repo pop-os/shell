@@ -293,6 +293,8 @@ var Tiler = class Tiler {
             );
 
             win.move(rect);
+
+            this.ext.snapped.insert(win.entity, true);
         }
     }
 };

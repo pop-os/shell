@@ -49,6 +49,7 @@ var Ext = class Ext extends World {
         this.names = this.register_storage();
         this.tilable = this.register_storage();
         this.windows = this.register_storage();
+        this.snapped = this.register_storage();
 
         // Dialogs
 
@@ -197,6 +198,13 @@ var Ext = class Ext extends World {
 
     tiled_windows() {
         return this.entities.filter((entity) => this.contains_tag(entity, Tags.Tiled));
+    }
+
+    update_snapped() {
+        for (const entity of ext.snapped.find((val) => val)) {
+            const window = ext.windows.get(entity);
+            ext.tiler.snap(window);
+        }
     }
 
     /// Fetches the window entity which is associated with the metacity window metadata.
