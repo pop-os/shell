@@ -1,19 +1,30 @@
+declare var imports: any;
+
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
-const { current_monitor, join, recursive_remove_children, separator } = Me.imports.lib;
+import * as Lib from 'lib';
+
 const { Clutter, GObject, Pango, St } = imports.gi;
 const { ModalDialog } = imports.ui.modalDialog;
-const ShellEntry = imports.ui.shellEntry;
 
-var Search = GObject.registerClass(
+export var Search = GObject.registerClass(
     class Search extends ModalDialog {
-        _init(cancel, search, select, apply) {
+        constructor() {
+            super();
+        }
+
+        _init(
+            cancel: () => void,
+            search: (pattern: string) => Array<any>,
+            select: (id: number) => void,
+            apply: (id: number) => void
+        ) {
             super._init({
-                styleClass: 'pop-shell-search',
+                styleClass: "pop-shell-search",
                 destroyOnClose: false,
                 shellReactive: true,
                 shouldFadeIn: false,
-                shouldFadeOut: false,
+                shouldFadeOut: false
             });
 
             this.search = search;
@@ -22,14 +33,13 @@ var Search = GObject.registerClass(
 
             this.entry = new St.Entry({
                 can_focus: true,
-                x_expand: true,
+                x_expand: true
             });
 
-            // ShellEntry.addContextMenu(this.entry);
             this.text = this.entry.clutter_text;
             this.setInitialKeyFocus(this.text);
 
-            this.text.connect('activate', (_) => {
+            this.text.connect("activate", () => {
                 if (this.active_id < this.widgets.length) {
                     apply(this.active_id);
                 }
@@ -39,14 +49,14 @@ var Search = GObject.registerClass(
                 this.close();
             });
 
-            this.text.connect('text-changed', (entry, _) => {
+            this.text.connect("text-changed", (entry: any, _: any) => {
                 this.clear();
 
                 let text = entry.get_text();
                 this.update_search_list(search(text.toLowerCase()));
             });
 
-            this.text.connect('key-press-event', (_, event) => {
+            this.text.connect("key-press-event", (_: any, event: any) => {
                 // Prevents key repeat events
                 if (event.get_flags() != Clutter.EventFlags.NONE) {
                     return;
@@ -80,20 +90,20 @@ var Search = GObject.registerClass(
             });
 
             this.list = new St.BoxLayout({
-                styleClass: 'pop-shell-search-list',
+                styleClass: "pop-shell-search-list",
                 vertical: true,
-                margin_top: 12,
+                margin_top: 12
             });
 
             this.contentLayout.add(this.entry);
             this.contentLayout.add(this.list);
 
             // Ensure that the width is at least 480 pixels wide.
-            this.contentLayout.width = Math.max(current_monitor().width / 4, 480);
+            this.contentLayout.width = Math.max(Lib.current_monitor().width / 4, 480);
         }
 
         clear() {
-            recursive_remove_children(this.list);
+            Lib.recursive_remove_children(this.list);
             this.list.hide();
             this.widgets = [];
             this.active_id = 0;
@@ -108,32 +118,36 @@ var Search = GObject.registerClass(
             this.show_all();
             this.clear();
             this.entry.grab_key_focus();
-            this.update_search_list(this.search(''));
+            this.update_search_list(this.search(""));
         }
 
         select() {
-            this.widgets[this.active_id].set_style_class_name('pop-shell-search-element pop-shell-search-active');
+            this.widgets[this.active_id].set_style_class_name(
+                "pop-shell-search-element pop-shell-search-active"
+            );
         }
 
         unselect() {
-            this.widgets[this.active_id].set_style_class_name('pop-shell-search-element');
+            this.widgets[this.active_id].set_style_class_name(
+                "pop-shell-search-element"
+            );
         }
 
-        update_search_list(list) {
-            join(
-                list,
-                (element) => {
+        update_search_list(list: Array<any>) {
+            Lib.join(
+                list.values(),
+                (element: [string, any]) => {
                     const [title, icon] = element;
 
                     let label = new St.Label({
                         text: title,
-                        styleClass: 'pop-shell-search-label'
+                        styleClass: "pop-shell-search-label"
                     });
 
                     label.clutter_text.set_ellipsize(Pango.EllipsizeMode.END);
 
                     let container = new St.BoxLayout({
-                        styleClass: 'pop-shell-search-element',
+                        styleClass: "pop-shell-search-element"
                     });
 
                     container.add(icon, { y_fill: false, y_align: St.Align.MIDDLE });
@@ -142,7 +156,7 @@ var Search = GObject.registerClass(
                     this.widgets.push(container);
                     this.list.add(container);
                 },
-                () => this.list.add(separator())
+                () => this.list.add(Lib.separator())
             );
 
             this.list.show();

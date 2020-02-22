@@ -1,8 +1,8 @@
 Source: pop-shell
 Section: gnome
 Priority: optional
-Maintainer: Jeremy Soller <jeremy@system76.com>
-Build-Depends: debhelper-compat (=10), libglib2.0-bin
+Maintainer: System76 <info@system76.com>
+Build-Depends: debhelper-compat (=10), libglib2.0-bin, node-typescript
 Standards-Version: 3.9.8
 Homepage: https://github.com/pop-os/shell
 Vcs-Git: https://github.com/pop-os/shell

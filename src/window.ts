@@ -1,37 +1,30 @@
+declare var global: any, imports: any;
+
+import { Entity } from './ecs';
+import { Rectangle } from './rectangle';
+
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
+import * as Log from 'log';
+import * as Rect from 'rectangle';
+import { Ext } from './extension';
+
 const { Gdk, Meta, Shell, St } = imports.gi;
-const Log = Me.imports.log;
 const Util = imports.misc.util;
 
-const MOTIF_HINTS = '_MOTIF_WM_HINTS';
-const HIDE_FLAGS = ['0x2', '0x0', '0x2', '0x0', '0x0'];
-const SHOW_FLAGS = ['0x2', '0x0', '0x1', '0x0', '0x0'];
-
-/// Activates a window, and moves the mouse point to the center of it.
-function activate(win) {
-    win.raise();
-    win.unminimize();
-    win.activate(global.get_current_time());
-    place_pointer_on(win)
-}
-
-function place_pointer_on(win) {
-    let rect = win.get_frame_rect();
-    let x = rect.x + 8;
-    let y = rect.y + 8;
-
-    let display = Gdk.DisplayManager.get().get_default_display();
-
-    display.get_default_seat()
-        .get_pointer()
-        .warp(display.get_default_screen(), x, y);
-}
+const MOTIF_HINTS: string = '_MOTIF_WM_HINTS';
+const HIDE_FLAGS: string[] = ['0x2', '0x0', '0x2', '0x0', '0x0'];
+const SHOW_FLAGS: string[] = ['0x2', '0x0', '0x1', '0x0', '0x0'];
 
 const window_tracker = Shell.WindowTracker.get_default();
 
-var ShellWindow = class ShellWindow {
-    constructor(entity, window, ext) {
+export class ShellWindow {
+    _window_app: any;
+    ext: Ext;
+    entity: Entity;
+    meta: any;
+
+    constructor(entity: Entity, window: any, ext: Ext) {
         this._window_app = null;
         this.ext = ext;
 
@@ -40,10 +33,10 @@ var ShellWindow = class ShellWindow {
 
         if (!window.is_client_decorated()) {
             if (ext.settings.show_title()) {
-                log(`showing decorations`);
+                Log.info(`showing decorations`);
                 this.decoration_show();
             } else {
-                log(`hiding decorations`);
+                Log.info(`hiding decorations`);
                 this.decoration_hide();
             }
         }
@@ -61,7 +54,7 @@ var ShellWindow = class ShellWindow {
         set_hint(this.xid(), MOTIF_HINTS, SHOW_FLAGS);
     }
 
-    icon(size) {
+    icon(size: number) {
         return this.ext.icons.get_or(this.entity, () => {
             let app = this.window_app();
             if (!app) return null;
@@ -88,7 +81,7 @@ var ShellWindow = class ShellWindow {
         });
     }
 
-    move(rect) {
+    move(rect: Rectangle) {
         this.meta.unmaximize(Meta.MaximizeFlags.HORIZONTAL);
         this.meta.unmaximize(Meta.MaximizeFlags.VERTICAL);
         this.meta.unmaximize(Meta.MaximizeFlags.HORIZONTAL | Meta.MaximizeFlags.VERTICAL);
@@ -102,12 +95,12 @@ var ShellWindow = class ShellWindow {
         );
     }
 
-    move_snap(rect) {
+    move_snap(rect: Rectangle) {
         this.move(rect);
         this.ext.tiler.snap(this);
     }
 
-    name() {
+    name(): string {
         return this.ext.names.get_or(this.entity, () => {
             try {
                 return this.window_app().get_name().replace(/&/g, "&amp;");
@@ -117,9 +110,13 @@ var ShellWindow = class ShellWindow {
         });
     }
 
-    swap(other) {
-        let ar = this.meta.get_frame_rect();
-        let br = other.meta.get_frame_rect();
+    rect(): Rectangle {
+        return Rect.Rectangle.from_meta(this.meta.get_frame_rect());
+    }
+
+    swap(other: ShellWindow) {
+        let ar = this.rect();
+        let br = other.rect();
 
         this.move(br);
         other.move(ar);
@@ -141,15 +138,38 @@ var ShellWindow = class ShellWindow {
     }
 }
 
-function blacklisted(window_class) {
-    Log.debug(`window class: ${window_class}`);
-    return [
-        'Conky',
-        'Com.github.donadigo.eddy',
-        'Gnome-screenshot'
-    ].includes(window_class);
+const BLACKLIST: string[] = [
+    'Conky',
+    'Com.github.donadigo.eddy',
+    'Gnome-screenshot'
+];
+
+/// Activates a window, and moves the mouse point to the center of it.
+export function activate(win: any) {
+    win.raise();
+    win.unminimize();
+    win.activate(global.get_current_time());
+    place_pointer_on(win)
 }
 
-function set_hint(xid, hint, value) {
+export function blacklisted(window_class: string): boolean {
+    Log.debug(`window class: ${window_class}`);
+    return BLACKLIST.indexOf(window_class) > -1;
+}
+
+export function place_pointer_on(win: any) {
+    const rect = win.get_frame_rect();
+    const x = rect.x + 8;
+    const y = rect.y + 8;
+
+    const display = Gdk.DisplayManager.get().get_default_display();
+
+    display
+        .get_default_seat()
+        .get_pointer()
+        .warp(display.get_default_screen(), x, y);
+}
+
+export function set_hint(xid: string, hint: string, value: string[]) {
     Util.spawn(['xprop', '-id', xid, '-f', hint, '32c', '-set', hint, value.join(', ')]);
 }

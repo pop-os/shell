@@ -12,29 +12,22 @@ $(info UUID is "$(UUID)")
 
 .PHONY: all clean install zip-file
 
-sources = src/extension.js \
-	src/auto_tiler.js \
-	src/ecs.js \
-	src/focus.js \
-	src/geom.js \
-	src/grab_op.js \
-	src/keybindings.js \
-	src/lib.js \
-	src/log.js \
-	src/panel_settings.js \
-	src/search.js \
-	src/settings.js \
-	src/tags.js \
-	src/tiling.js \
-	src/window.js \
-	src/window_search.js \
-	src/shortcut_overlay.js \
-	stylesheet.css
+sources = src/*.ts stylesheet.css
 
 all: $(sources) metadata.json schemas
+	tsc
+	for file in target/*.js; do \
+		sed -i \
+			-e 's#export function#function#g' \
+			-e 's#export var#var#g' \
+			-e 's#Object.defineProperty(exports, "__esModule", { value: true });#var exports = {};#g' \
+			$$file; \
+		sed -i -E 's/export class (\w+)/var \1 = class \1/g' $$file; \
+		sed -i -E "s/import \* as (\w+) from '(\w+)'/const \1 = Me.imports.\2/g" $$file; \
+	done
 	rm -rf _build
 	mkdir -p _build
-	cp -r $^ _build
+	cp -r metadata.json schemas target/*.js _build
 
 schemas: schemas/gschemas.compiled
 	touch $@

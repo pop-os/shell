@@ -1,62 +1,64 @@
-function xend(rect) {
+import { Rectangle } from "./rectangle";
+
+export function xend(rect: Rectangle) {
     return rect.x + rect.width;
 }
 
-function xcenter(rect) {
+export function xcenter(rect: Rectangle) {
     return rect.x + rect.width / 2;
 }
 
-function yend(rect) {
+export function yend(rect: Rectangle) {
     return rect.y + rect.height;
 }
 
-function ycenter(rect) {
+export function ycenter(rect: Rectangle) {
     return rect.y + rect.height / 2;
 }
 
-function center(rect) {
+export function center(rect: Rectangle) {
     return [xcenter(rect), ycenter(rect)];
 }
 
-function north(rect) {
+export function north(rect: Rectangle) {
     return [xcenter(rect), rect.y];
 }
 
-function east(rect) {
+export function east(rect: Rectangle) {
     return [xend(rect), ycenter(rect)];
 }
 
-function south(rect) {
+export function south(rect: Rectangle) {
     return [xcenter(rect), yend(rect)];
 }
 
-function west(rect) {
+export function west(rect: Rectangle) {
     return [rect.x, ycenter(rect)];
 }
 
-function directional_distance(win_a, win_b, fn_a, fn_b) {
+export function directional_distance(win_a: any, win_b: any, fn_a: any, fn_b: any) {
     let [ax, ay] = fn_a(win_a.get_frame_rect());
     let [bx, by] = fn_b(win_b.get_frame_rect());
 
     return Math.sqrt(Math.pow(bx - ax, 2) + Math.pow(by - ay, 2));
 }
 
-function window_distance(win_a, win_b) {
+export function window_distance(win_a: any, win_b: any) {
     return directional_distance(win_a, win_b, center, center);
 }
 
-function upward_distance(win_a, win_b) {
+export function upward_distance(win_a: any, win_b: any) {
     return directional_distance(win_a, win_b, south, north);
 }
 
-function rightward_distance(win_a, win_b) {
+export function rightward_distance(win_a: any, win_b: any) {
     return directional_distance(win_a, win_b, west, east);
 }
 
-function downward_distance(win_a, win_b) {
+export function downward_distance(win_a: any, win_b: any) {
     return directional_distance(win_a, win_b, north, south);
 }
 
-function leftward_distance(win_a, win_b) {
+export function leftward_distance(win_a: any, win_b: any) {
     return directional_distance(win_a, win_b, east, west);
 }

@@ -3,5 +3,5 @@ Upstream-Name: pop-shell
 Source: https://github.com/pop-os/shell
 
 Files: *
-Copyright: 2019 System76
+Copyright: 2020 System76
 License: GPL-3

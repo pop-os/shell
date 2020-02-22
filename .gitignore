@@ -1,6 +1,7 @@
 *.zip
 *.swp
 _build
+target
 schemas/gschemas.compiled
 debian/*
 !debian/source

@@ -8,17 +8,15 @@
 ///
 /// - The first 32-bit integer is the index.
 /// - The second 32-bit integer is the generation.
-const Entity = new Uint32Array(2);
 
-function entity_eq(a, b) {
+export type Entity = [number, number];
+
+export function entity_eq(a: Entity, b: Entity): boolean {
     return a[0] == b[0] && b[1] == b[1];
 }
 
-function entity_new(pos, gen) {
-    let entity = new Uint32Array(Entity);
-    entity[0] = pos;
-    entity[1] = gen;
-    return entity;
+export function entity_new(pos: number, gen: number): Entity {
+    return [pos, gen];
 }
 
 /// Storages hold components of a specific type, and define these associations on entities
@@ -29,13 +27,15 @@ function entity_new(pos, gen) {
 /// value in the array is an array which contains the entity's generation, and the
 /// component which was assigned to it. The generation is used to determine if an
 /// assigned component is stale on component lookup.
-var Storage = class Storage {
+export class Storage<T> {
+    _store: Array<[number, T] | null>;
+
     constructor() {
         this._store = new Array();
     }
 
     /// Private method for iterating across allocated slots
-    * _iter() {
+    * _iter(): IterableIterator<[number, [number, T]]> {
         let idx = 0;
         for (const slot of this._store) {
             if (slot) yield [idx, slot];
@@ -44,21 +44,21 @@ var Storage = class Storage {
     }
 
     /// Iterates across each stored component, and their entities
-    * iter() {
+    * iter(): IterableIterator<[Entity, T]> {
         for (const [idx, [gen, value]] of this._iter()) {
             yield [entity_new(idx, gen), value];
         }
     }
 
     /// Finds values with the matching component
-    * find(func) {
+    * find(func: (value: T) => boolean): IterableIterator<Entity> {
         for (const [idx, [gen, value]] of this._iter()) {
             if (func(value)) yield entity_new(idx, gen);
         }
     }
 
     /// Iterates across each stored component
-    * values() {
+    * values(): IterableIterator<T> {
         for (const [_idx, [_gen, value]] of this._iter()) {
             yield value;
         }
@@ -69,24 +69,23 @@ var Storage = class Storage {
      *
      * @param {Entity} entity
      */
-    contains(entity) {
+    contains(entity: Entity): boolean {
         return this.get(entity) != null;
     }
 
     /// Fetches the component for this entity, if it exists
-    get(entity) {
+    get(entity: Entity): T | null {
         let [id, gen] = entity;
         const val = this._store[id];
         return (val && val[0] == gen) ? val[1] : null;
     }
 
     /// Fetches the component, and initializing it if it is missing
-    get_or(entity, init) {
+    get_or(entity: Entity, init: () => T): T {
         let value = this.get(entity);
 
         if (!value) {
             value = init();
-            if (!value) return null;
             this.insert(entity, value);
         }
 
@@ -94,7 +93,7 @@ var Storage = class Storage {
     }
 
     /// Assigns component to an entity
-    insert(entity, component) {
+    insert(entity: Entity, component: T) {
         let [id, gen] = entity;
 
         let length = this._store.length;
@@ -106,7 +105,7 @@ var Storage = class Storage {
     }
 
     /// Removes the component for this entity, if it exists
-    remove(entity) {
+    remove(entity: Entity): T | null {
         const comp = this.get(entity);
         if (comp) {
             this._store[entity[0]] = null;
@@ -120,13 +119,13 @@ var Storage = class Storage {
      * @param {Entity} entity
      * @param {function} func
      */
-    take_with(entity, func) {
+    take_with<X>(entity: Entity, func: (component: T) => X): X | null {
         const component = this.remove(entity);
         return component ? func(component) : null;
     }
 
     /// Apply a function to the component when it exists
-    with(entity, func) {
+    with<X>(entity: Entity, func: (component: T) => X): X | null {
         const component = this.get(entity);
         return component ? func(component) : null
     }
@@ -142,7 +141,12 @@ var Storage = class Storage {
 /// - An array for storing a list of registered storages
 /// - An array for containing a list of free slots to allocate
 /// - An array for storing tags associated with an entity
-var World = class World {
+export class World {
+    _entities: Array<Entity>;
+    storages: Array<Storage<any>>;
+    _tags: Array<any>;
+    _free_slots: Array<number>;
+
     constructor() {
         this._entities = new Array();
         this.storages = new Array();
@@ -151,38 +155,38 @@ var World = class World {
     }
 
     /// The total capacity of the entity array
-    get capacity() {
+    get capacity(): number {
         return this._entities.length;
     }
 
     /// The number of unallocated entity slots
-    get free() {
+    get free(): number {
         return this._free_slots.length;
     }
 
     /// The number of allocated entities
-    get length() {
-        return this.capacity() - this.free();
+    get length(): number {
+        return this.capacity - this.free;
     }
 
     /// Fetches tags associated with an entity
     ///
     /// Tags are essentially a dense set of small components
-    tags(entity) {
+    tags(entity: Entity): any {
         return this._tags[entity[0]];
     }
 
     /// Iterates across entities in the world
-    * entities() {
-        for (const entity in this._entities) {
-            if (!this._free_slots.contains(entity[0])) yield entity;
+    * entities(): IterableIterator<Entity> {
+        for (const entity of this._entities.values()) {
+            if (!(this._free_slots.indexOf(entity[0]) > -1)) yield entity;
         }
     }
 
     /// Create a new entity in the world
     ///
     /// Find the first available slot, and increment the generation.
-    create_entity() {
+    create_entity(): Entity {
         let slot = this._free_slots.pop();
 
         if (slot) {
@@ -200,7 +204,7 @@ var World = class World {
     /// Deletes an entity from the world
     ///
     /// Sets the `id` of the entity to `null`, thus marking its slot as unused.
-    delete_entity(entity) {
+    delete_entity(entity: Entity) {
         this.tags(entity).clear();
         for (const storage of this.storages) {
             storage.remove(entity);
@@ -210,31 +214,31 @@ var World = class World {
     }
 
     /// Adds a new tag to the given entity
-    add_tag(entity, tag) {
+    add_tag(entity: Entity, tag: any) {
         this.tags(entity).add(tag);
     }
 
     /// Returns `true` if this tag exists for the given entity
-    contains_tag(entity, tag) {
+    contains_tag(entity: Entity, tag: any): boolean {
         return this.tags(entity).has(tag);
     }
 
     /// Deletes a tag from the given entity
-    delete_tag(entity, tag) {
+    delete_tag(entity: Entity, tag: any) {
         this.tags(entity).delete(tag);
     }
 
     /// Registers a new component storage for our world
     ///
     /// This will be used to easily remove components when deleting an entity.
-    register_storage() {
+    register_storage(): Storage<any> {
         let storage = new Storage();
         this.storages.push(storage);
         return storage;
     }
 
     /// Unregisters an old component storage from our world
-    unregister_storage(storage) {
+    unregister_storage(storage: Storage<any>) {
         let matched = this.storages.indexOf(storage);
         if (matched) {
             swap_remove(this.storages, matched);
@@ -242,7 +246,7 @@ var World = class World {
     }
 }
 
-function swap_remove(array, index) {
+function swap_remove<T>(array: Array<T>, index: number): T | undefined {
     const last = array.length - 1;
     array[index] = array[last];
     return array.pop();

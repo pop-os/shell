@@ -1,17 +1,29 @@
+declare var imports: any;
+
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
-const { Gio, GObject, Meta, Shell } = imports.gi;
-const { Window } = Me.imports.lib;
-const { Search } = Me.imports.search;
-const { uiGroup } = imports.ui.main;
-const { ShellWindow } = Window;
+const { GObject, Meta } = imports.gi;
+
+import * as Search from 'search';
+
+import { ShellWindow } from 'window';
+import { Ext } from './extension';
 
 const LIST_MAX = 5;
 const ICON_SIZE = 32;
 
-var WindowSearch = GObject.registerClass(
-    class WindowSearch extends Search {
-        _init(ext) {
+export var WindowSearch = GObject.registerClass(
+    class WindowSearch extends Search.Search {
+        windows: Array<ShellWindow>;
+        active: Array<[string, any]>;
+
+        constructor() {
+            super();
+            this.windows = [];
+            this.active = [];
+        }
+
+        _init(ext: Ext) {
             this.windows = [];
             this.active = [];
 
@@ -19,12 +31,12 @@ var WindowSearch = GObject.registerClass(
                 ext.overlay.visible = false;
             };
 
-            let search = (pattern) => {
+            let search = (pattern: string) => {
                 this.windows.splice(0);
                 this.active.splice(0);
 
                 let window_list = ext.tab_list(Meta.TabList.NORMAL, null);
-                window_list.sort((a, b) => a.name() > b.name());
+                window_list.sort((a: ShellWindow, b: ShellWindow) => a.name() > b.name());
 
                 for (const win of window_list) {
                     let name = win.name();
@@ -48,7 +60,7 @@ var WindowSearch = GObject.registerClass(
                 return this.active;
             };
 
-            let select = (id) => {
+            let select = (id: number) => {
                 let rect = this.windows[id].meta.get_frame_rect();
                 ext.overlay.x = rect.x
                 ext.overlay.y = rect.y;
@@ -57,7 +69,7 @@ var WindowSearch = GObject.registerClass(
                 ext.overlay.visible = true;
             };
 
-            let apply = (id) => {
+            let apply = (id: number) => {
                 this.windows[id].activate();
                 ext.overlay.visible = false;
             };

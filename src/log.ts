@@ -1,21 +1,23 @@
+declare const global: any;
+
 var log_level = 4;
 
-function log(text) {
+export function log(text: string) {
     global.log("pop-shell: " + text);
 }
 
-function info(text) {
+export function info(text: string) {
     if (log_level > 0) log(" [INFO] " + text);
 }
 
-function error(text) {
+export function error(text: string) {
     if (log_level > 1) log("[ERROR] " + text);
 }
 
-function warn(text) {
+export function warn(text: string) {
     if (log_level > 2) log(" [WARN] " + text);
 }
 
-function debug(text) {
+export function debug(text: string) {
     if (log_level > 3) log("[DEBUG] " + text);
 }

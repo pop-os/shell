@@ -1,0 +1,101 @@
+declare const global: any, imports: any;
+
+const Me = imports.misc.extensionUtils.getCurrentExtension();
+
+import * as rectangle from 'rectangle';
+
+type Rectangle = rectangle.Rectangle;
+
+const { Meta, St } = imports.gi;
+
+export var MODE_AUTO_TILE = 0;
+export var MODE_DEFAULT = 1;
+
+export var MOVEMENT_NONE = 0
+export var MOVEMENT_MOVED = 0b1;
+export var MOVEMENT_GROW = 0b10;
+export var MOVEMENT_SHRINK = 0b100;
+export var MOVEMENT_LEFT = 0b1000;
+export var MOVEMENT_UP = 0b10000;
+export var MOVEMENT_RIGHT = 0b100000;
+export var MOVEMENT_DOWN = 0b1000000;
+
+export var ORIENTATION_HORIZONTAL = 0;
+export var ORIENTATION_VERTICAL = 1;
+
+export function ok<T>(input: T | null, func: (a: T) => T | null): T | null {
+    return input ? func(input) : null;
+}
+
+export function ok_or_else<A, B>(input: A | null, ok_func: (input: A) => B, or_func: () => B): B {
+    return input ? ok_func(input) : or_func();
+}
+
+export function or_else<T>(input: T | null, func: () => T | null): T | null {
+    return input ? input : func();
+}
+
+export function current_monitor(): Rectangle {
+    return rectangle.Rectangle.from_meta(global.display.get_monitor_geometry(global.display.get_current_monitor()));
+}
+
+// Fetch rectangle that represents the cursor
+export function cursor_rect(): Rectangle {
+    let [x, y] = global.get_pointer();
+    return new rectangle.Rectangle([x, y, 1, 1]);
+}
+
+/// Missing from the Clutter API is an Actor children iterator
+export function* get_children(actor: any) {
+    let nth = 0;
+    let children = actor.get_n_children();
+
+    while (nth < children) {
+        yield actor.get_child_at_index(nth);
+        nth += 1;
+    }
+}
+
+export function join<T>(iterator: IterableIterator<T>, next_func: (arg: T) => void, between_func: () => void) {
+    ok(iterator.next().value, (first) => {
+        next_func(first);
+
+        for (const item of iterator) {
+            between_func();
+            next_func(item);
+        }
+    });
+}
+
+export function is_move_op(op: number): boolean {
+    return [
+        Meta.GrabOp.WINDOW_BASE,
+        Meta.GrabOp.MOVING,
+        Meta.GrabOp.KEYBOARD_MOVING
+    ].indexOf(op) > -1;
+}
+
+export function meta_rect_clamp(ref: Rectangle, rect: Rectangle, outer_gap: number) {
+    rect.clamp(ref, outer_gap);
+}
+
+export function orientation_as_str(value: number): string {
+    return value == 0 ? "Orientation::Horizontal" : "Orientation::Vertical";
+}
+
+/// Useful in the event that you want to reuse an actor in the future
+export function recursive_remove_children(actor: any) {
+    for (const child of get_children(actor)) {
+        recursive_remove_children(child);
+    }
+
+    actor.remove_all_children();
+}
+
+export function round_increment(value: number, increment: number): number {
+    return Math.round(value / increment) * increment;
+}
+
+export function separator(): any {
+    return new St.BoxLayout({ styleClass: 'pop-shell-separator', x_expand: true });
+}

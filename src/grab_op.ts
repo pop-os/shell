@@ -1,16 +1,24 @@
+declare const imports: any;
+
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
-const Lib = Me.imports.lib;
-const Log = Me.imports.log;
+import { Entity } from 'ecs';
+import { Rectangle } from 'rectangle';
 
-var GrabOp = class GrabOp {
-    constructor(entity, rect) {
+import * as Lib from 'lib';
+import * as Log from 'log';
+
+export class GrabOp {
+    entity: Entity;
+    rect: Rectangle;
+
+    constructor(entity: Entity, rect: Rectangle) {
         this.entity = entity;
         this.rect = rect;
     }
 
-    operation(change) {
-        Log.debug(`changing from (${Lib.fmt_rect(this.rect)}) to (${Lib.fmt_rect(change)})`);
+    operation(change: Rectangle) {
+        Log.debug(`changing from (${this.rect.fmt()}) to (${change.fmt()})`);
         const xpos = this.rect.x == change.x;
         const ypos = this.rect.y == change.y;
 

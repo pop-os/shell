@@ -14,6 +14,7 @@ However, GNOME Shell is a highly extensible desktop. It is very possible to impl
   - [Shared Features](#shared-features): Behaviors shared between stacking and auto-tiling modes
   - [Stacking Mode](#stacking-mode): Behaviors specific to the stacking mode
   - [Auto-Tile Mode](#auto-tile-mode): Behaviors specific to the auto-tiling mode
+- [Developers](#developers): Guide for getting started with development
 
 ---
 
@@ -186,3 +187,17 @@ Also of note is that we have implemented this extension around an entity-compone
 - A fork component contains two branches; which consist of an entity, and a kind.
   - The kind declares which world an entity belongs to.
   - The entity is used to locate the components belonging to it.
+
+## Developers
+
+Due to the risky nature of plain JavaScript, this GNOME Shell extension is written in [TypeScript](https://www.typescriptlang.org/). In addition to supplying static type-checking and self-documenting classes and interfaces, it allows us to write modern JavaScript syntax whilst supporting generation of code for older targets.
+
+When iterating on the codebase, run `sh rebuild.sh` to `make`, `make install`, configure keyboard shortcuts, begin following gnome-shell logs, and restart GNOME Shell. Note that any logged errors will be referencing the generated JavaScript files located in the `_build/` directory.
+
+GNOME JS is a little different from standard JS, so the included `Makefile` runs `sed` on the compied JavaScript to convert the small number of differences between JS and GJS. Notably, GJS only partially supports ES2015, and has its own module system which works differently from what ES2015 expects. The sed scripts will replace `import` and `export` statements with the expected GNOME variants.
+
+GNOME types are currently not type-checked. You may access the `global` and `imports` variables by declaring them at the top of the typescript file as `any` types. Working with `any` types is the same as working with JavaScript directly. To access local modules, you must add this line before any imports:
+
+```js
+const Me = imports.misc.extensionUtils.getCurrentExtension();
+```

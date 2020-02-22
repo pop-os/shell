@@ -1,1 +1,0 @@
-var Tiled = 0;

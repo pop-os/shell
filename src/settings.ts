@@ -1,9 +1,13 @@
+declare const imports: any;
+
 const ExtensionUtils = imports.misc.extensionUtils;
 const extension = ExtensionUtils.getCurrentExtension();
 const Gio = imports.gi.Gio;
 
-var Settings = class Settings {
-    constructor(schema) {
+export class Settings {
+    inner: any;
+
+    constructor(schema: string) {
         const GioSSS = Gio.SettingsSchemaSource;
         const schemaDir = extension.dir.get_child("schemas");
 
@@ -29,56 +33,56 @@ const ROW_SIZE = 'row-size';
 const SHOW_TITLE = 'show-title';
 const TILE_BY_DEFAULT = 'tile-by-default';
 
-var ExtensionSettings = class ExtensionSettings extends Settings {
+export class ExtensionSettings extends Settings {
     constructor() {
         super(extension.metadata['settings-schema']);
     }
 
-    column_size() {
+    column_size(): number {
         return this.inner.get_uint(COLUMN_SIZE);
     }
 
-    gap_inner() {
+    gap_inner(): number {
         return this.inner.get_uint(GAP_INNER);
     }
 
-    gap_outer() {
+    gap_outer(): number {
         return this.inner.get_uint(GAP_OUTER);
     }
 
-    row_size() {
+    row_size(): number {
         return this.inner.get_uint(ROW_SIZE);
     }
 
-    show_title() {
+    show_title(): number {
         return this.inner.get_boolean(SHOW_TITLE);
     }
 
-    tile_by_default() {
+    tile_by_default(): boolean {
         return this.inner.get_boolean(TILE_BY_DEFAULT);
     }
 
-    set_column_size(size) {
+    set_column_size(size: number) {
         this.inner.set_uint(COLUMN_SIZE, size);
     }
 
-    set_gap_inner(gap) {
+    set_gap_inner(gap: number) {
         this.inner.set_uint(GAP_INNER, gap);
     }
 
-    set_gap_outer(gap) {
+    set_gap_outer(gap: number) {
         this.inner.set_uint(GAP_OUTER, gap);
     }
 
-    set_row_size(size) {
+    set_row_size(size: number) {
         this.inner.set_uint(ROW_SIZE, size);
     }
 
-    set_show_title(set) {
+    set_show_title(set: boolean) {
         this.inner.set_boolean(SHOW_TITLE, set);
     }
 
-    set_tile_by_default(set) {
+    set_tile_by_default(set: boolean) {
         this.inner.set_boolean(TILE_BY_DEFAULT, set);
     }
 }
