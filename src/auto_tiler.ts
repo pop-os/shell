@@ -12,10 +12,12 @@ import { Rectangle } from './rectangle';
 import { ShellWindow } from './window';
 import { Ext } from './extension';
 
-const { ORIENTATION_HORIZONTAL, orientation_as_str } = Lib;
+const { orientation_as_str } = Lib;
 
-export var FORK = 0;
-export var WINDOW = 1;
+export enum NodeKind {
+    FORK = 0,
+    WINDOW = 1,
+}
 
 const XPOS = 0;
 const YPOS = 1;
@@ -153,7 +155,7 @@ export class AutoTiler extends Ecs.World {
                     reflow_fork = [fork.parent, this.reassign_child_to_parent(fork_entity, fork.parent, fork.right)];
                 } else if (fork.right) {
                     reflow_fork = [fork_entity, fork];
-                    if (fork.right.kind == WINDOW) {
+                    if (fork.right.kind == NodeKind.WINDOW) {
                         const detached = fork.right;
                         fork.left = detached;
                         fork.right = null;
@@ -172,7 +174,7 @@ export class AutoTiler extends Ecs.World {
                 } else {
                     reflow_fork = [fork_entity, fork];
 
-                    if (fork.left.kind == FORK) {
+                    if (fork.left.kind == NodeKind.FORK) {
                         this.reassign_children_to_parent(fork_entity, fork.left.entity, fork);
                     } else {
                         fork.right = null;
@@ -229,21 +231,21 @@ export class AutoTiler extends Ecs.World {
     /**
      * Grows a sibling a fork
      */
-    grow_sibling(ext: Ext, fork_e: Entity, fork_c: TilingFork, is_left: boolean, movement: number, crect: Rectangle) {
+    grow_sibling(ext: Ext, fork_e: Entity, fork_c: TilingFork, is_left: boolean, movement: Lib.Movement, crect: Rectangle) {
         if (fork_c.area) {
             if (fork_c.is_horizontal()) {
-                if ((movement & (Lib.MOVEMENT_DOWN | Lib.MOVEMENT_UP)) != 0) {
+                if ((movement & (Lib.Movement.DOWN | Lib.Movement.UP)) != 0) {
                     Log.debug(`growing Fork(${fork_e}) up/down`);
                     this.resize_fork_in_direction(ext, fork_e, fork_c, is_left, false, crect, 3);
                 } else if (is_left) {
-                    if ((movement & Lib.MOVEMENT_RIGHT) != 0) {
+                    if ((movement & Lib.Movement.RIGHT) != 0) {
                         Log.debug(`growing left child of Fork(${fork_e}) from left to right`);
                         this.readjust_fork_ratio_by_left(ext, crect.width, fork_c, fork_c.area.width);
                     } else {
                         Log.debug(`growing left child of Fork(${fork_e}) from right to left`);
                         this.resize_fork_in_direction(ext, fork_e, fork_c, is_left, true, crect, 2);
                     }
-                } else if ((movement & Lib.MOVEMENT_RIGHT) != 0) {
+                } else if ((movement & Lib.Movement.RIGHT) != 0) {
                     Log.debug(`growing right child of Fork(${fork_e}) from left to right`);
                     this.resize_fork_in_direction(ext, fork_e, fork_c, is_left, true, crect, 2);
                 } else {
@@ -251,18 +253,18 @@ export class AutoTiler extends Ecs.World {
                     this.readjust_fork_ratio_by_right(ext, crect.width, fork_c, fork_c.area.width);
                 }
             } else {
-                if ((movement & (Lib.MOVEMENT_LEFT | Lib.MOVEMENT_RIGHT)) != 0) {
+                if ((movement & (Lib.Movement.LEFT | Lib.Movement.RIGHT)) != 0) {
                     Log.debug(`growing Fork(${fork_e}) left/right`);
                     this.resize_fork_in_direction(ext, fork_e, fork_c, is_left, false, crect, 2);
                 } else if (is_left) {
-                    if ((movement & Lib.MOVEMENT_DOWN) != 0) {
+                    if ((movement & Lib.Movement.DOWN) != 0) {
                         Log.debug(`growing left child of Fork(${fork_e}) from top to bottom`);
                         this.readjust_fork_ratio_by_left(ext, crect.height, fork_c, fork_c.area.height);
                     } else {
                         Log.debug(`growing left child of Fork(${fork_e}) from bottom to top`);
                         this.resize_fork_in_direction(ext, fork_e, fork_c, is_left, true, crect, 3);
                     }
-                } else if ((movement & Lib.MOVEMENT_DOWN) != 0) {
+                } else if ((movement & Lib.Movement.DOWN) != 0) {
                     Log.debug(`growing right child of Fork(${fork_e}) from top to bottom`);
                     this.resize_fork_in_direction(ext, fork_e, fork_c, is_left, true, crect, 3);
                 } else {
@@ -278,7 +280,7 @@ export class AutoTiler extends Ecs.World {
         let forks = new Array(2);
 
         while (fork) {
-            if (fork.left.kind == FORK) {
+            if (fork.left.kind == NodeKind.FORK) {
                 forks.push(this.forks.get(fork.left.entity));
             }
 
@@ -287,7 +289,7 @@ export class AutoTiler extends Ecs.World {
             }
 
             if (fork.right) {
-                if (fork.right.kind == FORK) {
+                if (fork.right.kind == NodeKind.FORK) {
                     forks.push(this.forks.get(fork.right.entity));
                 }
 
@@ -307,7 +309,7 @@ export class AutoTiler extends Ecs.World {
         let largest_window = null;
         let largest_size = 0;
 
-        for (const win of this.iter(entity, WINDOW)) {
+        for (const win of this.iter(entity, NodeKind.WINDOW)) {
             const window = ext.windows.get(win.entity);
 
             if (window) {
@@ -353,7 +355,7 @@ export class AutoTiler extends Ecs.World {
      * - If it is a window, simply call on_attach
      */
     reassign_sibling(sibling: TilingNode, parent: Entity) {
-        (sibling.kind == FORK ? this.reassign_parent : this.on_attach)
+        (sibling.kind == NodeKind.FORK ? this.reassign_parent : this.on_attach)
             .call(this, parent, sibling.entity);
     }
 
@@ -391,11 +393,11 @@ export class AutoTiler extends Ecs.World {
     /**
      * Resizes the sibling of a fork
      */
-    resize(ext: Ext, fork_e: Entity, win_e: Entity, movement: number, crect: Rectangle) {
+    resize(ext: Ext, fork_e: Entity, win_e: Entity, movement: Lib.Movement, crect: Rectangle) {
         this.forks.with(fork_e, (fork_c) => {
             const is_left = fork_c.left.is_window(win_e);
 
-            ((movement & Lib.MOVEMENT_SHRINK) != 0 ? this.shrink_sibling : this.grow_sibling)
+            ((movement & Lib.Movement.SHRINK) != 0 ? this.shrink_sibling : this.grow_sibling)
                 .call(this, ext, fork_e, fork_c, is_left, movement, crect);
         });
     }
@@ -483,21 +485,21 @@ export class AutoTiler extends Ecs.World {
     /**
      * Shrinks the sibling of a fork, possibly shrinking the fork itself.
      */
-    shrink_sibling(ext: Ext, fork_e: Entity, fork_c: TilingFork, is_left: boolean, movement: number, crect: Rectangle) {
+    shrink_sibling(ext: Ext, fork_e: Entity, fork_c: TilingFork, is_left: boolean, movement: Lib.Movement, crect: Rectangle) {
         if (fork_c.area) {
             if (fork_c.is_horizontal()) {
-                if ((movement & (Lib.MOVEMENT_DOWN | Lib.MOVEMENT_UP)) != 0) {
+                if ((movement & (Lib.Movement.DOWN | Lib.Movement.UP)) != 0) {
                     Log.debug(`shrinking Fork(${fork_e}) up/down`);
                     this.resize_fork_in_direction(ext, fork_e, fork_c, is_left, false, crect, 3);
                 } else if (is_left) {
-                    if ((movement & Lib.MOVEMENT_LEFT) != 0) {
+                    if ((movement & Lib.Movement.LEFT) != 0) {
                         Log.debug(`shrinking left child of Fork(${fork_e}) from right to left`);
                         this.readjust_fork_ratio_by_left(ext, crect.width, fork_c, fork_c.area.array[2]);
                     } else {
                         Log.debug(`shrinking left child of Fork(${fork_e}) from left to right`);
                         this.resize_fork_in_direction(ext, fork_e, fork_c, is_left, true, crect, 2);
                     }
-                } else if ((movement & Lib.MOVEMENT_LEFT) != 0) {
+                } else if ((movement & Lib.Movement.LEFT) != 0) {
                     Log.debug(`shrinking right child of Fork(${fork_e}) from right to left`);
                     this.resize_fork_in_direction(ext, fork_e, fork_c, is_left, true, crect, 2);
                 } else {
@@ -505,18 +507,18 @@ export class AutoTiler extends Ecs.World {
                     this.readjust_fork_ratio_by_right(ext, crect.width, fork_c, fork_c.area.array[2]);
                 }
             } else {
-                if ((movement & (Lib.MOVEMENT_LEFT | Lib.MOVEMENT_RIGHT)) != 0) {
+                if ((movement & (Lib.Movement.LEFT | Lib.Movement.RIGHT)) != 0) {
                     Log.debug(`shrinking Fork(${fork_e}) left/right`);
                     this.resize_fork_in_direction(ext, fork_e, fork_c, is_left, false, crect, 2);
                 } else if (is_left) {
-                    if ((movement & Lib.MOVEMENT_UP) != 0) {
+                    if ((movement & Lib.Movement.UP) != 0) {
                         Log.debug(`shrinking left child of Fork(${fork_e}) from bottom to top`);
                         this.readjust_fork_ratio_by_left(ext, crect.height, fork_c, fork_c.area.array[3]);
                     } else {
                         Log.debug(`shrinking left child of Fork(${fork_e}) from top to bottom`);
                         this.resize_fork_in_direction(ext, fork_e, fork_c, is_left, true, crect, 3);
                     }
-                } else if ((movement & Lib.MOVEMENT_UP) != 0) {
+                } else if ((movement & Lib.Movement.UP) != 0) {
                     Log.debug(`shrinking right child of Fork(${fork_e}) from bottom to top`);
                     this.resize_fork_in_direction(ext, fork_e, fork_c, is_left, true, crect, 3);
                 } else {
@@ -546,7 +548,7 @@ export class AutoTiler extends Ecs.World {
     }
 
     _display_branch(branch: TilingNode, scope: number): string {
-        if (branch.kind == WINDOW) {
+        if (branch.kind == NodeKind.WINDOW) {
             return `Window(${branch.entity})`;
         } else {
             const fork = this.forks.get(branch.entity);
@@ -573,24 +575,17 @@ export class AutoTiler extends Ecs.World {
 export class TilingFork {
     left: TilingNode;
     right: TilingNode | null;
-    area: Rectangle | null;
-    area_left: Rectangle | null;
-    parent: Entity | null;
-    workspace: number | null;
-    ratio: number;
-    orientation: number;
-    is_toplevel: boolean;
+    area: Rectangle | null = null;
+    area_left: Rectangle | null = null;
+    parent: Entity | null = null;
+    workspace: number | null = null;
+    ratio: number = .5;
+    orientation: Lib.Orientation = Lib.Orientation.HORIZONTAL;
+    is_toplevel: boolean = false;
 
     constructor(left: TilingNode, right: TilingNode | null) {
         this.left = left;
         this.right = right;
-        this.area = null;
-        this.area_left = null;
-        this.parent = null;
-        this.workspace = null;
-        this.ratio = .5;
-        this.orientation = ORIENTATION_HORIZONTAL;
-        this.is_toplevel = false;
     }
 
     display(fmt: string) {
@@ -617,7 +612,7 @@ export class TilingFork {
     }
 
     is_horizontal(): boolean {
-        return ORIENTATION_HORIZONTAL == this.orientation;
+        return Lib.Orientation.HORIZONTAL == this.orientation;
     }
 
     /// Replaces the association of a window in a fork with another
@@ -673,15 +668,10 @@ export class TilingFork {
         this.workspace = workspace;
 
         if (this.right) {
-            const [l, p] = ORIENTATION_HORIZONTAL == this.orientation
-                ? [WIDTH, XPOS] : [HEIGHT, YPOS];
-
+            const [l, p] = this.is_horizontal() ? [WIDTH, XPOS] : [HEIGHT, YPOS];
             const length = Math.round(area.array[l] * this.ratio);
 
-
             let region = this.area.clone();
-            Log.debug(`this.area: ${this.area.array}`);
-            Log.debug(`region: ${region.array}`);
 
             region.array[l] = length - ext.gap_inner_half;
 
@@ -691,8 +681,6 @@ export class TilingFork {
             region.array[p] = region.array[p] + length + ext.gap_inner;
             region.array[l] = this.area.array[l] - length - ext.gap_inner;
 
-            Log.debug(`this.area: ${this.area.array}`);
-            Log.debug(`region: ${region.array}`);
             this.right.tile(tiler, ext, region, workspace);
         } else {
             this.left.tile(tiler, ext, this.area, workspace);
@@ -701,15 +689,15 @@ export class TilingFork {
     }
 
     toggle_orientation() {
-        this.orientation = Lib.ORIENTATION_HORIZONTAL == this.orientation
-            ? Lib.ORIENTATION_VERTICAL
-            : Lib.ORIENTATION_HORIZONTAL;
+        this.orientation = Lib.Orientation.HORIZONTAL == this.orientation
+            ? Lib.Orientation.VERTICAL
+            : Lib.Orientation.HORIZONTAL;
     }
 }
 
 /// A tiling node may either refer to a window entity, or another fork entity.
 export class TilingNode {
-    kind: number;
+    kind: NodeKind;
     entity: Entity;
 
     constructor(kind: number, entity: Entity) {
@@ -725,14 +713,14 @@ export class TilingNode {
      * @return TilingNode
      */
     static fork(fork: Entity): TilingNode {
-        return new TilingNode(FORK, fork);
+        return new TilingNode(NodeKind.FORK, fork);
     }
 
     /**
      * Create the window variant of a `TilingNode`
      */
     static window(window: Entity): TilingNode {
-        return new TilingNode(WINDOW, window);
+        return new TilingNode(NodeKind.WINDOW, window);
     }
 
     display(fmt: string) {
@@ -744,21 +732,21 @@ export class TilingNode {
      * Asks if this fork is the fork we are looking for
      */
     is_fork(entity: Entity): boolean {
-        return FORK == this.kind && Ecs.entity_eq(this.entity, entity);
+        return NodeKind.FORK == this.kind && Ecs.entity_eq(this.entity, entity);
     }
 
     /**
      * Asks if this window is the window we are looking for
      */
     is_window(entity: Entity): boolean {
-        return WINDOW == this.kind && Ecs.entity_eq(this.entity, entity);
+        return NodeKind.WINDOW == this.kind && Ecs.entity_eq(this.entity, entity);
     }
 
     /**
      * Tiles all windows associated with this node
      */
     tile(tiler: AutoTiler, ext: Ext, area: Rectangle, workspace: number | null) {
-        if (FORK == this.kind) {
+        if (NodeKind.FORK == this.kind) {
             Log.debug(`tiling Fork(${this.entity}) into [${area.array}]`);
             const fork = tiler.forks.get(this.entity);
             if (fork) fork.tile(tiler, ext, area, workspace);
@@ -776,5 +764,5 @@ export class TilingNode {
 }
 
 function node_variant_as_string(value: number): string {
-    return value == FORK ? "NodeVariant::Fork" : "NodeVariant::Window";
+    return value == NodeKind.FORK ? "NodeVariant::Fork" : "NodeVariant::Window";
 }

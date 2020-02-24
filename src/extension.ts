@@ -20,10 +20,9 @@ import { Rectangle } from './rectangle';
 
 
 const { Gio, GLib, Meta, St } = imports.gi;
-const { ORIENTATION_HORIZONTAL, ORIENTATION_VERTICAL, ok, cursor_rect, is_move_op } = Lib;
+const { cursor_rect, is_move_op } = Lib;
 const { _defaultCssStylesheet, panel, uiGroup } = imports.ui.main;
 const Tags = Me.imports.tags;
-const { FORK, WINDOW } = AutoTiler;
 
 export class Ext extends Ecs.World {
     init: boolean = true;
@@ -235,7 +234,7 @@ export class Ext extends Ecs.World {
      */
     attach_update(fork: AutoTiler.TilingFork, area: Rectangle, workspace: [number, number]) {
         Log.debug(`setting attach area to (${area.x},${area.y}), (${area.width},${area.height})`);
-        fork.set_orientation(area.width > area.height ? ORIENTATION_HORIZONTAL : ORIENTATION_VERTICAL);
+        fork.set_orientation(area.width > area.height ? Lib.Orientation.HORIZONTAL : Lib.Orientation.VERTICAL);
         this.tile(fork, area, workspace[1]);
     }
 
@@ -416,7 +415,7 @@ export class Ext extends Ecs.World {
                 const fork = this.auto_tiler.forks.get(fork_entity);
 
                 if (fork && fork.area) {
-                    if (fork.left.kind == WINDOW && fork.right && fork.right.kind == WINDOW) {
+                    if (fork.left.kind == AutoTiler.NodeKind.WINDOW && fork.right && fork.right.kind == AutoTiler.NodeKind.WINDOW) {
                         if (fork.left.is_window(win)) {
                             const sibling = this.windows.get(fork.right.entity);
                             if (sibling && sibling.rect().contains(cursor)) {
@@ -680,8 +679,7 @@ export class Ext extends Ecs.World {
                 if (this.auto_tiler) {
                     fork.toggle_orientation();
 
-                    for (const child of this.auto_tiler.iter(fork_entity, FORK)) {
-
+                    for (const child of this.auto_tiler.iter(fork_entity, AutoTiler.NodeKind.FORK)) {
                         this.auto_tiler.forks.with(child.entity, (fork) => {
                             fork.toggle_orientation();
                         });

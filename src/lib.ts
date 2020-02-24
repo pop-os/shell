@@ -11,17 +11,22 @@ const { Meta, St } = imports.gi;
 export var MODE_AUTO_TILE = 0;
 export var MODE_DEFAULT = 1;
 
-export var MOVEMENT_NONE = 0
-export var MOVEMENT_MOVED = 0b1;
-export var MOVEMENT_GROW = 0b10;
-export var MOVEMENT_SHRINK = 0b100;
-export var MOVEMENT_LEFT = 0b1000;
-export var MOVEMENT_UP = 0b10000;
-export var MOVEMENT_RIGHT = 0b100000;
-export var MOVEMENT_DOWN = 0b1000000;
+export enum Movement {
+    NONE = 0,
+    MOVED = 0b1,
+    GROW = 0b10,
+    SHRINK = 0b100,
+    LEFT = 0b1000,
+    UP = 0b10000,
+    RIGHT = 0b100000,
+    DOWN = 0b1000000,
+}
 
-export var ORIENTATION_HORIZONTAL = 0;
-export var ORIENTATION_VERTICAL = 1;
+export enum Orientation {
+    HORIZONTAL = 0,
+    VERTICAL = 1,
+}
+
 
 export function ok<T>(input: T | null, func: (a: T) => T | null): T | null {
     return input ? func(input) : null;
