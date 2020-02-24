@@ -1,5 +1,3 @@
-declare const global: any, imports: any;
-
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 import * as AutoTiler from 'auto_tiler';
@@ -60,7 +58,6 @@ export class Ext extends Ecs.World {
     windows: Ecs.Storage<Window.ShellWindow>;
 
     auto_tiler: AutoTiler.AutoTiler | null = null;
-
 
     signals: Array<any>;
 

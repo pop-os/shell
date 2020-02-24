@@ -1,5 +1,3 @@
-declare const imports: any;
-
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 import { ShellWindow } from 'window';

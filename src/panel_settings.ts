@@ -1,5 +1,3 @@
-declare const imports: any, _: (arg: string) => string;
-
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 const { Clutter, Gio, GObject, St } = imports.gi;

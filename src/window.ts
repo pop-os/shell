@@ -1,5 +1,3 @@
-declare var global: any, imports: any;
-
 import { Entity } from './ecs';
 import { Rectangle } from './rectangle';
 

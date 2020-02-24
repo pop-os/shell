@@ -1,5 +1,3 @@
-declare const imports: any;
-
 const ExtensionUtils = imports.misc.extensionUtils;
 const extension = ExtensionUtils.getCurrentExtension();
 const Gio = imports.gi.Gio;

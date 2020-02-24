@@ -1,5 +1,3 @@
-declare var imports: any;
-
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 const { GObject, Meta } = imports.gi;

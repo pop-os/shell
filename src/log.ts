@@ -1,5 +1,3 @@
-declare const global: any;
-
 var log_level = 4;
 
 export function log(text: string) {

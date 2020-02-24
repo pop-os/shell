@@ -1,5 +1,3 @@
-declare const global: any, imports: any;
-
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 import * as Lib from 'lib';

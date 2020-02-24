@@ -1,7 +1,5 @@
 import { Ext } from "./extension";
 
-declare const imports: any;
-
 const { wm } = imports.ui.main;
 const { Meta, Shell } = imports.gi;
 
