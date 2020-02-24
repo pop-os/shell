@@ -14,7 +14,9 @@ $(info UUID is "$(UUID)")
 
 sources = src/*.ts stylesheet.css
 
-all: $(sources) metadata.json schemas
+all: depcheck compile
+
+compile: $(sources) metadata.json schemas
 	tsc
 	for file in target/*.js; do \
 		sed -i \
@@ -27,7 +29,13 @@ all: $(sources) metadata.json schemas
 	done
 	rm -rf _build
 	mkdir -p _build
-	cp -r metadata.json schemas target/*.js _build
+	cp -r metadata.json schemas target/*.js stylesheet.css _build
+
+depcheck:
+	if ! command -v tsc >/dev/null; then \
+		echo 'You must install TypeScript to compile: (node-typescript on Debian systems)'; \
+		exit 1; \
+	fi
 
 schemas: schemas/gschemas.compiled
 	touch $@
