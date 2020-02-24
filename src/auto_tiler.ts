@@ -108,7 +108,7 @@ export class AutoTiler extends Ecs.World {
      */
     create_fork(left: TilingNode, right: TilingNode | null, area: Rectangle | null, workspace: number): [Entity, TilingFork] {
         const entity = this.create_entity();
-        let fork = new TilingFork(left, right ? right : null, area, workspace);
+        let fork = new TilingFork(left, right, area, workspace);
 
         fork.set_orientation(area && area.width > area.height ? Lib.Orientation.HORIZONTAL : Lib.Orientation.VERTICAL);
 
@@ -473,7 +473,7 @@ export class AutoTiler extends Ecs.World {
                 }
             }
 
-            child.tile(this, ext, child.area ? child.area : new Rect.Rectangle([0, 0, 0, 0]), child.workspace);
+            child.tile(this, ext, child.area ?? new Rect.Rectangle([0, 0, 0, 0]), child.workspace);
         }
     }
 
@@ -589,7 +589,7 @@ export class TilingFork {
     area_of(ext: Ext, child: Entity): Rect.Rectangle | null {
         if (this.left.is_window(child)) {
             return this.area_of_left(ext);
-        } else if (this.right && this.right.is_window(child)) {
+        } else if (this.right?.is_window(child)) {
             return this.area_of_right(ext);
         } else {
             return null;
@@ -692,7 +692,7 @@ export class TilingFork {
     tile(tiler: AutoTiler, ext: Ext, area: Rectangle, workspace: number) {
         /// Memorize our area for future tile reflows
 
-        if (null == this.area && null == this.parent) {
+        if (null === this.area && null === this.parent) {
             this.area = new Rect.Rectangle([
                 area.x + ext.gap_outer,
                 area.y + ext.gap_outer,
@@ -786,8 +786,7 @@ export class TilingNode {
     tile(tiler: AutoTiler, ext: Ext, area: Rectangle, workspace: number) {
         if (NodeKind.FORK == this.kind) {
             Log.debug(`tiling Fork(${this.entity}) into [${area.array}]`);
-            const fork = tiler.forks.get(this.entity);
-            if (fork) fork.tile(tiler, ext, area, workspace);
+            tiler.forks.get(this.entity)?.tile(tiler, ext, area, workspace);
         } else {
             Log.debug(`tiling Window(${this.entity}) into [${area.array}]`);
             const window = ext.windows.get(this.entity);

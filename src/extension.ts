@@ -640,7 +640,7 @@ export class Ext extends Ecs.World {
                 if (this.auto_tiler) {
                     Log.debug(`reflow Window(${win})`);
                     const fork = this.auto_tiler.forks.get(fork_entity);
-                    if (fork && fork.area) this.tile(fork, fork.area, fork.workspace);
+                    if (fork?.area) this.tile(fork, fork.area, fork.workspace);
                 }
             });
         });
@@ -687,7 +687,7 @@ export class Ext extends Ecs.World {
         if (!focused) return;
 
         if (this.attached) this.attached.with(focused.entity, (fork_entity) => {
-            if (this.auto_tiler) this.auto_tiler.forks.with(fork_entity, (fork) => {
+            this.auto_tiler?.forks.with(fork_entity, (fork) => {
                 if (this.auto_tiler) {
                     fork.toggle_orientation();
 
@@ -787,7 +787,7 @@ function init() {
 
     // Code to execute after the shell has finished initializing everything.
     GLib.idle_add(GLib.PRIORITY_LOW, () => {
-        if (ext && ext.mode == Lib.MODE_DEFAULT) ext.snap_windows();
+        if (ext?.mode == Lib.MODE_DEFAULT) ext.snap_windows();
         return false;
     });
 }
