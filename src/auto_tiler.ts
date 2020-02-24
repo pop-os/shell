@@ -29,7 +29,6 @@ const HEIGHT = 3;
  * handling all automatic tiling and reflowing as windows are moved, closed, and resized
  */
 export class AutoTiler extends Ecs.World {
-
     toplevel: Map<String, [Entity, [number, number]]>;
     string_reps: Ecs.Storage<string>;
     forks: Ecs.Storage<TilingFork>;
@@ -55,14 +54,15 @@ export class AutoTiler extends Ecs.World {
     /**
      * Attaches a `new` window to the fork which `onto` is attached to.
      */
-    attach_window(onto_entity: Entity, new_entity: Entity): [Entity, TilingFork] | null {
+    attach_window(ext: Ext, onto_entity: Entity, new_entity: Entity): [Entity, TilingFork] | null {
         Log.debug(`attaching Window(${new_entity}) onto Window(${onto_entity})`);
 
         for (const [entity, fork] of this.forks.iter()) {
             if (fork.left.is_window(onto_entity)) {
                 const node = TilingNode.window(new_entity);
                 if (fork.right) {
-                    const result = this.create_fork(fork.left, node);
+                    const area = fork.area_of_left(ext);
+                    const result = this.create_fork(fork.left, node, area, fork.workspace);
                     fork.left = TilingNode.fork(result[0]);
                     Log.debug(`attached Fork(${result[0]}) to Fork(${entity}).left`);
                     result[1].set_parent(entity);
@@ -72,7 +72,8 @@ export class AutoTiler extends Ecs.World {
                     return this._attach(onto_entity, new_entity, this.on_attach, entity, fork, null);
                 }
             } else if (fork.right && fork.right.is_window(onto_entity)) {
-                const result = this.create_fork(fork.right, TilingNode.window(new_entity));
+                const area = fork.area_of_right(ext);
+                const result = this.create_fork(fork.right, TilingNode.window(new_entity), area, fork.workspace);
                 fork.right = TilingNode.fork(result[0]);
                 Log.debug(`attached Fork(${result[0]}) to Fork(${entity}).right`);
                 result[1].set_parent(entity);
@@ -104,13 +105,13 @@ export class AutoTiler extends Ecs.World {
 
     /**
      * Create a new fork, where the left portion is a window `Entity`
-     *
-     * @param {Entity} window
-     * @return [Entity, TilingFork]
      */
-    create_fork(left: TilingNode, right?: TilingNode | null): [Entity, TilingFork] {
+    create_fork(left: TilingNode, right: TilingNode | null, area: Rectangle | null, workspace: number): [Entity, TilingFork] {
         const entity = this.create_entity();
-        const fork = new TilingFork(left, right ? right : null);
+        let fork = new TilingFork(left, right ? right : null, area, workspace);
+
+        fork.set_orientation(area && area.width > area.height ? Lib.Orientation.HORIZONTAL : Lib.Orientation.VERTICAL);
+
         this.forks.insert(entity, fork);
         return [entity, fork];
     }
@@ -118,8 +119,8 @@ export class AutoTiler extends Ecs.World {
     /**
      * Create a new top level fork
      */
-    create_toplevel(window: Entity, id: [number, number]): [Entity, TilingFork] {
-        const [entity, fork] = this.create_fork(TilingNode.window(window));
+    create_toplevel(window: Entity, area: Rectangle, id: [number, number]): [Entity, TilingFork] {
+        const [entity, fork] = this.create_fork(TilingNode.window(window), null, area, id[1]);
         this.string_reps.with(entity, (sid) => {
             fork.set_toplevel(this, entity, sid, id);
         });
@@ -193,20 +194,14 @@ export class AutoTiler extends Ecs.World {
     /**
      * Creates a string representation of every fork in the world; formatted for human consumption
      */
-    display(fmt: string) {
-        // NOTE: Display as flat array
-        // for (const [entity, fork] of this.forks.iter()) {
-        //     fmt += `fork (${entity}): ${fork.display('')}\n`;
-        // }
-
-        // NOTE: Display as hiearachy from toplevel forks
+    display(ext: Ext, fmt: string) {
         for (const [entity, _] of this.toplevel.values()) {
             Log.debug(`displaying fork (${entity})`);
             const fork = this.forks.get(entity);
 
             fmt += ' ';
             if (fork) {
-                fmt += this._display_fork(entity, fork, 1) + '\n';
+                fmt += this._display_fork(ext, entity, fork, 1) + '\n';
             } else {
                 fmt += `Fork(${entity}) Invalid\n`;
             }
@@ -540,30 +535,31 @@ export class AutoTiler extends Ecs.World {
         if (result) {
             assoc(result[0], onto_entity);
             assoc(result[0], new_entity);
-            return result;
         } else {
             assoc(entity, new_entity);
-            return [entity, fork];
         }
+
+        return [entity, fork];
     }
 
-    _display_branch(branch: TilingNode, scope: number): string {
+    _display_branch(ext: Ext, branch: TilingNode, scope: number): string {
         if (branch.kind == NodeKind.WINDOW) {
-            return `Window(${branch.entity})`;
+            const window = ext.windows.get(branch.entity);
+            return `Window(${branch.entity}) (${window ? window.rect().fmt() : "unknown area"})`;
         } else {
             const fork = this.forks.get(branch.entity);
-            return fork ? this._display_fork(branch.entity, fork, scope + 1) : "Missing Fork";
+            return fork ? this._display_fork(ext, branch.entity, fork, scope + 1) : "Missing Fork";
         }
     }
 
-    _display_fork(entity: Entity, fork: TilingFork, scope: number): string {
+    _display_fork(ext: Ext, entity: Entity, fork: TilingFork, scope: number): string {
         let fmt = `Fork(${entity}) [${fork.area ? fork.area.array : "unknown"}]: {\n`;
 
         fmt += ' '.repeat((1 + scope) * 2) + `workspace: (${fork.workspace}),\n`;
-        fmt += ' '.repeat((1 + scope) * 2) + 'left:  ' + this._display_branch(fork.left, scope) + ',\n';
+        fmt += ' '.repeat((1 + scope) * 2) + 'left:  ' + this._display_branch(ext, fork.left, scope) + ',\n';
 
         if (fork.right) {
-            fmt += ' '.repeat((1 + scope) * 2) + 'right: ' + this._display_branch(fork.right, scope) + ',\n';
+            fmt += ' '.repeat((1 + scope) * 2) + 'right: ' + this._display_branch(ext, fork.right, scope) + ',\n';
         }
 
         fmt += ' '.repeat(scope * 2) + '}';
@@ -575,17 +571,61 @@ export class AutoTiler extends Ecs.World {
 export class TilingFork {
     left: TilingNode;
     right: TilingNode | null;
-    area: Rectangle | null = null;
+    area: Rectangle | null;
     area_left: Rectangle | null = null;
     parent: Entity | null = null;
-    workspace: number | null = null;
+    workspace: number;
     ratio: number = .5;
     orientation: Lib.Orientation = Lib.Orientation.HORIZONTAL;
     is_toplevel: boolean = false;
 
-    constructor(left: TilingNode, right: TilingNode | null) {
+    constructor(left: TilingNode, right: TilingNode | null, area: Rectangle | null, workspace: number) {
+        this.area = area;
         this.left = left;
         this.right = right;
+        this.workspace = workspace;
+    }
+
+    area_of(ext: Ext, child: Entity): Rect.Rectangle | null {
+        if (this.left.is_window(child)) {
+            return this.area_of_left(ext);
+        } else if (this.right && this.right.is_window(child)) {
+            return this.area_of_right(ext);
+        } else {
+            return null;
+        }
+    }
+
+    area_of_left(ext: Ext): Rect.Rectangle | null {
+        if (this.area) {
+            return new Rect.Rectangle(
+                this.right
+                    ? this.is_horizontal()
+                        ? [this.area.x, this.area.y, (this.area.width * this.ratio) - ext.gap_inner_half, this.area.height]
+                        : [this.area.x, this.area.y, this.area.width, (this.area.height * this.ratio) - ext.gap_inner_half]
+                    : [this.area.x, this.area.y, this.area.width, this.area.height]
+            );
+        }
+
+        return null;
+    }
+
+    area_of_right(ext: Ext): Rect.Rectangle | null {
+        if (this.area && this.right) {
+            let area: [number, number, number, number];
+
+            if (this.is_horizontal()) {
+                const width = (this.area.width * this.ratio) + ext.gap_inner;
+                area = [width, this.area.y, this.area.width - width, this.area.height];
+            } else {
+                const height = (this.area.height * this.ratio) + ext.gap_inner;
+                area = [this.area.x, height, this.area.width, this.area.height - height];
+            }
+
+            return new Rect.Rectangle(area);
+        }
+
+        return null;
     }
 
     display(fmt: string) {
@@ -595,9 +635,7 @@ export class TilingFork {
             fmt += `\n  area: (${this.area.array}),`;
         }
 
-        if (this.workspace) {
-            fmt += `\n  workspace: (${this.workspace}),`;
-        }
+        fmt += `\n  workspace: (${this.workspace}),`;
 
         if (this.left) {
             fmt += `\n  left: ${this.left.display('')},`;
@@ -651,7 +689,7 @@ export class TilingFork {
     }
 
     /// Tiles all windows within this fork into the given area
-    tile(tiler: AutoTiler, ext: Ext, area: Rectangle, workspace: number | null) {
+    tile(tiler: AutoTiler, ext: Ext, area: Rectangle, workspace: number) {
         /// Memorize our area for future tile reflows
 
         if (null == this.area && null == this.parent) {
@@ -700,7 +738,7 @@ export class TilingNode {
     kind: NodeKind;
     entity: Entity;
 
-    constructor(kind: number, entity: Entity) {
+    constructor(kind: NodeKind, entity: Entity) {
         this.kind = kind;
         this.entity = entity;
     }
@@ -745,7 +783,7 @@ export class TilingNode {
     /**
      * Tiles all windows associated with this node
      */
-    tile(tiler: AutoTiler, ext: Ext, area: Rectangle, workspace: number | null) {
+    tile(tiler: AutoTiler, ext: Ext, area: Rectangle, workspace: number) {
         if (NodeKind.FORK == this.kind) {
             Log.debug(`tiling Fork(${this.entity}) into [${area.array}]`);
             const fork = tiler.forks.get(this.entity);

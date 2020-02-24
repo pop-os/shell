@@ -10,6 +10,7 @@ import * as Keybindings from 'keybindings';
 import * as Lib from 'lib';
 import * as Log from 'log';
 import * as PanelSettings from 'panel_settings';
+import * as Rect from 'rectangle';
 import * as Settings from 'settings';
 import * as Tiling from 'tiling';
 import * as Window from 'window';
@@ -189,13 +190,19 @@ export class Ext extends Ecs.World {
      */
     attach_to_monitor(win: Window.ShellWindow, workspace_id: [number, number]) {
         if (this.attached && this.auto_tiler) {
-            const [entity, fork] = this.auto_tiler.create_toplevel(win.entity, workspace_id)
+            let rect = this.monitor_work_area(workspace_id[0]);
+            rect.x += this.gap_outer;
+            rect.y += this.gap_outer;
+            rect.width -= this.gap_outer * 2;
+            rect.height -= this.gap_outer * 2;
+
+            const [entity, fork] = this.auto_tiler.create_toplevel(win.entity, rect.clone(), workspace_id)
             this.attached.insert(win.entity, entity);
 
             Log.debug(`attached Window(${win.entity}) to Fork(${entity}) on Monitor(${workspace_id})`);
 
-            this.attach_update(fork, this.monitor_work_area(workspace_id[0]), workspace_id);
-            Log.info(this.auto_tiler.display('\n\n'));
+            this.attach_update(fork, rect, workspace_id);
+            Log.info(this.auto_tiler.display(this, '\n\n'));
         }
     }
 
@@ -209,21 +216,25 @@ export class Ext extends Ecs.World {
         if (this.auto_tiler) {
             Log.debug(`attempting to attach ${attacher.name()} to ${attachee.name()}`);
 
-            let attached = this.auto_tiler.attach_window(attachee.entity, attacher.entity);
+            let attached = this.auto_tiler.attach_window(this, attachee.entity, attacher.entity);
 
             if (attached) {
                 const [_e, fork] = attached;
                 const monitor = this.monitors.get(attachee.entity);
                 if (monitor) {
-                    this.attach_update(fork, attachee.rect(), monitor);
-                    Log.info(this.auto_tiler.display('\n\n'));
+                    if (fork.area) {
+                        this.attach_update(fork, fork.area.clone(), monitor)
+                    } else {
+                        Log.error(`attaching to fork without an area`);
+                    };
+                    Log.info(this.auto_tiler.display(this, '\n\n'));
                     return true;
                 } else {
                     Log.error(`missing monitor association for Window(${attachee.entity})`);
                 }
             }
 
-            Log.info(this.auto_tiler.display('\n\n'));
+            Log.info(this.auto_tiler.display(this, '\n\n'));
         }
 
         return false;
@@ -234,11 +245,10 @@ export class Ext extends Ecs.World {
      */
     attach_update(fork: AutoTiler.TilingFork, area: Rectangle, workspace: [number, number]) {
         Log.debug(`setting attach area to (${area.x},${area.y}), (${area.width},${area.height})`);
-        fork.set_orientation(area.width > area.height ? Lib.Orientation.HORIZONTAL : Lib.Orientation.VERTICAL);
         this.tile(fork, area, workspace[1]);
     }
 
-    tile(fork: AutoTiler.TilingFork, area: Rectangle, workspace: number | null) {
+    tile(fork: AutoTiler.TilingFork, area: Rectangle, workspace: number) {
         if (this.auto_tiler) {
             this.tiling = true;
             fork.tile(this.auto_tiler, this, area, workspace);
@@ -393,7 +403,7 @@ export class Ext extends Ecs.World {
                         };
                     }
 
-                    Log.info(this.auto_tiler.display('\n\n'));
+                    Log.info(this.auto_tiler.display(this, '\n\n'));
                 }
             });
         }
@@ -466,10 +476,12 @@ export class Ext extends Ecs.World {
         this.row_size = this.settings.row_size();
     }
 
-    monitor_work_area(monitor: number) {
-        return global.display.get_workspace_manager()
+    monitor_work_area(monitor: number): Rectangle {
+        const meta = global.display.get_workspace_manager()
             .get_active_workspace()
-            .get_work_area_for_monitor(monitor)
+            .get_work_area_for_monitor(monitor);
+
+        return Rect.Rectangle.from_meta(meta);
     }
 
     on_destroy(win: Window.ShellWindow) {
@@ -542,7 +554,7 @@ export class Ext extends Ecs.World {
 
                         Log.debug(`resizing window: from [${rect.fmt()} to ${crect.fmt()}]`);
                         this.auto_tiler.resize(this, fork, win.entity, movement, crect);
-                        Log.debug(`changed to: ${this.auto_tiler.display('')}`);
+                        Log.debug(`changed to: ${this.auto_tiler.display(this, '')}`);
                     } else {
                         Log.error(`no fork found`);
                     }
