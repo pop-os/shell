@@ -28,10 +28,11 @@ const HEIGHT = 3;
  */
 export class AutoTiler extends Ecs.World {
     toplevel: Map<String, [Entity, [number, number]]>;
-    string_reps: Ecs.Storage<string>;
     forks: Ecs.Storage<TilingFork>;
 
-    on_attach: (parent: Entity, child: Entity) => void
+    private string_reps: Ecs.Storage<string>;
+
+    private on_attach: (parent: Entity, child: Entity) => void
 
     constructor() {
         super();

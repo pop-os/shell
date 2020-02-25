@@ -142,26 +142,26 @@ export class Storage<T> {
 /// - An array for containing a list of free slots to allocate
 /// - An array for storing tags associated with an entity
 export class World {
-    _entities: Array<Entity>;
-    storages: Array<Storage<any>>;
-    _tags: Array<any>;
-    _free_slots: Array<number>;
+    private entities_: Array<Entity>;
+    private storages: Array<Storage<any>>;
+    private tags_: Array<any>;
+    private free_slots: Array<number>;
 
     constructor() {
-        this._entities = new Array();
+        this.entities_ = new Array();
         this.storages = new Array();
-        this._tags = new Array();
-        this._free_slots = new Array();
+        this.tags_ = new Array();
+        this.free_slots = new Array();
     }
 
     /// The total capacity of the entity array
     get capacity(): number {
-        return this._entities.length;
+        return this.entities_.length;
     }
 
     /// The number of unallocated entity slots
     get free(): number {
-        return this._free_slots.length;
+        return this.free_slots.length;
     }
 
     /// The number of allocated entities
@@ -173,13 +173,13 @@ export class World {
     ///
     /// Tags are essentially a dense set of small components
     tags(entity: Entity): any {
-        return this._tags[entity[0]];
+        return this.tags_[entity[0]];
     }
 
     /// Iterates across entities in the world
     * entities(): IterableIterator<Entity> {
-        for (const entity of this._entities.values()) {
-            if (!(this._free_slots.indexOf(entity[0]) > -1)) yield entity;
+        for (const entity of this.entities_.values()) {
+            if (!(this.free_slots.indexOf(entity[0]) > -1)) yield entity;
         }
     }
 
@@ -187,15 +187,15 @@ export class World {
     ///
     /// Find the first available slot, and increment the generation.
     create_entity(): Entity {
-        let slot = this._free_slots.pop();
+        let slot = this.free_slots.pop();
 
         if (slot) {
-            var entity = this._entities[slot];
+            var entity = this.entities_[slot];
             entity[1] += 1;
         } else {
             var entity = entity_new(this.capacity, 0);
-            this._entities.push(entity);
-            this._tags.push(new Set());
+            this.entities_.push(entity);
+            this.tags_.push(new Set());
         }
 
         return entity;
@@ -210,7 +210,7 @@ export class World {
             storage.remove(entity);
         }
 
-        this._free_slots.push(entity[0]);
+        this.free_slots.push(entity[0]);
     }
 
     /// Adds a new tag to the given entity

@@ -7,7 +7,7 @@ import { Ext } from './extension';
 const Main = imports.ui.main;
 
 export class FocusSelector {
-    ext: Ext;
+    private ext: Ext;
 
     constructor(ext: Ext) {
         this.ext = ext;
@@ -17,7 +17,7 @@ export class FocusSelector {
         direction: (a: ShellWindow, b: Array<ShellWindow>) => Array<ShellWindow>,
         window: ShellWindow | null
     ): ShellWindow | null {
-        window = window ? window : this.ext.focus_window();
+        window = window ?? this.ext.focus_window();
         if (window) {
             let window_list = this.ext.active_window_list();
             return select(direction, window, window_list);

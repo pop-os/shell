@@ -17,7 +17,7 @@ export class Rectangle {
 
   set y(y: number) { this.array[1] = y; }
 
-  get width() { return this.array[2]; }
+  get width(): number { return this.array[2]; }
 
   set width(width: number) { this.array[2] = width; }
 

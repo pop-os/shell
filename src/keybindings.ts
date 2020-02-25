@@ -4,9 +4,10 @@ const { wm } = imports.ui.main;
 const { Meta, Shell } = imports.gi;
 
 export class Keybindings {
-    ext: Ext
     global: Object;
     window_focus: Object;
+
+    private ext: Ext
 
     constructor(ext: Ext) {
         this.ext = ext;

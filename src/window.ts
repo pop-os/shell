@@ -17,10 +17,11 @@ const SHOW_FLAGS: string[] = ['0x2', '0x0', '0x1', '0x0', '0x0'];
 const window_tracker = Shell.WindowTracker.get_default();
 
 export class ShellWindow {
-    _window_app: any;
-    ext: Ext;
     entity: Entity;
     meta: any;
+
+    private _window_app: any;
+    private ext: Ext;
 
     constructor(entity: Entity, window: any, ext: Ext) {
         this._window_app = null;

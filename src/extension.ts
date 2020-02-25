@@ -24,8 +24,8 @@ const { _defaultCssStylesheet, panel, uiGroup } = imports.ui.main;
 const Tags = Me.imports.tags;
 
 export class Ext extends Ecs.World {
-    init: boolean = true;
-    tiling: boolean = false;
+    private init: boolean = true;
+    private tiling: boolean = false;
 
     column_size: number = 128;
     row_size: number = 128;
@@ -667,15 +667,18 @@ export class Ext extends Ecs.World {
         }
     }
 
-    tab_list(tablist: number, workspace: number | null) {
+    tab_list(tablist: number, workspace: number | null): Array<Window.ShellWindow> {
         return global.display
             .get_tab_list(tablist, workspace)
             .map((win: any) => this.get_window(win));
     }
 
-    tiled_windows() {
-        return this._entities
-            .filter((entity: Entity) => this.contains_tag(entity, Tags.Tiled));
+    * tiled_windows(): IterableIterator<Entity> {
+        for (const entity of this.entities()) {
+            if (this.contains_tag(entity, Tags.Tiled)) {
+                yield entity;
+            }
+        }
     }
 
     toggle_orientation() {

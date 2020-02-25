@@ -13,14 +13,11 @@ import { Ext } from './extension';
 const Main = imports.ui.main;
 
 export class Tiler {
-    columns: number = 16;
-    rows: number = 16;
+    private ext: Ext;
+    private keybindings: Object;
 
-    ext: Ext;
-    keybindings: Object;
-
-    window: ShellWindow | null = null;
-    swap_window: ShellWindow | null = null;
+    private window: ShellWindow | null = null;
+    private swap_window: ShellWindow | null = null;
 
     constructor(ext: Ext) {
         this.ext = ext;
@@ -49,12 +46,13 @@ export class Tiler {
         let monitors = tile_monitors(this.ext.overlay);
         if (monitors.length == 0) return null;
 
-        return monitor_rect(monitors[0], this.columns, this.rows);
+        const columns = monitors[0].width / this.ext.column_size;
+        const rows = monitors[1].height / this.ext.row_size;
+
+        return monitor_rect(monitors[0], columns, rows);
     }
 
     change(overlay: any, rect: Rectangle, dx: number, dy: number, dw: number, dh: number): Tiler {
-        if (!rect) return this;
-
         let changed = new Rect.Rectangle([
             overlay.x + dx * rect.width,
             overlay.y + dy * rect.height,
@@ -84,10 +82,10 @@ export class Tiler {
         // Do not use change if there are no matching displays
         if (monitors.length == 0) return this;
 
-        let min_x = null;
-        let min_y = null;
-        let max_x = null;
-        let max_y = null;
+        let min_x: number | null = null;
+        let min_y: number | null = null;
+        let max_x: number | null = null;
+        let max_y: number | null = null;
 
         for (const monitor of monitors) {
             if (min_x === null || monitor.x < min_x) {
@@ -164,10 +162,13 @@ export class Tiler {
             this.move_auto(x, y);
         } else {
             this.swap_window = null;
+
             let rect = this.rect();
-            if (!rect) return;
-            this.change(this.ext.overlay, rect, x, y, w, h)
-                .change(this.ext.overlay, rect, 0, 0, 0, 0);
+
+            if (rect) {
+                this.change(this.ext.overlay, rect, x, y, w, h)
+                    .change(this.ext.overlay, rect, 0, 0, 0, 0);
+            }
         }
     }
 
@@ -293,11 +294,10 @@ export class Tiler {
     }
 
     swap(selector: ShellWindow | null) {
-        Lib.ok(selector, (win: ShellWindow) => {
-            this.ext.set_overlay(win.rect());
-            this.swap_window = win;
-            return null;
-        });
+        if (selector) {
+            this.ext.set_overlay(selector.rect());
+            this.swap_window = selector;
+        }
     }
 
     swap_left() {
@@ -370,9 +370,11 @@ export class Tiler {
         let mon_geom = this.ext.monitor_work_area(win.meta.get_monitor());
         if (mon_geom) {
             let rect = win.rect();
+            const columns = mon_geom.width / this.ext.column_size;
+            const rows = mon_geom.height / this.ext.row_size;
             this.change(
                 rect,
-                monitor_rect(mon_geom, this.columns, this.rows),
+                monitor_rect(mon_geom, columns, rows),
                 0, 0, 0, 0
             );
 
@@ -400,7 +402,7 @@ function monitor_rect(monitor: Rectangle, columns: number, rows: number): Rectan
     return new Rect.Rectangle([monitor.x, monitor.y, tile_width, tile_height]);
 }
 
-function tile_monitors(rect: Rectangle) {
+function tile_monitors(rect: Rectangle): Array<Rectangle> {
     let total_size = (a: Rectangle, b: Rectangle): number => (a.width * a.height) - (b.width * b.height);
 
     let workspace = global.workspace_manager.get_active_workspace();

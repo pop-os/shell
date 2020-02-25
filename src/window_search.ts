@@ -12,8 +12,8 @@ const ICON_SIZE = 32;
 
 export var WindowSearch = GObject.registerClass(
     class WindowSearch extends Search.Search {
-        windows: Array<ShellWindow>;
-        active: Array<[string, any]>;
+        private windows: Array<ShellWindow>;
+        private active: Array<[string, any]>;
 
         constructor() {
             super();
@@ -34,7 +34,7 @@ export var WindowSearch = GObject.registerClass(
                 this.active.splice(0);
 
                 let window_list = ext.tab_list(Meta.TabList.NORMAL, null);
-                window_list.sort((a: ShellWindow, b: ShellWindow) => a.name() > b.name());
+                window_list.sort((a: ShellWindow, b: ShellWindow) => a.name() > b.name() ? 1 : 0);
 
                 for (const win of window_list) {
                     let name = win.name();
