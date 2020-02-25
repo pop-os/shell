@@ -96,7 +96,7 @@ function number_entry(
     settings_method: any,
     get_method: any,
     post_exec: (a: number, b: number) => void
-) {
+): any {
     let entry = new St.Entry({ text: String(get_method.call(ext)) });
     entry.set_input_purpose(Clutter.InputContentPurpose.NUMBER);
     entry.set_x_align(Clutter.ActorAlign.FILL);
@@ -129,7 +129,7 @@ function number_entry(
     return item;
 }
 
-function tiled(ext: Ext) {
+function tiled(ext: Ext): any {
     let tiled = new PopupSwitchMenuItem(_("Launch Windows Tiled"));
     tiled.label.set_y_align(Clutter.ActorAlign.CENTER);
 
@@ -154,6 +154,10 @@ function tiled(ext: Ext) {
                         ext.attached.insert(window, entity);
                     }
                 });
+
+            for (const window of ext.windows.values()) {
+                if (window.is_tilable()) ext.auto_tile(window, false);
+            }
         }
 
         return true;
