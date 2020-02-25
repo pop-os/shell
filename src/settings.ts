@@ -29,6 +29,7 @@ const GAP_INNER = 'gap-inner';
 const GAP_OUTER = 'gap-outer';
 const ROW_SIZE = 'row-size';
 const SHOW_TITLE = 'show-title';
+const SNAP_TO_GRID = 'snap-to-grid';
 const TILE_BY_DEFAULT = 'tile-by-default';
 
 export class ExtensionSettings extends Settings {
@@ -52,8 +53,12 @@ export class ExtensionSettings extends Settings {
         return this.inner.get_uint(ROW_SIZE);
     }
 
-    show_title(): number {
+    show_title(): boolean {
         return this.inner.get_boolean(SHOW_TITLE);
+    }
+
+    snap_to_grid(): boolean {
+        return this.inner.get_boolean(SNAP_TO_GRID);
     }
 
     tile_by_default(): boolean {
@@ -78,6 +83,10 @@ export class ExtensionSettings extends Settings {
 
     set_show_title(set: boolean) {
         this.inner.set_boolean(SHOW_TITLE, set);
+    }
+
+    set_snap_to_grid(set: boolean) {
+        this.inner.set_boolean(SNAP_TO_GRID, set);
     }
 
     set_tile_by_default(set: boolean) {

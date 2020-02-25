@@ -25,6 +25,7 @@ export var Indicator = GObject.registerClass(
 
             this.menu.addMenuItem(tiled(ext));
             this.menu.addMenuItem(title_bars(ext));
+            this.menu.addMenuItem(snap_to_grid(ext));
             this.menu.addMenuItem(new PopupSeparatorMenuItem());
 
             this.menu.addMenuItem(
@@ -129,13 +130,29 @@ function number_entry(
     return item;
 }
 
+function toggle(ext: Ext, desc: string, active: boolean, connect: (toggle: any) => void): any {
+    let toggle = new PopupSwitchMenuItem(desc);
+    toggle.label.set_y_align(Clutter.ActorAlign.CENTER);
+
+    toggle.setToggleState(active);
+
+    toggle.connect('toggled', () => {
+        connect(toggle);
+
+        return true;
+    });
+
+    return toggle;
+}
+
+function snap_to_grid(ext: Ext): any {
+    return toggle(ext, _("Snap to Grid"), ext.settings.snap_to_grid(), (toggle) => {
+        ext.settings.set_snap_to_grid(toggle.state);
+    });
+}
+
 function tiled(ext: Ext): any {
-    let tiled = new PopupSwitchMenuItem(_("Launch Windows Tiled"));
-    tiled.label.set_y_align(Clutter.ActorAlign.CENTER);
-
-    tiled.setToggleState(null != ext.auto_tiler);
-
-    tiled.connect('toggled', () => {
+    return toggle(ext, _("Launch Windows Tiled"), null != ext.auto_tiler, (toggle) => {
         if (ext.attached && ext.auto_tiler) {
             Log.info(`tile by default disabled`);
             ext.mode = Lib.MODE_DEFAULT;
@@ -159,33 +176,20 @@ function tiled(ext: Ext): any {
                 if (window.is_tilable()) ext.auto_tile(window, false);
             }
         }
-
-        return true;
     });
-
-    return tiled;
 }
 
 function title_bars(ext: Ext) {
-    let tiled = new PopupSwitchMenuItem(_("Show Window Titles"));
-    tiled.label.set_y_align(Clutter.ActorAlign.CENTER);
-
-    tiled.setToggleState(ext.settings.show_title());
-
-    tiled.connect('toggled', () => {
-        ext.settings.set_show_title(tiled.state);
+    return toggle(ext, _("Show Window Titles"), ext.settings.show_title(), (toggle) => {
+        ext.settings.set_show_title(toggle.state);
         for (const window of ext.windows.values()) {
             if (window.meta.is_client_decorated()) continue;
 
-            if (tiled.state) {
+            if (toggle.state) {
                 window.decoration_show();
             } else {
                 window.decoration_hide();
             }
         }
-
-        return true;
     });
-
-    return tiled;
 }

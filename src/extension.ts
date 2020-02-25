@@ -556,7 +556,7 @@ export class Ext extends Ecs.World {
                         Log.error(`no fork found`);
                     }
                 }
-            } else {
+            } else if (this.settings.snap_to_grid()) {
                 this.tiler.snap(win);
             }
         } else {
