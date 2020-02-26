@@ -461,8 +461,7 @@ export class Ext extends Ecs.World {
 
     /// Fetches the window component from the entity associated with the metacity window metadata.
     get_window(meta: any): Window.ShellWindow | null {
-        // TODO: Deprecate this
-        let entity = this.window(meta);
+        let entity = this.window_entity(meta);
         return entity ? this.windows.get(entity) : null;
     }
 
@@ -711,22 +710,38 @@ export class Ext extends Ecs.World {
     }
 
     /// Fetches the window entity which is associated with the metacity window metadata.
-    window(meta: any) {
+    window_entity(meta: any): Entity | null {
         if (!meta) return null;
 
-        let id = meta.get_stable_sequence();
+        let id: number;
+
+        try {
+            id = meta.get_stable_sequence();
+        } catch (e) {
+            return null;
+        }
 
         // Locate the window entity with the matching ID
         let entity = this.ids.find((comp) => comp == id).next().value;
 
         // If not found, create a new entity with a ShellWindow component.
         if (!entity) {
+            let window_app: any, name: string;
+
+            try {
+                window_app = Window.window_tracker.get_window_app(meta);
+                name = window_app.get_name().replace(/&/g, "&amp;");
+            } catch (e) {
+                return null;
+            }
+
             entity = this.create_entity();
 
-            let win = new Window.ShellWindow(entity, meta, this);
+            let win = new Window.ShellWindow(entity, meta, window_app, this);
 
             this.windows.insert(entity, win);
             this.ids.insert(entity, id);
+            this.names.insert(entity, name);
             this.monitors.insert(entity, [win.meta.get_monitor(), win.meta.get_workspace().index()]);
 
             Log.debug(`created window (${win.entity}): ${win.name()}: ${id}`);

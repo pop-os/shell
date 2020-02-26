@@ -14,17 +14,17 @@ const MOTIF_HINTS: string = '_MOTIF_WM_HINTS';
 const HIDE_FLAGS: string[] = ['0x2', '0x0', '0x2', '0x0', '0x0'];
 const SHOW_FLAGS: string[] = ['0x2', '0x0', '0x1', '0x0', '0x0'];
 
-const window_tracker = Shell.WindowTracker.get_default();
+export var window_tracker = Shell.WindowTracker.get_default();
 
 export class ShellWindow {
     entity: Entity;
     meta: any;
 
-    private _window_app: any;
+    private window_app: any;
     private ext: Ext;
 
-    constructor(entity: Entity, window: any, ext: Ext) {
-        this._window_app = null;
+    constructor(entity: Entity, window: any, window_app: any, ext: Ext) {
+        this.window_app = window_app;
         this.ext = ext;
 
         this.entity = entity;
@@ -55,10 +55,7 @@ export class ShellWindow {
 
     icon(size: number) {
         return this.ext.icons.get_or(this.entity, () => {
-            let app = this.window_app();
-            if (!app) return null;
-
-            let icon = app.create_icon_texture(size);
+            let icon = this.window_app.create_icon_texture(size);
 
             if (!icon) {
                 icon = new St.Icon({
@@ -100,13 +97,7 @@ export class ShellWindow {
     }
 
     name(): string {
-        return this.ext.names.get_or(this.entity, () => {
-            try {
-                return this.window_app().get_name().replace(/&/g, "&amp;");
-            } catch (e) {
-                return "unknown";
-            }
-        });
+        return this.ext.names.get_or(this.entity, () => "unknown");
     }
 
     rect(): Rectangle {
@@ -120,14 +111,6 @@ export class ShellWindow {
         this.move(br);
         other.move(ar);
         place_pointer_on(this.meta);
-    }
-
-    window_app() {
-        if (!this._window_app) {
-            this._window_app = window_tracker.get_window_app(this.meta)
-        }
-
-        return this._window_app;
     }
 
     xid() {
