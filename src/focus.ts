@@ -9,47 +9,42 @@ import type { Ext } from './extension';
 const Main = imports.ui.main;
 
 export class FocusSelector {
-    private ext: Ext;
-
-    constructor(ext: Ext) {
-        this.ext = ext;
-    }
-
     select(
+        ext: Ext,
         direction: (a: ShellWindow, b: Array<ShellWindow>) => Array<ShellWindow>,
         window: ShellWindow | null
     ): ShellWindow | null {
-        window = window ?? this.ext.focus_window();
+        window = window ?? ext.focus_window();
         if (window) {
-            let window_list = this.ext.active_window_list();
+            let window_list = ext.active_window_list();
             return select(direction, window, window_list);
         }
 
         return null;
     }
 
-    down(window: ShellWindow | null): ShellWindow | null {
-        return this.select(window_down, window);
+    down(ext: Ext, window: ShellWindow | null): ShellWindow | null {
+        return this.select(ext, window_down, window);
     }
 
-    left(window: ShellWindow | null): ShellWindow | null {
-        return this.select(window_left, window);
+    left(ext: Ext, window: ShellWindow | null): ShellWindow | null {
+        return this.select(ext, window_left, window);
     }
 
-    right(window: ShellWindow | null): ShellWindow | null {
-        return this.select(window_right, window);
+    right(ext: Ext, window: ShellWindow | null): ShellWindow | null {
+        return this.select(ext, window_right, window);
     }
 
-    up(window: ShellWindow | null): ShellWindow | null {
-        return this.select(window_up, window);
+    up(ext: Ext, window: ShellWindow | null): ShellWindow | null {
+        return this.select(ext, window_up, window);
     }
 
-    monitor_left(window: ShellWindow | null): ShellWindow | null {
-        return this.select(window_monitor_left, window);
+    monitor_left(ext: Ext, window: ShellWindow | null): ShellWindow | null {
+        return this.select(ext, window_monitor_left, window);
     }
 
-    monitor_right(window: ShellWindow | null): ShellWindow | null {
-        return this.select(window_monitor_right, window);
+    monitor_right(ext: Ext, window: ShellWindow | null): ShellWindow | null {
+        return this.select(ext, window_monitor_right, window);
     }
 }
 

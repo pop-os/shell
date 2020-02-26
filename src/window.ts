@@ -91,7 +91,7 @@ export class ShellWindow {
 
     move_snap(ext: Ext, rect: Rectangle) {
         this.move(rect);
-        ext.tiler.snap(this);
+        ext.tiler.snap(ext, this);
     }
 
     name(ext: Ext): string {

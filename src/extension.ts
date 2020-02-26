@@ -91,7 +91,7 @@ export class Ext extends Ecs.World {
 
         // Systems
 
-        this.focus_selector = new Focus.FocusSelector(this);
+        this.focus_selector = new Focus.FocusSelector();
         this.tiler = new Tiling.Tiler(this);
 
         // Signals: We record these so that we may detach them
@@ -556,7 +556,7 @@ export class Ext extends Ecs.World {
                     }
                 }
             } else if (this.settings.snap_to_grid()) {
-                this.tiler.snap(win);
+                this.tiler.snap(this, win);
             }
         } else {
             Log.error(`mismatch on grab op entity`);
@@ -662,7 +662,7 @@ export class Ext extends Ecs.World {
     // Snaps all windows to the window grid
     snap_windows() {
         for (const window of this.windows.values()) {
-            if (window.is_tilable(this)) this.tiler.snap(window);
+            if (window.is_tilable(this)) this.tiler.snap(this, window);
         }
     }
 
@@ -705,7 +705,7 @@ export class Ext extends Ecs.World {
     update_snapped() {
         for (const entity of this.snapped.find((val) => val)) {
             const window = this.windows.get(entity);
-            if (window) this.tiler.snap(window);
+            if (window) this.tiler.snap(this, window);
         }
     }
 
@@ -834,7 +834,7 @@ function disable() {
     }
 
     if (ext) {
-        ext.tiler.exit();
+        ext.tiler.exit(ext);
 
         uiGroup.remove_actor(ext.overlay);
 

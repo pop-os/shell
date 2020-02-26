@@ -6,6 +6,7 @@ import * as Log from 'log';
 import * as GrabOp from 'grab_op';
 import * as Rect from 'rectangle';
 
+import type { Entity } from './ecs';
 import type { ShellWindow } from './window';
 import type { Rectangle } from './rectangle';
 import type { Ext } from './extension';
@@ -13,46 +14,43 @@ import type { Ext } from './extension';
 const Main = imports.ui.main;
 
 export class Tiler {
-    private ext: Ext;
     private keybindings: Object;
 
-    private window: ShellWindow | null = null;
-    private swap_window: ShellWindow | null = null;
+    private window: Entity | null = null;
+    private swap_window: Entity | null = null;
 
     constructor(ext: Ext) {
-        this.ext = ext;
-
         this.keybindings = {
-            "tile-move-left": () => this.move_left(),
-            "tile-move-down": () => this.move_down(),
-            "tile-move-up": () => this.move_up(),
-            "tile-move-right": () => this.move_right(),
-            "tile-resize-left": () => this.resize_left(),
-            "tile-resize-down": () => this.resize_down(),
-            "tile-resize-up": () => this.resize_up(),
-            "tile-resize-right": () => this.resize_right(),
-            "tile-swap-left": () => this.swap_left(),
-            "tile-swap-down": () => this.swap_down(),
-            "tile-swap-up": () => this.swap_up(),
-            "tile-swap-right": () => this.swap_right(),
-            "tile-accept": () => this.accept(),
-            "tile-reject": () => this.exit(),
+            "tile-move-left": () => this.move_left(ext),
+            "tile-move-down": () => this.move_down(ext),
+            "tile-move-up": () => this.move_up(ext),
+            "tile-move-right": () => this.move_right(ext),
+            "tile-resize-left": () => this.resize_left(ext),
+            "tile-resize-down": () => this.resize_down(ext),
+            "tile-resize-up": () => this.resize_up(ext),
+            "tile-resize-right": () => this.resize_right(ext),
+            "tile-swap-left": () => this.swap_left(ext),
+            "tile-swap-down": () => this.swap_down(ext),
+            "tile-swap-up": () => this.swap_up(ext),
+            "tile-swap-right": () => this.swap_right(ext),
+            "tile-accept": () => this.accept(ext),
+            "tile-reject": () => this.exit(ext),
         };
     }
 
-    rect(): Rectangle | null {
-        if (!this.ext.overlay.visible) return null;
+    rect(ext: Ext): Rectangle | null {
+        if (!ext.overlay.visible) return null;
 
-        let monitors = tile_monitors(this.ext.overlay);
+        let monitors = tile_monitors(ext.overlay);
         if (monitors.length == 0) return null;
 
-        const columns = monitors[0].width / this.ext.column_size;
-        const rows = monitors[1].height / this.ext.row_size;
+        const columns = monitors[0].width / ext.column_size;
+        const rows = monitors[1].height / ext.row_size;
 
         return monitor_rect(monitors[0], columns, rows);
     }
 
-    change(overlay: any, rect: Rectangle, dx: number, dy: number, dw: number, dh: number): Tiler {
+    change(ext: Ext, overlay: any, rect: Rectangle, dx: number, dy: number, dw: number, dh: number): Tiler {
         let changed = new Rect.Rectangle([
             overlay.x + dx * rect.width,
             overlay.y + dy * rect.height,
@@ -116,38 +114,38 @@ export class Tiler {
         // Prevent moving too far down
         if ((changed.y + changed.height) > max_y) return this;
 
-        const left_most = changed.x < this.ext.column_size;
-        const right_most = changed.x + changed.width >= monitors[0].height - this.ext.column_size;
+        const left_most = changed.x < ext.column_size;
+        const right_most = changed.x + changed.width >= monitors[0].height - ext.column_size;
 
         if (left_most && right_most) {
-            changed.x += this.ext.gap_outer;
-            changed.width -= (this.ext.gap_outer * 2);
+            changed.x += ext.gap_outer;
+            changed.width -= (ext.gap_outer * 2);
         } else if (left_most) {
-            changed.x += this.ext.gap_outer;
-            changed.width -= this.ext.gap_inner_half + this.ext.gap_outer;
+            changed.x += ext.gap_outer;
+            changed.width -= ext.gap_inner_half + ext.gap_outer;
         } else if (right_most) {
-            changed.x += this.ext.gap_inner_half;
-            changed.width -= this.ext.gap_inner_half + this.ext.gap_outer;
+            changed.x += ext.gap_inner_half;
+            changed.width -= ext.gap_inner_half + ext.gap_outer;
         } else {
-            changed.x += this.ext.gap_inner_half;
-            changed.width -= this.ext.gap_inner;
+            changed.x += ext.gap_inner_half;
+            changed.width -= ext.gap_inner;
         }
 
-        const top_most = changed.y < this.ext.row_size;
-        const bottom_most = changed.y + changed.height >= monitors[0].height - this.ext.row_size;
+        const top_most = changed.y < ext.row_size;
+        const bottom_most = changed.y + changed.height >= monitors[0].height - ext.row_size;
 
         if (top_most && bottom_most) {
-            changed.y += this.ext.gap_outer;
-            changed.height -= (this.ext.gap_outer * 2);
+            changed.y += ext.gap_outer;
+            changed.height -= (ext.gap_outer * 2);
         } else if (top_most) {
-            changed.y += this.ext.gap_outer;
-            changed.height -= this.ext.gap_inner_half + this.ext.gap_outer;
+            changed.y += ext.gap_outer;
+            changed.height -= ext.gap_inner_half + ext.gap_outer;
         } else if (bottom_most) {
-            changed.y += this.ext.gap_inner_half;
-            changed.height -= this.ext.gap_inner_half + this.ext.gap_outer;
+            changed.y += ext.gap_inner_half;
+            changed.height -= ext.gap_inner_half + ext.gap_outer;
         } else {
-            changed.y += this.ext.gap_inner_half;
-            changed.height -= this.ext.gap_inner;
+            changed.y += ext.gap_inner_half;
+            changed.height -= ext.gap_inner;
         }
 
         overlay.x = changed.x;
@@ -157,56 +155,57 @@ export class Tiler {
         return this;
     }
 
-    move(x: number, y: number, w: number, h: number) {
-        if (this.ext.auto_tiler) {
-            this.move_auto(x, y);
+    move(ext: Ext, x: number, y: number, w: number, h: number) {
+        if (ext.auto_tiler) {
+            this.move_auto(ext, x, y);
         } else {
             this.swap_window = null;
 
-            let rect = this.rect();
+            let rect = this.rect(ext);
 
             if (rect) {
-                this.change(this.ext.overlay, rect, x, y, w, h)
-                    .change(this.ext.overlay, rect, 0, 0, 0, 0);
+                this.change(ext, ext.overlay, rect, x, y, w, h)
+                    .change(ext, ext.overlay, rect, 0, 0, 0, 0);
             }
         }
     }
 
-    move_auto_(func: (a: any, b: Rectangle) => void) {
-        if (this.ext.auto_tiler && this.ext.attached && this.window) {
-            const entity = this.ext.attached.get(this.window.entity);
+    move_auto_(ext: Ext, func: (a: any, b: Rectangle) => void) {
+        if (ext.auto_tiler && ext.attached && this.window) {
+            const entity = ext.attached.get(this.window);
             if (entity) {
-                const fork = this.ext.auto_tiler.forks.get(entity);
-                if (fork) {
-                    const grab_op = new GrabOp.GrabOp(this.window.entity, this.window.rect());
+                const fork = ext.auto_tiler.forks.get(entity);
+                const window = ext.windows.get(this.window);
+                if (fork && window) {
+                    const grab_op = new GrabOp.GrabOp(this.window, window.rect());
 
                     let crect = grab_op.rect.clone();
                     func(fork, crect);
 
-                    const result = this.ext.monitors.get(this.window.entity);
+                    const result = ext.monitors.get(this.window);
                     if (result) {
                         const [monitor, _] = result;
-                        Lib.meta_rect_clamp(this.ext.monitor_work_area(monitor), crect, this.ext.gap_outer);
+                        Lib.meta_rect_clamp(ext.monitor_work_area(monitor), crect, ext.gap_outer);
 
                         if (crect.eq(grab_op.rect)) {
                             return;
                         }
 
-                        this.ext.auto_tiler.resize(this.ext, entity, this.window.entity, grab_op.operation(crect), crect);
-                        this.ext.set_overlay(this.window.rect());
+                        ext.auto_tiler.resize(ext, entity, this.window, grab_op.operation(crect), crect);
+                        ext.set_overlay(window.rect());
                     }
                 }
             }
         }
     }
 
-    move_auto(x: number, y: number) {
-        this.move_auto_((fork, crect) => {
-            let xadj = x * this.ext.row_size;
-            let yadj = y * this.ext.column_size;
+    move_auto(ext: Ext, x: number, y: number) {
+        this.move_auto_(ext, (fork, crect) => {
+            let xadj = x * ext.row_size;
+            let yadj = y * ext.column_size;
 
             if (this.window) {
-                if (fork.left.is_window(this.window.entity)) {
+                if (fork.left.is_window(this.window)) {
                     Log.debug(`left window move`);
                     crect.width += xadj;
                     crect.height += yadj;
@@ -223,13 +222,13 @@ export class Tiler {
         });
     }
 
-    resize_auto(x: number, y: number) {
-        this.move_auto_((fork, crect) => {
-            let xadj = x * this.ext.row_size;
-            let yadj = y * this.ext.column_size;
+    resize_auto(ext: Ext, x: number, y: number) {
+        this.move_auto_(ext, (fork, crect) => {
+            let xadj = x * ext.row_size;
+            let yadj = y * ext.column_size;
 
             if (this.window) {
-                if (fork.left.is_window(this.window.entity)) {
+                if (fork.left.is_window(this.window)) {
                     Log.debug(`left window resize`);
                     crect.width += xadj;
                     crect.height += yadj;
@@ -248,131 +247,149 @@ export class Tiler {
         });
     }
 
-    move_left() {
-        this.move(-1, 0, 0, 0);
+    move_left(ext: Ext) {
+        this.move(ext, -1, 0, 0, 0);
     }
 
-    move_down() {
-        this.move(0, 1, 0, 0);
+    move_down(ext: Ext) {
+        this.move(ext, 0, 1, 0, 0);
     }
 
-    move_up() {
-        this.move(0, -1, 0, 0);
+    move_up(ext: Ext) {
+        this.move(ext, 0, -1, 0, 0);
     }
 
-    move_right() {
-        this.move(1, 0, 0, 0);
+    move_right(ext: Ext) {
+        this.move(ext, 1, 0, 0, 0);
     }
 
-    resize(x: number, y: number, w: number, h: number) {
-        if (this.ext.auto_tiler) {
-            this.resize_auto(w, h);
+    resize(ext: Ext, x: number, y: number, w: number, h: number) {
+        if (ext.auto_tiler) {
+            this.resize_auto(ext, w, h);
         } else {
             this.swap_window = null;
-            let rect = this.rect();
+            let rect = this.rect(ext);
             if (rect) {
-                this.change(this.ext.overlay, rect, x, y, w, h)
-                    .change(this.ext.overlay, rect, 0, 0, 0, 0);
+                this.change(ext, ext.overlay, rect, x, y, w, h)
+                    .change(ext, ext.overlay, rect, 0, 0, 0, 0);
             }
         }
     }
 
-    resize_left() {
-        this.resize(0, 0, -1, 0);
+    resize_left(ext: Ext) {
+        this.resize(ext, 0, 0, -1, 0);
     }
 
-    resize_down() {
-        this.resize(0, 0, 0, 1);
+    resize_down(ext: Ext) {
+        this.resize(ext, 0, 0, 0, 1);
     }
 
-    resize_up() {
-        this.resize(0, 0, 0, -1);
+    resize_up(ext: Ext) {
+        this.resize(ext, 0, 0, 0, -1);
     }
 
-    resize_right() {
-        this.resize(0, 0, 1, 0);
+    resize_right(ext: Ext) {
+        this.resize(ext, 0, 0, 1, 0);
     }
 
-    swap(selector: ShellWindow | null) {
+    swap(ext: Ext, selector: ShellWindow | null) {
         if (selector) {
-            this.ext.set_overlay(selector.rect());
-            this.swap_window = selector;
+            ext.set_overlay(selector.rect());
+            this.swap_window = selector.entity;
         }
     }
 
-    swap_left() {
-        this.swap(this.ext.focus_selector.left(this.swap_window));
+    swap_left(ext: Ext) {
+        if (this.swap_window) ext.windows.with(this.swap_window, (window) => {
+            this.swap(ext, ext.focus_selector.left(ext, window));
+        });
     }
 
-    swap_down() {
-        this.swap(this.ext.focus_selector.down(this.swap_window));
+    swap_down(ext: Ext) {
+        if (this.swap_window) ext.windows.with(this.swap_window, (window) => {
+            this.swap(ext, ext.focus_selector.down(ext, window));
+        });
     }
 
-    swap_up() {
-        this.swap(this.ext.focus_selector.up(this.swap_window));
+    swap_up(ext: Ext) {
+        if (this.swap_window) ext.windows.with(this.swap_window, (window) => {
+            this.swap(ext, ext.focus_selector.up(ext, window));
+        })
+
     }
 
-    swap_right() {
-        this.swap(this.ext.focus_selector.right(this.swap_window));
+    swap_right(ext: Ext) {
+        if (this.swap_window) ext.windows.with(this.swap_window, (window) => {
+            this.swap(ext, ext.focus_selector.right(ext, window));
+        });
     }
 
-    enter() {
+    enter(ext: Ext) {
         if (!this.window) {
-            this.window = this.ext.focus_window();
-            if (!this.window) return;
+            const meta = ext.focus_window();
+            if (!meta) return;
+
+            this.window = meta.entity;
 
             // Set overlay to match window
-            this.ext.set_overlay(this.window.rect());
-            this.ext.overlay.visible = true;
+            ext.set_overlay(meta.rect());
+            ext.overlay.visible = true;
 
-            if (!this.ext.auto_tiler) {
-                let rect = this.rect();
+            if (!ext.auto_tiler) {
+                let rect = this.rect(ext);
                 // Make sure overlay is valid
-                if (rect) this.change(this.ext.overlay, rect, 0, 0, 0, 0);
+                if (rect) this.change(ext, ext.overlay, rect, 0, 0, 0, 0);
             }
 
-            this.ext.keybindings.disable(this.ext.keybindings.window_focus)
+            ext.keybindings.disable(ext.keybindings.window_focus)
                 .enable(this.keybindings);
         }
     }
 
-    accept() {
+    accept(ext: Ext) {
         if (this.window) {
-            if (this.swap_window) {
-                if (this.ext.auto_tiler) {
-                    this.ext.attach_swap(this.swap_window.entity, this.window.entity);
+            const meta = ext.windows.get(this.window);
+            if (meta) {
+                if (this.swap_window) {
+                    const meta_swap = ext.windows.get(this.swap_window);
+                    if (meta_swap) {
+                        if (ext.auto_tiler) {
+                            ext.attach_swap(this.swap_window, this.window);
+                        }
+                        meta_swap.move(meta.rect());
+                        this.swap_window = null;
+                    }
                 }
-                this.swap_window.move(this.window.rect());
-                this.swap_window = null;
-            }
 
-            this.window.move(this.ext.overlay);
-            this.ext.add_tag(this.window.entity, Tags.Tiled);
+                meta.move(ext.overlay);
+                ext.add_tag(this.window, Tags.Tiled);
+            }
         }
 
-        this.exit();
+        this.exit(ext);
     }
 
-    exit() {
+    exit(ext: Ext) {
         if (this.window) {
             this.window = null;
 
             // Disable overlay
-            this.ext.overlay.visible = false;
+            ext.overlay.visible = false;
 
             // Disable tiling keybindings
-            this.ext.keybindings.disable(this.keybindings)
-                .enable(this.ext.keybindings.window_focus);
+            ext.keybindings.disable(this.keybindings)
+                .enable(ext.keybindings.window_focus);
         }
     }
 
-    snap(win: ShellWindow) {
-        let mon_geom = this.ext.monitor_work_area(win.meta.get_monitor());
+    snap(ext: Ext, win: ShellWindow) {
+        let mon_geom = ext.monitor_work_area(win.meta.get_monitor());
         if (mon_geom) {
             let rect = win.rect();
-            const columns = mon_geom.width / this.ext.column_size;
-            const rows = mon_geom.height / this.ext.row_size;
+            const columns = mon_geom.width / ext.column_size;
+            const rows = mon_geom.height / ext.row_size;
             this.change(
+                ext,
                 rect,
                 monitor_rect(mon_geom, columns, rows),
                 0, 0, 0, 0
@@ -380,7 +397,7 @@ export class Tiler {
 
             win.move(rect);
 
-            this.ext.snapped.insert(win.entity, true);
+            ext.snapped.insert(win.entity, true);
         }
     }
 };

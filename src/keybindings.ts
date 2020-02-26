@@ -13,16 +13,16 @@ export class Keybindings {
         this.ext = ext;
         this.global = {
             "search": () => ext.window_search.open(),
-            "tile-enter": () => ext.tiler.enter()
+            "tile-enter": () => ext.tiler.enter(ext)
         };
 
         this.window_focus = {
-            "focus-left": () => ext.activate_window(ext.focus_selector.left(null)),
-            "focus-down": () => ext.activate_window(ext.focus_selector.down(null)),
-            "focus-up": () => ext.activate_window(ext.focus_selector.up(null)),
-            "focus-right": () => ext.activate_window(ext.focus_selector.right(null)),
-            "focus-monitor-left": () => ext.activate_window(ext.focus_selector.monitor_left(null)),
-            "focus-monitor-right": () => ext.activate_window(ext.focus_selector.monitor_right(null)),
+            "focus-left": () => ext.activate_window(ext.focus_selector.left(ext, null)),
+            "focus-down": () => ext.activate_window(ext.focus_selector.down(ext, null)),
+            "focus-up": () => ext.activate_window(ext.focus_selector.up(ext, null)),
+            "focus-right": () => ext.activate_window(ext.focus_selector.right(ext, null)),
+            "focus-monitor-left": () => ext.activate_window(ext.focus_selector.monitor_left(ext, null)),
+            "focus-monitor-right": () => ext.activate_window(ext.focus_selector.monitor_right(ext, null)),
             "tile-orientation": () => ext.toggle_orientation()
         };
     }
