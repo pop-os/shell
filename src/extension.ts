@@ -46,7 +46,7 @@ export class Ext extends Ecs.World {
     mode: number = Lib.MODE_DEFAULT;
 
     tiler: Tiling.Tiler;
-    window_search: any;
+    window_search: WindowSearch.WindowSearch;
 
     attached: Ecs.Storage<Entity> | null = null;
     icons: Ecs.Storage<any>;

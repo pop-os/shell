@@ -12,7 +12,7 @@ export class Keybindings {
     constructor(ext: Ext) {
         this.ext = ext;
         this.global = {
-            "search": () => ext.window_search.open(),
+            "search": () => ext.window_search.dialog.open(),
             "tile-enter": () => ext.tiler.enter(ext)
         };
 
