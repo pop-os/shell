@@ -112,7 +112,11 @@ function number_entry(
 
     entry.connect('key-release-event', (_: any, event: any) => {
         if (36 == event.get_key_code()) {
-            const number = parseInt(text.text, 10);
+            let number = parseInt(text.text, 10);
+            if (isNaN(number)) {
+                text.set_text('0');
+                number = 0;
+            }
 
             const prev = get_method.call(ext);
             ext_method.call(ext, number);
