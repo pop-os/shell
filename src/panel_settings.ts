@@ -113,14 +113,22 @@ function number_entry(
     entry.connect('key-release-event', (_: any, event: any) => {
         if (36 == event.get_key_code()) {
             const number = parseInt(text.text, 10);
-            if (number) {
-                let prev = get_method.call(ext);
-                ext_method.call(ext, number);
-                settings_method.call(ext.settings, number);
-                post_exec(prev, number);
-            } else {
-                text.text = "";
-            }
+
+            const prev = get_method.call(ext);
+            ext_method.call(ext, number);
+            settings_method.call(ext.settings, number);
+
+            post_exec(prev, number);
+        }
+    });
+
+    text.connect('text-changed', () => {
+        const input: string = text.get_text();
+        const last = input.slice(-1);
+        const parsed = parseInt(last);
+
+        if (isNaN(parsed)) {
+            text.set_text(input.substr(0, input.length - 1));
         }
     });
 
