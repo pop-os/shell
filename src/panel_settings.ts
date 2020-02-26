@@ -182,7 +182,7 @@ function tiled(ext: Ext): any {
                 });
 
             for (const window of ext.windows.values()) {
-                if (window.is_tilable()) ext.auto_tile(window, false);
+                if (window.is_tilable(ext)) ext.auto_tile(window, false);
             }
         }
     });

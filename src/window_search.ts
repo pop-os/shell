@@ -34,10 +34,10 @@ export var WindowSearch = GObject.registerClass(
                 this.active.splice(0);
 
                 let window_list = ext.tab_list(Meta.TabList.NORMAL, null);
-                window_list.sort((a: ShellWindow, b: ShellWindow) => a.name() > b.name() ? 1 : 0);
+                window_list.sort((a: ShellWindow, b: ShellWindow) => a.name(ext) > b.name(ext) ? 1 : 0);
 
                 for (const win of window_list) {
-                    let name = win.name();
+                    let name = win.name(ext);
                     let title = win.meta.get_title();
 
                     if (name != title) {
@@ -49,7 +49,7 @@ export var WindowSearch = GObject.registerClass(
                     }
 
                     this.windows.push(win);
-                    this.active.push([name, win.icon(ICON_SIZE)]);
+                    this.active.push([name, win.icon(ext, ICON_SIZE)]);
                     if (this.active.length == LIST_MAX) {
                         break
                     }

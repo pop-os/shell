@@ -21,11 +21,9 @@ export class ShellWindow {
     meta: any;
 
     private window_app: any;
-    private ext: Ext;
 
     constructor(entity: Entity, window: any, window_app: any, ext: Ext) {
         this.window_app = window_app;
-        this.ext = ext;
 
         this.entity = entity;
         this.meta = window;
@@ -53,8 +51,8 @@ export class ShellWindow {
         set_hint(this.xid(), MOTIF_HINTS, SHOW_FLAGS);
     }
 
-    icon(size: number) {
-        return this.ext.icons.get_or(this.entity, () => {
+    icon(ext: Ext, size: number) {
+        return ext.icons.get_or(this.entity, () => {
             let icon = this.window_app.create_icon_texture(size);
 
             if (!icon) {
@@ -69,8 +67,8 @@ export class ShellWindow {
         });
     }
 
-    is_tilable() {
-        return this.ext.tilable.get_or(this.entity, () => {
+    is_tilable(ext: Ext) {
+        return ext.tilable.get_or(this.entity, () => {
             return !this.meta.is_skip_taskbar()
                 && !blacklisted(this.meta.get_wm_class())
                 && this.meta.window_type == Meta.WindowType.NORMAL;
@@ -91,13 +89,13 @@ export class ShellWindow {
         );
     }
 
-    move_snap(rect: Rectangle) {
+    move_snap(ext: Ext, rect: Rectangle) {
         this.move(rect);
-        this.ext.tiler.snap(this);
+        ext.tiler.snap(this);
     }
 
-    name(): string {
-        return this.ext.names.get_or(this.entity, () => "unknown");
+    name(ext: Ext): string {
+        return ext.names.get_or(this.entity, () => "unknown");
     }
 
     rect(): Rectangle {

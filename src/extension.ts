@@ -211,7 +211,7 @@ export class Ext extends Ecs.World {
      */
     attach_to_window(attachee: Window.ShellWindow, attacher: Window.ShellWindow): boolean {
         if (this.auto_tiler) {
-            Log.debug(`attempting to attach ${attacher.name()} to ${attachee.name()}`);
+            Log.debug(`attempting to attach ${attacher.name(this)} to ${attachee.name(this)}`);
 
             let attached = this.auto_tiler.attach_window(this, attachee.entity, attacher.entity);
 
@@ -267,7 +267,7 @@ export class Ext extends Ecs.World {
         if (!ignore_focus) {
             let onto = this.focus_window();
 
-            if (onto && onto.is_tilable() && !Ecs.entity_eq(onto.entity, win.entity)) {
+            if (onto && onto.is_tilable(this) && !Ecs.entity_eq(onto.entity, win.entity)) {
                 this.detach_window(win.entity);
 
                 if (this.attach_to_window(onto, win)) {
@@ -363,7 +363,7 @@ export class Ext extends Ecs.World {
 
         this.connect(win.meta, 'size-changed', () => {
             if (this.attached)  {
-                Log.debug(`size changed: ${win.name()}`);
+                Log.debug(`size changed: ${win.name(this)}`);
                 if (this.grab_op) {
 
                 } else if (!this.tiling) {
@@ -374,7 +374,7 @@ export class Ext extends Ecs.World {
 
         this.connect(win.meta, 'position-changed', () => {
             if (this.attached && !this.grab_op && !this.tiling) {
-                Log.debug(`position changed: ${win.name()}`);
+                Log.debug(`position changed: ${win.name(this)}`);
                 this.reflow(win.entity);
             }
         });
@@ -426,7 +426,7 @@ export class Ext extends Ecs.World {
                         if (fork.left.is_window(win)) {
                             const sibling = this.windows.get(fork.right.entity);
                             if (sibling && sibling.rect().contains(cursor)) {
-                                Log.debug(`${this.names.get(win)} was dropped onto ${sibling.name()}`);
+                                Log.debug(`${this.names.get(win)} was dropped onto ${sibling.name(this)}`);
                                 fork.left.entity = fork.right.entity;
                                 fork.right.entity = win;
                                 this.tile(fork, fork.area, fork.workspace);
@@ -435,7 +435,7 @@ export class Ext extends Ecs.World {
                         } else if (fork.right.is_window(win)) {
                             const sibling = this.windows.get(fork.left.entity);
                             if (sibling && sibling.rect().contains(cursor)) {
-                                Log.debug(`${this.names.get(win)} was dropped onto ${sibling.name()}`);
+                                Log.debug(`${this.names.get(win)} was dropped onto ${sibling.name(this)}`);
                                 fork.right.entity = fork.left.entity;
                                 fork.left.entity = win;
 
@@ -481,7 +481,7 @@ export class Ext extends Ecs.World {
     }
 
     on_destroy(win: Window.ShellWindow) {
-        Log.debug(`destroying window (${win.entity}): ${win.name()}`);
+        Log.debug(`destroying window (${win.entity}): ${win.name(this)}`);
 
         if (this.auto_tiler) this.detach_window(win.entity);
 
@@ -497,7 +497,7 @@ export class Ext extends Ecs.World {
         this.last_focused = win.entity;
 
         let msg = `focused Window(${win.entity}) {\n`
-            + `  name: ${win.name()},\n`
+            + `  name: ${win.name(this)},\n`
             + `  rect: ${win.rect().fmt()},\n`
             + `  wm_class: "${win.meta.get_wm_class()}",\n`;
 
@@ -517,7 +517,7 @@ export class Ext extends Ecs.World {
     on_grab_end(meta: any, op: any) {
         let win = this.get_window(meta);
 
-        if (null == win || !win.is_tilable()) {
+        if (null == win || !win.is_tilable(this)) {
             return;
         }
 
@@ -527,11 +527,11 @@ export class Ext extends Ecs.World {
             if (this.mode == Lib.MODE_AUTO_TILE) {
                 const rect = this.grab_op.rect;
                 if (is_move_op(op)) {
-                    Log.debug(`win: ${win.name()}; op: ${op}; from (${rect.x},${rect.y}) to (${crect.x},${crect.y})`);
+                    Log.debug(`win: ${win.name(this)}; op: ${op}; from (${rect.x},${rect.y}) to (${crect.x},${crect.y})`);
 
                     this.on_monitor_changed(win, (changed_from: number, changed_to: number, workspace: number) => {
                         if (win) {
-                            Log.debug(`window ${win.name()} moved from display ${changed_from} to ${changed_to}`);
+                            Log.debug(`window ${win.name(this)} moved from display ${changed_from} to ${changed_to}`);
                             this.monitors.insert(win.entity, [changed_to, workspace]);
                         }
                     });
@@ -573,7 +573,7 @@ export class Ext extends Ecs.World {
      */
     on_grab_start(meta: any, op: any) {
         let win = this.get_window(meta);
-        if (win && win.is_tilable()) {
+        if (win && win.is_tilable(this)) {
             let entity = win.entity;
             Log.debug(`grabbed Window(${entity}): ${this.names.get(entity)}`);
             let rect = win.rect();
@@ -606,7 +606,7 @@ export class Ext extends Ecs.World {
                     if (win) this.on_destroy(win);
                 });
 
-                if (win.is_tilable()) {
+                if (win.is_tilable(this)) {
                     this.connect_window(win);
                 }
             }
@@ -617,7 +617,7 @@ export class Ext extends Ecs.World {
 
     on_workspace_changed(win: Window.ShellWindow) {
         if (!this.grab_op) {
-            Log.debug(`workspace changed for ${win.name()}`);
+            Log.debug(`workspace changed for ${win.name(this)}`);
             const id = this.workspace_id(win);
             const prev_id = this.monitors.get(win.entity);
             if (!prev_id || id[0] != prev_id[0] || id[1] != prev_id[1]) {
@@ -662,7 +662,7 @@ export class Ext extends Ecs.World {
     // Snaps all windows to the window grid
     snap_windows() {
         for (const window of this.windows.values()) {
-            if (window.is_tilable()) this.tiler.snap(window);
+            if (window.is_tilable(this)) this.tiler.snap(window);
         }
     }
 
@@ -744,8 +744,8 @@ export class Ext extends Ecs.World {
             this.names.insert(entity, name);
             this.monitors.insert(entity, [win.meta.get_monitor(), win.meta.get_workspace().index()]);
 
-            Log.debug(`created window (${win.entity}): ${win.name()}: ${id}`);
-            if (this.mode == Lib.MODE_AUTO_TILE && win.is_tilable()) this.auto_tile(win, this.init);
+            Log.debug(`created window (${win.entity}): ${win.name(this)}: ${id}`);
+            if (this.mode == Lib.MODE_AUTO_TILE && win.is_tilable(this)) this.auto_tile(win, this.init);
         }
 
         return entity;
