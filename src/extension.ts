@@ -16,7 +16,7 @@ import * as WindowSearch from 'window_search';
 
 import type { Entity } from 'ecs';
 import type { Rectangle } from 'rectangle';
-
+import type { Indicator } from 'panel_settings';
 
 const { Gio, GLib, Meta, St } = imports.gi;
 const { cursor_rect, is_move_op } = Lib;
@@ -793,7 +793,7 @@ export class Ext extends Ecs.World {
 }
 
 let ext: Ext | null = null;
-let indicator: any | null = null;
+let indicator: Indicator | null = null;
 
 function init() {
     Log.info("init");
@@ -817,7 +817,7 @@ function enable() {
 
         if (!indicator) {
             indicator = new PanelSettings.Indicator(ext);
-            panel.addToStatusArea('pop-shell', indicator);
+            panel.addToStatusArea('pop-shell', indicator.button);
         }
 
         ext.keybindings.enable(ext.keybindings.global)
@@ -829,7 +829,7 @@ function disable() {
     Log.info("disable");
 
     if (indicator) {
-        indicator.destroy();
+        indicator.button.destroy();
         indicator = null;
     }
 

@@ -1,6 +1,6 @@
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
-const { Clutter, Gio, GObject, St } = imports.gi;
+const { Clutter, Gio, St } = imports.gi;
 const { PopupMenuItem, PopupSeparatorMenuItem, PopupSwitchMenuItem } = imports.ui.popupMenu;
 const { Button } = imports.ui.panelMenu;
 
@@ -12,84 +12,84 @@ import type { Ext } from './extension';
 
 const { AutoTiler } = Me.imports.auto_tiler;
 
-export var Indicator = GObject.registerClass(
-    class Indicator extends Button {
-        _init(ext: Ext) {
-            super._init(0.0, _("Pop Shell Settings"));
+export class Indicator {
+    button: any;
 
-            this.icon = new St.Icon({
-                icon_name: "focus-windows-symbolic",
-                style_class: "system-status-icon"
-            });
+    constructor(ext: Ext) {
+        this.button = new Button(0.0, _("Pop Shell Settings"));
 
-            this.add_actor(this.icon);
+        this.button.icon = new St.Icon({
+            icon_name: "focus-windows-symbolic",
+            style_class: "system-status-icon"
+        });
 
-            this.menu.addMenuItem(tiled(ext));
-            this.menu.addMenuItem(title_bars(ext));
-            this.menu.addMenuItem(snap_to_grid(ext));
-            this.menu.addMenuItem(new PopupSeparatorMenuItem());
+        this.button.add_actor(this.button.icon);
 
-            this.menu.addMenuItem(
-                number_entry(ext,
-                    _("Inner Gap"),
-                    ext.set_gap_inner,
-                    ext.settings.set_gap_inner,
-                    () => ext.gap_inner,
-                    (prev: number, current: number) => {
-                        if (current - prev != 0) {
-                            Log.info(`inner gap changed to ${current}`);
-                            if (ext.auto_tiler) {
-                                for (const [entity, _] of ext.auto_tiler.toplevel.values()) {
-                                    const fork = ext.auto_tiler.forks.get(entity);
-                                    if (fork && fork.area) {
-                                        ext.tile(fork, fork.area, fork.workspace);
-                                    }
+        this.button.menu.addMenuItem(tiled(ext));
+        this.button.menu.addMenuItem(title_bars(ext));
+        this.button.menu.addMenuItem(snap_to_grid(ext));
+        this.button.menu.addMenuItem(new PopupSeparatorMenuItem());
+
+        this.button.menu.addMenuItem(
+            number_entry(ext,
+                _("Inner Gap"),
+                ext.set_gap_inner,
+                ext.settings.set_gap_inner,
+                () => ext.gap_inner,
+                (prev: number, current: number) => {
+                    if (current - prev != 0) {
+                        Log.info(`inner gap changed to ${current}`);
+                        if (ext.auto_tiler) {
+                            for (const [entity, _] of ext.auto_tiler.toplevel.values()) {
+                                const fork = ext.auto_tiler.forks.get(entity);
+                                if (fork && fork.area) {
+                                    ext.tile(fork, fork.area, fork.workspace);
                                 }
-                            } else {
-                                ext.update_snapped();
                             }
-
-                            Gio.Settings.sync();
+                        } else {
+                            ext.update_snapped();
                         }
+
+                        Gio.Settings.sync();
                     }
-                )
-            );
+                }
+            )
+        );
 
-            this.menu.addMenuItem(
-                number_entry(ext,
-                    _("Outer Gap"),
-                    ext.set_gap_outer,
-                    ext.settings.set_gap_outer,
-                    () => ext.gap_outer,
-                    (prev: number, current: number) => {
-                        const diff = current - prev;
-                        if (diff != 0) {
-                            Log.info(`outer gap changed to ${current}`);
-                            if (ext.auto_tiler) {
-                                for (const [entity, _] of ext.auto_tiler.toplevel.values()) {
-                                    const fork = ext.auto_tiler.forks.get(entity);
+        this.button.menu.addMenuItem(
+            number_entry(ext,
+                _("Outer Gap"),
+                ext.set_gap_outer,
+                ext.settings.set_gap_outer,
+                () => ext.gap_outer,
+                (prev: number, current: number) => {
+                    const diff = current - prev;
+                    if (diff != 0) {
+                        Log.info(`outer gap changed to ${current}`);
+                        if (ext.auto_tiler) {
+                            for (const [entity, _] of ext.auto_tiler.toplevel.values()) {
+                                const fork = ext.auto_tiler.forks.get(entity);
 
-                                    if (fork && fork.area) {
-                                        fork.area.array[0] += diff;
-                                        fork.area.array[1] += diff;
-                                        fork.area.array[2] -= diff * 2;
-                                        fork.area.array[3] -= diff * 2;
+                                if (fork && fork.area) {
+                                    fork.area.array[0] += diff;
+                                    fork.area.array[1] += diff;
+                                    fork.area.array[2] -= diff * 2;
+                                    fork.area.array[3] -= diff * 2;
 
-                                        ext.tile(fork, fork.area, fork.workspace);
-                                    }
+                                    ext.tile(fork, fork.area, fork.workspace);
                                 }
-                            } else {
-                                ext.update_snapped();
                             }
-
-                            Gio.Settings.sync();
+                        } else {
+                            ext.update_snapped();
                         }
+
+                        Gio.Settings.sync();
                     }
-                )
-            );
-        }
+                }
+            )
+        );
     }
-)
+}
 
 function number_entry(
     ext: Ext,
@@ -165,7 +165,7 @@ function snap_to_grid(ext: Ext): any {
 }
 
 function tiled(ext: Ext): any {
-    return toggle(ext, _("Launch Windows Tiled"), null != ext.auto_tiler, (toggle) => {
+    return toggle(ext, _("Tile Windows"), null != ext.auto_tiler, (toggle) => {
         if (ext.attached && ext.auto_tiler) {
             Log.info(`tile by default disabled`);
             ext.mode = Lib.MODE_DEFAULT;
