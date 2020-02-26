@@ -1,8 +1,12 @@
 # Pop Shell - WIP
 
-The purpose of Pop Shell is to provide a keyboard driven layer for GNOME Shell that allows for quick and sensible navigation, movement, and resizing of windows. The need for advanced tiling window management in GNOME is strong among our community. For many — ourselves included — i3wm has become the leading competitor to the GNOME desktop.
+Pop Shell is a keyboard-driven layer for GNOME Shell which allows for quick and sensible navigation and management of windows. The core feature of Pop Shell is the addition of advanced tiling window management — a feature that has been highly-sought within our community. For many — ourselves included — i3wm has become the leading competitor to the GNOME desktop.
 
-However, GNOME Shell is a highly extensible desktop. It is very possible to implement advanced tiling window management features into the GNOME desktop — combining the best of both experiences. Therefore, we see an opportunity here to advance the usability of the GNOME desktop to better accomodate the needs of our community.
+Tiling window management in GNOME is virtually nonexistent, which makes the desktop awkward to interact with when your needs exceed that of two windows at a given time. Luckily, GNOME Shell is an extensible desktop with the foundations that make it possible to implement a tiling window manager on top of the desktop.
+
+Therefore, we see an opportunity here to advance the usability of the GNOME desktop to better accomodate the needs of our community with Pop Shell. Advanced tiling window management is a must for the desktop, so we've merged i3-like tiling window management with the GNOME desktop for the best of both worlds.
+
+[![](./screenshot.webp)](https://raw.githubusercontent.com/pop-os/shell/master_focal/screenshot.webp)
 
 ---
 
@@ -20,7 +24,7 @@ However, GNOME Shell is a highly extensible desktop. It is very possible to impl
 
 ## The Proposal
 
-A proposal for integration of features from Pop Shell into upstream GNOME is currently under development. It will be created as a GitLab issue for GNOME Shell for future discussion, once we have invested our time into producing a functioning prototype, and learned what does and does not work in practice.
+A proposal for integration of the tiling window management features from Pop Shell into GNOME is currently under development. It will be created as a GitLab issue on GNOME Shell for future discussion, once we have invested our time into producing a functioning prototype, and learned what does and does not work in practice.
 
 Ideally, the features explored in Pop Shell will be available for any environment using Mutter — far extending the half-monitor tiling capability currently present. By starting out as a shell extension, anyone using GNOME Shell can install this onto their system, without having to install a Pop-specific fork of GNOME on their system.
 
@@ -32,7 +36,7 @@ So, why is this a problem for us, and why do so many of our users switch to i3wm
 
 ### Displays are large, and windows are many
 
-GNOME currently only supports half-tiling, which tiles one window to one side of the screen, and another window to the other side of the screen. If you have more than two windows, it is expected to place them on separate workspaces, monitors, or to alternate between windows with `Alt` + Tab`.
+GNOME currently only supports half-tiling, which tiles one window to one side of the screen, and another window to the other side of the screen. If you have more than two windows, it is expected to place them on separate workspaces, monitors, or to alternate between windows with `Alt` + `Tab`.
 
 This tends to work fine if you only have a small handful of applications. If you need more than two windows at a time on a display, your only option is to manually drag windows into position, and resize them to fit alongside each other — a very time-consuming process that could easily be automated and streamlined.
 
@@ -102,6 +106,10 @@ The window focus search dialog is summoned with `Super` + `/`. The search list d
 ### Inner and Outer Gaps
 
 Gaps improve the aesthetics of tiled windows, and make it easier to grab the edge of a specific window. We've decided to add support for inner and outer gaps, and made these settings configurable in the extension's popup menu.
+
+### Hiding Window Title Bars
+
+Windows with server-side decorations may have their title bars completely hidden, resulting in additional screen real estate for your applications, and a visually cleaner environment. This feature can be toggled in the extension's popup menu. Windows can be moved with the mouse by holding `Super` when clicking and dragging a window to another location. Windows may be closed by pressing GNOME's default `Super` + `W` shortcut.
 
 ---
 
@@ -195,8 +203,6 @@ Due to the risky nature of plain JavaScript, this GNOME Shell extension is writt
 When iterating on the codebase, run `sh rebuild.sh` to `make`, `make install`, configure keyboard shortcuts, begin following gnome-shell logs, and restart GNOME Shell. Note that any logged errors will be referencing the generated JavaScript files located in the `_build/` directory.
 
 GNOME JS is a little different from standard JS, so the included `Makefile` runs `sed` on the compied JavaScript to convert the small number of differences between JS and GJS. Notably, GJS only partially supports ES2015, and has its own module system which works differently from what ES2015 expects. The sed scripts will replace `import` and `export` statements with the expected GNOME variants.
-
-GNOME types are currently not type-checked. You may access the `global` and `imports` variables by declaring them at the top of the typescript file as `any` types. Working with `any` types is the same as working with JavaScript directly. To access local modules, you must add this line before any imports:
 
 ```js
 const Me = imports.misc.extensionUtils.getCurrentExtension();
