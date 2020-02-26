@@ -6,8 +6,9 @@ const { Button } = imports.ui.panelMenu;
 
 import * as Lib from 'lib';
 import * as Log from 'log';
-import { Entity } from './ecs';
-import { Ext } from './extension';
+
+import type { Entity } from './ecs';
+import type { Ext } from './extension';
 
 const { AutoTiler } = Me.imports.auto_tiler;
 

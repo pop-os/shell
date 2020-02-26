@@ -28,16 +28,16 @@ export function entity_new(pos: number, gen: number): Entity {
 /// component which was assigned to it. The generation is used to determine if an
 /// assigned component is stale on component lookup.
 export class Storage<T> {
-    _store: Array<[number, T] | null>;
+    private store: Array<[number, T] | null>;
 
     constructor() {
-        this._store = new Array();
+        this.store = new Array();
     }
 
     /// Private method for iterating across allocated slots
     * _iter(): IterableIterator<[number, [number, T]]> {
         let idx = 0;
-        for (const slot of this._store) {
+        for (const slot of this.store) {
             if (slot) yield [idx, slot];
             idx += 1;
         }
@@ -76,7 +76,7 @@ export class Storage<T> {
     /// Fetches the component for this entity, if it exists
     get(entity: Entity): T | null {
         let [id, gen] = entity;
-        const val = this._store[id];
+        const val = this.store[id];
         return (val && val[0] == gen) ? val[1] : null;
     }
 
@@ -96,19 +96,19 @@ export class Storage<T> {
     insert(entity: Entity, component: T) {
         let [id, gen] = entity;
 
-        let length = this._store.length;
+        let length = this.store.length;
         if (length >= id) {
-            this._store.fill(null, length, id);
+            this.store.fill(null, length, id);
         }
 
-        this._store[id] = [gen, component];
+        this.store[id] = [gen, component];
     }
 
     /// Removes the component for this entity, if it exists
     remove(entity: Entity): T | null {
         const comp = this.get(entity);
         if (comp) {
-            this._store[entity[0]] = null;
+            this.store[entity[0]] = null;
         };
         return comp;
     }

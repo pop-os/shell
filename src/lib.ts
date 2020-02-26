@@ -2,7 +2,7 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 import * as rectangle from 'rectangle';
 
-type Rectangle = rectangle.Rectangle;
+import type { Rectangle } from 'rectangle';
 
 const { Meta, St } = imports.gi;
 

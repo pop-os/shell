@@ -4,8 +4,8 @@ const { GObject, Meta } = imports.gi;
 
 import * as Search from 'search';
 
-import { ShellWindow } from 'window';
-import { Ext } from './extension';
+import type { ShellWindow } from 'window';
+import type { Ext } from './extension';
 
 const LIST_MAX = 5;
 const ICON_SIZE = 32;

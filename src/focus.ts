@@ -1,8 +1,10 @@
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
-import { ShellWindow } from 'window';
 import * as Geom from 'geom';
-import { Ext } from './extension';
+
+
+import type { ShellWindow } from 'window';
+import type { Ext } from './extension';
 
 const Main = imports.ui.main;
 

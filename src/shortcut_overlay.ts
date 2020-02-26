@@ -5,7 +5,8 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 const { GObject, St } = imports.gi;
 
 import * as Lib from 'lib';
-const { join, separator } = Lib;
+
+const { separator } = Lib;
 
 export class Shortcut {
     description: string;

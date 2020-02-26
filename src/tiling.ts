@@ -6,9 +6,9 @@ import * as Log from 'log';
 import * as GrabOp from 'grab_op';
 import * as Rect from 'rectangle';
 
-import { ShellWindow } from './window';
-import { Rectangle } from './rectangle';
-import { Ext } from './extension';
+import type { ShellWindow } from './window';
+import type { Rectangle } from './rectangle';
+import type { Ext } from './extension';
 
 const Main = imports.ui.main;
 

@@ -1,4 +1,4 @@
-import { Ext } from "./extension";
+import type { Ext } from "./extension";
 
 const { wm } = imports.ui.main;
 const { Meta, Shell } = imports.gi;

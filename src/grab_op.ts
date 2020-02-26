@@ -1,10 +1,10 @@
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
-import { Entity } from 'ecs';
-import { Rectangle } from 'rectangle';
-
 import * as Lib from 'lib';
 import * as Log from 'log';
+
+import type { Entity } from 'ecs';
+import type { Rectangle } from 'rectangle';
 
 export class GrabOp {
     entity: Entity;

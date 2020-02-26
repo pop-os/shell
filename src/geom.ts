@@ -1,4 +1,4 @@
-import { Rectangle } from "./rectangle";
+import type { Rectangle } from "./rectangle";
 
 export function xend(rect: Rectangle) {
     return rect.x + rect.width;

@@ -1,11 +1,11 @@
-import { Entity } from './ecs';
-import { Rectangle } from './rectangle';
-
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 import * as Log from 'log';
 import * as Rect from 'rectangle';
-import { Ext } from './extension';
+
+import type { Entity } from './ecs';
+import type { Ext } from './extension';
+import type { Rectangle } from './rectangle';
 
 const { Gdk, Meta, Shell, St } = imports.gi;
 const Util = imports.misc.util;

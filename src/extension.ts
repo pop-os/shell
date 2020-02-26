@@ -14,8 +14,8 @@ import * as Tiling from 'tiling';
 import * as Window from 'window';
 import * as WindowSearch from 'window_search';
 
-import { Entity } from 'ecs';
-import { Rectangle } from './rectangle';
+import type { Entity } from 'ecs';
+import type { Rectangle } from 'rectangle';
 
 
 const { Gio, GLib, Meta, St } = imports.gi;

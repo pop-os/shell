@@ -5,10 +5,10 @@ import * as Lib from 'lib';
 import * as Log from 'log';
 import * as Rect from 'rectangle';
 
-import { Entity } from 'ecs';
-import { Rectangle } from './rectangle';
-import { ShellWindow } from './window';
-import { Ext } from './extension';
+import type { Entity } from 'ecs';
+import type { Rectangle } from './rectangle';
+import type { ShellWindow } from './window';
+import type { Ext } from './extension';
 
 const { orientation_as_str } = Lib;
 
@@ -742,20 +742,12 @@ export class TilingNode {
         this.entity = entity;
     }
 
-    /**
-     * Create a fork variant of a `TilingNode`
-     *
-     * @param {TilingFork} fork
-     *
-     * @return TilingNode
-     */
+    /// Create a fork variant of a `TilingNode`
     static fork(fork: Entity): TilingNode {
         return new TilingNode(NodeKind.FORK, fork);
     }
 
-    /**
-     * Create the window variant of a `TilingNode`
-     */
+    /// Create the window variant of a `TilingNode`
     static window(window: Entity): TilingNode {
         return new TilingNode(NodeKind.WINDOW, window);
     }
@@ -765,9 +757,7 @@ export class TilingNode {
         return fmt;
     }
 
-    /**
-     * Asks if this fork is the fork we are looking for
-     */
+    /// Asks if this fork is the fork we are looking for
     is_fork(entity: Entity): boolean {
         return NodeKind.FORK == this.kind && Ecs.entity_eq(this.entity, entity);
     }
