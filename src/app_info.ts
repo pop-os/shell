@@ -8,16 +8,23 @@ import * as Log from 'log';
 export class AppInfo {
     app_info: any;
 
+    desktop_name: string;
+
     private name_: string;
 
-    constructor(app_info: any) {
+    constructor(path: string, app_info: any) {
         this.app_info = app_info;
+        this.desktop_name = path.split('/').slice(-1)[0];
+
+        const pos = this.desktop_name.lastIndexOf('.');
+        this.desktop_name = this.desktop_name.slice(0, pos);
+
         this.name_ = this.string("Name") ?? "unknown";
     }
 
     static try_from(path: string): AppInfo | error.Error {
         const app_info = Gio.DesktopAppInfo.new_from_filename(path);
-        return app_info ? new AppInfo(app_info) : new error.Error(`failed to open app info for ${path}`);
+        return app_info ? new AppInfo(path, app_info) : new error.Error(`failed to open app info for ${path}`);
     }
 
     get filename(): string {

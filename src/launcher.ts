@@ -56,6 +56,7 @@ export class Launcher extends search.Search {
             // Filter matching desktop apps
             for (const [where, info] of ext.desktop_apps) {
                 const retain = contains_pattern(info.name(), needles)
+                    || contains_pattern(info.desktop_name, needles)
                     || lib.ok(info.generic_name(), (s) => contains_pattern(s, needles))
                     || lib.ok(info.comment(), (s) => contains_pattern(s, needles))
                     || lib.ok(info.categories(), (s) => contains_pattern(s, needles));
