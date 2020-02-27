@@ -12,11 +12,15 @@ import * as Rect from 'rectangle';
 import * as Settings from 'settings';
 import * as Tiling from 'tiling';
 import * as Window from 'window';
-import * as WindowSearch from 'window_search';
+import * as window_search from 'window_search';
+import * as app_info from 'app_info';
+import * as error from 'error';
 
+import type { AppInfo } from 'app_info';
 import type { Entity } from 'ecs';
 import type { Rectangle } from 'rectangle';
 import type { Indicator } from 'panel_settings';
+import type { WindowSearch } from 'window_search';
 
 const { Gio, GLib, Meta, St } = imports.gi;
 const { cursor_rect, is_move_op } = Lib;
@@ -46,7 +50,7 @@ export class Ext extends Ecs.World {
     mode: number = Lib.MODE_DEFAULT;
 
     tiler: Tiling.Tiler;
-    window_search: WindowSearch.WindowSearch;
+    window_search: WindowSearch;
 
     attached: Ecs.Storage<Entity> | null = null;
     icons: Ecs.Storage<any>;
@@ -60,6 +64,11 @@ export class Ext extends Ecs.World {
     auto_tiler: AutoTiler.AutoTiler | null = null;
 
     signals: Array<any>;
+    desktop_apps: Array<AppInfo> = new Array();
+
+    private search_paths: Array<string> = [
+        "/usr/share/applications/",
+    ];
 
     constructor() {
         super();
@@ -87,7 +96,7 @@ export class Ext extends Ecs.World {
 
         // Dialogs
 
-        this.window_search = new WindowSearch.WindowSearch(this);
+        this.window_search = new window_search.WindowSearch(this);
 
         // Systems
 
@@ -122,6 +131,8 @@ export class Ext extends Ecs.World {
         }
 
         // Post-init
+
+        this.load_desktop_files();
 
         for (const window of this.tab_list(Meta.TabList.NORMAL, null)) {
             this.on_window_create(window);
@@ -463,6 +474,17 @@ export class Ext extends Ecs.World {
     get_window(meta: any): Window.ShellWindow | null {
         let entity = this.window_entity(meta);
         return entity ? this.windows.get(entity) : null;
+    }
+
+    load_desktop_files() {
+        for (const result of app_info.load_desktop_entries(this.search_paths.values())) {
+            if (result instanceof app_info.AppInfo) {
+                Log.info(result.display());
+                this.desktop_apps.push(result);
+            } else {
+                Log.error(result.context(`failed to load desktop app`).format());
+            }
+        }
     }
 
     load_settings() {
