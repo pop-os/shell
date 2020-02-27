@@ -52,8 +52,9 @@ function select(
     windows: (a: ShellWindow, b: Array<ShellWindow>) => Array<ShellWindow>,
     focused: ShellWindow,
     window_list: Array<ShellWindow>
-) {
-    return windows(focused, window_list)[0];
+): ShellWindow | null {
+    const array = windows(focused, window_list);
+    return array.length > 0 ? array[0] : null;
 }
 
 function window_down(focused: ShellWindow, windows: Array<ShellWindow>) {
