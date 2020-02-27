@@ -29,7 +29,7 @@ compile: $(sources) metadata.json schemas
 	done
 	rm -rf _build
 	mkdir -p _build
-	cp -r metadata.json schemas target/*.js stylesheet.css _build
+	cp -r metadata.json schemas target/*.js imports/*.js stylesheet.css _build
 
 depcheck:
 	if ! command -v tsc >/dev/null; then \

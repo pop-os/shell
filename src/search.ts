@@ -3,23 +3,25 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 import * as Lib from 'lib';
 import * as widgets from 'widgets';
 
-const { Clutter, GObject, Pango, St } = imports.gi;
+const { Clutter, Pango, St } = imports.gi;
 const { ModalDialog } = imports.ui.modalDialog;
 
 export class Search {
     dialog: any;
 
     private active_id: number;
+    private ignore_prefixes: Array<string>;
     private entry: any;
     private list: any;
     private text: any;
     private widgets: Array<any>;
 
     constructor(
+        ignore_prefixes: Array<string>,
         cancel: () => void,
         search: (pattern: string) => Array<[string, any, any]> | null,
         select: (id: number) => void,
-        apply: (id: number | string) => void
+        apply: (id: number | string) => boolean
     ) {
         this.dialog = new ModalDialog({
             styleClass: "pop-shell-search",
@@ -30,6 +32,7 @@ export class Search {
         });
 
         this.active_id = 0;
+        this.ignore_prefixes = ignore_prefixes;
         this.widgets = [];
 
         this.entry = new St.Entry({
@@ -42,22 +45,26 @@ export class Search {
 
         this.text.connect("activate", () => {
             const text: string = this.text.get_text();
-            if (text.startsWith(':')) {
-                apply(text.slice(1));
+            let cont = false;
+
+            if (this.has_prefix(text)) {
+                cont = apply(text);
             } else if (this.active_id < this.widgets.length) {
-                apply(this.active_id);
+                cont = apply(this.active_id);
             }
 
-            this.reset();
-            this.dialog.popModal();
-            this.dialog.close();
+            if (!cont) {
+                this.reset();
+                this.dialog.popModal();
+                this.dialog.close();
+            }
         });
 
         this.text.connect("text-changed", (entry: any) => {
             this.clear();
 
             const text = entry.get_text();
-            if (text.startsWith(':')) return;
+            if (this.has_prefix(text)) return;
 
             const update = search(text.toLowerCase());
             if (update) {
@@ -170,5 +177,13 @@ export class Search {
         if (this.widgets.length != 0) {
             this.select();
         }
+    }
+
+    set_text(text: string) {
+        this.text.set_text(text);
+    }
+
+    private has_prefix(text: string): boolean {
+        return this.ignore_prefixes.some((p) => text.startsWith(p));
     }
 }

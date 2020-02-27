@@ -2,6 +2,8 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 const { GLib, Meta, St } = imports.gi;
 
+const { evaluate } = Me.imports.math.math;
+
 import * as app_info from 'app_info';
 import * as error from 'error';
 import * as lib from 'lib';
@@ -163,15 +165,24 @@ export class Launcher extends search.Search {
                         log.error(result.format());
                     }
                 }
-            } else {
-                const cmd = id.startsWith('sudo ')
+            } else if (id.startsWith(':')) {
+                let cmd = id.slice(1);
+                cmd = id.startsWith('sudo ')
                     ? `x-terminal-emulator -e sh -c '${id}'`
                     : id;
                 imports.misc.util.spawnCommandLine(cmd);
+            } else if (id.startsWith('=')) {
+                const expr = id.slice(1).trim();
+                const value: string = evaluate(expr).toString();
+                log.info(`${expr} = ${value}`);
+                this.set_text('= ' + value);
+                return true;
             }
+
+            return false;
         };
 
-        super(cancel, search, select, apply);
+        super([':','='], cancel, search, select, apply);
         this.selections = new Array();
         this.active = new Array();
         this.desktop_apps = new Array();
