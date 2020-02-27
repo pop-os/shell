@@ -300,28 +300,44 @@ export class Tiler {
     }
 
     swap_left(ext: Ext) {
-        if (this.swap_window) ext.windows.with(this.swap_window, (window) => {
-            this.swap(ext, ext.focus_selector.left(ext, window));
-        });
+        if (this.swap_window) {
+            ext.windows.with(this.swap_window, (window) => {
+                this.swap(ext, ext.focus_selector.left(ext, window));
+            });
+        } else {
+            this.swap(ext, ext.focus_selector.left(ext, null));
+        }
     }
 
     swap_down(ext: Ext) {
-        if (this.swap_window) ext.windows.with(this.swap_window, (window) => {
-            this.swap(ext, ext.focus_selector.down(ext, window));
-        });
+        if (this.swap_window) {
+            ext.windows.with(this.swap_window, (window) => {
+                this.swap(ext, ext.focus_selector.down(ext, window));
+            });
+        } else {
+            this.swap(ext, ext.focus_selector.down(ext, null));
+        }
     }
 
     swap_up(ext: Ext) {
-        if (this.swap_window) ext.windows.with(this.swap_window, (window) => {
-            this.swap(ext, ext.focus_selector.up(ext, window));
-        })
+        if (this.swap_window) {
+            ext.windows.with(this.swap_window, (window) => {
+                this.swap(ext, ext.focus_selector.up(ext, window));
+            })
+        } else {
+            this.swap(ext, ext.focus_selector.up(ext, null));
+        }
 
     }
 
     swap_right(ext: Ext) {
-        if (this.swap_window) ext.windows.with(this.swap_window, (window) => {
-            this.swap(ext, ext.focus_selector.right(ext, window));
-        });
+        if (this.swap_window) {
+            ext.windows.with(this.swap_window, (window) => {
+                this.swap(ext, ext.focus_selector.right(ext, window));
+            });
+        } else {
+            this.swap(ext, ext.focus_selector.right(ext, null));
+        }
     }
 
     enter(ext: Ext) {
