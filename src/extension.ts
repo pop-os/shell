@@ -477,14 +477,16 @@ export class Ext extends Ecs.World {
     }
 
     load_desktop_files() {
-        for (const result of app_info.load_desktop_entries(this.search_paths.values())) {
-            if (result instanceof app_info.AppInfo) {
-                Log.info(result.display());
-                this.desktop_apps.push(result);
-            } else {
-                Log.error(result.context(`failed to load desktop app`).format());
+        Lib.bench("load_desktop_files", () => {
+            for (const result of app_info.load_desktop_entries(this.search_paths.values())) {
+                if (result instanceof app_info.AppInfo) {
+                    Log.info(result.display());
+                    this.desktop_apps.push(result);
+                } else {
+                    Log.error(result.context(`failed to load desktop app`).format());
+                }
             }
-        }
+        });
     }
 
     load_settings() {

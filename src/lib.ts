@@ -1,5 +1,6 @@
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
+import * as Log from 'log';
 import * as rectangle from 'rectangle';
 
 import type { Rectangle } from 'rectangle';
@@ -35,6 +36,16 @@ export function ok_or_else<A, B>(input: A | null, ok_func: (input: A) => B, or_f
 
 export function or_else<T>(input: T | null, func: () => T | null): T | null {
     return input ? input : func();
+}
+
+export function bench<T>(name: string, callback: () => T): T {
+    const start = new Date().getMilliseconds();
+    const value = callback();
+    const end = new Date().getMilliseconds();
+
+    Log.info(`bench ${name}: ${end - start} ms elapsed`);
+
+    return value;
 }
 
 export function current_monitor(): Rectangle {

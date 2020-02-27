@@ -57,13 +57,14 @@ export class AppInfo {
 
     display(): string {
         return `AppInfo {
-    filename: ${this.filename},
-    name: ${this.name()},
-    icon: ${this.icon()},
-    comment: ${this.comment()},
     categories: ${this.categories()},
-    generic name: ${this.generic_name()},
+    comment: ${this.comment()},
     exe: ${this.exec()}
+    filename: ${this.filename},
+    generic name: ${this.generic_name()},
+    icon: ${this.icon()},
+    keywords: ${this.keywords()},
+    name: ${this.name()},
 }`;
     }
 
