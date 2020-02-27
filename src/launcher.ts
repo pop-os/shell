@@ -164,7 +164,10 @@ export class Launcher extends search.Search {
                     }
                 }
             } else {
-                imports.misc.util.spawnCommandLine(id);
+                const cmd = id.startsWith('sudo ')
+                    ? `x-terminal-emulator -e sh -c '${id}'`
+                    : id;
+                imports.misc.util.spawnCommandLine(cmd);
             }
         };
 
