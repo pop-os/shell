@@ -27,8 +27,6 @@ const { cursor_rect, is_move_op } = Lib;
 const { _defaultCssStylesheet, panel, uiGroup } = imports.ui.main;
 const Tags = Me.imports.tags;
 
-const HOME_DIR: string = GLib.get_home_dir();
-
 export class Ext extends Ecs.World {
     private init: boolean = true;
     private tiling: boolean = false;
@@ -66,19 +64,6 @@ export class Ext extends Ecs.World {
     auto_tiler: AutoTiler.AutoTiler | null = null;
 
     signals: Array<any>;
-    desktop_apps: Array<[string, AppInfo]> = new Array();
-
-    // Search paths for finding applications
-    private search_paths: Array<[string, string]> = [
-        // System-wide
-        ["System", "/usr/share/applications/"],
-        // User-local
-        ["Local", HOME_DIR + "/.local/share/applications/"],
-        // System-wide flatpaks
-        ["Flatpak (system)", "/var/lib/flatpak/exports/share/applications/"],
-        // User-local flatpaks
-        ["Flatpak", HOME_DIR + "/.local/share/flatpak/exports/share/applications/"]
-    ];
 
     constructor() {
         super();
@@ -141,8 +126,6 @@ export class Ext extends Ecs.World {
         }
 
         // Post-init
-
-        this.load_desktop_files();
 
         for (const window of this.tab_list(Meta.TabList.NORMAL, null)) {
             this.on_window_create(window);
@@ -484,22 +467,6 @@ export class Ext extends Ecs.World {
     get_window(meta: any): Window.ShellWindow | null {
         let entity = this.window_entity(meta);
         return entity ? this.windows.get(entity) : null;
-    }
-
-    load_desktop_files() {
-        Lib.bench("load_desktop_files", () => {
-            for (const [where, path] of this.search_paths) {
-                for (const result of app_info.load_desktop_entries(path)) {
-                    if (result instanceof app_info.AppInfo) {
-                        Log.info(result.display());
-                        this.desktop_apps.push([where, result]);
-                    } else {
-                        Log.error(result.context(`failed to load desktop app`).format());
-                    }
-                }
-            }
-
-        });
     }
 
     load_settings() {

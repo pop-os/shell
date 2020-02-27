@@ -2,6 +2,7 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 const { GLib, Meta, St } = imports.gi;
 
+import * as app_info from 'app_info';
 import * as error from 'error';
 import * as lib from 'lib';
 import * as log from 'log';
@@ -12,12 +13,27 @@ import type { ShellWindow } from 'window';
 import type { Ext } from './extension';
 import type { AppInfo } from './app_info';
 
+const HOME_DIR: string = GLib.get_home_dir();
+
 const LIST_MAX = 5;
 const ICON_SIZE = 32;
+
+/// Search paths for finding applications
+const SEARCH_PATHS: Array<[string, string]> = [
+    // System-wide
+    ["System", "/usr/share/applications/"],
+    // User-local
+    ["Local", HOME_DIR + "/.local/share/applications/"],
+    // System-wide flatpaks
+    ["Flatpak (system)", "/var/lib/flatpak/exports/share/applications/"],
+    // User-local flatpaks
+    ["Flatpak", HOME_DIR + "/.local/share/flatpak/exports/share/applications/"]
+];
 
 export class Launcher extends search.Search {
     selections: Array<ShellWindow | [string, AppInfo]>;
     active: Array<[string, any, any]>;
+    desktop_apps: Array<[string, AppInfo]>;
 
     constructor(ext: Ext) {
         let apps = new Array();
@@ -54,7 +70,7 @@ export class Launcher extends search.Search {
             }
 
             // Filter matching desktop apps
-            for (const [where, info] of ext.desktop_apps) {
+            for (const [where, info] of this.desktop_apps) {
                 const retain = contains_pattern(info.name(), needles)
                     || contains_pattern(info.desktop_name, needles)
                     || lib.ok(info.generic_name(), (s) => contains_pattern(s, needles))
@@ -155,5 +171,22 @@ export class Launcher extends search.Search {
         super(cancel, search, select, apply);
         this.selections = new Array();
         this.active = new Array();
+        this.desktop_apps = new Array();
+    }
+
+    load_desktop_files() {
+        lib.bench("load_desktop_files", () => {
+            this.desktop_apps.splice(0);
+            for (const [where, path] of SEARCH_PATHS) {
+                for (const result of app_info.load_desktop_entries(path)) {
+                    if (result instanceof app_info.AppInfo) {
+                        log.info(result.display());
+                        this.desktop_apps.push([where, result]);
+                    } else {
+                        log.error(result.context(`failed to load desktop app`).format());
+                    }
+                }
+            }
+        });
     }
 }
