@@ -1,14 +1,18 @@
 .pop-shell-search {
     background: #eee;
-    color: #333
+    color: #333;
 }
 
 .pop-shell-search-label {
-    margin-left: 2em
+    margin-left: 2em;
+}
+
+.pop-shell-search-cat {
+    margin-right: .5em;
 }
 
 .pop-shell-search-list {
-    margin-top: 1em
+    margin-top: 1em;
 }
 
 .pop-shell-search-element {
@@ -24,5 +28,5 @@
 
 .pop-shell-search-active {
     background: #FFAD00;
-    color: #000
+    color: #000;
 }

@@ -1,6 +1,7 @@
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 import * as Lib from 'lib';
+import * as widgets from 'widgets';
 
 const { Clutter, GObject, Pango, St } = imports.gi;
 const { ModalDialog } = imports.ui.modalDialog;
@@ -16,7 +17,7 @@ export class Search {
 
     constructor(
         cancel: () => void,
-        search: (pattern: string) => Array<[string, any]> | null,
+        search: (pattern: string) => Array<[string, any, any]> | null,
         select: (id: number) => void,
         apply: (id: number) => void
     ) {
@@ -49,7 +50,7 @@ export class Search {
             this.dialog.close();
         });
 
-        this.text.connect("text-changed", (entry: any, _: any) => {
+        this.text.connect("text-changed", (entry: any) => {
             this.clear();
 
             const update = search(entry.get_text().toLowerCase());
@@ -137,8 +138,8 @@ export class Search {
     update_search_list(list: Array<any>) {
         Lib.join(
             list.values(),
-            (element: [string, any]) => {
-                const [title, icon] = element;
+            (element: [string, any, any]) => {
+                const [title, cat_icon, icon] = element;
 
                 let label = new St.Label({
                     text: title,
@@ -147,12 +148,11 @@ export class Search {
 
                 label.clutter_text.set_ellipsize(Pango.EllipsizeMode.END);
 
-                let container = new St.BoxLayout({
-                    styleClass: "pop-shell-search-element"
-                });
-
-                container.add(icon, { y_fill: false, y_align: St.Align.MIDDLE });
-                container.add(label, { y_fill: false, y_align: St.Align.MIDDLE });
+                let container = new widgets.Box({ styleClass: "pop-shell-search-element" })
+                    .add(cat_icon, { y_fill: false, y_align: St.Align.MIDDLE })
+                    .add(icon, { y_fill: false, y_align: St.Align.MIDDLE })
+                    .add(label, { y_fill: false, y_align: St.Align.MIDDLE })
+                    .container;
 
                 this.widgets.push(container);
                 this.list.add(container);

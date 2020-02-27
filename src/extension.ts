@@ -12,7 +12,7 @@ import * as Rect from 'rectangle';
 import * as Settings from 'settings';
 import * as Tiling from 'tiling';
 import * as Window from 'window';
-import * as window_search from 'window_search';
+import * as launcher from 'launcher';
 import * as app_info from 'app_info';
 import * as error from 'error';
 
@@ -20,7 +20,7 @@ import type { AppInfo } from 'app_info';
 import type { Entity } from 'ecs';
 import type { Rectangle } from 'rectangle';
 import type { Indicator } from 'panel_settings';
-import type { WindowSearch } from 'window_search';
+import type { Launcher } from './launcher';
 
 const { Gio, GLib, Meta, St } = imports.gi;
 const { cursor_rect, is_move_op } = Lib;
@@ -52,7 +52,7 @@ export class Ext extends Ecs.World {
     mode: number = Lib.MODE_DEFAULT;
 
     tiler: Tiling.Tiler;
-    window_search: WindowSearch;
+    window_search: Launcher;
 
     attached: Ecs.Storage<Entity> | null = null;
     icons: Ecs.Storage<any>;
@@ -66,18 +66,18 @@ export class Ext extends Ecs.World {
     auto_tiler: AutoTiler.AutoTiler | null = null;
 
     signals: Array<any>;
-    desktop_apps: Array<AppInfo> = new Array();
+    desktop_apps: Array<[string, AppInfo]> = new Array();
 
     // Search paths for finding applications
-    private search_paths: Array<string> = [
+    private search_paths: Array<[string, string]> = [
         // System-wide
-        "/usr/share/applications/",
+        ["System", "/usr/share/applications/"],
         // User-local
-        HOME_DIR + "/.local/share/applications/",
+        ["Local", HOME_DIR + "/.local/share/applications/"],
         // System-wide flatpaks
-        "/var/lib/flatpak/exports/share/applications/",
+        ["Flatpak (system)", "/var/lib/flatpak/exports/share/applications/"],
         // User-local flatpaks
-        HOME_DIR + "/.local/share/flatpak/exports/share/applications/"
+        ["Flatpak", HOME_DIR + "/.local/share/flatpak/exports/share/applications/"]
     ];
 
     constructor() {
@@ -106,7 +106,7 @@ export class Ext extends Ecs.World {
 
         // Dialogs
 
-        this.window_search = new window_search.WindowSearch(this);
+        this.window_search = new launcher.Launcher(this);
 
         // Systems
 
@@ -488,14 +488,17 @@ export class Ext extends Ecs.World {
 
     load_desktop_files() {
         Lib.bench("load_desktop_files", () => {
-            for (const result of app_info.load_desktop_entries(this.search_paths.values())) {
-                if (result instanceof app_info.AppInfo) {
-                    Log.info(result.display());
-                    this.desktop_apps.push(result);
-                } else {
-                    Log.error(result.context(`failed to load desktop app`).format());
+            for (const [where, path] of this.search_paths) {
+                for (const result of app_info.load_desktop_entries(path)) {
+                    if (result instanceof app_info.AppInfo) {
+                        Log.info(result.display());
+                        this.desktop_apps.push([where, result]);
+                    } else {
+                        Log.error(result.context(`failed to load desktop app`).format());
+                    }
                 }
             }
+
         });
     }
 

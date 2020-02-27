@@ -26,7 +26,7 @@ export enum Orientation {
     VERTICAL = 1,
 }
 
-export function ok<T>(input: T | null, func: (a: T) => T | null): T | null {
+export function ok<T, X>(input: T | null, func: (a: T) => X | null): X | null {
     return input ? func(input) : null;
 }
 

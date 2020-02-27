@@ -8,8 +8,11 @@ import * as Log from 'log';
 export class AppInfo {
     app_info: any;
 
+    private name_: string;
+
     constructor(app_info: any) {
         this.app_info = app_info;
+        this.name_ = this.string("Name") ?? "unknown";
     }
 
     static try_from(path: string): AppInfo | error.Error {
@@ -21,7 +24,7 @@ export class AppInfo {
         return this.app_info.filename;
     }
 
-    categories(): Array<string> {
+    categories(): string {
         return this.app_info.get_categories();
     }
 
@@ -45,8 +48,8 @@ export class AppInfo {
         return this.app_info.get_keywords();
     }
 
-    name(): string | null {
-        return this.string("Name");
+    name(): string {
+        return this.name_;
     }
 
     launch(): null | error.Error {
@@ -73,33 +76,30 @@ export class AppInfo {
     }
 }
 
-export function *load_desktop_entries(search_paths: IterableIterator<string>): IterableIterator<AppInfo | error.Error> {
-    for (const path of search_paths) {
-        let dir = Gio.file_new_for_path(path);
-        if (!dir.query_exists(null)) {
-            Log.warn(`desktop path is missing: ${path}`);
+export function *load_desktop_entries(path: string): IterableIterator<AppInfo | error.Error> {
+    let dir = Gio.file_new_for_path(path);
+    if (!dir.query_exists(null)) {
+        return new error.Error(`desktop path is missing: ${path}`);
+    }
+
+    let entries, entry;
+    try {
+        entries = dir.enumerate_children('standard::*', Gio.FileQueryInfoFlags.NONE, null);
+    } catch (e) {
+        return new error.Error(String(e))
+            .context(`failed to enumerate children of ${path}`);
+    }
+
+    while ((entry = entries.next_file(null)) != null) {
+        const ft = entry.get_file_type();
+        if (!(ft == Gio.FileType.REGULAR || ft == Gio.FileType.SYMBOLIC_LINK)) {
             continue
         }
 
-        let entries, entry;
-        try {
-            entries = dir.enumerate_children('standard::*', Gio.FileQueryInfoFlags.NONE, null);
-        } catch (e) {
-            Log.error(`failed to enumerate children of ${path}: ${e}`);
-            continue
-        }
-
-        while ((entry = entries.next_file(null)) != null) {
-            const ft = entry.get_file_type();
-            if (!(ft == Gio.FileType.REGULAR || ft == Gio.FileType.SYMBOLIC_LINK)) {
-                continue
-            }
-
-            const name: string = entry.get_name();
-            if (name.indexOf('.desktop') > -1) {
-                const desktop_path = GLib.build_filenamev([path, name]);
-                yield AppInfo.try_from(desktop_path);
-            }
+        const name: string = entry.get_name();
+        if (name.indexOf('.desktop') > -1) {
+            const desktop_path = GLib.build_filenamev([path, name]);
+            yield AppInfo.try_from(desktop_path);
         }
     }
 }
