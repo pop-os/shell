@@ -3,12 +3,22 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 const { Gio, GLib } = imports.gi;
 
 import * as error from 'error';
+import * as once_cell from 'once_cell';
 import * as Log from 'log';
+
+const OnceCell = once_cell.OnceCell;
 
 export class AppInfo {
     app_info: any;
 
     desktop_name: string;
+
+    private categories_: once_cell.OnceCell<string> = new OnceCell();
+    private comment_: once_cell.OnceCell<string | null> = new OnceCell();
+    private exec_: once_cell.OnceCell<string | null> = new OnceCell();
+    private icon_: once_cell.OnceCell<string | null> = new OnceCell();
+    private generic: once_cell.OnceCell<string | null> = new OnceCell();
+    private keywords_: once_cell.OnceCell<Array<string>> = new OnceCell();
 
     private name_: string;
 
@@ -32,27 +42,27 @@ export class AppInfo {
     }
 
     categories(): string {
-        return this.app_info.get_categories();
+        return this.categories_.get_or_init(() => this.app_info.get_categories());
     }
 
     comment(): string | null {
-        return this.string("Comment");
+        return this.comment_.get_or_init(() => this.string("Comment"));
     }
 
     exec(): string | null {
-        return this.string("Exec");
+        return this.exec_.get_or_init(() => this.string("Exec"));
     }
 
     icon(): string | null {
-        return this.string("Icon");
+        return this.icon_.get_or_init(() => this.string("Icon"));
     }
 
     generic_name(): string | null {
-        return this.app_info.get_generic_name();
+        return this.generic.get_or_init(() => this.app_info.get_generic_name());
     }
 
     keywords(): Array<string> {
-        return this.app_info.get_keywords();
+        return this.keywords_.get_or_init(() => this.app_info.get_keywords());
     }
 
     name(): string {
