@@ -19,7 +19,7 @@ export class Search {
         cancel: () => void,
         search: (pattern: string) => Array<[string, any, any]> | null,
         select: (id: number) => void,
-        apply: (id: number) => void
+        apply: (id: number | string) => void
     ) {
         this.dialog = new ModalDialog({
             styleClass: "pop-shell-search",
@@ -41,7 +41,10 @@ export class Search {
         this.dialog.setInitialKeyFocus(this.text);
 
         this.text.connect("activate", () => {
-            if (this.active_id < this.widgets.length) {
+            const text: string = this.text.get_text();
+            if (text.startsWith(':')) {
+                apply(text.slice(1));
+            } else if (this.active_id < this.widgets.length) {
                 apply(this.active_id);
             }
 
@@ -53,7 +56,10 @@ export class Search {
         this.text.connect("text-changed", (entry: any) => {
             this.clear();
 
-            const update = search(entry.get_text().toLowerCase());
+            const text = entry.get_text();
+            if (text.startsWith(':')) return;
+
+            const update = search(text.toLowerCase());
             if (update) {
                 this.update_search_list(update);
             }

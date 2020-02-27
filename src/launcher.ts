@@ -1,6 +1,6 @@
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
-const { Meta, St } = imports.gi;
+const { GLib, Meta, St } = imports.gi;
 
 import * as error from 'error';
 import * as lib from 'lib';
@@ -135,16 +135,20 @@ export class Launcher extends search.Search {
             }
         };
 
-        let apply = (id: number) => {
-            const selected = this.selections[id];
-            if (selected instanceof window.ShellWindow) {
-                selected.activate();
-                ext.overlay.visible = false;
-            } else {
-                const result = selected[1].launch();
-                if (result instanceof error.Error) {
-                    log.error(result.format());
+        let apply = (id: number | string) => {
+            if (typeof id === 'number') {
+                const selected = this.selections[id];
+                if (selected instanceof window.ShellWindow) {
+                    selected.activate();
+                    ext.overlay.visible = false;
+                } else {
+                    const result = selected[1].launch();
+                    if (result instanceof error.Error) {
+                        log.error(result.format());
+                    }
                 }
+            } else {
+                imports.misc.util.spawnCommandLine(id);
             }
         };
 
