@@ -58,6 +58,11 @@ export function cursor_rect(): Rectangle {
     return new rectangle.Rectangle([x, y, 1, 1]);
 }
 
+export function dbg<T>(value: T): T {
+    Log.debug(String(value));
+    return value;
+}
+
 /// Missing from the Clutter API is an Actor children iterator
 export function* get_children(actor: any) {
     let nth = 0;
