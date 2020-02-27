@@ -684,6 +684,26 @@ export class Ext extends Ecs.World {
         }
     }
 
+    toggle_floating() {
+        if (!this.auto_tiler) return;
+
+        const focused = this.focus_window();
+        if (!focused) return;
+
+        if (this.attached) {
+            if (this.contains_tag(focused.entity, Tags.Floating)) {
+                this.delete_tag(focused.entity, Tags.Floating);
+                this.auto_tile(focused, false);
+            } else {
+                const fork_entity = this.attached.get(focused.entity);
+                if (fork_entity) {
+                    this.detach_window(focused.entity);
+                    this.add_tag(focused.entity, Tags.Floating);
+                }
+            }
+        }
+    }
+
     toggle_orientation() {
         if (!this.auto_tiler) return;
         const focused = this.focus_window();

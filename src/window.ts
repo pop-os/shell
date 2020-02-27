@@ -2,6 +2,7 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 import * as Log from 'log';
 import * as Rect from 'rectangle';
+import * as Tags from 'tags';
 
 import type { Entity } from './ecs';
 import type { Ext } from './extension';
@@ -67,12 +68,13 @@ export class ShellWindow {
         });
     }
 
-    is_tilable(ext: Ext) {
-        return ext.tilable.get_or(this.entity, () => {
-            return !this.meta.is_skip_taskbar()
-                && !blacklisted(this.meta.get_wm_class())
-                && this.meta.window_type == Meta.WindowType.NORMAL;
-        });
+    is_tilable(ext: Ext): boolean {
+        return !ext.contains_tag(this.entity, Tags.Floating)
+            && ext.tilable.get_or(this.entity, () => {
+                return !this.meta.is_skip_taskbar()
+                    && !blacklisted(this.meta.get_wm_class())
+                    && this.meta.window_type == Meta.WindowType.NORMAL;
+            });
     }
 
     move(rect: Rectangle) {
