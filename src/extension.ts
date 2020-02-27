@@ -27,6 +27,8 @@ const { cursor_rect, is_move_op } = Lib;
 const { _defaultCssStylesheet, panel, uiGroup } = imports.ui.main;
 const Tags = Me.imports.tags;
 
+const HOME_DIR: string = GLib.get_home_dir();
+
 export class Ext extends Ecs.World {
     private init: boolean = true;
     private tiling: boolean = false;
@@ -66,8 +68,16 @@ export class Ext extends Ecs.World {
     signals: Array<any>;
     desktop_apps: Array<AppInfo> = new Array();
 
+    // Search paths for finding applications
     private search_paths: Array<string> = [
+        // System-wide
         "/usr/share/applications/",
+        // User-local
+        HOME_DIR + "/.local/share/applications/",
+        // System-wide flatpaks
+        "/var/lib/flatpak/exports/share/applications/",
+        // User-local flatpaks
+        HOME_DIR + "/.local/share/flatpak/exports/share/applications/"
     ];
 
     constructor() {
