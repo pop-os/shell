@@ -9,6 +9,7 @@ right="l"
 
 KEYS_GNOME_WM=/org/gnome/desktop/wm/keybindings
 KEYS_GNOME_SHELL=/org/gnome/shell/keybindings
+KEYS_MUTTER=/org/gnome/mutter/keybindings
 KEYS_MEDIA=/org/gnome/settings-daemon/plugins/media-keys
 
 # Disable incompatible shortcuts
@@ -38,6 +39,10 @@ dconf write ${KEYS_GNOME_WM}/move-to-monitor-right "['<Shift><Super>Right','<Shi
 dconf write ${KEYS_GNOME_WM}/switch-to-workspace-down "['<Primary><Super>Down','<Primary><Super>${down}']"
 # Move to workspace above
 dconf write ${KEYS_GNOME_WM}/switch-to-workspace-up "['<Primary><Super>Up','<Primary><Super>${up}']"
+
+# Disable tiling to left / right of screen
+dconf write ${KEYS_MUTTER}/toggle-tiled-left "@as []"
+dconf write ${KEYS_MUTTER}/toggle-tiled-right "@as []"
 
 # Toggle maximization state
 dconf write ${KEYS_GNOME_WM}/toggle-maximized "['<Super>m']"
