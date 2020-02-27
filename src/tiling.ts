@@ -45,7 +45,7 @@ export class Tiler {
         if (monitors.length == 0) return null;
 
         const columns = monitors[0].width / ext.column_size;
-        const rows = monitors[1].height / ext.row_size;
+        const rows = monitors[0].height / ext.row_size;
 
         return monitor_rect(monitors[0], columns, rows);
     }
