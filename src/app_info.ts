@@ -6,6 +6,11 @@ import * as error from 'error';
 import * as once_cell from 'once_cell';
 import * as Log from 'log';
 
+import type { Result } from 'error';
+import { ok } from './lib';
+
+const { Err, Ok } = error;
+
 const OnceCell = once_cell.OnceCell;
 
 export class AppInfo {
@@ -32,9 +37,11 @@ export class AppInfo {
         this.name_ = this.string("Name") ?? "unknown";
     }
 
-    static try_from(path: string): AppInfo | error.Error {
+    static try_from(path: string): Result<AppInfo, error.Error> {
         const app_info = Gio.DesktopAppInfo.new_from_filename(path);
-        return app_info ? new AppInfo(path, app_info) : new error.Error(`failed to open app info for ${path}`);
+        return app_info
+            ? Ok(new AppInfo(path, app_info))
+            : Err(new error.Error(`failed to open app info for ${path}`));
     }
 
     get filename(): string {
@@ -69,10 +76,10 @@ export class AppInfo {
         return this.name_;
     }
 
-    launch(): null | error.Error {
+    launch(): Result<null, error.Error> {
         return this.app_info.launch([], null)
-            ? null
-            : new error.Error(`failed to launch ${this.filename}`);
+            ? Ok(null)
+            : Err(new error.Error(`failed to launch ${this.filename}`));
     }
 
     display(): string {
@@ -93,7 +100,7 @@ export class AppInfo {
     }
 }
 
-export function *load_desktop_entries(path: string): IterableIterator<AppInfo | error.Error> {
+export function *load_desktop_entries(path: string): IterableIterator<Result<AppInfo, error.Error>> {
     let dir = Gio.file_new_for_path(path);
     if (!dir.query_exists(null)) {
         return new error.Error(`desktop path is missing: ${path}`);

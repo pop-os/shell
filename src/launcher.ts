@@ -15,6 +15,9 @@ import type { ShellWindow } from 'window';
 import type { Ext } from './extension';
 import type { AppInfo } from './app_info';
 
+
+const { OK } = error;
+
 const HOME_DIR: string = GLib.get_home_dir();
 
 const LIST_MAX = 5;
@@ -193,11 +196,13 @@ export class Launcher extends search.Search {
             this.desktop_apps.splice(0);
             for (const [where, path] of SEARCH_PATHS) {
                 for (const result of app_info.load_desktop_entries(path)) {
-                    if (result instanceof app_info.AppInfo) {
-                        log.info(result.display());
-                        this.desktop_apps.push([where, result]);
+                    if (result.kind == OK) {
+                        const value = result.value;
+                        log.info(value.display());
+                        this.desktop_apps.push([where, value]);
                     } else {
-                        log.error(result.context(`failed to load desktop app`).format());
+                        const why = result.value;
+                        log.error(why.context(`failed to load desktop app`).format());
                     }
                 }
             }
