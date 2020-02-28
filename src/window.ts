@@ -1,20 +1,18 @@
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
-import * as lib from 'lib';
-import * as Log from 'log';
+import * as log from 'log';
+import * as once_cell from 'once_cell';
 import * as Rect from 'rectangle';
 import * as Tags from 'tags';
+import * as xprop from 'xprop';
 
 import type { Entity } from './ecs';
 import type { Ext } from './extension';
 import type { Rectangle } from './rectangle';
 
-const { Gdk, GLib, Meta, Shell, St } = imports.gi;
-const Util = imports.misc.util;
+const { Gdk, Meta, Shell, St } = imports.gi;
 
-const MOTIF_HINTS: string = '_MOTIF_WM_HINTS';
-const HIDE_FLAGS: string[] = ['0x2', '0x0', '0x2', '0x0', '0x0'];
-const SHOW_FLAGS: string[] = ['0x2', '0x0', '0x1', '0x0', '0x0'];
+const { OnceCell } = once_cell;
 
 export var window_tracker = Shell.WindowTracker.get_default();
 
@@ -23,6 +21,7 @@ export class ShellWindow {
     meta: any;
 
     private window_app: any;
+    private xid_: once_cell.OnceCell<string | null> = new OnceCell();
 
     constructor(entity: Entity, window: any, window_app: any, ext: Ext) {
         this.window_app = window_app;
@@ -33,47 +32,44 @@ export class ShellWindow {
         if (this.may_decorate()) {
             if (!window.is_client_decorated()) {
                 if (ext.settings.show_title()) {
-                    Log.info(`showing decorations`);
+                    log.info(`showing decorations`);
                     this.decoration_show(ext);
                 } else {
-                    Log.info(`hiding decorations`);
+                    log.info(`hiding decorations`);
                     this.decoration_hide(ext);
                 }
             }
         }
     }
 
-    activate() {
+    activate(): void {
         activate(this.meta);
     }
 
-    decoration_hide(ext: Ext) {
+    private decoration(ext: Ext, callback: (xid: string) => void): void {
         if (this.may_decorate()) {
             const name = this.name(ext);
             const xid = this.xid();
 
-            Log.debug(`previous motif for ${name}: ${motif_hints(xid)}`);
+            if (xid) {
+                log.debug(`previous motif for ${name}: ${xprop.motif_hints(xid)}`);
 
-            set_hint(this.xid(), MOTIF_HINTS, HIDE_FLAGS);
+                callback(xid);
 
-            Log.debug(`new motif for ${name}: ${motif_hints(xid)}`)
+                log.debug(`new motif for ${name}: ${xprop.motif_hints(xid)}`)
+            }
         }
     }
 
-    decoration_show(ext: Ext) {
-        if (this.may_decorate()) {
-            const name = this.name(ext);
-            const xid = this.xid();
-
-            Log.debug(`previous motif for ${name}: ${motif_hints(xid)}`);
-
-            set_hint(xid, MOTIF_HINTS, SHOW_FLAGS);
-
-            Log.debug(`new motif for ${name}: ${motif_hints(xid)}`)
-        }
+    decoration_hide(ext: Ext): void {
+        this.decoration(ext, (xid) => xprop.set_hint(xid, xprop.MOTIF_HINTS, xprop.HIDE_FLAGS));
     }
 
-    icon(ext: Ext, size: number) {
+    decoration_show(ext: Ext): void {
+        this.decoration(ext, (xid) => xprop.set_hint(xid, xprop.MOTIF_HINTS, xprop.SHOW_FLAGS));
+    }
+
+    icon(ext: Ext, size: number): any {
         return ext.icons.get_or(this.entity, () => {
             let icon = this.window_app.create_icon_texture(size);
 
@@ -90,8 +86,8 @@ export class ShellWindow {
     }
 
     may_decorate(): boolean {
-        const hints = motif_hints(this.xid());
-        return hints ? hints[2] != '0x0' : false;
+        const xid = this.xid();
+        return xid ? xprop.may_decorate(xid) : false;
     }
 
     is_tilable(ext: Ext): boolean {
@@ -103,7 +99,7 @@ export class ShellWindow {
             });
     }
 
-    move(rect: Rectangle) {
+    move(rect: Rectangle): void {
         this.meta.unmaximize(Meta.MaximizeFlags.HORIZONTAL);
         this.meta.unmaximize(Meta.MaximizeFlags.VERTICAL);
         this.meta.unmaximize(Meta.MaximizeFlags.HORIZONTAL | Meta.MaximizeFlags.VERTICAL);
@@ -117,7 +113,7 @@ export class ShellWindow {
         );
     }
 
-    move_snap(ext: Ext, rect: Rectangle) {
+    move_snap(ext: Ext, rect: Rectangle): void {
         this.move(rect);
         ext.tiler.snap(ext, this);
     }
@@ -130,7 +126,7 @@ export class ShellWindow {
         return Rect.Rectangle.from_meta(this.meta.get_frame_rect());
     }
 
-    swap(other: ShellWindow) {
+    swap(other: ShellWindow): void {
         let ar = this.rect();
         let br = other.rect();
 
@@ -139,10 +135,8 @@ export class ShellWindow {
         place_pointer_on(this.meta);
     }
 
-    xid() {
-        const desc = this.meta.get_description();
-        const match = desc && desc.match(/0x[0-9a-f]+/);
-        return match && match[0];
+    xid(): string | null {
+        return this.xid_.get_or_init(() => xprop.get_xid(this.meta));
     }
 }
 
@@ -161,7 +155,7 @@ export function activate(win: any) {
 }
 
 export function blacklisted(window_class: string): boolean {
-    Log.debug(`window class: ${window_class}`);
+    log.debug(`window class: ${window_class}`);
     return BLACKLIST.indexOf(window_class) > -1;
 }
 
@@ -176,30 +170,4 @@ export function place_pointer_on(win: any) {
         .get_default_seat()
         .get_pointer()
         .warp(display.get_default_screen(), x, y);
-}
-
-function get_hint(xid: string, hint: string): Array<string> | null {
-    let xprops = GLib.spawn_command_line_sync(lib.dbg(`xprop -id ${xid} ${hint}`));
-
-    if (!xprops[0]) return null;
-
-    let string: string = imports.byteArray.toString(xprops[1]);
-
-    let pos = string.indexOf('=');
-    if (-1 == pos) {
-        return null;
-    }
-
-    return string.slice(pos+1)
-        .trim()
-        .split(', ')
-        .map((value) => value.startsWith('0x') ? value : '0x' + value);
-}
-
-function motif_hints(xid: string): Array<string> | null {
-    return get_hint(xid, '_MOTIF_WM_HINTS');
-}
-
-function set_hint(xid: string, hint: string, value: string[]) {
-    Util.spawn(['xprop', '-id', xid, '-f', hint, '32c', '-set', hint, value.join(', ')]);
 }
