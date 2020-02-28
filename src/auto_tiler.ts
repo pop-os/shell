@@ -397,14 +397,17 @@ export class AutoTiler extends Ecs.World {
     }
 
     resize_parent(parent: TilingFork, child: TilingFork, is_left: boolean) {
-        Log.debug(`before ratio: ${parent.ratio}; (${child.area} : ${parent.area})`);
-
         if (!child.area || !parent.area || child.area.eq(parent.area)) return;
 
+        Log.debug(`before ratio: ${parent.ratio}; (${child.area?.array} : ${parent.area?.array})`);
+
         const measure = parent.is_horizontal() ? 2 : 3;
-        parent.ratio = is_left
-            ? child.area.array[measure] / parent.area.array[measure]
-            : (parent.area.array[measure] - child.area.array[measure]) / parent.area.array[measure];
+        parent.set_ratio(
+            parent.ratio = is_left
+                ? child.area.array[measure]
+                : (parent.area.array[measure] - child.area.array[measure]),
+            parent.area.array[measure]
+        );
 
         Log.debug(`after ratio: ${parent.ratio}`);
     }
@@ -575,6 +578,7 @@ export class TilingFork {
     parent: Entity | null = null;
     workspace: number;
     ratio: number = .5;
+    minimum_ratio: number = 0.1;
     orientation: Lib.Orientation = Lib.Orientation.HORIZONTAL;
     is_toplevel: boolean = false;
 
@@ -665,8 +669,21 @@ export class TilingFork {
         return true;
     }
 
+    set_area(area: Rectangle): Rectangle {
+        this.area = area;
+        this.set_minimum_ratio();
+        return this.area;
+    }
+
+    private set_minimum_ratio() {
+        if (this.area) {
+            this.minimum_ratio = this.orientation == Lib.Orientation.HORIZONTAL ? 256 / this.area.width : 256 / this.area.height;
+        }
+    }
+
     set_orientation(orientation: number): TilingFork {
         this.orientation = orientation;
+        this.set_minimum_ratio();
         return this;
     }
 
@@ -676,7 +693,8 @@ export class TilingFork {
     }
 
     set_ratio(left_length: number, fork_length: number): TilingFork {
-        this.ratio = left_length / fork_length;
+        this.ratio = Math.min(Math.max(this.minimum_ratio, left_length / fork_length), 1.0 - this.minimum_ratio);
+
         Log.debug(`new ratio: ${this.ratio}`);
         return this;
     }
@@ -692,14 +710,14 @@ export class TilingFork {
         /// Memorize our area for future tile reflows
 
         if (null === this.area && null === this.parent) {
-            this.area = new Rect.Rectangle([
+            this.area = this.set_area(new Rect.Rectangle([
                 area.x + ext.gap_outer,
                 area.y + ext.gap_outer,
                 area.width - ext.gap_outer * 2,
                 area.height - ext.gap_outer * 2,
-            ]);
+            ]));
         } else {
-            this.area = area.clone();
+            this.area = this.set_area(area.clone());
         }
 
         this.workspace = workspace;
