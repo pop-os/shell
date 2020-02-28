@@ -539,6 +539,10 @@ export class Ext extends Ecs.World {
             return;
         }
 
+        if (win.is_maximized()) {
+            return;
+        }
+
         if (win && this.grab_op && Ecs.entity_eq(this.grab_op.entity, win.entity)) {
             let crect = win.rect()
 

@@ -90,6 +90,10 @@ export class ShellWindow {
         return xid ? xprop.may_decorate(xid) : false;
     }
 
+    is_maximized(): boolean {
+        return this.meta.get_maximized() == Meta.MaximizeFlags.BOTH;
+    }
+
     is_tilable(ext: Ext): boolean {
         return !ext.contains_tag(this.entity, Tags.Floating)
             && ext.tilable.get_or(this.entity, () => {
