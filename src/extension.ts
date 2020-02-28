@@ -487,6 +487,20 @@ export class Ext extends Ecs.World {
     on_destroy(win: Window.ShellWindow) {
         Log.debug(`destroying window (${win.entity}): ${win.name(this)}`);
 
+        if (this.last_focused == win.entity) {
+            this.last_focused = null;
+
+            if (this.attached && this.auto_tiler) {
+                const entity = this.attached.get(win.entity);
+                if (entity) {
+                    const fork = this.auto_tiler.forks.get(entity);
+                    if (fork?.right?.is_window(win.entity)) {
+                        this.windows.with(fork.right.entity, (sibling) => sibling.activate())
+                    }
+                }
+            }
+        }
+
         if (this.auto_tiler) this.detach_window(win.entity);
 
         this.delete_entity(win.entity);
