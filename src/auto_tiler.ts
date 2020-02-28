@@ -13,8 +13,8 @@ import type { Ext } from './extension';
 const { orientation_as_str } = Lib;
 
 export enum NodeKind {
-    FORK = 0,
-    WINDOW = 1,
+    FORK = 1,
+    WINDOW = 2,
 }
 
 const XPOS = 0;
@@ -269,7 +269,7 @@ export class AutoTiler extends Ecs.World {
         }
     }
 
-    * iter(entity: Entity, kind: number): IterableIterator<TilingNode> {
+    * iter(entity: Entity, kind: NodeKind): IterableIterator<TilingNode> {
         let fork = this.forks.get(entity);
         let forks = new Array(2);
 
@@ -278,7 +278,7 @@ export class AutoTiler extends Ecs.World {
                 forks.push(this.forks.get(fork.left.entity));
             }
 
-            if (kind == null || fork.left.kind == kind) {
+            if (kind === null || fork.left.kind == kind) {
                 yield fork.left
             }
 
@@ -287,7 +287,7 @@ export class AutoTiler extends Ecs.World {
                     forks.push(this.forks.get(fork.right.entity));
                 }
 
-                if (kind == null || fork.right.kind == kind) {
+                if (kind === null || fork.right.kind == kind) {
                   yield fork.right;
                 }
             }
@@ -732,14 +732,24 @@ export class TilingFork {
     }
 }
 
+interface NodeFork {
+    kind: 1;
+    entity: Entity;
+}
+
+interface NodeWindow {
+    kind: 2;
+    entity: Entity;
+}
+
+type NodeADT = NodeFork | NodeWindow;
+
 /// A tiling node may either refer to a window entity, or another fork entity.
 export class TilingNode {
-    kind: NodeKind;
-    entity: Entity;
+    private inner: NodeADT;
 
     constructor(kind: NodeKind, entity: Entity) {
-        this.kind = kind;
-        this.entity = entity;
+        this.inner = { kind: kind, entity: entity };
     }
 
     /// Create a fork variant of a `TilingNode`
@@ -752,7 +762,16 @@ export class TilingNode {
         return new TilingNode(NodeKind.WINDOW, window);
     }
 
-    display(fmt: string) {
+    get entity(): Entity { return this.inner.entity; }
+
+    set entity(entity: Entity) { this.inner.entity = entity; }
+
+    get kind(): NodeKind { return this.inner.kind; }
+
+    set kind(kind: NodeKind ) { this.inner.kind = kind; }
+
+    /// Generates a string representation of the this value.
+    display(fmt: string): string {
         fmt += `{\n    kind: ${node_variant_as_string(this.kind)},\n    entity: (${this.entity})\n  }`;
         return fmt;
     }
@@ -762,9 +781,7 @@ export class TilingNode {
         return NodeKind.FORK == this.kind && Ecs.entity_eq(this.entity, entity);
     }
 
-    /**
-     * Asks if this window is the window we are looking for
-     */
+    /// Asks if this window is the window we are looking for
     is_window(entity: Entity): boolean {
         return NodeKind.WINDOW == this.kind && Ecs.entity_eq(this.entity, entity);
     }
