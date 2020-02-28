@@ -775,6 +775,19 @@ export class Ext extends Ecs.World {
         return entity;
     }
 
+    windows_are_siblings(a: Entity, b: Entity): Entity | null {
+        if (this.attached) {
+            const a_parent = this.attached.get(a);
+            const b_parent = this.attached.get(b);
+
+            if (a_parent !== null && null !== b_parent && Ecs.entity_eq(a_parent, b_parent)) {
+                return a_parent;
+            }
+        }
+
+        return null;
+    }
+
     /// Returns the window(s) that the mouse pointer is currently hoving above.
     * windows_at_pointer(
         cursor: Rectangle,

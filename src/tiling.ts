@@ -155,9 +155,9 @@ export class Tiler {
         return this;
     }
 
-    move(ext: Ext, x: number, y: number, w: number, h: number) {
+    move(ext: Ext, x: number, y: number, w: number, h: number, focus: () => ShellWindow | null) {
         if (ext.auto_tiler) {
-            this.move_auto(ext, x, y);
+            this.move_auto(ext, focus());
         } else {
             this.swap_window = null;
 
@@ -199,29 +199,6 @@ export class Tiler {
         }
     }
 
-    move_auto(ext: Ext, x: number, y: number) {
-        this.move_auto_(ext, (fork, crect) => {
-            let xadj = x * ext.row_size;
-            let yadj = y * ext.column_size;
-
-            if (this.window) {
-                if (fork.left.is_window(this.window)) {
-                    Log.debug(`left window move`);
-                    crect.width += xadj;
-                    crect.height += yadj;
-                } else if (fork.is_horizontal()) {
-                    Log.debug(`right window horizontal move`);
-                    crect.width += xadj;
-                    crect.height += yadj;
-                } else {
-                    Log.debug(`right window vertical move`);
-                    crect.width += xadj;
-                    crect.height += yadj;
-                }
-            }
-        });
-    }
-
     resize_auto(ext: Ext, x: number, y: number) {
         this.move_auto_(ext, (fork, crect) => {
             let xadj = x * ext.row_size;
@@ -247,20 +224,42 @@ export class Tiler {
         });
     }
 
+    move_auto(ext: Ext, move_to: ShellWindow | null) {
+        const focused = ext.focus_window();
+        if (focused && move_to) {
+            const parent = ext.windows_are_siblings(focused.entity, move_to.entity);
+            if (parent) {
+                const fork = ext.auto_tiler?.forks.get(parent);
+                if (fork) {
+                    const temp = fork.left.entity;
+                    fork.left.entity = (fork.right as any).entity;
+                    (fork.right as any).entity = temp;
+                    ext.tile(fork, fork.area as any, fork.workspace);
+                    ext.set_overlay(focused.rect());
+                    return;
+                }
+            }
+
+            ext.detach_window(focused.entity);
+            ext.attach_to_window(move_to, focused);
+            ext.set_overlay(focused.rect());
+        }
+    }
+
     move_left(ext: Ext) {
-        this.move(ext, -1, 0, 0, 0);
+        this.move(ext, -1, 0, 0, 0, () => ext.focus_selector.left(ext, null));
     }
 
     move_down(ext: Ext) {
-        this.move(ext, 0, 1, 0, 0);
+        this.move(ext, 0, 1, 0, 0, () => ext.focus_selector.down(ext, null));
     }
 
     move_up(ext: Ext) {
-        this.move(ext, 0, -1, 0, 0);
+        this.move(ext, 0, -1, 0, 0, () => ext.focus_selector.up(ext, null));
     }
 
     move_right(ext: Ext) {
-        this.move(ext, 1, 0, 0, 0);
+        this.move(ext, 1, 0, 0, 0, () => ext.focus_selector.right(ext, null));
     }
 
     resize(ext: Ext, x: number, y: number, w: number, h: number) {
