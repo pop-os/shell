@@ -199,9 +199,9 @@ function title_bars(ext: Ext) {
             if (window.meta.is_client_decorated()) continue;
 
             if (toggle.state) {
-                window.decoration_show();
+                window.decoration_show(ext);
             } else {
-                window.decoration_hide();
+                window.decoration_hide(ext);
             }
         }
     });
