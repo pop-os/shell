@@ -446,10 +446,12 @@ export class AutoTiler extends Ecs.World {
             Log.debug(`shrinking? ${shrinking}`);
 
             let done = false;
+            let prev_area = child.area.clone();
             while (child.parent && !done) {
                 Log.debug(`length = ${length}`);
                 const parent = this.forks.get(child.parent);
                 if (parent && parent.area) {
+                    prev_area = parent.area.clone();
                     if (parent.area.contains(original)) {
                         if (shrinking) {
                             Log.debug(`Fork(${child_e}) area before: ${child.area}`);
@@ -481,7 +483,11 @@ export class AutoTiler extends Ecs.World {
                 }
             }
 
-            child.tile(this, ext, child.area ?? new Rect.Rectangle([0, 0, 0, 0]), child.workspace);
+
+            if (!child.tile(this, ext, child.area as Rectangle, child.workspace)) {
+                Log.debug(`failure resizing Fork(${child_e})`);
+                child.tile(this, ext, prev_area, child.workspace);
+            }
         }
     }
 
@@ -729,7 +735,6 @@ export class TilingFork {
         }
 
         this.workspace = workspace;
-        let successful = true;
 
         if (this.right) {
             const [l, p] = this.is_horizontal() ? [WIDTH, XPOS] : [HEIGHT, YPOS];
@@ -745,29 +750,26 @@ export class TilingFork {
                 region.array[p] = region.array[p] + length + ext.gap_inner;
                 region.array[l] = this.area.array[l] - length - ext.gap_inner;
 
-                if (!this.right.tile(tiler, ext, region, workspace)) {
+                if (this.right.tile(tiler, ext, region, workspace)) {
+                    return true;
+                } else {
                     Log.debug(`failed to move right node`);
 
                     this.area_left = prev_left;
                     this.left.tile(tiler, ext, prev_left, workspace);
                     this.right.tile(tiler, ext, prev_right, workspace);
-
-                    successful = false;
                 }
             } else {
                 Log.debug(`failed to move left node`);
                 this.area_left = prev_left;
                 this.left.tile(tiler, ext, prev_left, workspace);
-
-                successful = false;
             }
         } else if (this.left.tile(tiler, ext, this.area, workspace)) {
             this.area_left = this.area;
-        } else {
-            successful = false;
+            return true;
         }
 
-        return successful;
+        return false;
     }
 
     toggle_orientation() {
