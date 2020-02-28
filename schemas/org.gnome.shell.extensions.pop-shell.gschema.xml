@@ -57,6 +57,10 @@
             <default><![CDATA[['<Primary><Super>Right','<Primary><Super>l']]]></default>
             <summary>Focus right monitor</summary>
         </key>
+        <key type="as" name="management-orientation">
+            <default><![CDATA[['backslash']]]></default>
+            <summary>Toggle tiling orientation</summary>
+        </key>
         <key type="as" name="search">
             <default><![CDATA[['<Super>slash']]]></default>
             <summary>Search key combo</summary>

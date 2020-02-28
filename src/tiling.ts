@@ -21,6 +21,13 @@ export class Tiler {
 
     constructor(ext: Ext) {
         this.keybindings = {
+            "management-orientation": () => {
+                if (this.window) ext.windows.with(this.window, (window) => {
+                    ext.toggle_orientation();
+                    ext.set_overlay(window.rect());
+                });
+            },
+
             "tile-move-left": () => this.move_left(ext),
             "tile-move-down": () => this.move_down(ext),
             "tile-move-up": () => this.move_up(ext),
