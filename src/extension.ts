@@ -366,7 +366,7 @@ export class Ext extends Ecs.World {
         this.connect(win.meta, 'workspace-changed', () => this.on_workspace_changed(win));
 
         this.connect(win.meta, 'size-changed', () => {
-            if (this.attached)  {
+            if (this.attached && !win.is_maximized())  {
                 Log.debug(`size changed: ${win.name(this)}`);
                 if (this.grab_op) {
 
@@ -377,7 +377,7 @@ export class Ext extends Ecs.World {
         });
 
         this.connect(win.meta, 'position-changed', () => {
-            if (this.attached && !this.grab_op && !this.tiling) {
+            if (this.attached && !this.grab_op && !this.tiling && !win.is_maximized()) {
                 Log.debug(`position changed: ${win.name(this)}`);
                 this.reflow(win.entity);
             }
