@@ -166,10 +166,10 @@ export class Launcher extends search.Search {
                     }
                 }
             } else if (id.startsWith(':')) {
-                let cmd = id.slice(1);
-                cmd = id.startsWith('sudo ')
-                    ? `x-terminal-emulator -e sh -c '${id}'`
-                    : id;
+                let cmd = id.slice(1).trim();
+                cmd = cmd.startsWith('sudo ')
+                    ? `x-terminal-emulator -e sh -c '${cmd}'`
+                    : cmd;
                 imports.misc.util.spawnCommandLine(cmd);
             } else if (id.startsWith('=')) {
                 const expr = id.slice(1).trim();
