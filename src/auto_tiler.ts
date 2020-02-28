@@ -414,7 +414,13 @@ export class AutoTiler extends Ecs.World {
 
     /// Readjusts the division of space between the left and right siblings of a fork
     readjust_fork_ratio_by_left(ext: Ext, left_length: number, fork: TilingFork, fork_length: number) {
-        if (fork.area) fork.set_ratio(left_length, fork_length).tile(this, ext, fork.area, fork.workspace);
+        if (fork.area) {
+            const prev_ratio = fork.ratio;
+            if (!fork.set_ratio(left_length, fork_length).tile(this, ext, fork.area, fork.workspace)) {
+                fork.ratio = prev_ratio;
+                fork.tile(this, ext, fork.area, fork.workspace);
+            }
+        }
     }
 
     /// Readjusts the division of space between the left and right siblings of a fork
@@ -706,8 +712,10 @@ export class TilingFork {
     }
 
     /// Tiles all windows within this fork into the given area
-    tile(tiler: AutoTiler, ext: Ext, area: Rectangle, workspace: number) {
+    tile(tiler: AutoTiler, ext: Ext, area: Rectangle, workspace: number, resize_by_parent: boolean = false): boolean {
         /// Memorize our area for future tile reflows
+        const prev_left = this.area_of_left(ext) as Rectangle;
+        const prev_right = this.area_of_right(ext) as Rectangle;
 
         if (null === this.area && null === this.parent) {
             this.area = this.set_area(new Rect.Rectangle([
@@ -721,6 +729,7 @@ export class TilingFork {
         }
 
         this.workspace = workspace;
+        let successful = true;
 
         if (this.right) {
             const [l, p] = this.is_horizontal() ? [WIDTH, XPOS] : [HEIGHT, YPOS];
@@ -731,16 +740,34 @@ export class TilingFork {
             region.array[l] = length - ext.gap_inner_half;
 
             this.area_left = region.clone();
-            this.left.tile(tiler, ext, region, workspace);
 
-            region.array[p] = region.array[p] + length + ext.gap_inner;
-            region.array[l] = this.area.array[l] - length - ext.gap_inner;
+            if (this.left.tile(tiler, ext, region, workspace)) {
+                region.array[p] = region.array[p] + length + ext.gap_inner;
+                region.array[l] = this.area.array[l] - length - ext.gap_inner;
 
-            this.right.tile(tiler, ext, region, workspace);
-        } else {
-            this.left.tile(tiler, ext, this.area, workspace);
+                if (!this.right.tile(tiler, ext, region, workspace)) {
+                    Log.debug(`failed to move right node`);
+
+                    this.area_left = prev_left;
+                    this.left.tile(tiler, ext, prev_left, workspace);
+                    this.right.tile(tiler, ext, prev_right, workspace);
+
+                    successful = false;
+                }
+            } else {
+                Log.debug(`failed to move left node`);
+                this.area_left = prev_left;
+                this.left.tile(tiler, ext, prev_left, workspace);
+
+                successful = false;
+            }
+        } else if (this.left.tile(tiler, ext, this.area, workspace)) {
             this.area_left = this.area;
+        } else {
+            successful = false;
         }
+
+        return successful;
     }
 
     toggle_orientation() {
@@ -804,23 +831,25 @@ export class TilingNode {
         return NodeKind.WINDOW == this.kind && Ecs.entity_eq(this.entity, entity);
     }
 
-    /**
-     * Tiles all windows associated with this node
-     */
-    tile(tiler: AutoTiler, ext: Ext, area: Rectangle, workspace: number) {
+    /// Tiles all windows associated with this node
+    tile(tiler: AutoTiler, ext: Ext, area: Rectangle, workspace: number): boolean {
         if (NodeKind.FORK == this.kind) {
             Log.debug(`tiling Fork(${this.entity}) into [${area.array}]`);
-            tiler.forks.get(this.entity)?.tile(tiler, ext, area, workspace);
+            const fork = tiler.forks.get(this.entity);
+            if (fork) {
+                return fork.tile(tiler, ext, area, workspace, true);
+            }
         } else {
             Log.debug(`tiling Window(${this.entity}) into [${area.array}]`);
             const window = ext.windows.get(this.entity);
 
             if (window) {
-                window.move(area);
-
                 window.meta.change_workspace_by_index(workspace, false);
+                return window.move(area);
             }
         }
+
+        return false;
     }
 }
 
