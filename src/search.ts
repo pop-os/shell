@@ -16,6 +16,8 @@ export class Search {
     private text: any;
     private widgets: Array<any>;
 
+    private select_cb: (id: number) => void;
+
     constructor(
         ignore_prefixes: Array<string>,
         cancel: () => void,
@@ -23,6 +25,7 @@ export class Search {
         select: (id: number) => void,
         apply: (id: number | string) => boolean
     ) {
+        this.select_cb = select;
         this.dialog = new ModalDialog({
             styleClass: "pop-shell-search",
             destroyOnClose: false,
@@ -102,7 +105,7 @@ export class Search {
                 }
             }
 
-            select(this.active_id);
+            this.select_cb(this.active_id);
         });
 
         this.list = new St.BoxLayout({
@@ -176,6 +179,7 @@ export class Search {
         this.list.show();
         if (this.widgets.length != 0) {
             this.select();
+            this.select_cb(0);
         }
     }
 

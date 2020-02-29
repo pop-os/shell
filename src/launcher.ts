@@ -143,7 +143,7 @@ export class Launcher extends search.Search {
         };
 
         let select = (id: number) => {
-            if (id <= this.selections.length) return;
+            if (id >= this.selections.length) return;
 
             const selected = this.selections[id];
             if (selected instanceof window.ShellWindow) {
@@ -152,7 +152,9 @@ export class Launcher extends search.Search {
                 ext.overlay.y = rect.y;
                 ext.overlay.width = rect.width;
                 ext.overlay.height = rect.height;
-                ext.overlay.visible = true;
+                ext.overlay.visible = selected.meta.get_workspace().index() == ext.active_workspace();
+            } else {
+                ext.overlay.visible = false;
             }
         };
 
