@@ -847,6 +847,8 @@ export class TilingNode {
 
             if (window) {
                 window.meta.change_workspace_by_index(workspace, false);
+                window.meta.get_workspace().activate(global.get_current_time());
+
                 return window.move(area);
             }
         }
