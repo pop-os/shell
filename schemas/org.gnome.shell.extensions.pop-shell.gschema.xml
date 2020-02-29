@@ -58,7 +58,7 @@
             <summary>Focus right monitor</summary>
         </key>
         <key type="as" name="management-orientation">
-            <default><![CDATA[['backslash']]]></default>
+            <default><![CDATA[['o']]]></default>
             <summary>Toggle tiling orientation</summary>
         </key>
         <key type="as" name="search">
@@ -87,7 +87,7 @@
             <summary>Move window right</summary>
         </key>
         <key type="as" name="tile-orientation">
-            <default><![CDATA[['<Super>backslash']]]></default>
+            <default><![CDATA[['<Super>o']]]></default>
             <summary>Toggle tiling orientation</summary>
         </key>
         <key type="as" name="tile-resize-left">
