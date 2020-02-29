@@ -14,7 +14,7 @@ export class Keybindings {
         this.global = {
             "search": () => {
                 ext.window_search.load_desktop_files();
-                ext.window_search.dialog.open();
+                ext.window_search.open(ext);
             },
             "tile-enter": () => ext.tiler.enter(ext)
         };

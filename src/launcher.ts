@@ -102,22 +102,7 @@ export class Launcher extends search.Search {
                 let data: [string, any, any];
 
                 if (selection instanceof window.ShellWindow) {
-                    let name = selection.name(ext);
-                    let title = selection.meta.get_title();
-
-                    if (name != title) {
-                        name += ': ' + title;
-                    }
-
-                    data = [
-                        name,
-                        new St.Icon({
-                            icon_name: 'focus-windows-symbolic',
-                            icon_size: ICON_SIZE - 12,
-                            style_class: "pop-shell-search-cat"
-                        }),
-                        selection.icon(ext, ICON_SIZE)
-                    ];
+                    data = window_selection(ext, selection);
                 } else {
                     const [where, app] = selection;
                     const generic = app.generic_name();
@@ -210,4 +195,41 @@ export class Launcher extends search.Search {
             }
         });
     }
+
+    open(ext: Ext) {
+        const active = ext.active_workspace();
+
+        for (const window of ext.tab_list(Meta.TabList.NORMAL, null)) {
+            if (window.meta.get_workspace().index() == active) {
+                this.selections.push(window);
+
+                this.active.push(window_selection(ext, window));
+
+                if (this.selections.length == LIST_MAX) break;
+            }
+        }
+
+        this.update_search_list(this.active);
+
+        this.dialog.open();
+    }
+}
+
+function window_selection(ext: Ext, window: ShellWindow): [string, any, any] {
+    let name = window.name(ext);
+    let title = window.meta.get_title();
+
+    if (name != title) {
+        name += ': ' + title;
+    }
+
+    return [
+        name,
+        new St.Icon({
+            icon_name: 'focus-windows-symbolic',
+            icon_size: ICON_SIZE - 12,
+            style_class: "pop-shell-search-cat"
+        }),
+        window.icon(ext, ICON_SIZE)
+    ];
 }
