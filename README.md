@@ -101,7 +101,7 @@ Switching focus to the left will calculate from the center of the east side of t
 
 ### Window Focus Dialog
 
-The window focus search dialog is summoned with `Super` + `/`. The search list displays matching windows based on their window name and title. The arrow keys are used to select a window from the search list. The selected window will be visually highlighted with an overlay, in the event that two windows have the same name and title. Pressing `Return` will bring that window to focus, switching to its workspace, and unminimizing it if it was minimized.
+The window focus search dialog is summoned with `Super` + `O`. The search list displays matching windows based on their window name and title. The arrow keys are used to select a window from the search list. The selected window will be visually highlighted with an overlay, in the event that two windows have the same name and title. Pressing `Return` will bring that window to focus, switching to its workspace, and unminimizing it if it was minimized.
 
 ### Inner and Outer Gaps
 
@@ -109,7 +109,7 @@ Gaps improve the aesthetics of tiled windows, and make it easier to grab the edg
 
 ### Hiding Window Title Bars
 
-Windows with server-side decorations may have their title bars completely hidden, resulting in additional screen real estate for your applications, and a visually cleaner environment. This feature can be toggled in the extension's popup menu. Windows can be moved with the mouse by holding `Super` when clicking and dragging a window to another location. Windows may be closed by pressing GNOME's default `Super` + `W` shortcut.
+Windows with server-side decorations may have their title bars completely hidden, resulting in additional screen real estate for your applications, and a visually cleaner environment. This feature can be toggled in the extension's popup menu. Windows can be moved with the mouse by holding `Super` when clicking and dragging a window to another location. Windows may be closed by pressing GNOME's default `Super` + (`grave \`` / `tilde ~`) shortcut.
 
 ---
 
@@ -133,7 +133,7 @@ This provides the tiling window manager experience, where windows are automatica
 
 ### Keyboard Shortcuts
 
-- `Super` + `\`
+- `Super` + `O`
   - Toggles the orientation of a fork's tiling mode
 
 ### Feature Overview
@@ -142,7 +142,7 @@ This provides the tiling window manager experience, where windows are automatica
 - As new windows are opened, they are tiled into the currently-focused window
 - Windows can be detached and retached to different areas of the tree by dragging and dropping them
 - The default tiling orientation is based on the dimensions of the window being attached to
-- The tiling orientation of the fork associated with the focused window can be altered with `Super` + `\`.
+- The tiling orientation of the fork associated with the focused window can be altered with `Super` + `O`.
 - The division of space between branches in a fork can be altered by resizing windows
   - Window resizes can be carried out with the mouse
   - Tiling mode may also be used to adjust sizes with the keyboard
