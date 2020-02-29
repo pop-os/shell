@@ -131,7 +131,7 @@
             <summary>Reject tiling changes</summary>
         </key>
         <key type="as" name="toggle-floating">
-            <default><![CDATA[['<Super>W']]]></default>
+            <default><![CDATA[['<Super>grave']]]></default>
             <summary>Toggles a window between floating and tiling</summary>
         </key>
     </schema>
