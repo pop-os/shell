@@ -20,7 +20,7 @@ const { OK } = error;
 
 const HOME_DIR: string = GLib.get_home_dir();
 
-const LIST_MAX = 5;
+const LIST_MAX = 10;
 const ICON_SIZE = 32;
 
 /// Search paths for finding applications
