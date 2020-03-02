@@ -189,7 +189,7 @@ export class Launcher extends search.Search {
                         this.desktop_apps.push([where, value]);
                     } else {
                         const why = result.value;
-                        log.error(why.context(`failed to load desktop app`).format());
+                        log.warn(why.context(`failed to load desktop app`).format());
                     }
                 }
             }
