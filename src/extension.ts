@@ -39,6 +39,8 @@ export class Ext extends Ecs.World {
     gap_outer_half: number = 0;
     gap_outer: number = 0;
 
+    switch_workspace_on_move: boolean = true;
+
     overlay: any;
 
     keybindings: Keybindings.Keybindings;

@@ -40,12 +40,14 @@ export class Indicator {
                     if (current - prev != 0) {
                         Log.info(`inner gap changed to ${current}`);
                         if (ext.auto_tiler) {
+                            ext.switch_workspace_on_move = false;
                             for (const [entity, _] of ext.auto_tiler.toplevel.values()) {
                                 const fork = ext.auto_tiler.forks.get(entity);
                                 if (fork && fork.area) {
                                     ext.tile(fork, fork.area, fork.workspace, true);
                                 }
                             }
+                            ext.switch_workspace_on_move = true;
                         } else {
                             ext.update_snapped();
                         }
@@ -67,6 +69,7 @@ export class Indicator {
                     if (diff != 0) {
                         Log.info(`outer gap changed to ${current}`);
                         if (ext.auto_tiler) {
+                            ext.switch_workspace_on_move = false;
                             for (const [entity, _] of ext.auto_tiler.toplevel.values()) {
                                 const fork = ext.auto_tiler.forks.get(entity);
 
@@ -79,6 +82,7 @@ export class Indicator {
                                     ext.tile(fork, fork.area, fork.workspace, true);
                                 }
                             }
+                            ext.switch_workspace_on_move = true;
                         } else {
                             ext.update_snapped();
                         }
