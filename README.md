@@ -73,11 +73,11 @@ These are key to many of the shortcuts utilized by tiling window managers. This 
 - `Up` or `k`
 - `Right` or `l`
 
-### Tiling Mode
+### Window Management Mode
 
 > This mode is activated with `Super` + `Return`.
 
-Tiling mode activates additional keyboard control over the size and location of the currently-focused window. The behavior of this mode changes slightly based on whether you are in auto-tile mode, or in the default stacking mode. In the default mode, an overlay is displayed snapped to a grid, which represents a possible future location and size of your focused window. This behavior changes slightly in auto-tiling mode, where resizes are performed immediately, and overlays are only shown when swapping windows.
+Window management mode mode activates additional keyboard control over the size and location of the currently-focused window. The behavior of this mode changes slightly based on whether you are in auto-tile mode, or in the default stacking mode. In the default mode, an overlay is displayed snapped to a grid, which represents a possible future location and size of your focused window. This behavior changes slightly in auto-tiling mode, where resizes are performed immediately, and overlays are only shown when swapping windows.
 
 Activating this enables the following behaviors:
 
@@ -90,18 +90,20 @@ Activating this enables the following behaviors:
 - `Ctrl` + `<Direction>`
   - Selects a window in the given direction of the overlay
   - When `Return` is pressed, window positions will be swapped
+- `O`: Toggles between horizontal and vertical tiling in auto-tile mode
+- `~`: Toggles between floating and tiling in auto-tile mode
 - `Return`: Applies the changes that have been requested
 - `Esc`: Cancels any changes that were requested
 
 ### Window Focus Switching
 
-When not in tiling mode, pressing `Super` + `<Direction>` will shift window focus to a window in the given direction. This is calculated based on the distance between the center of the side of the focused window that the window is being shifted from, and the opposite side of windows surrounding it.
+When not in window management mode, pressing `Super` + `<Direction>` will shift window focus to a window in the given direction. This is calculated based on the distance between the center of the side of the focused window that the window is being shifted from, and the opposite side of windows surrounding it.
 
 Switching focus to the left will calculate from the center of the east side of the focused window, to the center of the west side of all other windows. The window with the least distance is the window we pick.
 
-### Window Focus Dialog
+### Launcher
 
-The window focus search dialog is summoned with `Super` + `/`. The search list displays matching windows based on their window name and title. The arrow keys are used to select a window from the search list. The selected window will be visually highlighted with an overlay, in the event that two windows have the same name and title. Pressing `Return` will bring that window to focus, switching to its workspace, and unminimizing it if it was minimized.
+The launcher is summoned with `Super` + `/`. The search list displays matching windows based on their window name and title, and applications on the system which can be launched. The arrow keys are used to select an application or window from the search list. If it is a window, the selected window will be visually highlighted with an overlay, in the event that two windows have the same name and title. Pressing `Return` on a window will bring that window to focus, switching to its workspace, and unminimizing it if it was minimized.
 
 ### Inner and Outer Gaps
 
@@ -121,9 +123,9 @@ This is the default mode of Pop Shell, which combines traditional stacking windo
 
 In this mode, displays are split into a grid of columns and rows. When entering tile mode, windows are snapped to this grid as they are placed. The number of rows and columns are configurable in the extension's popup menu in the panel.
 
-### Snap-on-Drop
+### Snap-to-Grid
 
-An optional feature to improve your tiling experience is the ability to snap windows to the grid when using your mouse to move and resize them. This provides the same precision as entering tiling mode to position a window with your keyboard, but with the convenience and familiarity of a mouse. This feature can be enabled through the extension's popup menu.
+An optional feature to improve your tiling experience is the ability to snap windows to the grid when using your mouse to move and resize them. This provides the same precision as entering window management mode to position a window with your keyboard, but with the convenience and familiarity of a mouse. This feature can be enabled through the extension's popup menu.
 
 ---
 
@@ -134,7 +136,9 @@ This provides the tiling window manager experience, where windows are automatica
 ### Keyboard Shortcuts
 
 - `Super` + `O`
-  - Toggles the orientation of a fork's tiling mode
+  - Toggles the orientation of a fork's tiling orientation
+- `Super` + `~`
+  - Toggles a window between floating and tiling
 
 ### Feature Overview
 
