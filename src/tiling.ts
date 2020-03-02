@@ -198,7 +198,7 @@ export class Tiler {
                             return;
                         }
 
-                        ext.auto_tiler.resize(ext, entity, this.window, grab_op.operation(crect), crect);
+                        ext.auto_tiler.resize(ext, entity, this.window, grab_op.operation(crect), crect, false);
                         ext.set_overlay(window.rect());
                     }
                 }
@@ -241,7 +241,7 @@ export class Tiler {
                     const temp = fork.left.entity;
                     fork.left.entity = (fork.right as any).entity;
                     (fork.right as any).entity = temp;
-                    ext.tile(fork, fork.area as any, fork.workspace);
+                    ext.tile(fork, fork.area as any, fork.workspace, false);
                     ext.set_overlay(focused.rect());
                     return;
                 }

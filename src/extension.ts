@@ -202,7 +202,7 @@ export class Ext extends Ecs.World {
 
             Log.debug(`attached Window(${win.entity}) to Fork(${entity}) on Monitor(${workspace_id})`);
 
-            this.attach_update(fork, rect, workspace_id);
+            this.attach_update(fork, rect, workspace_id, true);
             Log.info(this.auto_tiler.display(this, '\n\n'));
         }
     }
@@ -224,7 +224,7 @@ export class Ext extends Ecs.World {
                 const monitor = this.monitors.get(attachee.entity);
                 if (monitor) {
                     if (fork.area) {
-                        this.attach_update(fork, fork.area.clone(), monitor)
+                        this.attach_update(fork, fork.area.clone(), monitor, true);
                     } else {
                         Log.error(`attaching to fork without an area`);
                     };
@@ -244,17 +244,20 @@ export class Ext extends Ecs.World {
     /**
      * Sets the orientation of a tiling fork, and this it according to the given area.
      */
-    attach_update(fork: AutoTiler.TilingFork, area: Rectangle, workspace: [number, number]) {
+    attach_update(fork: AutoTiler.TilingFork, area: Rectangle, workspace: [number, number], failure_allowed: boolean): boolean {
         Log.debug(`setting attach area to (${area.x},${area.y}), (${area.width},${area.height})`);
-        this.tile(fork, area, workspace[1]);
+        return this.tile(fork, area, workspace[1], failure_allowed);
     }
 
-    tile(fork: AutoTiler.TilingFork, area: Rectangle, workspace: number) {
+    tile(fork: AutoTiler.TilingFork, area: Rectangle, workspace: number, failure_allowed: boolean): boolean {
+        let success = true;
         if (this.auto_tiler) {
             this.tiling = true;
-            fork.tile(this.auto_tiler, this, area, workspace);
+            success = fork.tile(this.auto_tiler, this, area, workspace, failure_allowed);
             this.tiling = false;
         }
+
+        return success;
     }
 
     /**
@@ -400,7 +403,7 @@ export class Ext extends Ecs.World {
                         const fork = reflow_fork[1];
                         if (fork.area) {
                             Log.debug(`begin tiling`);
-                            this.tile(fork, fork.area, fork.workspace);
+                            this.tile(fork, fork.area, fork.workspace, true);
                         };
                     }
 
@@ -433,7 +436,7 @@ export class Ext extends Ecs.World {
                                 Log.debug(`${this.names.get(win)} was dropped onto ${sibling.name(this)}`);
                                 fork.left.entity = fork.right.entity;
                                 fork.right.entity = win;
-                                this.tile(fork, fork.area, fork.workspace);
+                                this.tile(fork, fork.area, fork.workspace, false);
                                 return true;
                             }
                         } else if (fork.right.is_window(win)) {
@@ -443,7 +446,7 @@ export class Ext extends Ecs.World {
                                 fork.right.entity = fork.left.entity;
                                 fork.left.entity = win;
 
-                                this.tile(fork, fork.area, fork.workspace);
+                                this.tile(fork, fork.area, fork.workspace, false);
                                 return true;
                             }
                         }
@@ -571,7 +574,7 @@ export class Ext extends Ecs.World {
                         const movement = this.grab_op.operation(crect);
 
                         Log.debug(`resizing window: from [${rect.fmt()} to ${crect.fmt()}]`);
-                        this.auto_tiler.resize(this, fork, win.entity, movement, crect);
+                        this.auto_tiler.resize(this, fork, win.entity, movement, crect, false);
                         Log.debug(`changed to: ${this.auto_tiler.display(this, '')}`);
                     } else {
                         Log.error(`no fork found`);
@@ -658,7 +661,7 @@ export class Ext extends Ecs.World {
                 if (this.auto_tiler) {
                     Log.debug(`reflow Window(${win})`);
                     const fork = this.auto_tiler.forks.get(fork_entity);
-                    if (fork?.area) this.tile(fork, fork.area, fork.workspace);
+                    if (fork?.area) this.tile(fork, fork.area, fork.workspace, true);
                 }
             });
         });
@@ -723,6 +726,7 @@ export class Ext extends Ecs.World {
     }
 
     toggle_orientation() {
+        Log.info(`toggling orientation`);
         if (!this.auto_tiler) return;
         const focused = this.focus_window();
         if (!focused) return;
@@ -738,7 +742,9 @@ export class Ext extends Ecs.World {
                         });
                     }
 
-                    if (fork.area) this.tile(fork, fork.area, fork.workspace);
+                    if (fork.area) {
+                        this.tile(fork, fork.area, fork.workspace, true);
+                    };
                 }
             });
         });

@@ -43,7 +43,7 @@ export class Indicator {
                             for (const [entity, _] of ext.auto_tiler.toplevel.values()) {
                                 const fork = ext.auto_tiler.forks.get(entity);
                                 if (fork && fork.area) {
-                                    ext.tile(fork, fork.area, fork.workspace);
+                                    ext.tile(fork, fork.area, fork.workspace, true);
                                 }
                             }
                         } else {
@@ -76,7 +76,7 @@ export class Indicator {
                                     fork.area.array[2] -= diff * 2;
                                     fork.area.array[3] -= diff * 2;
 
-                                    ext.tile(fork, fork.area, fork.workspace);
+                                    ext.tile(fork, fork.area, fork.workspace, true);
                                 }
                             }
                         } else {

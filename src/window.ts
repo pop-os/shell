@@ -116,20 +116,7 @@ export class ShellWindow {
             rect.height
         );
 
-        const actual = this.rect();
-        return actual.eq(rect);
-    }
-
-    move_snap(ext: Ext, rect: Rectangle): boolean {
-        const prev = this.rect();
-
-        if (!this.move(rect)) {
-            this.move(prev);
-            return false;
-        }
-
-        ext.tiler.snap(ext, this);
-        return true;
+        return this.rect().eq(rect);
     }
 
     name(ext: Ext): string {
