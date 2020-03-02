@@ -10,8 +10,25 @@ import type { Entity } from './ecs';
 import type { ShellWindow } from './window';
 import type { Rectangle } from './rectangle';
 import type { Ext } from './extension';
+import type { TilingFork } from './auto_tiler';
 
 const Main = imports.ui.main;
+
+enum Direction {
+    Left,
+    Up,
+    Right,
+    Down
+}
+
+enum ResizeMode {
+    Normal,
+    Reverse
+}
+
+function resize_mode_str(mode: ResizeMode): string {
+    return mode == ResizeMode.Normal ? "ResizeMode::Normal" : "ResizeMode::Reverse";
+}
 
 export class Tiler {
     private keybindings: Object;
@@ -32,10 +49,14 @@ export class Tiler {
             "tile-move-down": () => this.move_down(ext),
             "tile-move-up": () => this.move_up(ext),
             "tile-move-right": () => this.move_right(ext),
-            "tile-resize-left": () => this.resize_left(ext),
-            "tile-resize-down": () => this.resize_down(ext),
-            "tile-resize-up": () => this.resize_up(ext),
-            "tile-resize-right": () => this.resize_right(ext),
+            "tile-resize-left": () => this.resize(ext, Direction.Left, ResizeMode.Normal),
+            "tile-resize-left-reverse": () => this.resize(ext, Direction.Left, ResizeMode.Reverse),
+            "tile-resize-down": () => this.resize(ext, Direction.Down, ResizeMode.Normal),
+            "tile-resize-down-reverse": () => this.resize(ext, Direction.Down, ResizeMode.Reverse),
+            "tile-resize-up": () => this.resize(ext, Direction.Up, ResizeMode.Normal),
+            "tile-resize-up-reverse": () => this.resize(ext, Direction.Up, ResizeMode.Reverse),
+            "tile-resize-right": () => this.resize(ext, Direction.Right, ResizeMode.Normal),
+            "tile-resize-right-reverse": () => this.resize(ext, Direction.Right, ResizeMode.Reverse),
             "tile-swap-left": () => this.swap_left(ext),
             "tile-swap-down": () => this.swap_down(ext),
             "tile-swap-up": () => this.swap_up(ext),
@@ -177,7 +198,7 @@ export class Tiler {
         }
     }
 
-    move_auto_(ext: Ext, func: (a: any, b: Rectangle) => void) {
+    move_auto_(ext: Ext, func: (a: TilingFork, b: Rectangle) => void) {
         if (ext.auto_tiler && ext.attached && this.window) {
             const entity = ext.attached.get(this.window);
             if (entity) {
@@ -189,43 +210,67 @@ export class Tiler {
                     let crect = grab_op.rect.clone();
                     func(fork, crect);
 
-                    const result = ext.monitors.get(this.window);
-                    if (result) {
-                        const [monitor, _] = result;
-                        Lib.meta_rect_clamp(ext.monitor_work_area(monitor), crect, ext.gap_outer);
-
-                        if (crect.eq(grab_op.rect)) {
-                            return;
-                        }
-
-                        ext.auto_tiler.resize(ext, entity, this.window, grab_op.operation(crect), crect, false);
-                        ext.set_overlay(window.rect());
+                    if (crect.eq(grab_op.rect)) {
+                        return;
                     }
+
+                    ext.auto_tiler.resize(ext, entity, this.window, grab_op.operation(crect), crect, false);
+                    ext.set_overlay(window.rect());
                 }
             }
         }
     }
 
-    resize_auto(ext: Ext, x: number, y: number) {
+    resize_auto(ext: Ext, direction: Direction, mode: ResizeMode) {
         this.move_auto_(ext, (fork, crect) => {
-            let xadj = x * ext.row_size;
-            let yadj = y * ext.column_size;
-
-            if (this.window) {
-                if (fork.left.is_window(this.window)) {
-                    Log.debug(`left window resize`);
-                    crect.width += xadj;
-                    crect.height += yadj;
-                } else if (fork.is_horizontal()) {
-                    Log.debug(`right window horizontal resize`);
-                    crect.width += -1 * xadj;
-                    crect.height += yadj;
-                    crect.x += xadj;
-                } else {
-                    Log.debug(`right window vertical resize`);
-                    crect.width += xadj;
-                    crect.height += -1 * yadj;
-                    crect.y += yadj;
+            if (ext.auto_tiler && this.window) {
+                const window = ext.windows.get(this.window);
+                if (window) {
+                    const workspace_id = ext.workspace_id(window);
+                    const toplevel = ext.auto_tiler.find_toplevel(workspace_id);
+                    if (toplevel) {
+                        ext.auto_tiler.forks.with(toplevel, (topfork) => {
+                            const toparea = topfork.area as Rect.Rectangle;
+                            switch (direction) {
+                                case Direction.Left:
+                                    if (mode == ResizeMode.Normal) {
+                                        crect.width -= ext.row_size;
+                                    } else {
+                                        if (crect.x - ext.row_size < toparea.x) return;
+                                        crect.x -= ext.row_size;
+                                        crect.width += ext.row_size;
+                                    }
+                                    break
+                                case Direction.Right:
+                                    if (mode == ResizeMode.Normal) {
+                                        if (crect.x + crect.width + ext.row_size > toparea.x + toparea.width) return;
+                                        crect.width += ext.row_size;
+                                    } else {
+                                        crect.x += ext.row_size;
+                                        crect.width -= ext.row_size;
+                                    }
+                                    break
+                                case Direction.Up:
+                                    if (mode == ResizeMode.Normal) {
+                                        crect.height -= ext.column_size;
+                                    } else {
+                                        if (crect.y - ext.column_size < toparea.y) return;
+                                        crect.y -= ext.column_size;
+                                        crect.height += ext.column_size;
+                                    }
+                                    break
+                                default:
+                                    if (mode == ResizeMode.Normal) {
+                                        if (crect.y + crect.height + ext.column_size > toparea.y + toparea.height) return;
+                                        crect.height += ext.column_size;
+                                    } else {
+                                        if (crect.y + ext.column_size > toparea.y + toparea.height) return;
+                                        crect.y += ext.column_size;
+                                        crect.height -= ext.column_size;
+                                    }
+                            }
+                        });
+                    }
                 }
             }
         });
@@ -269,10 +314,27 @@ export class Tiler {
         this.move(ext, 1, 0, 0, 0, () => ext.focus_selector.right(ext, null));
     }
 
-    resize(ext: Ext, x: number, y: number, w: number, h: number) {
+    resize(ext: Ext, direction: Direction, mode: ResizeMode) {
         if (ext.auto_tiler) {
-            this.resize_auto(ext, w, h);
+            this.resize_auto(ext, direction, mode);
         } else {
+            let array: [number, number, number, number];
+            switch (direction) {
+                case Direction.Down:
+                    array = [0, 0, 0, 1];
+                    break
+                case Direction.Left:
+                    array = [0, 0, -1, 0];
+                    break
+                case Direction.Up:
+                    array = [0, 0, 0, -1];
+                    break
+                default:
+                    array = [0, 0, 1, 0];
+            }
+
+            const [x, y, w, h] = array;
+
             this.swap_window = null;
             let rect = this.rect(ext);
             if (rect) {
@@ -280,22 +342,6 @@ export class Tiler {
                     .change(ext, ext.overlay, rect, 0, 0, 0, 0);
             }
         }
-    }
-
-    resize_left(ext: Ext) {
-        this.resize(ext, 0, 0, -1, 0);
-    }
-
-    resize_down(ext: Ext) {
-        this.resize(ext, 0, 0, 0, 1);
-    }
-
-    resize_up(ext: Ext) {
-        this.resize(ext, 0, 0, 0, -1);
-    }
-
-    resize_right(ext: Ext) {
-        this.resize(ext, 0, 0, 1, 0);
     }
 
     swap(ext: Ext, selector: ShellWindow | null) {
@@ -333,7 +379,6 @@ export class Tiler {
         } else {
             this.swap(ext, ext.focus_selector.up(ext, null));
         }
-
     }
 
     swap_right(ext: Ext) {

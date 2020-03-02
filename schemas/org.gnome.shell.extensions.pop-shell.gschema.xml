@@ -90,6 +90,8 @@
             <default><![CDATA[['<Super>o']]]></default>
             <summary>Toggle tiling orientation</summary>
         </key>
+
+        <!-- Resize in normal direction -->
         <key type="as" name="tile-resize-left">
             <default><![CDATA[['<Shift>Left','<Shift>h']]]></default>
             <summary>Resize window left</summary>
@@ -106,6 +108,25 @@
             <default><![CDATA[['<Shift>Right','<Shift>l']]]></default>
             <summary>Resize window right</summary>
         </key>
+
+        <!-- Resize in reverse direction -->
+        <key type="as" name="tile-resize-left-reverse">
+            <default><![CDATA[['<Primary><Shift>Left','<Primary><Shift>h']]]></default>
+            <summary>Resize window left</summary>
+        </key>
+        <key type="as" name="tile-resize-down-reverse">
+            <default><![CDATA[['<Primary><Shift>Down','<Primary><Shift>j']]]></default>
+            <summary>Resize window down</summary>
+        </key>
+        <key type="as" name="tile-resize-up-reverse">
+            <default><![CDATA[['<Primary><Shift>Up','<Primary><Shift>k']]]></default>
+            <summary>Resize window up</summary>
+        </key>
+        <key type="as" name="tile-resize-right-reverse">
+            <default><![CDATA[['<Primary><Shift>Right','<Primary><Shift>l']]]></default>
+            <summary>Resize window right</summary>
+        </key>
+
         <key type="as" name="tile-swap-left">
             <default><![CDATA[['<Primary>Left','<Primary>h']]]></default>
             <summary>Swap window left</summary>

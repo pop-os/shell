@@ -25,20 +25,19 @@ export class Rectangle {
 
   set height(height: number) { this.array[3] = height; }
 
-  clamp(other: Rectangle, outer: number) {
-    this.x = Math.max(0, this.x);
-    this.y = Math.max(0, this.y);
+  clamp(other: Rectangle) {
+    this.x = Math.max(other.x, this.x);
+    this.y = Math.max(other.y, this.y);
 
     const xend = this.x + this.width;
-    const work_width = other.width - outer;
-    if (xend > work_width) {
-      this.width = work_width - this.x;
+    if (xend > other.width) {
+      this.width = other.width - this.x;
     }
 
     const yend = this.y + this.height;
-    const work_height = other.height;
-    if (yend > work_height) {
-      this.height = work_height - this.y;
+    if (yend > other.height) {
+      global.log(`${this.y} + ${this.height} > ${other.height}`);
+      this.height = other.height - this.y;
     }
   }
 
@@ -58,6 +57,15 @@ export class Rectangle {
       this.x + this.width >= other.x + other.width &&
       this.y + this.height >= other.y + other.height
     );
+  }
+
+  diff(other: Rectangle): Rectangle {
+    return new Rectangle([
+      other.x - this.x,
+      other.y - this.y,
+      other.width - this.width,
+      other.height - this.height
+    ]);
   }
 
   eq(other: Rectangle): boolean {

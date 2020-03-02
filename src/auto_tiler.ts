@@ -718,29 +718,34 @@ export class TilingFork {
     }
 
     /// Tiles all windows within this fork into the given area
-    tile(tiler: AutoTiler, ext: Ext, area: Rectangle, workspace: number, failure_allowed: boolean, resize_by_parent: boolean = false): boolean {
+    tile(tiler: AutoTiler, ext: Ext, area: Rectangle, workspace: number, failure_allowed: boolean): boolean {
         /// Memorize our area for future tile reflows
         const prev_left = this.area_of_left(ext) as Rectangle;
         const prev_right = this.area_of_right(ext) as Rectangle;
 
-        if (null === this.area && null === this.parent) {
-            this.area = this.set_area(new Rect.Rectangle([
-                area.x + ext.gap_outer,
-                area.y + ext.gap_outer,
-                area.width - ext.gap_outer * 2,
-                area.height - ext.gap_outer * 2,
-            ]));
-        } else {
-            this.area = this.set_area(area.clone());
+        if (!this.is_toplevel) {
+            if (null === this.area && null === this.parent) {
+                this.area = this.set_area(new Rect.Rectangle([
+                    area.x + ext.gap_outer,
+                    area.y + ext.gap_outer,
+                    area.width - ext.gap_outer * 2,
+                    area.height - ext.gap_outer * 2,
+                ]));
+            } else {
+                this.area = this.set_area(area.clone());
+            }
         }
+
+        const this_area = this.area as Rectangle;
+        Log.debug(`fork area = ${this_area.fmt()}`);
 
         this.workspace = workspace;
 
         if (this.right) {
             const [l, p] = this.is_horizontal() ? [WIDTH, XPOS] : [HEIGHT, YPOS];
-            const length = Math.round(area.array[l] * this.ratio);
+            const length = Math.round(this_area.array[l] * this.ratio);
 
-            let region = this.area.clone();
+            let region = this_area.clone();
 
             region.array[l] = length - ext.gap_inner_half;
 
@@ -748,7 +753,7 @@ export class TilingFork {
 
             if (this.left.tile(tiler, ext, region, workspace) || failure_allowed) {
                 region.array[p] = region.array[p] + length + ext.gap_inner;
-                region.array[l] = this.area.array[l] - length - ext.gap_inner;
+                region.array[l] = this_area.array[l] - length - ext.gap_inner;
 
                 if (this.right.tile(tiler, ext, region, workspace) || failure_allowed) {
                     return true;
@@ -764,8 +769,8 @@ export class TilingFork {
                 this.area_left = prev_left;
                 this.left.tile(tiler, ext, prev_left, workspace);
             }
-        } else if (this.left.tile(tiler, ext, this.area, workspace) || failure_allowed) {
-            this.area_left = this.area;
+        } else if (this.left.tile(tiler, ext, this_area, workspace) || failure_allowed) {
+            this.area_left = this_area;
             return true;
         }
 
@@ -836,13 +841,13 @@ export class TilingNode {
     /// Tiles all windows associated with this node
     tile(tiler: AutoTiler, ext: Ext, area: Rectangle, workspace: number): boolean {
         if (NodeKind.FORK == this.kind) {
-            Log.debug(`tiling Fork(${this.entity}) into [${area.array}]`);
+            // Log.debug(`tiling Fork(${this.entity}) into [${area.array}]`);
             const fork = tiler.forks.get(this.entity);
             if (fork) {
                 return fork.tile(tiler, ext, area, workspace, true);
             }
         } else {
-            Log.debug(`tiling Window(${this.entity}) into [${area.array}]`);
+            // Log.debug(`tiling Window(${this.entity}) into [${area.array}]`);
             const window = ext.windows.get(this.entity);
 
             if (window) {

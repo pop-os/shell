@@ -93,10 +93,6 @@ export function is_move_op(op: number): boolean {
     ].indexOf(op) > -1;
 }
 
-export function meta_rect_clamp(ref: Rectangle, rect: Rectangle, outer_gap: number) {
-    rect.clamp(ref, outer_gap);
-}
-
 export function orientation_as_str(value: number): string {
     return value == 0 ? "Orientation::Horizontal" : "Orientation::Vertical";
 }
