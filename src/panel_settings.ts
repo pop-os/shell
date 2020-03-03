@@ -187,10 +187,9 @@ function snap_to_grid(ext: Ext): any {
 }
 
 function toggle(ext: Ext, desc: string, active: boolean, connect: (toggle: any) => void): any {
-    let toggle = new PopupSwitchMenuItem(desc);
-    toggle.label.set_y_align(Clutter.ActorAlign.CENTER);
+    let toggle = new PopupSwitchMenuItem(desc, active);
 
-    toggle.setToggleState(active);
+    toggle.label.set_y_align(Clutter.ActorAlign.CENTER);
 
     toggle.connect('toggled', () => {
         connect(toggle);
