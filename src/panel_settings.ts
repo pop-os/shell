@@ -1,7 +1,7 @@
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 const { Clutter, Gio, St } = imports.gi;
-const { PopupMenuItem, PopupSeparatorMenuItem, PopupSwitchMenuItem } = imports.ui.popupMenu;
+const { PopupMenuItem, PopupMenuSection, PopupSeparatorMenuItem, PopupSwitchMenuItem, PopupSubMenuMenuItem } = imports.ui.popupMenu;
 const { Button } = imports.ui.panelMenu;
 
 import * as Lib from 'lib';
@@ -14,6 +14,7 @@ const { AutoTiler } = Me.imports.auto_tiler;
 
 export class Indicator {
     button: any;
+    appearances: any;
 
     constructor(ext: Ext) {
         this.button = new Button(0.0, _("Pop Shell Settings"));
@@ -26,11 +27,15 @@ export class Indicator {
         this.button.add_actor(this.button.icon);
 
         this.button.menu.addMenuItem(tiled(ext));
-        this.button.menu.addMenuItem(title_bars(ext));
         this.button.menu.addMenuItem(snap_to_grid(ext));
-        this.button.menu.addMenuItem(new PopupSeparatorMenuItem());
 
-        this.button.menu.addMenuItem(
+        this.appearances = new PopupSubMenuMenuItem('Appearance', true);
+        this.appearances.icon.icon_name = 'preferences-desktop-display-symbolic';
+        this.button.menu.addMenuItem(this.appearances);
+
+        this.appearances.menu.addMenuItem(title_bars(ext));
+
+        this.appearances.menu.addMenuItem(
             number_entry(ext,
                 _("Inner Gap"),
                 ext.set_gap_inner,
@@ -58,7 +63,7 @@ export class Indicator {
             )
         );
 
-        this.button.menu.addMenuItem(
+        this.appearances.menu.addMenuItem(
             number_entry(ext,
                 _("Outer Gap"),
                 ext.set_gap_outer,
@@ -95,6 +100,10 @@ export class Indicator {
     }
 }
 
+function clamp(input: number): number {
+    return Math.min(Math.max(0, input), 128);
+}
+
 function number_entry(
     ext: Ext,
     label: string,
@@ -114,13 +123,26 @@ function number_entry(
     let text = entry.clutter_text;
     text.set_max_length(3);
 
+    entry.connect('key-press-event', () => {
+        Log.debug(`activated`);
+    });
+
     entry.connect('key-release-event', (_: any, event: any) => {
-        if (36 == event.get_key_code()) {
-            let number = parseInt(text.text, 10);
-            if (isNaN(number)) {
-                text.set_text('0');
-                number = 0;
-            }
+        const code = event.get_key_code();
+
+        Log.debug(`event code: ${code}`);
+
+        const number: number | null =
+            code == 36
+                ? parse_number(text.text)
+                : code == 113
+                    ? clamp(parse_number(text.text) - 4)
+                    : code == 114
+                        ? clamp(parse_number(text.text) + 4)
+                        : null;
+
+        if (number) {
+            text.set_text(String(number));
 
             const prev = get_method.call(ext);
             ext_method.call(ext, number);
@@ -147,6 +169,23 @@ function number_entry(
     return item;
 }
 
+function parse_number(text: string): number {
+    let number = parseInt(text, 10);
+    if (isNaN(number)) {
+        number = 0;
+    } else {
+        number = number - (number % 4);
+    }
+
+    return number;
+}
+
+function snap_to_grid(ext: Ext): any {
+    return toggle(ext, _("Snap to Grid"), ext.settings.snap_to_grid(), (toggle) => {
+        ext.settings.set_snap_to_grid(toggle.state);
+    });
+}
+
 function toggle(ext: Ext, desc: string, active: boolean, connect: (toggle: any) => void): any {
     let toggle = new PopupSwitchMenuItem(desc);
     toggle.label.set_y_align(Clutter.ActorAlign.CENTER);
@@ -160,12 +199,6 @@ function toggle(ext: Ext, desc: string, active: boolean, connect: (toggle: any) 
     });
 
     return toggle;
-}
-
-function snap_to_grid(ext: Ext): any {
-    return toggle(ext, _("Snap to Grid"), ext.settings.snap_to_grid(), (toggle) => {
-        ext.settings.set_snap_to_grid(toggle.state);
-    });
 }
 
 function tiled(ext: Ext): any {
