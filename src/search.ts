@@ -58,8 +58,7 @@ export class Search {
 
             if (!cont) {
                 this.reset();
-                this.dialog.popModal();
-                this.dialog.close();
+                this.close();
             }
         });
 
@@ -85,8 +84,7 @@ export class Search {
             if (c == 9) {
                 // Escape key was pressed
                 this.reset();
-                this.dialog.popModal();
-                this.dialog.close();
+                this.close();
                 cancel();
                 return;
             } else if (c == 111) {
@@ -126,6 +124,10 @@ export class Search {
         this.list.hide();
         this.widgets = [];
         this.active_id = 0;
+    }
+
+    close() {
+        this.dialog.close(global.get_current_time());
     }
 
     reset() {

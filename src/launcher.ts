@@ -198,6 +198,7 @@ export class Launcher extends search.Search {
 
     open(ext: Ext) {
         const active = ext.active_workspace();
+        this.active.splice(0);
 
         for (const window of ext.tab_list(Meta.TabList.NORMAL, null)) {
             if (window.meta.get_workspace().index() == active) {
@@ -211,7 +212,7 @@ export class Launcher extends search.Search {
 
         this.update_search_list(this.active);
 
-        this.dialog.open();
+        this.dialog.open(global.get_current_time());
     }
 }
 

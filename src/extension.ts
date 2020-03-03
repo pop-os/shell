@@ -24,7 +24,7 @@ import type { Launcher } from './launcher';
 
 const { Gio, GLib, Meta, St } = imports.gi;
 const { cursor_rect, is_move_op } = Lib;
-const { _defaultCssStylesheet, layoutManager, panel } = imports.ui.main;
+const { _defaultCssStylesheet, layoutManager, overview, panel, sessionMode } = imports.ui.main;
 const Tags = Me.imports.tags;
 
 export class Ext extends Ecs.World {
@@ -104,10 +104,18 @@ export class Ext extends Ecs.World {
 
         const workspace_manager = global.display.get_workspace_manager();
 
+        this.connect(sessionMode, 'updated', () => {
+            if ('user' != global.sessionMode.currentMode()) {
+                this.exit_modes();
+            }
+        });
+
+        this.connect(overview, 'showing', () => this.exit_modes());
         this.connect(global.display, 'window_created', (_: any, win: any) => this.on_window_create(win));
         this.connect(global.display, 'grab-op-begin', (_: any, _display: any, win: any, op: any) => this.on_grab_start(win, op));
         this.connect(global.display, 'grab-op-end', (_: any, _display: any, win: any, op: any) => this.on_grab_end(win, op));
         this.connect(workspace_manager, 'active-workspace-changed', () => {
+            this.exit_modes();
             this.last_focused = null;
         });
 
@@ -458,6 +466,11 @@ export class Ext extends Ecs.World {
         }
 
         return false;
+    }
+
+    exit_modes() {
+        this.tiler.exit(this);
+        this.window_search.close();
     }
 
     focus_window(): Window.ShellWindow | null {
@@ -897,7 +910,7 @@ function disable() {
     }
 
     if (ext) {
-        ext.tiler.exit(ext);
+        ext.exit_modes();
 
         layoutManager.removeChrome(ext.overlay);
 

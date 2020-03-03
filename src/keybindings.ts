@@ -13,6 +13,7 @@ export class Keybindings {
         this.ext = ext;
         this.global = {
             "search": () => {
+                ext.tiler.exit(ext);
                 ext.window_search.load_desktop_files();
                 ext.window_search.open(ext);
             },
