@@ -1,3 +1,5 @@
+set -xe
+
 # Build and install extension
 make all
 make install
@@ -59,14 +61,7 @@ dconf write ${KEYS_MEDIA}/www "['<Super>b']"
 dconf write ${KEYS_GNOME_WM}/close "['<Super>q']"
 
 # Enable extension
-gnome-extensions enable "pop-shell@system76.com"
+make enable
 
-echo "Restart shell!"
-if [ -n "$(which xdotool)" ]
-then
-    xdotool key alt+F2
-    sleep 0.5
-    xdotool key r Return
-fi
-
-journalctl -o cat -n 0 -f "$(which gnome-shell)"
+make restart-shell
+make listen
