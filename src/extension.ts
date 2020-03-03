@@ -24,7 +24,7 @@ import type { Launcher } from './launcher';
 
 const { Gio, GLib, Meta, St } = imports.gi;
 const { cursor_rect, is_move_op } = Lib;
-const { _defaultCssStylesheet, panel, uiGroup } = imports.ui.main;
+const { _defaultCssStylesheet, layoutManager, panel } = imports.ui.main;
 const Tags = Me.imports.tags;
 
 export class Ext extends Ecs.World {
@@ -363,7 +363,7 @@ export class Ext extends Ecs.World {
      * @param {function} callback
      */
     connect(object: any, property: string, callback: any) {
-        this.signals.push(object.connect(property, callback));
+        object.connect(property, callback);
     }
 
     connect_window(win: Window.ShellWindow) {
@@ -876,7 +876,7 @@ function enable() {
 
         load_theme();
 
-        uiGroup.add_actor(ext.overlay);
+        layoutManager.addChrome(ext.overlay);
 
         if (!indicator) {
             indicator = new PanelSettings.Indicator(ext);
@@ -899,7 +899,7 @@ function disable() {
     if (ext) {
         ext.tiler.exit(ext);
 
-        uiGroup.remove_actor(ext.overlay);
+        layoutManager.removeChrome(ext.overlay);
 
         ext.keybindings.disable(ext.keybindings.global)
             .disable(ext.keybindings.window_focus)
