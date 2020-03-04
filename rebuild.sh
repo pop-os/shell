@@ -26,6 +26,12 @@ dconf write ${KEYS_GNOME_WM}/switch-to-workspace-left "@as []"
 # Switch to workspace right: disable <Super>Right
 dconf write ${KEYS_GNOME_WM}/switch-to-workspace-right "@as []"
 
+# Super + Ctrl + up/down, move window one monitor up/down
+# Move window one monitor down
+dconf write ${KEYS_GNOME_WM}/move-to-monitor-down "['<Primary><Shift><Super>Down','<Primary><Shift><Super>${down}']"
+# Move window one monitor up
+dconf write ${KEYS_GNOME_WM}/move-to-monitor-up "['<Primary><Shift><Super>Up','<Primary><Shift><Super>${up}']"
+
 # Super + direction keys, move window left and right monitors, or up and down workspaces
 # Move window one monitor to the left
 dconf write ${KEYS_GNOME_WM}/move-to-monitor-left "['<Shift><Super>Left','<Shift><Super>${left}']"
