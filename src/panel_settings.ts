@@ -190,7 +190,8 @@ function parse_number(text: string): number {
     if (isNaN(number)) {
         number = 0;
     } else {
-        number = number - (number % 4);
+        const diff = number % 4;
+        number = number - diff + (diff > 2 ? 4 : 0);
     }
 
     return number;
