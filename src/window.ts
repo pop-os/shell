@@ -21,6 +21,7 @@ export class ShellWindow {
     meta: any;
 
     private window_app: any;
+    private wm_role_: once_cell.OnceCell<string | null> = new OnceCell();
     private xid_: once_cell.OnceCell<string | null> = new OnceCell();
 
     constructor(entity: Entity, window: any, window_app: any, ext: Ext) {
@@ -141,6 +142,13 @@ export class ShellWindow {
         }
 
         place_pointer_on(this.meta);
+    }
+
+    wm_role(): string | null {
+        return this.wm_role_.get_or_init(() => {
+            const xid = this.xid();
+            return xid ? xprop.get_window_role(xid) : null
+        });
     }
 
     xid(): string | null {
