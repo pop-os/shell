@@ -208,7 +208,7 @@ Due to the risky nature of plain JavaScript, this GNOME Shell extension is writt
 
 When iterating on the codebase, run `sh rebuild.sh` to `make`, `make install`, configure keyboard shortcuts, begin following gnome-shell logs, and restart GNOME Shell. Note that any logged errors will be referencing the generated JavaScript files located in the `_build/` directory.
 
-GNOME JS is a little different from standard JS, so the included `Makefile` runs `sed` on the compied JavaScript to convert the small number of differences between JS and GJS. Notably, GJS only partially supports ES2015, and has its own module system which works differently from what ES2015 expects. The sed scripts will replace `import` and `export` statements with the expected GNOME variants.
+GNOME JS is a little different from standard JS, so the included `Makefile` runs `sed` on the transpiled JavaScript to convert the small number of differences between JS and GJS. Notably, GJS only partially supports ES2015, and has its own module system which works differently from what ES2015 expects. The sed scripts will replace `import` and `export` statements with the expected GNOME variants.
 
 ```js
 const Me = imports.misc.extensionUtils.getCurrentExtension();
