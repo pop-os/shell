@@ -66,19 +66,16 @@ export class Tiler {
         };
     }
 
-    rect(ext: Ext): Rectangle | null {
+    rect(ext: Ext, monitor: Rectangle): Rectangle | null {
         if (!ext.overlay.visible) return null;
 
-        let monitors = tile_monitors(ext.overlay);
-        if (monitors.length == 0) return null;
+        const columns = monitor.width / ext.column_size;
+        const rows = monitor.height / ext.row_size;
 
-        const columns = monitors[0].width / ext.column_size;
-        const rows = monitors[0].height / ext.row_size;
-
-        return monitor_rect(monitors[0], columns, rows);
+        return monitor_rect(monitor, columns, rows);
     }
 
-    change(ext: Ext, overlay: any, rect: Rectangle, dx: number, dy: number, dw: number, dh: number): Tiler {
+    change(ext: Ext, overlay: any, monitor: Rectangle, rect: Rectangle, dx: number, dy: number, dw: number, dh: number): Tiler {
         let changed = new Rect.Rectangle([
             overlay.x + dx * rect.width,
             overlay.y + dy * rect.height,
@@ -143,7 +140,7 @@ export class Tiler {
         if ((changed.y + changed.height) > max_y) return this;
 
         const left_most = changed.x < ext.column_size;
-        const right_most = changed.x + changed.width >= monitors[0].height - ext.column_size;
+        const right_most = changed.x + changed.width >= monitor.height - ext.column_size;
 
         if (left_most && right_most) {
             changed.x += ext.gap_outer;
@@ -160,7 +157,7 @@ export class Tiler {
         }
 
         const top_most = changed.y < ext.row_size;
-        const bottom_most = changed.y + changed.height >= monitors[0].height - ext.row_size;
+        const bottom_most = changed.y + changed.height >= monitor.height - ext.row_size;
 
         if (top_most && bottom_most) {
             changed.y += ext.gap_outer;
@@ -189,12 +186,10 @@ export class Tiler {
         } else {
             this.swap_window = null;
 
-            let rect = this.rect(ext);
-
-            if (rect) {
-                this.change(ext, ext.overlay, rect, x, y, w, h)
-                    .change(ext, ext.overlay, rect, 0, 0, 0, 0);
-            }
+            this.rect_by_active_area(ext, (monitor, rect) => {
+                this.change(ext, ext.overlay, monitor, rect, x, y, w, h)
+                    .change(ext, ext.overlay, monitor, rect, 0, 0, 0, 0);
+            });
         }
     }
 
@@ -216,6 +211,20 @@ export class Tiler {
 
                     ext.auto_tiler.resize(ext, entity, this.window, grab_op.operation(crect), crect, false);
                     ext.set_overlay(window.rect());
+                }
+            }
+        }
+    }
+
+    rect_by_active_area(ext: Ext, callback: (monitor: Rectangle, area: Rectangle) => void) {
+        if (this.window) {
+            const monitor_id = ext.monitors.get(this.window);
+            if (monitor_id) {
+                const monitor = ext.monitor_work_area(monitor_id[0]);
+                let rect = this.rect(ext, monitor);
+
+                if (rect) {
+                    callback(monitor, rect)
                 }
             }
         }
@@ -336,11 +345,10 @@ export class Tiler {
             const [x, y, w, h] = array;
 
             this.swap_window = null;
-            let rect = this.rect(ext);
-            if (rect) {
-                this.change(ext, ext.overlay, rect, x, y, w, h)
-                    .change(ext, ext.overlay, rect, 0, 0, 0, 0);
-            }
+            this.rect_by_active_area(ext, (monitor, rect) => {
+                this.change(ext, ext.overlay, monitor, rect, x, y, w, h)
+                    .change(ext, ext.overlay, monitor, rect, 0, 0, 0, 0);
+            });
         }
     }
 
@@ -403,9 +411,10 @@ export class Tiler {
             ext.overlay.visible = true;
 
             if (!ext.auto_tiler) {
-                let rect = this.rect(ext);
                 // Make sure overlay is valid
-                if (rect) this.change(ext, ext.overlay, rect, 0, 0, 0, 0);
+                this.rect_by_active_area(ext, (monitor, rect) => {
+                    this.change(ext, ext.overlay, monitor, rect, 0, 0, 0, 0);
+                });
             }
 
             ext.keybindings.disable(ext.keybindings.window_focus)
@@ -458,6 +467,7 @@ export class Tiler {
             this.change(
                 ext,
                 rect,
+                mon_geom,
                 monitor_rect(mon_geom, columns, rows),
                 0, 0, 0, 0
             );
