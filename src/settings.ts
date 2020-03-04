@@ -24,6 +24,7 @@ export class Settings {
     }
 }
 
+const ACTIVE_HINT = 'active-hint';
 const COLUMN_SIZE = 'column-size';
 const GAP_INNER = 'gap-inner';
 const GAP_OUTER = 'gap-outer';
@@ -35,6 +36,10 @@ const TILE_BY_DEFAULT = 'tile-by-default';
 export class ExtensionSettings extends Settings {
     constructor() {
         super(extension.metadata['settings-schema']);
+    }
+
+    active_hint(): boolean {
+        return this.inner.get_boolean(ACTIVE_HINT);
     }
 
     column_size(): number {
@@ -63,6 +68,10 @@ export class ExtensionSettings extends Settings {
 
     tile_by_default(): boolean {
         return this.inner.get_boolean(TILE_BY_DEFAULT);
+    }
+
+    set_active_hint(set: boolean) {
+        this.inner.set_boolean(ACTIVE_HINT, set);
     }
 
     set_column_size(size: number) {

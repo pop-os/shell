@@ -4,6 +4,7 @@ const { Clutter, Gio, St } = imports.gi;
 const { PopupMenuItem, PopupMenuSection, PopupSeparatorMenuItem, PopupSwitchMenuItem, PopupSubMenuMenuItem } = imports.ui.popupMenu;
 const { Button } = imports.ui.panelMenu;
 
+import * as active_hint from 'active_hint';
 import * as Lib from 'lib';
 import * as Log from 'log';
 
@@ -32,6 +33,21 @@ export class Indicator {
         this.appearances = new PopupSubMenuMenuItem('Appearance', true);
         this.appearances.icon.icon_name = 'preferences-desktop-display-symbolic';
         this.button.menu.addMenuItem(this.appearances);
+
+        this.appearances.menu.addMenuItem(toggle(_("Show Active Hint"), ext.settings.active_hint(), (toggle) => {
+            ext.settings.set_active_hint(toggle.state);
+            if (toggle.state) {
+                ext.active_hint = new active_hint.ActiveHint();
+
+                const focused = ext.focus_window();
+                if (focused) {
+                    ext.active_hint.track_window(focused);
+                }
+            } else {
+                ext.active_hint?.untrack();
+                ext.active_hint = null;
+            }
+        }));
 
         this.appearances.menu.addMenuItem(title_bars(ext));
 
@@ -181,12 +197,12 @@ function parse_number(text: string): number {
 }
 
 function snap_to_grid(ext: Ext): any {
-    return toggle(ext, _("Snap to Grid"), ext.settings.snap_to_grid(), (toggle) => {
+    return toggle(_("Snap to Grid"), ext.settings.snap_to_grid(), (toggle) => {
         ext.settings.set_snap_to_grid(toggle.state);
     });
 }
 
-function toggle(ext: Ext, desc: string, active: boolean, connect: (toggle: any) => void): any {
+function toggle(desc: string, active: boolean, connect: (toggle: any) => void): any {
     let toggle = new PopupSwitchMenuItem(desc, active);
 
     toggle.label.set_y_align(Clutter.ActorAlign.CENTER);
@@ -201,7 +217,7 @@ function toggle(ext: Ext, desc: string, active: boolean, connect: (toggle: any) 
 }
 
 function tiled(ext: Ext): any {
-    return toggle(ext, _("Tile Windows"), null != ext.auto_tiler, (toggle) => {
+    return toggle(_("Tile Windows"), null != ext.auto_tiler, (toggle) => {
         if (ext.attached && ext.auto_tiler) {
             Log.info(`tile by default disabled`);
             ext.mode = Lib.MODE_DEFAULT;
@@ -229,7 +245,7 @@ function tiled(ext: Ext): any {
 }
 
 function title_bars(ext: Ext) {
-    return toggle(ext, _("Show Window Titles"), ext.settings.show_title(), (toggle) => {
+    return toggle(_("Show Window Titles"), ext.settings.show_title(), (toggle) => {
         ext.settings.set_show_title(toggle.state);
         for (const window of ext.windows.values()) {
             if (window.meta.is_client_decorated()) continue;

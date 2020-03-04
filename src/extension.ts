@@ -15,6 +15,7 @@ import * as Window from 'window';
 import * as launcher from 'launcher';
 import * as app_info from 'app_info';
 import * as error from 'error';
+import * as active_hint from 'active_hint';
 
 import type { AppInfo } from 'app_info';
 import type { Entity } from 'ecs';
@@ -41,6 +42,7 @@ export class Ext extends Ecs.World {
 
     switch_workspace_on_move: boolean = true;
 
+    active_hint: active_hint.ActiveHint | null = null;
     overlay: any;
 
     keybindings: Keybindings.Keybindings;
@@ -492,6 +494,10 @@ export class Ext extends Ecs.World {
         this.set_gap_outer(this.settings.gap_outer());
         this.column_size = this.settings.column_size();
         this.row_size = this.settings.row_size();
+
+        if (this.settings.active_hint()) {
+            this.active_hint = new active_hint.ActiveHint();
+        }
     }
 
     monitor_work_area(monitor: number): Rectangle {
@@ -531,6 +537,7 @@ export class Ext extends Ecs.World {
      */
     on_focused(win: Window.ShellWindow) {
         this.last_focused = win.entity;
+        this.active_hint?.track_window(win);
 
         let msg = `focused Window(${win.entity}) {\n`
             + `  name: ${win.name(this)},\n`

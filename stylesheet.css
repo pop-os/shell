@@ -1,3 +1,7 @@
+.pop-shell-active-hint {
+    background: rgba(230,130,32,0.6);
+}
+
 .pop-shell-search-label {
     margin-left: 2em;
 }
