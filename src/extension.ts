@@ -508,28 +508,28 @@ export class Ext extends Ecs.World {
         return Rect.Rectangle.from_meta(meta);
     }
 
-    on_destroy(win: Window.ShellWindow) {
-        Log.debug(`destroying window (${win.entity}): ${win.name(this)}`);
+    on_destroy(win: Entity) {
+        Log.debug(`destroying window (${win}): ${this.names.get(win)}`);
 
-        if (this.last_focused == win.entity) {
+        if (this.last_focused == win) {
             this.active_hint?.untrack();
 
             this.last_focused = null;
 
             if (this.attached && this.auto_tiler) {
-                const entity = this.attached.get(win.entity);
+                const entity = this.attached.get(win);
                 if (entity) {
                     const fork = this.auto_tiler.forks.get(entity);
-                    if (fork?.right?.is_window(win.entity)) {
+                    if (fork?.right?.is_window(win)) {
                         this.windows.with(fork.right.entity, (sibling) => sibling.activate())
                     }
                 }
             }
         }
 
-        if (this.auto_tiler) this.detach_window(win.entity);
+        if (this.auto_tiler) this.detach_window(win);
 
-        this.delete_entity(win.entity);
+        this.delete_entity(win);
     }
 
     /**
@@ -655,8 +655,9 @@ export class Ext extends Ecs.World {
             let win = this.get_window(window);
             let actor = window.get_compositor_private();
             if (win && actor) {
+                const entity = win.entity;
                 actor.connect('destroy', () => {
-                    if (win) this.on_destroy(win);
+                    if (win) this.on_destroy(entity);
                 });
 
                 if (win.is_tilable(this)) {
