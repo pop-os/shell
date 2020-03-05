@@ -512,6 +512,8 @@ export class Ext extends Ecs.World {
         Log.debug(`destroying window (${win.entity}): ${win.name(this)}`);
 
         if (this.last_focused == win.entity) {
+            this.active_hint?.untrack();
+
             this.last_focused = null;
 
             if (this.attached && this.auto_tiler) {
@@ -537,7 +539,11 @@ export class Ext extends Ecs.World {
      */
     on_focused(win: Window.ShellWindow) {
         this.last_focused = win.entity;
-        this.active_hint?.track_window(win);
+
+        GLib.idle_add(GLib.PRIORITY_LOW, () => {
+            this.active_hint?.track_window(win);
+            return false;
+        });
 
         let msg = `focused Window(${win.entity}) {\n`
             + `  name: ${win.name(this)},\n`
