@@ -66,7 +66,7 @@ restart-shell:
 	echo "Restart shell!"
 	if [ -n "$$(which xdotool)" ]; then \
 		xdotool key alt+F2; \
-		sleep 0.5; \
+		sleep 1; \
 		xdotool key r Return; \
 	fi
 
