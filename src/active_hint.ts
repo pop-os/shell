@@ -4,10 +4,11 @@ const { St } = imports.gi;
 const { main } = imports.ui;
 
 export class ActiveHint {
-    overlay: any;
-    source1: any;
-    source2: any;
-    meta: any | null;
+    private overlay: any;
+    private source1: any;
+    private source2: any;
+    private meta: any | null;
+    private parent: any;
 
     constructor() {
         this.overlay = new St.BoxLayout({
@@ -21,13 +22,14 @@ export class ActiveHint {
         this.untrack();
 
         this.meta = window.meta;
-        this.update_overlay();
 
         const actor = this.meta.get_compositor_private();
+        this.parent = actor.get_parent();
 
-        const parent = actor.get_parent();
-        parent.add_child(this.overlay);
-        parent.set_child_above_sibling(actor, this.overlay);
+        this.update_overlay();
+
+        this.parent.add_child(this.overlay);
+        this.parent.set_child_above_sibling(actor, this.overlay);
 
         main.layoutManager.trackChrome(this.overlay, { affectsInputRegion: false });
 
@@ -39,7 +41,9 @@ export class ActiveHint {
         if (this.meta) {
             this.meta.disconnect(this.source1);
             this.meta.disconnect(this.source2);
-            this.meta.get_compositor_private().get_parent().remove_child(this.overlay);
+            this.parent.remove_child(this.overlay);
+            this.meta = null;
+            this.parent = null;
             main.layoutManager.untrackChrome(this.overlay);
         }
     }
