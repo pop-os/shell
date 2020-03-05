@@ -151,6 +151,11 @@ export class ShellWindow {
         });
     }
 
+    workspace_id(): number {
+        const workspace = this.meta.get_workspace();
+        return workspace ? workspace.index() : 0;
+    }
+
     xid(): string | null {
         return this.xid_.get_or_init(() => xprop.get_xid(this.meta));
     }

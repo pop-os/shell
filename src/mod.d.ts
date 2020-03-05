@@ -44,7 +44,7 @@ declare namespace Meta {
         get_stable_sequence: () => number;
         get_title: () => string;
         get_wm_class: () => string;
-        get_workspace: () => Workspace;
+        get_workspace: () => Workspace | null;
         is_client_decorated: () => boolean;
         is_skip_taskbar: () => boolean;
         move_resize_frame: (user_op: boolean, x: number, y: number, w: number, h: number) => boolean;

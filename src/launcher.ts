@@ -137,7 +137,7 @@ export class Launcher extends search.Search {
                 ext.overlay.y = rect.y;
                 ext.overlay.width = rect.width;
                 ext.overlay.height = rect.height;
-                ext.overlay.visible = selected.meta.get_workspace().index() == ext.active_workspace();
+                ext.overlay.visible = selected.workspace_id() == ext.active_workspace();
             } else {
                 ext.overlay.visible = false;
             }
@@ -201,7 +201,7 @@ export class Launcher extends search.Search {
         this.active.splice(0);
 
         for (const window of ext.tab_list(Meta.TabList.NORMAL, null)) {
-            if (window.meta.get_workspace().index() == active) {
+            if (window.workspace_id() == active) {
                 this.selections.push(window);
 
                 this.active.push(window_selection(ext, window));

@@ -854,7 +854,9 @@ export class TilingNode {
                 window.meta.change_workspace_by_index(workspace, false);
 
                 if (ext.switch_workspace_on_move) {
-                    window.meta.get_workspace().activate(global.get_current_time())
+                    global.display.get_workspace_manager()
+                        .get_workspace_by_index(workspace)
+                        .activate(global.get_current_time())
                 }
 
                 return window.move(area);

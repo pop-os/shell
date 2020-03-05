@@ -666,7 +666,7 @@ export class Ext extends Ecs.World {
         if (monitor) {
             const [expected_monitor, expected_workspace] = monitor;
             const actual_monitor = win.meta.get_monitor();
-            const actual_workspace = win.meta.get_workspace().index();
+            const actual_workspace = win.workspace_id();
             if (expected_monitor != actual_monitor || actual_workspace != expected_workspace) {
                 func(expected_monitor, actual_monitor, actual_workspace);
             }
@@ -843,7 +843,7 @@ export class Ext extends Ecs.World {
             this.windows.insert(entity, win);
             this.ids.insert(entity, id);
             this.names.insert(entity, name);
-            this.monitors.insert(entity, [win.meta.get_monitor(), win.meta.get_workspace().index()]);
+            this.monitors.insert(entity, [win.meta.get_monitor(), win.workspace_id()]);
 
             Log.debug(`created window (${win.entity}): ${win.name(this)}: ${id}`);
             if (this.mode == Lib.MODE_AUTO_TILE && win.is_tilable(this)) this.auto_tile(win, this.init);
@@ -893,7 +893,7 @@ export class Ext extends Ecs.World {
 
         if (window) {
             id[0] = window.meta.get_monitor();
-            id[1] = window.meta.get_workspace().index();
+            id[1] = window.workspace_id();
         } else {
             id[0] = this.active_monitor();
             id[1] = this.active_workspace();
@@ -960,13 +960,17 @@ function disable() {
 // Supplements the GNOME Shell theme with the extension's theme.
 function load_theme() {
     try {
+        Log.info(`loading theme`)
         let theme = new St.Theme({
             application_stylesheet: Gio.File.new_for_path(Me.path + "/stylesheet.css"),
             theme_stylesheet: _defaultCssStylesheet,
         });
 
+        Log.info(`setting theme`);
+
         St.ThemeContext.get_for_stage(global.stage).set_theme(theme);
+        Log.info(`theme set`);
     } catch (e) {
-        Log.error("failed to load pop-shell stylesheet: " + e);
+        Log.error("failed to load stylesheet: " + e);
     }
 }
