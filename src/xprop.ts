@@ -2,7 +2,7 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 import * as lib from 'lib';
 
-const { GLib } = imports.gi;
+const GLib: GLib = imports.gi.GLib;
 const { spawn } = imports.misc.util;
 
 export var MOTIF_HINTS: string = '_MOTIF_WM_HINTS';
@@ -64,7 +64,7 @@ function parse_string(string: string): string | null {
 function xprop_cmd(xid: string, args: string): string | null {
     let xprops = GLib.spawn_command_line_sync(lib.dbg(`xprop -id ${xid} ${args}`));
 
-    if (!xprops[0]) return null;
+    if (!xprops.ok) return null;
 
-    return imports.byteArray.toString(xprops[1]);
+    return imports.byteArray.toString(xprops.standard_output);
 }

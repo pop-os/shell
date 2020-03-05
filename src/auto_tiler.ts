@@ -213,8 +213,9 @@ export class AutoTiler extends Ecs.World {
      * Finds the top level fork associated with the given entity
      */
     find_toplevel(id: [number, number]): Entity | null {
-        for (const [entity, value] of this.toplevel.values()) {
-            if (value[0] == id[0] && value[1] == id[1]) {
+        for (const [entity, [mon, work]] of this.toplevel.values()) {
+            if (mon == id[0] && work == id[1]) {
+                Log.log(`found top level at Fork(${entity})`);
                 return entity;
             }
         }

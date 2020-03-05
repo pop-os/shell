@@ -9,6 +9,22 @@ interface Rectangular {
     height: number;
 }
 
+interface ProcessResult {
+    ok: boolean;
+    standard_output: any;
+    standard_error: any;
+    exit_status: number;
+}
+
+declare interface GLib {
+    PRIORITY_DEFAULT: number;
+    PRIORITY_LOW: number;
+
+    idle_add: (priority: any, callback: () => boolean) => number;
+    spawn_command_line_sync: (cmd: string) => ProcessResult;
+    timeout_add: (ms: number, priority: any, callback: () => Boolean) => number;
+}
+
 declare namespace GObject {
     interface Object {
         connect: (signal: string, callback: (...args: any) => boolean) => number;
@@ -21,6 +37,7 @@ declare namespace Clutter {
         visible: boolean;
 
         add_child: (child: Actor) => void;
+        destroy: () => void;
         get_child_at_index: (nth: number) => Clutter.Actor | null;
         get_n_children: () => number;
         get_parent: () => Clutter.Actor | null;

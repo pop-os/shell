@@ -23,10 +23,12 @@ import type { Rectangle } from 'rectangle';
 import type { Indicator } from 'panel_settings';
 import type { Launcher } from './launcher';
 
-const { Gio, GLib, Meta, St } = imports.gi;
+const { Gio, Meta, St } = imports.gi;
 const { cursor_rect, is_move_op } = Lib;
 const { _defaultCssStylesheet, layoutManager, overview, panel, sessionMode } = imports.ui.main;
 const Tags = Me.imports.tags;
+
+const GLib: GLib = imports.gi.GLib;
 
 export class Ext extends Ecs.World {
     private init: boolean = true;
@@ -518,7 +520,7 @@ export class Ext extends Ecs.World {
         this.column_size = this.settings.column_size();
         this.row_size = this.settings.row_size();
 
-        if (this.settings.active_hint()) {
+        if (this.settings.active_hint() && !this.active_hint) {
             this.active_hint = new active_hint.ActiveHint();
         }
     }
@@ -710,12 +712,15 @@ export class Ext extends Ecs.World {
     reflow(win: Entity) {
         if (this.attached) this.attached.with(win, (fork_entity) => {
             Log.debug(`scheduling reflow of Window(${win})`);
+
             GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
                 if (this.auto_tiler) {
                     Log.debug(`reflow Window(${win})`);
                     const fork = this.auto_tiler.forks.get(fork_entity);
                     if (fork?.area) this.tile(fork, fork.area, fork.workspace, true);
                 }
+
+                return false;
             });
         });
     }
@@ -889,15 +894,11 @@ export class Ext extends Ecs.World {
     workspace_id(window: Window.ShellWindow | null = null): [number, number] {
         Log.debug(`fetching workspace ID`);
 
-        let id: [number, number] = [0, 0];
+        let id: [number, number] = window
+            ? [window.meta.get_monitor(), window.workspace_id()]
+            : [this.active_monitor(), this.active_workspace()];
 
-        if (window) {
-            id[0] = window.meta.get_monitor();
-            id[1] = window.workspace_id();
-        } else {
-            id[0] = this.active_monitor();
-            id[1] = this.active_workspace();
-        }
+        Log.debug(`fetched workspace ID: ${id}`);
 
         id[0] = Math.max(0, id[0]);
         id[1] = Math.max(0, id[1]);

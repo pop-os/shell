@@ -122,7 +122,7 @@ export function *load_desktop_entries(path: string): IterableIterator<Result<App
 
         const name: string = entry.get_name();
         if (name.indexOf('.desktop') > -1) {
-            const desktop_path = GLib.build_filenamev([path, name]);
+            const desktop_path = path + '/' + name;
             const info = AppInfo.try_from(desktop_path);
 
             if (info instanceof AppInfo && (info.app_info.get_is_hidden() || info.app_info.get_nodisplay())) {
