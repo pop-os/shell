@@ -44,7 +44,7 @@ export class Indicator {
                     ext.active_hint.track_window(focused);
                 }
             } else {
-                ext.active_hint?.untrack(false);
+                ext.active_hint?.destroy();
                 ext.active_hint = null;
             }
         }));

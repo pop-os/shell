@@ -80,4 +80,9 @@ export class ActiveHint {
             this.overlay.visible = true;
         }
     }
+
+    destroy() {
+        this.untrack(false);
+        this.overlay.destroy();
+    }
 }
