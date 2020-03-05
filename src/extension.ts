@@ -823,7 +823,6 @@ export class Ext extends Ecs.World {
             Log.debug(`created window (${win.entity}): ${win.name(this)}: ${id}`);
             if (this.mode == Lib.MODE_AUTO_TILE && win.is_tilable(this)) this.auto_tile(win, this.init);
         }
-
         return entity;
     }
 
@@ -875,7 +874,8 @@ export class Ext extends Ecs.World {
             id[1] = this.active_workspace();
         }
 
-        Log.debug(`found workspace ID: ${id}`);
+        id[0] = Math.max(0, id[0]);
+        id[1] = Math.max(0, id[1]);
 
         return id;
     }
@@ -942,6 +942,6 @@ function load_theme() {
 
         St.ThemeContext.get_for_stage(global.stage).set_theme(theme);
     } catch (e) {
-        Log.debug("stylesheet: " + e);
+        Log.error("failed to load pop-shell stylesheet: " + e);
     }
 }
