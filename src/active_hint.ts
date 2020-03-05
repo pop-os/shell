@@ -1,14 +1,20 @@
-import { ShellWindow } from "./window";
+import type { Entity } from './ecs';
+import type { ShellWindow } from "./window";
 
 const { St } = imports.gi;
 const { main } = imports.ui;
 
+interface WindowDetails {
+    entity: Entity;
+    meta: Meta.Window;
+    parent: Clutter.Actor;
+}
+
 export class ActiveHint {
-    private overlay: any;
-    private source1: any;
-    private source2: any;
-    private meta: any | null;
-    private parent: any;
+    private overlay: Clutter.Actor;
+    private source1: number = 0;
+    private source2: number = 0;
+    private window: WindowDetails | null = null;
 
     constructor() {
         this.overlay = new St.BoxLayout({
@@ -19,43 +25,59 @@ export class ActiveHint {
     }
 
     track_window(window: ShellWindow) {
-        this.untrack();
+        this.untrack(false);
 
-        this.meta = window.meta;
+        const actor = window.meta.get_compositor_private();
+        const parent = actor.get_parent();
 
-        const actor = this.meta.get_compositor_private();
-        this.parent = actor.get_parent();
+        if (parent) {
+            this.window = {
+                entity: window.entity,
+                meta: window.meta,
+                parent: parent,
+            }
+            this.update_overlay();
 
-        this.update_overlay();
+            parent.add_child(this.overlay);
+            parent.set_child_below_sibling(this.overlay, actor);
 
-        this.parent.add_child(this.overlay);
-        this.parent.set_child_below_sibling(this.overlay, actor);
+            main.layoutManager.trackChrome(this.overlay, { affectsInputRegion: false });
 
-        main.layoutManager.trackChrome(this.overlay, { affectsInputRegion: false });
+            this.source1 = window.meta.connect('size-changed', () => {
+                this.update_overlay();
+                return true;
+            });
 
-        this.source1 = this.meta.connect('size-changed', () => this.update_overlay());
-        this.source2 = this.meta.connect('position-changed', () => this.update_overlay());
+            this.source2 = window.meta.connect('position-changed', () => {
+                this.update_overlay();
+                return true;
+            });
+        }
     }
 
-    untrack() {
-        if (this.meta) {
-            this.meta.disconnect(this.source1);
-            this.meta.disconnect(this.source2);
-            this.parent.remove_child(this.overlay);
-            this.meta = null;
-            this.parent = null;
+    untrack(destroyed: boolean) {
+        if (this.window) {
+            if (!destroyed) {
+                this.window.meta.disconnect(this.source1);
+                this.window.meta.disconnect(this.source2);
+            }
+
+            this.window.parent.remove_child(this.overlay);
             main.layoutManager.untrackChrome(this.overlay);
+            this.window = null;
         }
     }
 
     update_overlay() {
-        const rect = this.meta.get_frame_rect();
+        if (this.window) {
+            const rect = this.window.meta.get_frame_rect();
 
-        this.overlay.x = rect.x - 4;
-        this.overlay.y = rect.y - 4;
-        this.overlay.width = rect.width + 8;
-        this.overlay.height = rect.height + 8;
+            this.overlay.x = rect.x - 4;
+            this.overlay.y = rect.y - 4;
+            this.overlay.width = rect.width + 8;
+            this.overlay.height = rect.height + 8;
 
-        this.overlay.visible = true;
+            this.overlay.visible = true;
+        }
     }
 }

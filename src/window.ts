@@ -18,13 +18,13 @@ export var window_tracker = Shell.WindowTracker.get_default();
 
 export class ShellWindow {
     entity: Entity;
-    meta: any;
+    meta: Meta.Window;
 
     private window_app: any;
     private wm_role_: once_cell.OnceCell<string | null> = new OnceCell();
     private xid_: once_cell.OnceCell<string | null> = new OnceCell();
 
-    constructor(entity: Entity, window: any, window_app: any, ext: Ext) {
+    constructor(entity: Entity, window: Meta.Window, window_app: any, ext: Ext) {
         this.window_app = window_app;
 
         this.entity = entity;
@@ -104,7 +104,7 @@ export class ShellWindow {
             });
     }
 
-    move(rect: Rectangle): boolean {
+    move(rect: Rectangular): boolean {
         this.meta.unmaximize(Meta.MaximizeFlags.HORIZONTAL);
         this.meta.unmaximize(Meta.MaximizeFlags.VERTICAL);
         this.meta.unmaximize(Meta.MaximizeFlags.HORIZONTAL | Meta.MaximizeFlags.VERTICAL);
@@ -163,7 +163,7 @@ const BLACKLIST: string[] = [
 ];
 
 /// Activates a window, and moves the mouse point to the center of it.
-export function activate(win: any) {
+export function activate(win: Meta.Window) {
     win.raise();
     win.unminimize();
     win.activate(global.get_current_time());
@@ -175,7 +175,7 @@ export function blacklisted(window_class: string): boolean {
     return BLACKLIST.indexOf(window_class) > -1;
 }
 
-export function place_pointer_on(win: any) {
+export function place_pointer_on(win: Meta.Window) {
     const rect = win.get_frame_rect();
     const x = rect.x + 8;
     const y = rect.y + 8;

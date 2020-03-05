@@ -43,7 +43,7 @@ export class Ext extends Ecs.World {
     switch_workspace_on_move: boolean = true;
 
     active_hint: active_hint.ActiveHint | null = null;
-    overlay: any;
+    overlay: Clutter.Actor;
 
     keybindings: Keybindings.Keybindings;
     settings: Settings.ExtensionSettings;
@@ -110,15 +110,33 @@ export class Ext extends Ecs.World {
             if ('user' != global.sessionMode.currentMode()) {
                 this.exit_modes();
             }
+            return true;
         });
 
-        this.connect(overview, 'showing', () => this.exit_modes());
-        this.connect(global.display, 'window_created', (_: any, win: any) => this.on_window_create(win));
-        this.connect(global.display, 'grab-op-begin', (_: any, _display: any, win: any, op: any) => this.on_grab_start(win, op));
-        this.connect(global.display, 'grab-op-end', (_: any, _display: any, win: any, op: any) => this.on_grab_end(win, op));
+        this.connect(overview, 'showing', () => {
+            this.exit_modes();
+            return true;
+        });
+
+        this.connect(global.display, 'window_created', (_: any, win: any) => {
+            this.on_window_create(win);
+            return true;
+        });
+
+        this.connect(global.display, 'grab-op-begin', (_: any, _display: any, win: any, op: any) => {
+            this.on_grab_start(win, op);
+            return true;
+        });
+
+        this.connect(global.display, 'grab-op-end', (_: any, _display: any, win: any, op: any) => {
+            this.on_grab_end(win, op);
+            return true;
+        });
+
         this.connect(workspace_manager, 'active-workspace-changed', () => {
             this.exit_modes();
             this.last_focused = null;
+            return true;
         });
 
         // Modes
@@ -140,7 +158,7 @@ export class Ext extends Ecs.World {
         // Post-init
 
         for (const window of this.tab_list(Meta.TabList.NORMAL, null)) {
-            this.on_window_create(window);
+            this.on_window_create(window.meta);
         }
 
         GLib.timeout_add(1000, GLib.PRIORITY_DEFAULT, () => {
@@ -365,20 +383,21 @@ export class Ext extends Ecs.World {
         }
     }
 
-    /**
-     * Connects a callback signal to a GObject, and records the signal.
-     *
-     * @param {GObject.Object} object
-     * @param {string} property
-     * @param {function} callback
-     */
-    connect(object: any, property: string, callback: any) {
+    /// Connects a callback signal to a GObject, and records the signal.
+    connect(object: GObject.Object, property: string, callback: (...args: any) => boolean) {
         object.connect(property, callback);
     }
 
     connect_window(win: Window.ShellWindow) {
-        this.connect(win.meta, 'focus', () => this.on_focused(win));
-        this.connect(win.meta, 'workspace-changed', () => this.on_workspace_changed(win));
+        this.connect(win.meta, 'focus', () => {
+            this.on_focused(win);
+            return true;
+        });
+
+        this.connect(win.meta, 'workspace-changed', () => {
+            this.on_workspace_changed(win);
+            return true;
+        });
 
         this.connect(win.meta, 'size-changed', () => {
             if (this.attached && !win.is_maximized())  {
@@ -389,6 +408,8 @@ export class Ext extends Ecs.World {
                     this.reflow(win.entity);
                 }
             }
+
+            return true;
         });
 
         this.connect(win.meta, 'position-changed', () => {
@@ -396,6 +417,8 @@ export class Ext extends Ecs.World {
                 Log.debug(`position changed: ${win.name(this)}`);
                 this.reflow(win.entity);
             }
+
+            return true;
         });
     }
 
@@ -484,7 +507,7 @@ export class Ext extends Ecs.World {
     }
 
     /// Fetches the window component from the entity associated with the metacity window metadata.
-    get_window(meta: any): Window.ShellWindow | null {
+    get_window(meta: Meta.Window | null): Window.ShellWindow | null {
         let entity = this.window_entity(meta);
         return entity ? this.windows.get(entity) : null;
     }
@@ -512,7 +535,7 @@ export class Ext extends Ecs.World {
         Log.debug(`destroying window (${win}): ${this.names.get(win)}`);
 
         if (this.last_focused == win) {
-            this.active_hint?.untrack();
+            this.active_hint?.untrack(true);
 
             this.last_focused = null;
 
@@ -563,7 +586,7 @@ export class Ext extends Ecs.World {
      * @param {Meta.Window} meta
      * @param {*} op
      */
-    on_grab_end(meta: any, op: any) {
+    on_grab_end(meta: Meta.Window, op: any) {
         let win = this.get_window(meta);
 
         if (null == win || !win.is_tilable(this)) {
@@ -624,7 +647,7 @@ export class Ext extends Ecs.World {
      * @param {Meta.Window} meta
      * @param {*} op
      */
-    on_grab_start(meta: any, op: any) {
+    on_grab_start(meta: Meta.Window, op: any) {
         let win = this.get_window(meta);
         if (win && win.is_tilable(this)) {
             let entity = win.entity;
@@ -650,7 +673,7 @@ export class Ext extends Ecs.World {
         }
     }
 
-    on_window_create(window: any) {
+    on_window_create(window: Meta.Window) {
         GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
             let win = this.get_window(window);
             let actor = window.get_compositor_private();
@@ -658,6 +681,7 @@ export class Ext extends Ecs.World {
                 const entity = win.entity;
                 actor.connect('destroy', () => {
                     if (win) this.on_destroy(entity);
+                    return false;
                 });
 
                 if (win.is_tilable(this)) {
@@ -723,7 +747,7 @@ export class Ext extends Ecs.World {
     tab_list(tablist: number, workspace: number | null): Array<Window.ShellWindow> {
         return global.display
             .get_tab_list(tablist, workspace)
-            .map((win: any) => this.get_window(win));
+            .map((win: Meta.Window) => this.get_window(win));
     }
 
     * tiled_windows(): IterableIterator<Entity> {
@@ -787,7 +811,7 @@ export class Ext extends Ecs.World {
     }
 
     /// Fetches the window entity which is associated with the metacity window metadata.
-    window_entity(meta: any): Entity | null {
+    window_entity(meta: Meta.Window | null): Entity | null {
         if (!meta) return null;
 
         let id: number;

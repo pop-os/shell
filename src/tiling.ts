@@ -75,7 +75,7 @@ export class Tiler {
         return monitor_rect(monitor, columns, rows);
     }
 
-    change(ext: Ext, overlay: any, monitor: Rectangle, rect: Rectangle, dx: number, dy: number, dw: number, dh: number): Tiler {
+    change(ext: Ext, overlay: Rectangular, monitor: Rectangle, rect: Rectangle, dx: number, dy: number, dw: number, dh: number): Tiler {
         let changed = new Rect.Rectangle([
             overlay.x + dx * rect.width,
             overlay.y + dy * rect.height,

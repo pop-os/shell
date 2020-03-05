@@ -5,7 +5,7 @@ export class Rectangle {
     this.array = array;
   }
 
-  static from_meta(meta: any): Rectangle {
+  static from_meta(meta: Rectangular): Rectangle {
     return new Rectangle([meta.x, meta.y, meta.width, meta.height]);
   }
 
@@ -68,7 +68,7 @@ export class Rectangle {
     ]);
   }
 
-  eq(other: Rectangle): boolean {
+  eq(other: Rectangular): boolean {
     return (
       this.x == other.x &&
       this.y == other.y &&

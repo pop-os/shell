@@ -27,8 +27,8 @@ export function get_hint(xid: string, hint: string): Array<string> | null {
     return array ? array.map((value) => value.startsWith('0x') ? value : '0x' + value) : null;
 }
 
-export function get_xid(meta: any): string | null {
-    const desc: string = meta.get_description();
+export function get_xid(meta: Meta.Window): string | null {
+    const desc = meta.get_description();
     const match = desc && desc.match(/0x[0-9a-f]+/);
     return match && match[0];
 }
