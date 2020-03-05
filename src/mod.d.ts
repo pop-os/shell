@@ -9,12 +9,7 @@ interface Rectangular {
     height: number;
 }
 
-interface ProcessResult {
-    ok: boolean;
-    standard_output: any;
-    standard_error: any;
-    exit_status: number;
-}
+declare type ProcessResult = [boolean, any, any, number];
 
 declare interface GLib {
     PRIORITY_DEFAULT: number;
