@@ -70,6 +70,11 @@ restart-shell:
 		xdotool key r Return; \
 	fi
 
+update-repository:
+	git fetch origin
+	git reset --hard origin/master_focal
+	git clean -fd
+
 schemas: schemas/gschemas.compiled
 	touch $@
 
