@@ -566,7 +566,7 @@ export class Ext extends Ecs.World {
         this.last_focused = win.entity;
 
         GLib.idle_add(GLib.PRIORITY_LOW, () => {
-            this.active_hint?.track_window(win);
+            this.active_hint?.track(win);
             return false;
         });
 

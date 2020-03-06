@@ -41,10 +41,10 @@ export class Indicator {
 
                 const focused = ext.focus_window();
                 if (focused) {
-                    ext.active_hint.track_window(focused);
+                    ext.active_hint.track(focused);
                 }
-            } else {
-                ext.active_hint?.destroy();
+            } else if (ext.active_hint) {
+                ext.active_hint.destroy();
                 ext.active_hint = null;
             }
         }));
