@@ -563,6 +563,7 @@ export class Ext extends Ecs.World {
      * @param {ShellWindow} win
      */
     on_focused(win: Window.ShellWindow) {
+        this.exit_modes();
         this.last_focused = win.entity;
 
         GLib.idle_add(GLib.PRIORITY_LOW, () => {
