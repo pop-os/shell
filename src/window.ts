@@ -152,8 +152,17 @@ export class ShellWindow {
     }
 
     workspace_id(): number {
-        const workspace = this.meta.get_workspace();
-        return workspace ? workspace.index() : 0;
+        // TODO: This cause GNOME Shell to crash
+        // const workspace = this.meta.get_workspace();
+        // if (workspace) {
+        //     return workspace.index();
+        // } else {
+        //     this.meta.change_workspace_by_index(0, false);
+        //     return 0;
+        // }
+
+        // TODO: This throws an error when the workspace is null.
+        return (this.meta.get_workspace() as Meta.Workspace).index();
     }
 
     xid(): string | null {
