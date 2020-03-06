@@ -19,6 +19,7 @@ interface WindowDetails {
 
 export class ActiveHint {
     private overlay: Clutter.Actor;
+    private clone: Clutter.Actor;
 
     private window: WindowDetails | null = null;
 
@@ -29,22 +30,25 @@ export class ActiveHint {
             visible: false
         });
 
+        this.clone = this.overlay.ref();
+
         main.layoutManager.trackChrome(this.overlay, { affectsInputRegion: false });
     }
 
     reparent() {
         if (this.window) {
             const actor = this.window.meta.get_compositor_private();
+            if (!actor) return;
+
             const parent = actor.get_parent();
+            if (!parent) return;
 
-            if (parent) {
-                let clone = this.overlay;
-                this.window.parent.remove_child(clone);
+            this.window.parent.remove_child(this.clone);
+            this.clone = this.overlay.ref();
 
-                parent.add_child(this.overlay);
-                parent.set_child_below_sibling(this.overlay, actor);
-                this.window.parent = parent;
-            }
+            parent.add_child(this.overlay);
+            parent.set_child_below_sibling(this.overlay, actor);
+            this.window.parent = parent;
         }
     }
 
@@ -54,10 +58,12 @@ export class ActiveHint {
                 return;
             }
 
-            this.untrack(false);
+            this.untrack();
         }
 
         const actor = window.meta.get_compositor_private();
+        if (!actor) return;
+
         const parent = actor.get_parent();
 
         if (parent) {
@@ -88,15 +94,20 @@ export class ActiveHint {
         }
     }
 
-    untrack(destroyed: boolean) {
+    untrack() {
         this.overlay.visible = false;
         if (this.window) {
-            if (!destroyed) {
+            global.log(`untracking`);
+            const actor = this.window.meta.get_compositor_private();
+            if (actor) {
+                global.log(`not destroyed`);
                 if (this.window.source1 && this.window.source2) {
                     this.window.meta.disconnect(this.window.source1);
                     this.window.meta.disconnect(this.window.source2);
-                    this.window.meta.get_compositor_private().disconnect(this.window.source3);
+                    actor.disconnect(this.window.source3);
                 }
+            } else {
+                global.log(`destroyed`);
             }
 
             let clone = this.overlay;
@@ -117,7 +128,7 @@ export class ActiveHint {
     }
 
     destroy() {
-        this.untrack(false);
+        this.untrack();
         main.layoutManager.untrackChrome(this.overlay);
     }
 }

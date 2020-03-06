@@ -24,6 +24,7 @@ declare namespace GObject {
     interface Object {
         connect: (signal: string, callback: (...args: any) => boolean) => number;
         disconnect: (id: number) => void;
+        ref(): this;
     }
 }
 
@@ -48,7 +49,7 @@ declare namespace Meta {
 
         activate: (time: number) => void;
         change_workspace_by_index: (workspace: number, append: boolean) => void;
-        get_compositor_private: () => Clutter.Actor;
+        get_compositor_private: () => Clutter.Actor | null;
         get_description: () => string;
         get_frame_rect: () => Rectangular;
         get_maximized: () => boolean;

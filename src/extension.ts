@@ -537,7 +537,7 @@ export class Ext extends Ecs.World {
         Log.debug(`destroying window (${win}): ${this.names.get(win)}`);
 
         if (this.last_focused == win) {
-            this.active_hint?.untrack(true);
+            this.active_hint?.untrack();
 
             this.last_focused = null;
 
