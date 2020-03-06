@@ -111,6 +111,12 @@ export function round_increment(value: number, increment: number): number {
     return Math.round(value / increment) * increment;
 }
 
+export function round_to(n: number, digits: number): number {
+    let m = Math.pow(10, digits);
+    n = parseFloat((n * m).toFixed(11));
+    return Math.round(n) / m;
+}
+
 export function separator(): any {
     return new St.BoxLayout({ styleClass: 'pop-shell-separator', x_expand: true });
 }

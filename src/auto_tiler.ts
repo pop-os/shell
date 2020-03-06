@@ -704,7 +704,7 @@ export class TilingFork {
     }
 
     set_ratio(left_length: number, fork_length: number): TilingFork {
-        this.ratio = Math.min(Math.max(this.minimum_ratio, left_length / fork_length), 1.0 - this.minimum_ratio);
+        this.ratio = Lib.round_to(Math.min(Math.max(this.minimum_ratio, left_length / fork_length), 1.0 - this.minimum_ratio), 2);
 
         Log.debug(`new ratio: ${this.ratio}`);
         return this;
