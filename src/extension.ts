@@ -711,11 +711,8 @@ export class Ext extends Ecs.World {
 
     reflow(win: Entity) {
         if (this.attached) this.attached.with(win, (fork_entity) => {
-            Log.debug(`scheduling reflow of Window(${win})`);
-
             GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
                 if (this.auto_tiler) {
-                    Log.debug(`reflow Window(${win})`);
                     const fork = this.auto_tiler.forks.get(fork_entity);
                     if (fork?.area) this.tile(fork, fork.area, fork.workspace, true);
                 }

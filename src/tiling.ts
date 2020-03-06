@@ -49,14 +49,10 @@ export class Tiler {
             "tile-move-down": () => this.move_down(ext),
             "tile-move-up": () => this.move_up(ext),
             "tile-move-right": () => this.move_right(ext),
-            "tile-resize-left": () => this.resize(ext, Direction.Left, ResizeMode.Normal),
-            "tile-resize-left-reverse": () => this.resize(ext, Direction.Left, ResizeMode.Reverse),
-            "tile-resize-down": () => this.resize(ext, Direction.Down, ResizeMode.Normal),
-            "tile-resize-down-reverse": () => this.resize(ext, Direction.Down, ResizeMode.Reverse),
-            "tile-resize-up": () => this.resize(ext, Direction.Up, ResizeMode.Normal),
-            "tile-resize-up-reverse": () => this.resize(ext, Direction.Up, ResizeMode.Reverse),
-            "tile-resize-right": () => this.resize(ext, Direction.Right, ResizeMode.Normal),
-            "tile-resize-right-reverse": () => this.resize(ext, Direction.Right, ResizeMode.Reverse),
+            "tile-resize-left": () => this.resize(ext, Direction.Left),
+            "tile-resize-down": () => this.resize(ext, Direction.Down),
+            "tile-resize-up": () => this.resize(ext, Direction.Up),
+            "tile-resize-right": () => this.resize(ext, Direction.Right),
             "tile-swap-left": () => this.swap_left(ext),
             "tile-swap-down": () => this.swap_down(ext),
             "tile-swap-up": () => this.swap_up(ext),
@@ -193,25 +189,41 @@ export class Tiler {
         }
     }
 
-    move_auto_(ext: Ext, func: (a: TilingFork, b: Rectangle) => void) {
+    move_auto_(ext: Ext, func: (a: TilingFork, b: Rectangle, limit: Rectangle) => void) {
         if (ext.auto_tiler && ext.attached && this.window) {
             const entity = ext.attached.get(this.window);
             if (entity) {
                 const fork = ext.auto_tiler.forks.get(entity);
                 const window = ext.windows.get(this.window);
-                if (fork && window) {
-                    const grab_op = new GrabOp.GrabOp(this.window, window.rect());
 
-                    let crect = grab_op.rect.clone();
-                    func(fork, crect);
+                if (!fork || !window) return;
 
-                    if (crect.eq(grab_op.rect)) {
-                        return;
-                    }
+                const workspace_id = ext.workspace_id(window);
 
-                    ext.auto_tiler.resize(ext, entity, this.window, grab_op.operation(crect), crect, false);
-                    ext.set_overlay(window.rect());
+                const toplevel = ext.auto_tiler.find_toplevel(workspace_id);
+
+                if (!toplevel) return;
+
+                const topfork = ext.auto_tiler.forks.get(toplevel);
+
+                if (!topfork) return;
+
+                const toparea = topfork.area as Rect.Rectangle;
+
+                const before = window.rect();
+                const grab_op = new GrabOp.GrabOp(this.window, before);
+
+                let crect = grab_op.rect.clone();
+                func(fork, crect, toparea);
+
+                crect.clamp_diff(toparea);
+
+                if (crect.eq(grab_op.rect)) {
+                    return;
                 }
+
+                ext.auto_tiler.resize(ext, entity, this.window, grab_op.operation(crect), crect, false);
+                ext.set_overlay(window.rect());
             }
         }
     }
@@ -230,59 +242,32 @@ export class Tiler {
         }
     }
 
-    resize_auto(ext: Ext, direction: Direction, mode: ResizeMode) {
-        this.move_auto_(ext, (fork, crect) => {
-            if (ext.auto_tiler && this.window) {
-                const window = ext.windows.get(this.window);
-                if (window) {
-                    const workspace_id = ext.workspace_id(window);
-                    const toplevel = ext.auto_tiler.find_toplevel(workspace_id);
-                    if (toplevel) {
-                        ext.auto_tiler.forks.with(toplevel, (topfork) => {
-                            const toparea = topfork.area as Rect.Rectangle;
-                            switch (direction) {
-                                case Direction.Left:
-                                    if (mode == ResizeMode.Normal) {
-                                        crect.width -= ext.row_size;
-                                    } else {
-                                        if (crect.x - ext.row_size < toparea.x) return;
-                                        crect.x -= ext.row_size;
-                                        crect.width += ext.row_size;
-                                    }
-                                    break
-                                case Direction.Right:
-                                    if (mode == ResizeMode.Normal) {
-                                        if (crect.x + crect.width + ext.row_size > toparea.x + toparea.width) return;
-                                        crect.width += ext.row_size;
-                                    } else {
-                                        crect.x += ext.row_size;
-                                        crect.width -= ext.row_size;
-                                    }
-                                    break
-                                case Direction.Up:
-                                    if (mode == ResizeMode.Normal) {
-                                        crect.height -= ext.column_size;
-                                    } else {
-                                        if (crect.y - ext.column_size < toparea.y) return;
-                                        crect.y -= ext.column_size;
-                                        crect.height += ext.column_size;
-                                    }
-                                    break
-                                default:
-                                    if (mode == ResizeMode.Normal) {
-                                        if (crect.y + crect.height + ext.column_size > toparea.y + toparea.height) return;
-                                        crect.height += ext.column_size;
-                                    } else {
-                                        if (crect.y + ext.column_size > toparea.y + toparea.height) return;
-                                        crect.y += ext.column_size;
-                                        crect.height -= ext.column_size;
-                                    }
-                            }
-                        });
-                    }
-                }
-            }
-        });
+    resize_auto(ext: Ext, direction: Direction) {
+        let mov1: Rectangle, mov2: Rectangle;
+
+        const hrow = ext.row_size / 2;
+        const hcolumn = ext.column_size / 2;
+
+        switch (direction) {
+            case Direction.Left:
+                mov1 = new Rect.Rectangle([hrow, 0, -hrow, 0]);
+                mov2 = new Rect.Rectangle([0, 0, -hrow, 0]);
+                break;
+            case Direction.Right:
+                mov1 = new Rect.Rectangle([-hrow, 0, hrow, 0]);
+                mov2 = new Rect.Rectangle([0, 0, hrow, 0]);
+                break;
+            case Direction.Up:
+                mov1 = new Rect.Rectangle([0, hcolumn, 0, -hcolumn]);
+                mov2 = new Rect.Rectangle([0, 0, 0, -hcolumn]);
+                break;
+            default:
+                mov1 = new Rect.Rectangle([0, -hcolumn, 0, hcolumn]);
+                mov2 = new Rect.Rectangle([0, 0, 0, hcolumn]);
+        }
+
+        this.move_auto_(ext, (_, crect) => crect.apply(mov1));
+        this.move_auto_(ext, (_, crect) => crect.apply(mov2));
     }
 
     move_auto(ext: Ext, move_to: ShellWindow | null) {
@@ -323,9 +308,9 @@ export class Tiler {
         this.move(ext, 1, 0, 0, 0, () => ext.focus_selector.right(ext, null));
     }
 
-    resize(ext: Ext, direction: Direction, mode: ResizeMode) {
+    resize(ext: Ext, direction: Direction) {
         if (ext.auto_tiler) {
-            this.resize_auto(ext, direction, mode);
+            this.resize_auto(ext, direction);
         } else {
             let array: [number, number, number, number];
             switch (direction) {

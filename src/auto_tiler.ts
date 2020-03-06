@@ -444,20 +444,18 @@ export class AutoTiler extends Ecs.World {
             }
 
             const shrinking = length < child.area.array[measure];
-            Log.debug(`shrinking? ${shrinking}`);
 
             let done = false;
             let prev_area = child.area.clone();
             while (child.parent && !done) {
-                Log.debug(`length = ${length}`);
                 const parent = this.forks.get(child.parent);
                 if (parent && parent.area) {
                     prev_area = parent.area.clone();
                     if (parent.area.contains(original)) {
                         if (shrinking) {
-                            Log.debug(`Fork(${child_e}) area before: ${child.area}`);
+                            Log.debug(`Fork(${child_e}) area before: ${child.area?.fmt()}`);
                             if (child.area) child.area.array[measure] = length;
-                            Log.debug(`Fork(${child_e}) area after ${child.area}`);
+                            Log.debug(`Fork(${child_e}) area after ${child.area?.fmt()}`);
                         } else {
                             Log.info("breaking");
                             if (child.area) child.area.array[measure] = length;
@@ -738,7 +736,6 @@ export class TilingFork {
         }
 
         const this_area = this.area as Rectangle;
-        Log.debug(`fork area = ${this_area.fmt()}`);
 
         this.workspace = workspace;
 
