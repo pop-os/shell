@@ -390,18 +390,27 @@ export class Ext extends Ecs.World {
         object.connect(property, callback);
     }
 
+    connect_meta(win: Window.ShellWindow, signal: string, callback: () => boolean) {
+        this.connect(win.meta, signal, () => {
+            return win.actor_exists()
+                ? callback()
+                : false;
+        });
+    }
+
     connect_window(win: Window.ShellWindow) {
-        this.connect(win.meta, 'focus', () => {
+        this.connect_meta(win, 'focus', () => {
             this.on_focused(win);
             return true;
         });
 
-        this.connect(win.meta, 'workspace-changed', () => {
+        this.connect_meta(win, 'workspace-changed', () => {
             this.on_workspace_changed(win);
+
             return true;
         });
 
-        this.connect(win.meta, 'size-changed', () => {
+        this.connect_meta(win, 'size-changed', () => {
             if (this.attached && !win.is_maximized())  {
                 Log.debug(`size changed: ${win.name(this)}`);
                 if (this.grab_op) {
@@ -414,7 +423,7 @@ export class Ext extends Ecs.World {
             return true;
         });
 
-        this.connect(win.meta, 'position-changed', () => {
+        this.connect_meta(win, 'position-changed', () => {
             if (this.attached && !this.grab_op && !this.tiling && !win.is_maximized()) {
                 Log.debug(`position changed: ${win.name(this)}`);
                 this.reflow(win.entity);

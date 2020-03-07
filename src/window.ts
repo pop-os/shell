@@ -47,6 +47,10 @@ export class ShellWindow {
         activate(this.meta);
     }
 
+    actor_exists(): boolean {
+        return this.meta.get_compositor_private() !== null;
+    }
+
     private decoration(ext: Ext, callback: (xid: string) => void): void {
         if (this.may_decorate()) {
             const name = this.name(ext);
@@ -152,17 +156,13 @@ export class ShellWindow {
     }
 
     workspace_id(): number {
-        // TODO: This cause GNOME Shell to crash
-        // const workspace = this.meta.get_workspace();
-        // if (workspace) {
-        //     return workspace.index();
-        // } else {
-        //     this.meta.change_workspace_by_index(0, false);
-        //     return 0;
-        // }
-
-        // TODO: This throws an error when the workspace is null.
-        return (this.meta.get_workspace() as Meta.Workspace).index();
+        const workspace = this.meta.get_workspace();
+        if (workspace) {
+            return workspace.index();
+        } else {
+            this.meta.change_workspace_by_index(0, false);
+            return 0;
+        }
     }
 
     xid(): string | null {
