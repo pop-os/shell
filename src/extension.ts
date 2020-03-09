@@ -235,7 +235,7 @@ export class Ext extends Ecs.World {
             Log.debug(`attached Window(${win.entity}) to Fork(${entity}) on Monitor(${workspace_id})`);
 
             this.attach_update(fork, rect, workspace_id, true);
-            Log.info(this.auto_tiler.display(this, '\n\n'));
+            this.log_tree_nodes();
         }
     }
 
@@ -260,14 +260,14 @@ export class Ext extends Ecs.World {
                     } else {
                         Log.error(`attaching to fork without an area`);
                     };
-                    Log.info(this.auto_tiler.display(this, '\n\n'));
+                    this.log_tree_nodes();
                     return true;
                 } else {
                     Log.error(`missing monitor association for Window(${attachee.entity})`);
                 }
             }
 
-            Log.info(this.auto_tiler.display(this, '\n\n'));
+            this.log_tree_nodes();
         }
 
         return false;
@@ -453,7 +453,7 @@ export class Ext extends Ecs.World {
                         };
                     }
 
-                    Log.info(this.auto_tiler.display(this, '\n\n'));
+                    this.log_tree_nodes();
                 }
             });
         }
@@ -531,6 +531,13 @@ export class Ext extends Ecs.World {
 
         if (this.settings.active_hint() && !this.active_hint) {
             this.active_hint = new active_hint.ActiveHint();
+        }
+    }
+
+    log_tree_nodes() {
+        if (this.auto_tiler) {
+            let buf = this.auto_tiler.display(this, '');
+            Log.info('\n\n' + buf);
         }
     }
 
