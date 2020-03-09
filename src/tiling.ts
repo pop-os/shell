@@ -10,7 +10,7 @@ import type { Entity } from './ecs';
 import type { ShellWindow } from './window';
 import type { Rectangle } from './rectangle';
 import type { Ext } from './extension';
-import type { TilingFork } from './auto_tiler';
+import type { TilingFork, AutoTiler } from './auto_tiler';
 
 const Main = imports.ui.main;
 
@@ -189,7 +189,7 @@ export class Tiler {
         }
     }
 
-    move_auto_(ext: Ext, func: (a: TilingFork, b: Rectangle, limit: Rectangle) => void) {
+    move_auto_(ext: Ext, func1: (a: Rectangle) => void, func2: (a: Rectangle) => void) {
         if (ext.auto_tiler && ext.attached && this.window) {
             const entity = ext.attached.get(this.window);
             if (entity) {
@@ -211,18 +211,27 @@ export class Tiler {
                 const toparea = topfork.area as Rect.Rectangle;
 
                 const before = window.rect();
-                const grab_op = new GrabOp.GrabOp(this.window, before);
 
-                let crect = grab_op.rect.clone();
-                func(fork, crect, toparea);
+                let resize = (func: (a: Rectangle) => void) => {
+                    const grab_op = new GrabOp.GrabOp((this.window as Entity), before);
 
-                crect.clamp_diff(toparea);
+                    let crect = grab_op.rect.clone();
+                    func(crect);
 
-                if (crect.eq(grab_op.rect)) {
-                    return;
-                }
+                    crect.clamp_diff(toparea);
 
-                ext.auto_tiler.resize(ext, entity, this.window, grab_op.operation(crect), crect, false);
+                    if (crect.eq(grab_op.rect)) {
+                        return;
+                    }
+
+                    (ext.auto_tiler as AutoTiler).resize(ext, entity, (this.window as Entity), grab_op.operation(crect), crect, false);
+                };
+
+                ext.auto_tiler.move_windows = false;
+                resize(func1);
+                ext.auto_tiler.move_windows = true;
+                resize(func2);
+
                 ext.set_overlay(window.rect());
             }
         }
@@ -266,8 +275,7 @@ export class Tiler {
                 mov2 = new Rect.Rectangle([0, 0, 0, hcolumn]);
         }
 
-        this.move_auto_(ext, (_, crect) => crect.apply(mov1));
-        this.move_auto_(ext, (_, crect) => crect.apply(mov2));
+        this.move_auto_(ext, (crect) => crect.apply(mov1), (crect) => crect.apply(mov2));
     }
 
     move_auto(ext: Ext, move_to: ShellWindow | null) {

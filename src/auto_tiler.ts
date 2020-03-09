@@ -34,6 +34,7 @@ const HEIGHT = 3;
 export class AutoTiler extends Ecs.World {
     toplevel: Map<String, [Entity, [number, number]]>;
     forks: Ecs.Storage<TilingFork>;
+    move_windows: boolean = true;
 
     private string_reps: Ecs.Storage<string>;
 
@@ -851,7 +852,7 @@ export class TilingNode {
             if (fork) {
                 return fork.tile(tiler, ext, area, workspace, true);
             }
-        } else {
+        } else if (tiler.move_windows) {
             // Log.debug(`tiling Window(${this.entity}) into [${area.array}]`);
             const window = ext.windows.get(this.entity);
 
@@ -866,6 +867,8 @@ export class TilingNode {
 
                 return window.move(area);
             }
+        } else {
+            return true;
         }
 
         return false;
