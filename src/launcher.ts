@@ -38,7 +38,7 @@ const SEARCH_PATHS: Array<[string, string]> = [
 
 export class Launcher extends search.Search {
     selections: Array<ShellWindow | [string, AppInfo]>;
-    active: Array<[string, any, any]>;
+    active: Array<[string, St.Widget, St.Widget]>;
     desktop_apps: Array<[string, AppInfo]>;
 
     constructor(ext: Ext) {
@@ -48,7 +48,7 @@ export class Launcher extends search.Search {
             ext.overlay.visible = false;
         };
 
-        let search = (pattern: string): Array<[string, any, any]> | null => {
+        let search = (pattern: string): Array<[string, St.Widget, St.Widget]> | null => {
             this.selections.splice(0);
             this.active.splice(0);
             apps.splice(0);
@@ -100,7 +100,7 @@ export class Launcher extends search.Search {
             this.selections.splice(LIST_MAX);
 
             for (const selection of this.selections) {
-                let data: [string, any, any];
+                let data: [string, St.Widget, St.Widget];
 
                 if (selection instanceof window.ShellWindow) {
                     data = window_selection(ext, selection);
@@ -221,11 +221,11 @@ export class Launcher extends search.Search {
 
         this.update_search_list(this.active);
 
-        this.dialog.open(global.get_current_time());
+        this.dialog.open(global.get_current_time(), false);
     }
 }
 
-function window_selection(ext: Ext, window: ShellWindow): [string, any, any] {
+function window_selection(ext: Ext, window: ShellWindow): [string, St.Widget, St.Widget] {
     let name = window.name(ext);
     let title = window.meta.get_title();
 

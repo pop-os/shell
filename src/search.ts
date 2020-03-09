@@ -7,21 +7,21 @@ const { Clutter, Pango, St } = imports.gi;
 const { ModalDialog } = imports.ui.modalDialog;
 
 export class Search {
-    dialog: any;
+    dialog: Shell.ModalDialog;
 
     private active_id: number;
     private ignore_prefixes: Array<string>;
-    private entry: any;
-    private list: any;
-    private text: any;
-    private widgets: Array<any>;
+    private entry: St.Entry;
+    private list: St.Widget;
+    private text: Clutter.Text;
+    private widgets: Array<St.Widget>;
 
     private select_cb: (id: number) => void;
 
     constructor(
         ignore_prefixes: Array<string>,
         cancel: () => void,
-        search: (pattern: string) => Array<[string, any, any]> | null,
+        search: (pattern: string) => Array<[string, St.Widget, St.Widget]> | null,
         select: (id: number) => void,
         apply: (id: number | string) => boolean
     ) {
@@ -43,7 +43,7 @@ export class Search {
             x_expand: true
         });
 
-        this.text = this.entry.clutter_text;
+        this.text = this.entry.get_clutter_text();
         this.dialog.setInitialKeyFocus(this.text);
 
         this.text.connect("activate", () => {
@@ -65,7 +65,7 @@ export class Search {
         this.text.connect("text-changed", (entry: any) => {
             this.clear();
 
-            const text = entry.get_text();
+            const text = (entry as Clutter.Text).get_text();
             if (this.has_prefix(text)) return;
 
             const update = search(text.toLowerCase());
@@ -112,8 +112,8 @@ export class Search {
             margin_top: 12
         });
 
-        this.dialog.contentLayout.add(this.entry);
-        this.dialog.contentLayout.add(this.list);
+        this.dialog.contentLayout.add_child(this.entry);
+        this.dialog.contentLayout.add_child(this.list);
 
         // Ensure that the width is at least 480 pixels wide.
         this.dialog.contentLayout.width = Math.max(Lib.current_monitor().width / 4, 480);
@@ -153,10 +153,10 @@ export class Search {
         );
     }
 
-    update_search_list(list: Array<any>) {
+    update_search_list(list: Array<[string, St.Widget, St.Widget]>) {
         Lib.join(
             list.values(),
-            (element: [string, any, any]) => {
+            (element: [string, St.Widget, St.Widget]) => {
                 const [title, cat_icon, icon] = element;
 
                 let label = new St.Label({
@@ -173,9 +173,9 @@ export class Search {
                     .container;
 
                 this.widgets.push(container);
-                this.list.add(container);
+                this.list.add_child(container);
             },
-            () => this.list.add(Lib.separator())
+            () => this.list.add_child(Lib.separator())
         );
 
         this.list.show();

@@ -22,15 +22,24 @@ declare interface GLib {
 
 declare namespace GObject {
     interface Object {
-        connect: (signal: string, callback: (...args: any) => boolean) => number;
+        connect: (signal: string, callback: (...args: any) => boolean | void) => number;
         disconnect: (id: number) => void;
         ref(): this;
     }
 }
 
 declare namespace Clutter {
+    enum ActorAlign {
+        FILL = 0,
+        START = 1,
+        CENTER = 3,
+        END = 3
+    }
+
     interface Actor extends Rectangular, GObject.Object {
         visible: boolean;
+        x_align: ActorAlign;
+        y_align: ActorAlign;
 
         add_child: (child: Actor) => void;
         destroy: () => void;
@@ -40,6 +49,11 @@ declare namespace Clutter {
         remove_all_children: () => void;
         remove_child: (child: Actor) => void;
         set_child_below_sibling: (child: Actor, sibling: Actor | null) => void;
+    }
+
+    interface Text extends Actor {
+        get_text(): Readonly<string>;
+        set_text(text: string | null): void;
     }
 }
 
@@ -69,5 +83,38 @@ declare namespace Meta {
     interface Workspace {
         activate: (time: number) => boolean;
         index: () => number;
+    }
+}
+
+declare namespace Shell {
+    interface Dialog extends St.Widget {
+        _dialog: St.Widget;
+        contentLayout: St.Widget;
+    }
+
+    interface ModalDialog extends St.Widget {
+        contentLayout: St.Widget;
+        dialogLayout: Dialog;
+
+        close(timestamp: number): void;
+        open(timestamp: number, on_primary: boolean): void;
+
+        setInitialKeyFocus(actor: Clutter.Actor): void;
+    }
+}
+
+declare namespace St {
+    interface Widget extends Clutter.Actor {
+        hide(): void;
+        set_style_class_name(name: string): void;
+        show(): void;
+        show_all(): void;
+    }
+
+    interface Entry extends Widget {
+        clutter_text: any;
+
+        get_clutter_text(): Clutter.Text;
+        grab_key_focus(): void;
     }
 }
