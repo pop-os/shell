@@ -15,15 +15,15 @@ declare interface GLib {
     PRIORITY_DEFAULT: number;
     PRIORITY_LOW: number;
 
-    idle_add: (priority: any, callback: () => boolean) => number;
-    spawn_command_line_sync: (cmd: string) => ProcessResult;
-    timeout_add: (ms: number, priority: any, callback: () => Boolean) => number;
+    idle_add(priority: any, callback: () => boolean): number;
+    spawn_command_line_sync(cmd: string): ProcessResult;
+    timeout_add(ms: number, priority: any, callback: () => Boolean): number;
 }
 
 declare namespace GObject {
     interface Object {
-        connect: (signal: string, callback: (...args: any) => boolean | void) => number;
-        disconnect: (id: number) => void;
+        connect(signal: string, callback: (...args: any) => boolean | void): number;
+        disconnect(id: number): void;
         ref(): this;
     }
 }
@@ -41,14 +41,14 @@ declare namespace Clutter {
         x_align: ActorAlign;
         y_align: ActorAlign;
 
-        add_child: (child: Actor) => void;
-        destroy: () => void;
-        get_child_at_index: (nth: number) => Clutter.Actor | null;
-        get_n_children: () => number;
-        get_parent: () => Clutter.Actor | null;
-        remove_all_children: () => void;
-        remove_child: (child: Actor) => void;
-        set_child_below_sibling: (child: Actor, sibling: Actor | null) => void;
+        add_child(child: Actor): void;
+        destroy(): void;
+        get_child_at_index(nth: number): Clutter.Actor | null;
+        get_n_children(): number;
+        get_parent(): Clutter.Actor | null;
+        remove_all_children(): void;
+        remove_child(child: Actor): void;
+        set_child_below_sibling(child: Actor, sibling: Actor | null): void;
     }
 
     interface Text extends Actor {
@@ -61,28 +61,28 @@ declare namespace Meta {
     interface Window extends Clutter.Actor {
         window_type: any;
 
-        activate: (time: number) => void;
-        change_workspace_by_index: (workspace: number, append: boolean) => void;
-        get_compositor_private: () => Clutter.Actor | null;
-        get_description: () => string;
-        get_frame_rect: () => Rectangular;
-        get_maximized: () => boolean;
-        get_monitor: () => number;
-        get_stable_sequence: () => number;
-        get_title: () => string;
-        get_wm_class: () => string;
-        get_workspace: () => Workspace | null;
-        is_client_decorated: () => boolean;
-        is_skip_taskbar: () => boolean;
-        move_resize_frame: (user_op: boolean, x: number, y: number, w: number, h: number) => boolean;
-        raise: () => void;
-        unmaximize: (flags: any) => void;
-        unminimize: () => void;
+        activate(time: number): void;
+        change_workspace_by_index(workspace: number, append: boolean): void;
+        get_compositor_private(): Clutter.Actor | null;
+        get_description(): string;
+        get_frame_rect(): Rectangular;
+        get_maximized(): boolean;
+        get_monitor(): number;
+        get_stable_sequence(): number;
+        get_title(): string;
+        get_wm_class(): string;
+        get_workspace(): Workspace | null;
+        is_client_decorated(): boolean;
+        is_skip_taskbar(): boolean;
+        move_resize_frame(user_op: boolean, x: number, y: number, w: number, h: number): boolean;
+        raise(): void;
+        unmaximize(flags: any): void;
+        unminimize(): void;
     }
 
     interface Workspace {
-        activate: (time: number) => boolean;
-        index: () => number;
+        activate(time: number): boolean;
+        index(): number;
     }
 }
 
