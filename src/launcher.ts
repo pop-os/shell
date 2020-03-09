@@ -1,6 +1,6 @@
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
-const { GLib, Meta, St } = imports.gi;
+const { Clutter, GLib, Meta, St } = imports.gi;
 const { spawnCommandLine } = imports.misc.util;
 
 const { evaluate } = Me.imports.math.math;
@@ -173,7 +173,12 @@ export class Launcher extends search.Search {
             return false;
         };
 
-        super([':', 't:','='], cancel, search, select, apply);
+        super([':', 't:', '='], cancel, search, select, apply);
+
+        this.dialog.dialogLayout._dialog.y_align = Clutter.ActorAlign.START;
+        this.dialog.dialogLayout._dialog.x_align = Clutter.ActorAlign.START;
+        this.dialog.dialogLayout.y = 48;
+
         this.selections = new Array();
         this.active = new Array();
         this.desktop_apps = new Array();
@@ -198,8 +203,11 @@ export class Launcher extends search.Search {
     }
 
     open(ext: Ext) {
+        const mon = ext.monitor_work_area(ext.active_monitor());
         const active = ext.active_workspace();
         this.active.splice(0);
+
+        this.dialog.dialogLayout.x = (mon.width / 2) - (this.dialog.dialogLayout.width / 2);
 
         for (const window of ext.tab_list(Meta.TabList.NORMAL, null)) {
             if (window.workspace_id() == active) {
