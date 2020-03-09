@@ -1,5 +1,3 @@
-import { TilingFork } from "./auto_tiler";
-
 export const OK = 1;
 export const ERR = 2;
 

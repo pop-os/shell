@@ -10,7 +10,7 @@ import type { Entity } from './ecs';
 import type { ShellWindow } from './window';
 import type { Rectangle } from './rectangle';
 import type { Ext } from './extension';
-import type { TilingFork, AutoTiler } from './auto_tiler';
+import type { AutoTiler } from './auto_tiler';
 
 const Main = imports.ui.main;
 

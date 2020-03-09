@@ -13,20 +13,20 @@ import * as Settings from 'settings';
 import * as Tiling from 'tiling';
 import * as Window from 'window';
 import * as launcher from 'launcher';
-import * as app_info from 'app_info';
-import * as error from 'error';
 import * as active_hint from 'active_hint';
+import * as node from 'node';
 
-import type { AppInfo } from 'app_info';
 import type { Entity } from 'ecs';
 import type { Rectangle } from 'rectangle';
 import type { Indicator } from 'panel_settings';
 import type { Launcher } from './launcher';
+import type { Fork } from 'fork';
 
 const { Gio, Meta, St } = imports.gi;
 const { cursor_rect, is_move_op } = Lib;
 const { _defaultCssStylesheet, layoutManager, overview, panel, sessionMode } = imports.ui.main;
 const Tags = Me.imports.tags;
+const { NodeKind } = node;
 
 const GLib: GLib = imports.gi.GLib;
 
@@ -295,12 +295,12 @@ export class Ext extends Ecs.World {
     /**
      * Sets the orientation of a tiling fork, and this it according to the given area.
      */
-    attach_update(fork: AutoTiler.TilingFork, area: Rectangle, workspace: [number, number], failure_allowed: boolean): boolean {
+    attach_update(fork: Fork, area: Rectangle, workspace: [number, number], failure_allowed: boolean): boolean {
         Log.debug(`setting attach area to (${area.x},${area.y}), (${area.width},${area.height})`);
         return this.tile(fork, area, workspace[1], failure_allowed);
     }
 
-    tile(fork: AutoTiler.TilingFork, area: Rectangle, workspace: number, failure_allowed: boolean): boolean {
+    tile(fork: Fork, area: Rectangle, workspace: number, failure_allowed: boolean): boolean {
         let success = true;
         if (this.auto_tiler) {
             this.tiling = true;
@@ -489,7 +489,7 @@ export class Ext extends Ecs.World {
                 const fork = this.auto_tiler.forks.get(fork_entity);
 
                 if (fork && fork.area) {
-                    if (fork.left.kind == AutoTiler.NodeKind.WINDOW && fork.right && fork.right.kind == AutoTiler.NodeKind.WINDOW) {
+                    if (fork.left.kind == NodeKind.WINDOW && fork.right && fork.right.kind == NodeKind.WINDOW) {
                         if (fork.left.is_window(win)) {
                             const sibling = this.windows.get(fork.right.entity);
                             if (sibling && sibling.rect().contains(cursor)) {
@@ -822,7 +822,7 @@ export class Ext extends Ecs.World {
                 if (this.auto_tiler) {
                     fork.toggle_orientation();
 
-                    for (const child of this.auto_tiler.iter(fork_entity, AutoTiler.NodeKind.FORK)) {
+                    for (const child of this.auto_tiler.iter(fork_entity, NodeKind.FORK)) {
                         this.auto_tiler.forks.with(child.entity, (fork) => {
                             fork.toggle_orientation();
                         });
