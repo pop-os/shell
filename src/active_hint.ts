@@ -5,7 +5,7 @@ import type { ShellWindow } from "./window";
 
 import * as Ecs from 'ecs';
 
-const { St } = imports.gi;
+const { GLib, St } = imports.gi;
 const { main } = imports.ui;
 
 interface WindowDetails {
@@ -97,17 +97,11 @@ export class ActiveHint {
     untrack() {
         this.overlay.visible = false;
         if (this.window) {
-            global.log(`untracking`);
             const actor = this.window.meta.get_compositor_private();
             if (actor) {
-                global.log(`not destroyed`);
-                if (this.window.source1 && this.window.source2) {
-                    this.window.meta.disconnect(this.window.source1);
-                    this.window.meta.disconnect(this.window.source2);
-                    actor.disconnect(this.window.source3);
-                }
-            } else {
-                global.log(`destroyed`);
+                this.window.meta.disconnect(this.window.source1);
+                this.window.meta.disconnect(this.window.source2);
+                actor.disconnect(this.window.source3);
             }
 
             let clone = this.overlay;

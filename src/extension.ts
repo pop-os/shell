@@ -120,6 +120,25 @@ export class Ext extends Ecs.World {
             return true;
         });
 
+        // We have to connect this signal in an idle_add; otherwise work areas stop being calculated
+        GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
+            global.display.connect('notify::focus-window', () => {
+                const window = this.focus_window();
+                if (window) {
+                    this.on_focused(window);
+                }
+
+                return true;
+            });
+
+            const window = this.focus_window();
+            if (window) {
+                this.on_focused(window);
+            }
+
+            return false;
+        });
+
         this.connect(global.display, 'window_created', (_: any, win: any) => {
             this.on_window_create(win);
             return true;
@@ -399,11 +418,6 @@ export class Ext extends Ecs.World {
     }
 
     connect_window(win: Window.ShellWindow) {
-        this.connect_meta(win, 'focus', () => {
-            this.on_focused(win);
-            return true;
-        });
-
         this.connect_meta(win, 'workspace-changed', () => {
             this.on_workspace_changed(win);
 
