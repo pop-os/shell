@@ -17,6 +17,11 @@ export enum NodeKind {
     WINDOW = 2,
 }
 
+enum Measure {
+    Horizontal = 2,
+    Vertical = 3,
+}
+
 const XPOS = 0;
 const YPOS = 1;
 const WIDTH = 2;
@@ -397,17 +402,19 @@ export class AutoTiler extends Ecs.World {
         });
     }
 
-    resize_parent(parent: TilingFork, child: TilingFork, is_left: boolean) {
+    resize_parent(parent: TilingFork, child: TilingFork, is_left: boolean, measure: Measure) {
         if (!child.area || !parent.area || child.area.eq(parent.area)) return;
+
+        const parent_measure = parent.is_horizontal() ? Measure.Horizontal : Measure.Vertical;
+        if (parent_measure != measure) return;
 
         Log.debug(`before ratio: ${parent.ratio}; (${child.area?.array} : ${parent.area?.array})`);
 
-        const measure = parent.is_horizontal() ? 2 : 3;
         parent.set_ratio(
             parent.ratio = is_left
-                ? child.area.array[measure]
-                : (parent.area.array[measure] - child.area.array[measure]),
-            parent.area.array[measure]
+                ? child.area.array[parent_measure]
+                : (parent.area.array[parent_measure] - child.area.array[parent_measure]),
+            parent.area.array[parent_measure]
         );
 
         Log.debug(`after ratio: ${parent.ratio}`);
@@ -431,11 +438,11 @@ export class AutoTiler extends Ecs.World {
         this.readjust_fork_ratio_by_left(ext, fork_length - right_length, fork, fork_length, failure_allowed);
     }
 
-    resize_fork_in_direction(ext: Ext, child_e: Entity, child: TilingFork, is_left: boolean, consider_sibling: boolean, crect: Rectangle, measure: number, failure_allowed: boolean) {
+    resize_fork_in_direction(ext: Ext, child_e: Entity, child: TilingFork, is_left: boolean, consider_sibling: boolean, crect: Rectangle, measure: Measure, failure_allowed: boolean) {
         Log.debug(`resizing fork in direction ${measure}: considering ${consider_sibling}`);
         if (child.area && child.area_left) {
             const original = new Rect.Rectangle([crect.x, crect.y, crect.width, crect.height]);
-            let length = (measure == 2 ? crect.width : crect.height);
+            let length = (measure == Measure.Horizontal ? crect.width : crect.height);
 
             if (consider_sibling) {
                 length += is_left
@@ -459,12 +466,12 @@ export class AutoTiler extends Ecs.World {
                         } else {
                             Log.info("breaking");
                             if (child.area) child.area.array[measure] = length;
-                            this.resize_parent(parent, child, parent.left.is_fork(child_e));
+                            this.resize_parent(parent, child, parent.left.is_fork(child_e), measure);
                             done = true;
                         }
                     } else if (shrinking) {
                         Log.info("breaking");
-                        this.resize_parent(parent, child, parent.left.is_fork(child_e));
+                        this.resize_parent(parent, child, parent.left.is_fork(child_e), measure);
                         done = true;
                     } else {
                         Log.debug(`Fork(${child_e}) area before: ${child.area}`);
@@ -473,7 +480,7 @@ export class AutoTiler extends Ecs.World {
                         Log.debug(`Fork(${child_e}) area after ${child.area}`);
                     }
 
-                    this.resize_parent(parent, child, parent.left.is_fork(child_e));
+                    this.resize_parent(parent, child, parent.left.is_fork(child_e), measure);
 
                     child_e = child.parent;
                     child = parent;
