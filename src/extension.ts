@@ -815,7 +815,7 @@ export class Ext extends Ecs.World {
         Log.info(`toggling orientation`);
         if (!this.auto_tiler) return;
         const focused = this.focus_window();
-        if (!focused) return;
+        if (!focused || focused.meta.get_maximized()) return;
 
         if (this.attached) this.attached.with(focused.entity, (fork_entity) => {
             this.auto_tiler?.forks.with(fork_entity, (fork) => {
