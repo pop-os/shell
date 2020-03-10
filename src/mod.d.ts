@@ -59,7 +59,8 @@ declare namespace Clutter {
 
 declare namespace Meta {
     interface Window extends Clutter.Actor {
-        window_type: any;
+        minimized: Readonly<boolean>;
+        window_type: Readonly<any>;
 
         activate(time: number): void;
         change_workspace_by_index(workspace: number, append: boolean): void;

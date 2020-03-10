@@ -405,24 +405,18 @@ export class Ext extends Ecs.World {
     }
 
     /// Connects a callback signal to a GObject, and records the signal.
-    connect(object: GObject.Object, property: string, callback: (...args: any) => boolean) {
+    connect(object: GObject.Object, property: string, callback: (...args: any) => boolean | void) {
         object.connect(property, callback);
     }
 
-    connect_meta(win: Window.ShellWindow, signal: string, callback: () => boolean) {
+    connect_meta(win: Window.ShellWindow, signal: string, callback: () => void) {
         this.connect(win.meta, signal, () => {
-            return win.actor_exists()
-                ? callback()
-                : false;
+            if (win.actor_exists()) callback();
         });
     }
 
     connect_window(win: Window.ShellWindow) {
-        this.connect_meta(win, 'workspace-changed', () => {
-            this.on_workspace_changed(win);
-
-            return true;
-        });
+        this.connect_meta(win, 'workspace-changed', () => this.on_workspace_changed(win));
 
         this.connect_meta(win, 'size-changed', () => {
             if (this.attached && !win.is_maximized()) {
@@ -433,8 +427,6 @@ export class Ext extends Ecs.World {
                     this.reflow(win.entity);
                 }
             }
-
-            return true;
         });
 
         this.connect_meta(win, 'position-changed', () => {
@@ -442,8 +434,16 @@ export class Ext extends Ecs.World {
                 Log.debug(`position changed: ${win.name(this)}`);
                 this.reflow(win.entity);
             }
+        });
 
-            return true;
+        this.connect_meta(win, 'notify::minimized', () => {
+            if (win.meta.minimized) {
+                if (this.attached?.contains(win.entity)) {
+                    this.detach_window(win.entity);
+                }
+            } else if (!this.contains_tag(win.entity, Tags.Floating)) {
+                this.auto_tile(win, false);
+            }
         });
     }
 
