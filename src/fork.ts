@@ -21,8 +21,8 @@ const HEIGHT = 3;
 export class Fork {
     left: Node;
     right: Node | null;
-    area: Rectangle | null;
-    area_left: Rectangle | null = null;
+    area: Rectangle;
+    area_left: Rectangle;
     parent: Entity | null = null;
     workspace: number;
     ratio: number = .5;
@@ -30,61 +30,41 @@ export class Fork {
     orientation: Lib.Orientation = Lib.Orientation.HORIZONTAL;
     is_toplevel: boolean = false;
 
-    constructor(left: Node, right: Node | null, area: Rectangle | null, workspace: number) {
+    constructor(ext: Ext, left: Node, right: Node | null, area: Rectangle, workspace: number) {
         this.area = area;
         this.left = left;
         this.right = right;
         this.workspace = workspace;
+        this.area_left = this.area_of_left(ext);
     }
 
-    area_of(ext: Ext, child: Entity): Rect.Rectangle | null {
-        if (this.left.is_window(child)) {
-            return this.area_of_left(ext);
-        } else if (this.right?.is_window(child)) {
-            return this.area_of_right(ext);
+    area_of_left(ext: Ext): Rect.Rectangle {
+        return new Rect.Rectangle(
+            this.right
+                ? this.is_horizontal()
+                    ? [this.area.x, this.area.y, (this.area.width * this.ratio) - ext.gap_inner_half, this.area.height]
+                    : [this.area.x, this.area.y, this.area.width, (this.area.height * this.ratio) - ext.gap_inner_half]
+                : [this.area.x, this.area.y, this.area.width, this.area.height]
+        );
+    }
+
+    area_of_right(ext: Ext): Rect.Rectangle {
+        let area: [number, number, number, number];
+
+        if (this.is_horizontal()) {
+            const width = (this.area.width * this.ratio) + ext.gap_inner;
+            area = [width, this.area.y, this.area.width - width, this.area.height];
         } else {
-            return null;
-        }
-    }
-
-    area_of_left(ext: Ext): Rect.Rectangle | null {
-        if (this.area) {
-            return new Rect.Rectangle(
-                this.right
-                    ? this.is_horizontal()
-                        ? [this.area.x, this.area.y, (this.area.width * this.ratio) - ext.gap_inner_half, this.area.height]
-                        : [this.area.x, this.area.y, this.area.width, (this.area.height * this.ratio) - ext.gap_inner_half]
-                    : [this.area.x, this.area.y, this.area.width, this.area.height]
-            );
+            const height = (this.area.height * this.ratio) + ext.gap_inner;
+            area = [this.area.x, height, this.area.width, this.area.height - height];
         }
 
-        return null;
-    }
-
-    area_of_right(ext: Ext): Rect.Rectangle | null {
-        if (this.area && this.right) {
-            let area: [number, number, number, number];
-
-            if (this.is_horizontal()) {
-                const width = (this.area.width * this.ratio) + ext.gap_inner;
-                area = [width, this.area.y, this.area.width - width, this.area.height];
-            } else {
-                const height = (this.area.height * this.ratio) + ext.gap_inner;
-                area = [this.area.x, height, this.area.width, this.area.height - height];
-            }
-
-            return new Rect.Rectangle(area);
-        }
-
-        return null;
+        return new Rect.Rectangle(area);
     }
 
     display(fmt: string) {
         fmt += `{\n  parent: ${this.parent},`;
-
-        if (this.area) {
-            fmt += `\n  area: (${this.area.array}),`;
-        }
+        fmt += `\n  area: (${this.area.array}),`;
 
         fmt += `\n  workspace: (${this.workspace}),`;
 
@@ -124,9 +104,7 @@ export class Fork {
     }
 
     private set_minimum_ratio() {
-        if (this.area) {
-            this.minimum_ratio = this.orientation == Lib.Orientation.HORIZONTAL ? 256 / this.area.width : 256 / this.area.height;
-        }
+        this.minimum_ratio = this.orientation == Lib.Orientation.HORIZONTAL ? 256 / this.area.width : 256 / this.area.height;
     }
 
     set_orientation(orientation: number): Fork {
@@ -156,11 +134,11 @@ export class Fork {
     /// Tiles all windows within this fork into the given area
     tile(tiler: AutoTiler, ext: Ext, area: Rectangle, workspace: number, failure_allowed: boolean): boolean {
         /// Memorize our area for future tile reflows
-        const prev_left = this.area_of_left(ext) as Rectangle;
-        const prev_right = this.area_of_right(ext) as Rectangle;
+        const prev_left = this.area_of_left(ext);
+        const prev_right = this.area_of_right(ext);
 
         if (!this.is_toplevel) {
-            if (null === this.area && null === this.parent) {
+            if (null === this.parent) {
                 this.area = this.set_area(new Rect.Rectangle([
                     area.x + ext.gap_outer,
                     area.y + ext.gap_outer,
@@ -172,15 +150,13 @@ export class Fork {
             }
         }
 
-        const this_area = this.area as Rectangle;
-
         this.workspace = workspace;
 
         if (this.right) {
             const [l, p] = this.is_horizontal() ? [WIDTH, XPOS] : [HEIGHT, YPOS];
-            const length = Math.round(this_area.array[l] * this.ratio);
+            const length = Math.round(this.area.array[l] * this.ratio);
 
-            let region = this_area.clone();
+            let region = this.area.clone();
 
             region.array[l] = length - ext.gap_inner_half;
 
@@ -188,7 +164,7 @@ export class Fork {
 
             if (this.left.tile(tiler, ext, region, workspace) || failure_allowed) {
                 region.array[p] = region.array[p] + length + ext.gap_inner;
-                region.array[l] = this_area.array[l] - length - ext.gap_inner;
+                region.array[l] = this.area.array[l] - length - ext.gap_inner;
 
                 if (this.right.tile(tiler, ext, region, workspace) || failure_allowed) {
                     return true;
@@ -204,8 +180,8 @@ export class Fork {
                 this.area_left = prev_left;
                 this.left.tile(tiler, ext, prev_left, workspace);
             }
-        } else if (this.left.tile(tiler, ext, this_area, workspace) || failure_allowed) {
-            this.area_left = this_area;
+        } else if (this.left.tile(tiler, ext, this.area, workspace) || failure_allowed) {
+            this.area_left = this.area;
             return true;
         }
 

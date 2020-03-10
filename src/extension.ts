@@ -240,7 +240,7 @@ export class Ext extends Ecs.World {
      * @param {ShellWindow} win The window to attach
      * @param {Number} monitor The index of the monitor to attach to
      */
-    attach_to_monitor(win: Window.ShellWindow, workspace_id: [number, number]) {
+    attach_to_monitor(ext: Ext, win: Window.ShellWindow, workspace_id: [number, number]) {
         if (this.attached && this.auto_tiler) {
             let rect = this.monitor_work_area(workspace_id[0]);
             rect.x += this.gap_outer;
@@ -248,7 +248,7 @@ export class Ext extends Ecs.World {
             rect.width -= this.gap_outer * 2;
             rect.height -= this.gap_outer * 2;
 
-            const [entity, fork] = this.auto_tiler.create_toplevel(win.entity, rect.clone(), workspace_id)
+            const [entity, fork] = this.auto_tiler.create_toplevel(ext, win.entity, rect.clone(), workspace_id)
             this.attached.insert(win.entity, entity);
 
             Log.debug(`attached Window(${win.entity}) to Fork(${entity}) on Monitor(${workspace_id})`);
@@ -378,7 +378,7 @@ export class Ext extends Ecs.World {
                     }
                 }
 
-                this.attach_to_monitor(win, this.workspace_id(win));
+                this.attach_to_monitor(this, win, this.workspace_id(win));
             }
         }
     }
@@ -400,7 +400,7 @@ export class Ext extends Ecs.World {
 
             }
 
-            this.attach_to_monitor(win, id);
+            this.attach_to_monitor(this, win, id);
         }
     }
 
