@@ -100,7 +100,7 @@ export class AppInfo {
     }
 }
 
-export function *load_desktop_entries(path: string): IterableIterator<Result<AppInfo, error.Error>> {
+export function* load_desktop_entries(path: string): IterableIterator<Result<AppInfo, error.Error>> {
     let dir = Gio.file_new_for_path(path);
     if (!dir.query_exists(null)) {
         return new error.Error(`desktop path is missing: ${path}`);

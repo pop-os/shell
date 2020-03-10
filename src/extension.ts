@@ -425,7 +425,7 @@ export class Ext extends Ecs.World {
         });
 
         this.connect_meta(win, 'size-changed', () => {
-            if (this.attached && !win.is_maximized())  {
+            if (this.attached && !win.is_maximized()) {
                 Log.debug(`size changed: ${win.name(this)}`);
                 if (this.grab_op) {
 

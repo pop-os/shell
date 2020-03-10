@@ -151,7 +151,7 @@ export class AutoTiler extends Ecs.World {
                     reflow_fork = [fork.parent, this.reassign_child_to_parent(fork_entity, fork.parent, fork.right)];
                 } else if (fork.right) {
                     reflow_fork = [fork_entity, fork];
-                    if (fork.right.kind ==Node.NodeKind.WINDOW) {
+                    if (fork.right.kind == Node.NodeKind.WINDOW) {
                         const detached = fork.right;
                         fork.left = detached;
                         fork.right = null;
@@ -170,7 +170,7 @@ export class AutoTiler extends Ecs.World {
                 } else {
                     reflow_fork = [fork_entity, fork];
 
-                    if (fork.left.kind ==Node.NodeKind.FORK) {
+                    if (fork.left.kind == Node.NodeKind.FORK) {
                         this.reassign_children_to_parent(fork_entity, fork.left.entity, fork);
                     } else {
                         fork.right = null;
@@ -264,12 +264,12 @@ export class AutoTiler extends Ecs.World {
         }
     }
 
-    * iter(entity: Entity, kind:Node.NodeKind): IterableIterator<Node.Node> {
+    * iter(entity: Entity, kind: Node.NodeKind): IterableIterator<Node.Node> {
         let fork = this.forks.get(entity);
         let forks = new Array(2);
 
         while (fork) {
-            if (fork.left.kind ==Node.NodeKind.FORK) {
+            if (fork.left.kind == Node.NodeKind.FORK) {
                 forks.push(this.forks.get(fork.left.entity));
             }
 
@@ -278,12 +278,12 @@ export class AutoTiler extends Ecs.World {
             }
 
             if (fork.right) {
-                if (fork.right.kind ==Node.NodeKind.FORK) {
+                if (fork.right.kind == Node.NodeKind.FORK) {
                     forks.push(this.forks.get(fork.right.entity));
                 }
 
                 if (kind === null || fork.right.kind == kind) {
-                  yield fork.right;
+                    yield fork.right;
                 }
             }
 
@@ -298,7 +298,7 @@ export class AutoTiler extends Ecs.World {
         let largest_window = null;
         let largest_size = 0;
 
-        for (const win of this.iter(entity,Node.NodeKind.WINDOW)) {
+        for (const win of this.iter(entity, Node.NodeKind.WINDOW)) {
             const window = ext.windows.get(win.entity);
 
             if (window) {
@@ -344,7 +344,7 @@ export class AutoTiler extends Ecs.World {
      * - If it is a window, simply call on_attach
      */
     reassign_sibling(sibling: Node.Node, parent: Entity) {
-        (sibling.kind ==Node.NodeKind.FORK ? this.reassign_parent : this.on_attach)
+        (sibling.kind == Node.NodeKind.FORK ? this.reassign_parent : this.on_attach)
             .call(this, parent, sibling.entity);
     }
 
@@ -549,7 +549,7 @@ export class AutoTiler extends Ecs.World {
     }
 
     private display_branch(ext: Ext, branch: Node.Node, scope: number): string {
-        if (branch.kind ==Node.NodeKind.WINDOW) {
+        if (branch.kind == Node.NodeKind.WINDOW) {
             const window = ext.windows.get(branch.entity);
             return `Window(${branch.entity}) (${window ? window.rect().fmt() : "unknown area"})`;
         } else {
