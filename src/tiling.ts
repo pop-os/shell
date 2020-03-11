@@ -10,7 +10,7 @@ import type { Entity } from './ecs';
 import type { ShellWindow } from './window';
 import type { Rectangle } from './rectangle';
 import type { Ext } from './extension';
-import type { AutoTiler } from './auto_tiler';
+import type { Forest } from './forest';
 
 const Main = imports.ui.main;
 
@@ -224,7 +224,7 @@ export class Tiler {
                         return;
                     }
 
-                    (ext.auto_tiler as AutoTiler).resize(ext, entity, (this.window as Entity), grab_op.operation(crect), crect);
+                    (ext.auto_tiler as Forest).resize(ext, entity, (this.window as Entity), grab_op.operation(crect), crect);
                 };
 
                 resize(func1);

@@ -1,6 +1,6 @@
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
-import type { AutoTiler } from 'auto_tiler';
+import type { Forest } from './forest';
 import type { Entity } from 'ecs';
 import type { Ext } from 'extension';
 import type { Rectangle } from 'rectangle';
@@ -17,7 +17,10 @@ const YPOS = 1;
 const WIDTH = 2;
 const HEIGHT = 3;
 
-/// A tiling fork contains two children nodes. These nodes may either be windows, or sub-forks.
+/** A tiling fork contains two children nodes.
+ * 
+ * These nodes may either be windows, or sub-forks.
+ */
 export class Fork {
     left: Node;
     right: Node | null;
@@ -39,6 +42,7 @@ export class Fork {
         this.area_left = this.area_of_left(ext);
     }
 
+    /** The calculated left area of this fork */
     area_of_left(ext: Ext): Rect.Rectangle {
         return new Rect.Rectangle(
             this.right
@@ -49,6 +53,7 @@ export class Fork {
         );
     }
 
+    /** The calculated right area of this fork */
     area_of_right(ext: Ext): Rect.Rectangle {
         let area: [number, number, number, number];
 
@@ -63,29 +68,12 @@ export class Fork {
         return new Rect.Rectangle(area);
     }
 
-    display(fmt: string) {
-        fmt += `{\n  parent: ${this.parent},`;
-        fmt += `\n  area: (${this.area.array}),`;
-
-        fmt += `\n  workspace: (${this.workspace}),`;
-
-        if (this.left) {
-            fmt += `\n  left: ${this.left.display('')},`;
-        }
-
-        if (this.right) {
-            fmt += `\n  right: ${this.right.display('')},`;
-        }
-
-        fmt += `\n  orientation: ${orientation_as_str(this.orientation)}\n}`;
-        return fmt;
-    }
-
+    /** If this fork has a horizontal orientation */
     is_horizontal(): boolean {
         return Lib.Orientation.HORIZONTAL == this.orientation;
     }
 
-    /// Replaces the association of a window in a fork with another
+    /** Replaces the association of a window in a fork with another */
     replace_window(a: Entity, b: Entity): boolean {
         if (this.left.is_window(a)) {
             this.left.entity = b;
@@ -98,27 +86,35 @@ export class Fork {
         return true;
     }
 
+    /** Sets a new area for this fork */
     set_area(area: Rectangle): Rectangle {
         this.area = area;
         this.set_minimum_ratio();
         return this.area;
     }
 
+    /** Defines a minimum ratio based based on a minimum sibling length */
     private set_minimum_ratio() {
         this.minimum_ratio = this.orientation == Lib.Orientation.HORIZONTAL ? 256 / this.area.width : 256 / this.area.height;
     }
 
-    set_orientation(orientation: number): Fork {
+    /** Sets the orientation of this fork */
+    set_orientation(orientation: Lib.Orientation): Fork {
         this.orientation = orientation;
         this.set_minimum_ratio();
         return this;
     }
 
+    /** Sets a nother fork entity as the parent of this fork */
     set_parent(parent: Entity): Fork {
         this.parent = parent;
         return this;
     }
 
+    /** Sets the ratio of this fork
+     * 
+     * Ensures that the ratio is never smaller or larger than the constraints.
+     */
     set_ratio(left_length: number, fork_length: number): Fork {
         this.ratio_prev = this.ratio;
         this.ratio = Lib.round_to(Math.min(Math.max(this.minimum_ratio, left_length / fork_length), 1.0 - this.minimum_ratio), 2);
@@ -127,15 +123,16 @@ export class Fork {
         return this;
     }
 
-    set_toplevel(tiler: AutoTiler, entity: Entity, string: string, id: [number, number]): Fork {
+    /** Defines this fork as a top level fork, and records it in the forest */
+    set_toplevel(tiler: Forest, entity: Entity, string: string, id: [number, number]): Fork {
         this.is_toplevel = true;
         tiler.toplevel.set(string, [entity, id]);
         return this;
     }
 
-    /// Tiles all windows within this fork into the given area
+    /** Calculates the future arrangement of windows in this fork */
     measure(
-        tiler: AutoTiler,
+        tiler: Forest,
         ext: Ext,
         area: Rectangle,
         record: (win: Entity, area: Rectangle) => void
@@ -163,6 +160,7 @@ export class Fork {
         }
     }
 
+    /** Toggles the orientation of this fork */
     toggle_orientation() {
         this.orientation = Lib.Orientation.HORIZONTAL == this.orientation
             ? Lib.Orientation.VERTICAL

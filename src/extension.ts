@@ -1,6 +1,6 @@
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
-import * as AutoTiler from 'auto_tiler';
+import * as Forest from 'forest';
 import * as Ecs from 'ecs';
 import * as Focus from 'focus';
 import * as GrabOp from 'grab_op';
@@ -67,7 +67,7 @@ export class Ext extends Ecs.World {
     tilable: Ecs.Storage<boolean>;
     windows: Ecs.Storage<Window.ShellWindow>;
 
-    auto_tiler: AutoTiler.AutoTiler | null = null;
+    auto_tiler: Forest.Forest | null = null;
 
     signals: Array<any>;
 
@@ -167,7 +167,7 @@ export class Ext extends Ecs.World {
             this.mode = Lib.MODE_AUTO_TILE;
             this.attached = this.register_storage();
 
-            this.auto_tiler = new AutoTiler.AutoTiler()
+            this.auto_tiler = new Forest.Forest()
                 .connect_on_attach((entity: Entity, window: Entity) => {
                     if (this.attached) {
                         Log.debug(`attached Window(${window}) to Fork(${entity})`);
@@ -543,7 +543,7 @@ export class Ext extends Ecs.World {
 
     log_tree_nodes() {
         if (this.auto_tiler) {
-            let buf = this.auto_tiler.display(this, '');
+            let buf = this.auto_tiler.fmt(this);
             Log.info('\n\n' + buf);
         }
     }
@@ -652,7 +652,7 @@ export class Ext extends Ecs.World {
 
                         Log.debug(`resizing window: from [${rect.fmt()} to ${crect.fmt()}]`);
                         this.auto_tiler.resize(this, fork, win.entity, movement, crect);
-                        Log.debug(`changed to: ${this.auto_tiler.display(this, '')}`);
+                        Log.debug(`changed to: ${this.auto_tiler.fmt(this)}`);
                     } else {
                         Log.error(`no fork found`);
                     }

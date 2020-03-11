@@ -12,21 +12,30 @@ import type { Rectangle } from './rectangle';
 import type { ShellWindow } from './window';
 import type { Ext } from './extension';
 
+/** A designation for using either the width or height of a rectangle. */
 enum Measure {
     Horizontal = 2,
     Vertical = 3,
 }
 
+/** A request to move a window into a new location. */
 interface Request {
     entity: Entity,
     rect: Rectangle
 }
 
-/**
- * The world containing all forks and their attached windows, which is responible for
- * handling all automatic tiling and reflowing as windows are moved, closed, and resized
+/** A collection of forks separated into trees
+ * 
+ * Each display on each workspace has their own unique tree. A tree is a
+ * collection of starting from an uppermost fork, and branching into
+ * deeply-nested sub-forks.
+ * 
+ * Each fork represents two nodes and an orientation, whereby a node may either
+ * be a window or another fork. As windows are attached to other windows,
+ * forks will be dynamically removed and created to accomodate the new
+ * arrangement.
  */
-export class AutoTiler extends Ecs.World {
+export class Forest extends Ecs.World {
     /** Maintains a list of top-level forks. */
     toplevel: Map<String, [Entity, [number, number]]> = new Map();
 
@@ -107,15 +116,12 @@ export class AutoTiler extends Ecs.World {
     }
 
     /** Assigns the callback to trigger when a window is attached to a fork */
-    connect_on_attach(callback: (parent: Entity, child: Entity) => void): AutoTiler {
+    connect_on_attach(callback: (parent: Entity, child: Entity) => void): this {
         this.on_attach = callback;
         return this;
     }
 
-    /** Creates a new fork entity in the world
-     *
-     * @return Entity
-     */
+    /** Creates a new fork entity in the world */
     create_entity(): Entity {
         const entity = super.create_entity();
         this.string_reps.insert(entity, `${entity}`);
@@ -140,8 +146,17 @@ export class AutoTiler extends Ecs.World {
     }
 
     /** Create a new top level fork */
-    create_toplevel(ext: Ext, window: Entity, area: Rectangle, id: [number, number]): [Entity, Fork.Fork] {
-        const [entity, fork] = this.create_fork(ext, Node.Node.window(window), null, area, id[1]);
+    create_toplevel(
+        ext: Ext,
+        window: Entity,
+        area: Rectangle,
+        id: [number, number]
+    ): [Entity, Fork.Fork] {
+        const [entity, fork] = this.create_fork(
+            ext,
+            Node.Node.window(window), null, area, id[1]
+        );
+
         this.string_reps.with(entity, (sid) => {
             fork.set_toplevel(this, entity, sid, id);
         });
@@ -149,9 +164,7 @@ export class AutoTiler extends Ecs.World {
         return [entity, fork];
     }
 
-    /**
-     * Deletes a fork entity from the world, performing any cleanup necessary
-     */
+    /** Deletes a fork entity from the world, performing any cleanup necessary */
     delete_entity(entity: Entity) {
         const fork = this.forks.remove(entity);
         if (fork && fork.is_toplevel) {
@@ -162,9 +175,7 @@ export class AutoTiler extends Ecs.World {
         super.delete_entity(entity);
     }
 
-    /**
-     * Detaches an entity from the a fork, re-arranging the fork's tree as necessary
-     */
+    /** Detaches an entity from the a fork, re-arranging the fork's tree as necessary */
     detach(fork_entity: Entity, window: Entity): [Entity, Fork.Fork] | null {
         let reflow_fork = null;
 
@@ -212,10 +223,10 @@ export class AutoTiler extends Ecs.World {
         return reflow_fork;
     }
 
-    /**
-     * Creates a string representation of every fork in the world; formatted for human consumption
-     */
-    display(ext: Ext, fmt: string) {
+    /** Creates a string representation of every fork in the world */
+    fmt(ext: Ext) {
+        let fmt = '';
+
         for (const [entity, _] of this.toplevel.values()) {
             Log.debug(`displaying fork (${entity})`);
             const fork = this.forks.get(entity);
@@ -425,14 +436,13 @@ export class AutoTiler extends Ecs.World {
         }
     }
 
-    /**
-     * Reassigns a child to the given parent
-     */
+    /** Reassigns a child to the given parent */
     private reassign_parent(parent: Entity, child: Entity) {
         Log.debug(`assigning parent of Fork(${child}) to Fork(${parent})`);
         this.forks.with(child, (fork) => fork.set_parent(parent));
     }
 
+    /** Resizes the parent fork of a child fork */
     private resize_parent(parent: Fork.Fork, child: Fork.Fork, is_left: boolean, measure: Measure) {
         if (child.area.eq(parent.area)) return;
 
@@ -451,7 +461,7 @@ export class AutoTiler extends Ecs.World {
         Log.debug(`after ratio: ${parent.ratio}`);
     }
 
-    /// Readjusts the division of space between the left and right siblings of a fork
+    /** Readjusts the division of space between the left and right siblings of a fork */
     private readjust_fork_ratio_by_left(
         ext: Ext,
         left_length: number,
@@ -461,9 +471,10 @@ export class AutoTiler extends Ecs.World {
         fork.set_ratio(left_length, fork_length).measure(this, ext, fork.area, this.on_record())
     }
 
-    /// Readjusts the division of space between the left and right siblings of a fork
-    ///
-    /// Determines the size of the left sibling based on the new length of the right sibling
+    /** Readjusts the division of space between the left and right siblings of a fork
+     * 
+     * Determines the size of the left sibling based on the new length of the right sibling
+     */
     private readjust_fork_ratio_by_right(ext: Ext,
         right_length: number,
         fork: Fork.Fork,
@@ -472,6 +483,7 @@ export class AutoTiler extends Ecs.World {
         this.readjust_fork_ratio_by_left(ext, fork_length - right_length, fork, fork_length);
     }
 
+    /** Resizes a fork in the direction that a movement requests */
     private resize_fork_in_direction(
         ext: Ext,
         child_e: Entity,
@@ -533,9 +545,7 @@ export class AutoTiler extends Ecs.World {
         child.measure(this, ext, child.area, this.on_record())
     }
 
-    /**
-     * Shrinks the sibling of a fork, possibly shrinking the fork itself.
-     */
+    /** Shrinks the sibling of a fork, possibly shrinking the fork itself */
     private shrink_sibling(
         ext: Ext,
         fork_e: Entity,
