@@ -157,7 +157,7 @@ function number_entry(
                         ? clamp(parse_number(text.text) + 4)
                         : null;
 
-        if (number) {
+        if (number !== null) {
             text.set_text(String(number));
 
             const prev = get_method.call(ext);
