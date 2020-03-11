@@ -274,11 +274,7 @@ export class Ext extends Ecs.World {
                 const [_e, fork] = attached;
                 const monitor = this.monitors.get(attachee.entity);
                 if (monitor) {
-                    if (fork.area) {
-                        this.attach_update(fork, fork.area.clone(), monitor, true);
-                    } else {
-                        Log.error(`attaching to fork without an area`);
-                    };
+                    this.attach_update(fork, fork.area.clone(), monitor, true);
                     this.log_tree_nodes();
                     return true;
                 } else {
@@ -304,7 +300,7 @@ export class Ext extends Ecs.World {
         let success = true;
         if (this.auto_tiler) {
             this.tiling = true;
-            success = fork.tile(this.auto_tiler, this, area, workspace, failure_allowed);
+            this.auto_tiler.tile(this, fork, area);
             this.tiling = false;
         }
 
@@ -461,10 +457,7 @@ export class Ext extends Ecs.World {
                     if (reflow_fork) {
                         Log.debug(`found reflow_fork`);
                         const fork = reflow_fork[1];
-                        if (fork.area) {
-                            Log.debug(`begin tiling`);
-                            this.tile(fork, fork.area, fork.workspace, true);
-                        };
+                        this.tile(fork, fork.area, fork.workspace, true);
                     }
 
                     this.log_tree_nodes();
@@ -488,7 +481,7 @@ export class Ext extends Ecs.World {
                 const cursor = cursor_rect();
                 const fork = this.auto_tiler.forks.get(fork_entity);
 
-                if (fork && fork.area) {
+                if (fork) {
                     if (fork.left.kind == NodeKind.WINDOW && fork.right && fork.right.kind == NodeKind.WINDOW) {
                         if (fork.left.is_window(win)) {
                             const sibling = this.windows.get(fork.right.entity);
@@ -658,7 +651,7 @@ export class Ext extends Ecs.World {
                         const movement = this.grab_op.operation(crect);
 
                         Log.debug(`resizing window: from [${rect.fmt()} to ${crect.fmt()}]`);
-                        this.auto_tiler.resize(this, fork, win.entity, movement, crect, false);
+                        this.auto_tiler.resize(this, fork, win.entity, movement, crect);
                         Log.debug(`changed to: ${this.auto_tiler.display(this, '')}`);
                     } else {
                         Log.error(`no fork found`);
@@ -745,7 +738,7 @@ export class Ext extends Ecs.World {
             GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
                 if (this.auto_tiler) {
                     const fork = this.auto_tiler.forks.get(fork_entity);
-                    if (fork?.area) this.tile(fork, fork.area, fork.workspace, true);
+                    if (fork) this.tile(fork, fork.area, fork.workspace, true);
                 }
 
                 return false;
@@ -828,9 +821,7 @@ export class Ext extends Ecs.World {
                         });
                     }
 
-                    if (fork.area) {
-                        this.tile(fork, fork.area, fork.workspace, true);
-                    };
+                    this.tile(fork, fork.area, fork.workspace, true);
                 }
             });
         });

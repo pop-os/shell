@@ -66,34 +66,21 @@ export class Node {
         return NodeKind.WINDOW == this.kind && Ecs.entity_eq(this.entity, entity);
     }
 
-    /// Tiles all windows associated with this node
-    tile(tiler: AutoTiler, ext: Ext, area: Rectangle, workspace: number): boolean {
+    /// Calculates changes to request
+    measure(
+        tiler: AutoTiler,
+        ext: Ext,
+        area: Rectangle,
+        record: (win: Entity, area: Rectangle) => void
+    ) {
         if (NodeKind.FORK == this.kind) {
-            // Log.debug(`tiling Fork(${this.entity}) into [${area.array}]`);
             const fork = tiler.forks.get(this.entity);
             if (fork) {
-                return fork.tile(tiler, ext, area, workspace, true);
-            }
-        } else if (tiler.move_windows) {
-            // Log.debug(`tiling Window(${this.entity}) into [${area.array}]`);
-            const window = ext.windows.get(this.entity);
-
-            if (window) {
-                window.meta.change_workspace_by_index(workspace, false);
-
-                if (ext.switch_workspace_on_move) {
-                    global.display.get_workspace_manager()
-                        .get_workspace_by_index(workspace)
-                        .activate(global.get_current_time())
-                }
-
-                return window.move(area);
+                fork.measure(tiler, ext, area, record);
             }
         } else {
-            return true;
+            record(this.entity, area.clone());
         }
-
-        return false;
     }
 }
 

@@ -224,12 +224,10 @@ export class Tiler {
                         return;
                     }
 
-                    (ext.auto_tiler as AutoTiler).resize(ext, entity, (this.window as Entity), grab_op.operation(crect), crect, false);
+                    (ext.auto_tiler as AutoTiler).resize(ext, entity, (this.window as Entity), grab_op.operation(crect), crect);
                 };
 
-                ext.auto_tiler.move_windows = false;
                 resize(func1);
-                ext.auto_tiler.move_windows = true;
                 resize(func2);
 
                 ext.set_overlay(window.rect());

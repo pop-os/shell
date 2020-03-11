@@ -108,7 +108,7 @@ export class ShellWindow {
             });
     }
 
-    move(rect: Rectangular): boolean {
+    move(rect: Rectangular) {
         this.meta.unmaximize(Meta.MaximizeFlags.HORIZONTAL);
         this.meta.unmaximize(Meta.MaximizeFlags.VERTICAL);
         this.meta.unmaximize(Meta.MaximizeFlags.HORIZONTAL | Meta.MaximizeFlags.VERTICAL);
@@ -120,8 +120,6 @@ export class ShellWindow {
             rect.width,
             rect.height
         );
-
-        return this.rect().eq(rect);
     }
 
     name(ext: Ext): string {
@@ -136,14 +134,8 @@ export class ShellWindow {
         let ar = this.rect();
         let br = other.rect();
 
-        if (!this.move(br)) {
-            this.move(ar);
-        } else {
-            if (!other.move(ar)) {
-                this.move(ar);
-                other.move(br);
-            }
-        }
+        this.move(br);
+        other.move(ar);
 
         place_pointer_on(this.meta);
     }

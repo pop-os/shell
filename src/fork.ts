@@ -26,6 +26,7 @@ export class Fork {
     parent: Entity | null = null;
     workspace: number;
     ratio: number = .5;
+    ratio_prev: number = .5;
     minimum_ratio: number = 0.1;
     orientation: Lib.Orientation = Lib.Orientation.HORIZONTAL;
     is_toplevel: boolean = false;
@@ -119,6 +120,7 @@ export class Fork {
     }
 
     set_ratio(left_length: number, fork_length: number): Fork {
+        this.ratio_prev = this.ratio;
         this.ratio = Lib.round_to(Math.min(Math.max(this.minimum_ratio, left_length / fork_length), 1.0 - this.minimum_ratio), 2);
 
         Log.debug(`new ratio: ${this.ratio}`);
@@ -132,25 +134,15 @@ export class Fork {
     }
 
     /// Tiles all windows within this fork into the given area
-    tile(tiler: AutoTiler, ext: Ext, area: Rectangle, workspace: number, failure_allowed: boolean): boolean {
-        /// Memorize our area for future tile reflows
-        const prev_left = this.area_of_left(ext);
-        const prev_right = this.area_of_right(ext);
-
+    measure(
+        tiler: AutoTiler,
+        ext: Ext,
+        area: Rectangle,
+        record: (win: Entity, area: Rectangle) => void
+    ) {
         if (!this.is_toplevel) {
-            if (null === this.parent) {
-                this.area = this.set_area(new Rect.Rectangle([
-                    area.x + ext.gap_outer,
-                    area.y + ext.gap_outer,
-                    area.width - ext.gap_outer * 2,
-                    area.height - ext.gap_outer * 2,
-                ]));
-            } else {
-                this.area = this.set_area(area.clone());
-            }
+            this.area = this.set_area(area.clone());
         }
-
-        this.workspace = workspace;
 
         if (this.right) {
             const [l, p] = this.is_horizontal() ? [WIDTH, XPOS] : [HEIGHT, YPOS];
@@ -162,30 +154,13 @@ export class Fork {
 
             this.area_left = region.clone();
 
-            if (this.left.tile(tiler, ext, region, workspace) || failure_allowed) {
-                region.array[p] = region.array[p] + length + ext.gap_inner;
-                region.array[l] = this.area.array[l] - length - ext.gap_inner;
-
-                if (this.right.tile(tiler, ext, region, workspace) || failure_allowed) {
-                    return true;
-                } else {
-                    Log.debug(`failed to move right node`);
-
-                    this.area_left = prev_left;
-                    this.left.tile(tiler, ext, prev_left, workspace);
-                    this.right.tile(tiler, ext, prev_right, workspace);
-                }
-            } else {
-                Log.debug(`failed to move left node`);
-                this.area_left = prev_left;
-                this.left.tile(tiler, ext, prev_left, workspace);
-            }
-        } else if (this.left.tile(tiler, ext, this.area, workspace) || failure_allowed) {
-            this.area_left = this.area;
-            return true;
+            this.left.measure(tiler, ext, region, record);
+            region.array[p] = region.array[p] + length + ext.gap_inner;
+            region.array[l] = this.area.array[l] - length - ext.gap_inner;
+            this.right.measure(tiler, ext, region, record);
+        } else {
+            this.left.measure(tiler, ext, this.area, record)
         }
-
-        return false;
     }
 
     toggle_orientation() {
