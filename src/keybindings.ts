@@ -27,8 +27,8 @@ export class Keybindings {
             "focus-right": () => ext.activate_window(ext.focus_selector.right(ext, null)),
             "focus-monitor-left": () => ext.activate_window(ext.focus_selector.monitor_left(ext, null)),
             "focus-monitor-right": () => ext.activate_window(ext.focus_selector.monitor_right(ext, null)),
-            "tile-orientation": () => ext.toggle_orientation(),
-            "toggle-floating": () => ext.toggle_floating()
+            "tile-orientation": () => ext.auto_tiler?.toggle_orientation(ext),
+            "toggle-floating": () => ext.auto_tiler?.toggle_floating(ext)
         };
     }
 

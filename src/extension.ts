@@ -9,32 +9,28 @@ import * as Lib from 'lib';
 import * as Log from 'log';
 import * as PanelSettings from 'panel_settings';
 import * as Rect from 'rectangle';
-import * as result from 'result';
 import * as Settings from 'settings';
 import * as Tiling from 'tiling';
 import * as Window from 'window';
 import * as launcher from 'launcher';
 import * as active_hint from 'active_hint';
-import * as node from 'node';
+import * as auto_tiler from 'auto_tiler';
 
 import type { Entity } from 'ecs';
 import type { Rectangle } from 'rectangle';
 import type { Indicator } from 'panel_settings';
 import type { Launcher } from './launcher';
-import type { Fork } from 'fork';
-import type { Result } from 'result';
 
 const { Gio, Meta, St } = imports.gi;
 const { cursor_rect, is_move_op } = Lib;
 const { _defaultCssStylesheet, layoutManager, overview, panel, sessionMode, getThemeStylesheet } = imports.ui.main;
 const Tags = Me.imports.tags;
-const { NodeKind } = node;
+
 const GLib: GLib = imports.gi.GLib;
-const { Ok, Err, ERR } = result;
 
 export class Ext extends Ecs.World {
     private init: boolean = true;
-    private tiling: boolean = false;
+    tiling: boolean = false;
 
     column_size: number = 128;
     row_size: number = 128;
@@ -60,7 +56,6 @@ export class Ext extends Ecs.World {
     tiler: Tiling.Tiler;
     window_search: Launcher;
 
-    attached: Ecs.Storage<Entity> | null = null;
     icons: Ecs.Storage<any>;
     ids: Ecs.Storage<number>;
     monitors: Ecs.Storage<[number, number]>;
@@ -69,7 +64,7 @@ export class Ext extends Ecs.World {
     tilable: Ecs.Storage<boolean>;
     windows: Ecs.Storage<Window.ShellWindow>;
 
-    auto_tiler: Forest.Forest | null = null;
+    auto_tiler: auto_tiler.AutoTiler | null = null;
 
     signals: Array<any>;
 
@@ -166,15 +161,17 @@ export class Ext extends Ecs.World {
 
         if (this.settings.tile_by_default()) {
             Log.info(`tile by default enabled`);
-            this.attached = this.register_storage();
 
-            this.auto_tiler = new Forest.Forest()
-                .connect_on_attach((entity: Entity, window: Entity) => {
-                    if (this.attached) {
-                        Log.debug(`attached Window(${window}) to Fork(${entity})`);
-                        this.attached.insert(window, entity);
-                    }
-                });
+            this.auto_tiler = new auto_tiler.AutoTiler(
+                new Forest.Forest()
+                    .connect_on_attach((entity: Entity, window: Entity) => {
+                        if (this.auto_tiler) {
+                            Log.debug(`attached Window(${window}) to Fork(${entity})`);
+                            this.auto_tiler.attached.insert(window, entity);
+                        }
+                    }),
+                this.register_storage<Entity>(),
+            )
         }
 
         // Post-init
@@ -209,221 +206,6 @@ export class Ext extends Ecs.World {
         return global.workspace_manager.get_active_workspace_index();
     }
 
-    /**
-     * Swap window associations in the auto-tiler
-     *
-     * @param {Entity} a
-     * @param {Entity} b
-     *
-     * Call this when a window has swapped positions with another, so that we
-     * may update the associations in the auto-tiler world.
-     */
-    attach_swap(a: Entity, b: Entity) {
-        if (this.attached && this.auto_tiler) {
-            const a_ent = this.attached.remove(a);
-            const b_ent = this.attached.remove(b);
-
-            if (a_ent) {
-                this.auto_tiler.forks.with(a_ent, (fork) => fork.replace_window(a, b));
-                this.attached.insert(b, a_ent);
-            }
-
-            if (b_ent) {
-                this.auto_tiler.forks.with(b_ent, (fork) => fork.replace_window(b, a));
-                this.attached.insert(a, b_ent);
-            }
-        }
-    }
-
-    /**
-     * Attaches `win` to an optionally-given monitor
-     *
-     * @param {ShellWindow} win The window to attach
-     * @param {Number} monitor The index of the monitor to attach to
-     */
-    attach_to_monitor(ext: Ext, win: Window.ShellWindow, workspace_id: [number, number]) {
-        if (this.attached && this.auto_tiler) {
-            let rect = this.monitor_work_area(workspace_id[0]);
-            rect.x += this.gap_outer;
-            rect.y += this.gap_outer;
-            rect.width -= this.gap_outer * 2;
-            rect.height -= this.gap_outer * 2;
-
-            const [entity, fork] = this.auto_tiler.create_toplevel(ext, win.entity, rect.clone(), workspace_id)
-            this.attached.insert(win.entity, entity);
-
-            Log.debug(`attached Window(${win.entity}) to Fork(${entity}) on Monitor(${workspace_id})`);
-
-            this.attach_update(fork, rect);
-            this.log_tree_nodes();
-        }
-    }
-
-    /**
-     * Tiles a window into another
-     *
-     * @param {ShellWindow} attachee The window to attach to
-     * @param {ShellWindow} attacher The window to attach with
-     */
-    attach_to_window(attachee: Window.ShellWindow, attacher: Window.ShellWindow): boolean {
-        if (this.auto_tiler) {
-            Log.debug(`attempting to attach ${attacher.name(this)} to ${attachee.name(this)}`);
-
-            let attached = this.auto_tiler.attach_window(this, attachee.entity, attacher.entity);
-
-            if (attached) {
-                const [, fork] = attached;
-                const monitor = this.monitors.get(attachee.entity);
-                if (monitor) {
-                    this.attach_update(fork, fork.area.clone());
-                    this.log_tree_nodes();
-                    return true;
-                } else {
-                    Log.error(`missing monitor association for Window(${attachee.entity})`);
-                }
-            }
-
-            this.log_tree_nodes();
-        }
-
-        return false;
-    }
-
-    /**
-     * Sets the orientation of a tiling fork, and this it according to the given area.
-     */
-    attach_update(fork: Fork, area: Rectangle): boolean {
-        Log.debug(`setting attach area to (${area.x},${area.y}), (${area.width},${area.height})`);
-        return this.tile(fork, area);
-    }
-
-    tile(fork: Fork, area: Rectangle): boolean {
-        let success = true;
-        if (this.auto_tiler) {
-            this.tiling = true;
-            this.auto_tiler.tile(this, fork, area);
-            this.tiling = false;
-        }
-
-        return success;
-    }
-
-    /**
-     * Automatically tiles a window into the window tree.
-     *
-     * @param {ShellWindow} win The window to be tiled
-     *
-     * ## Implementation Notes
-     *
-     * - First tries to tile into the focused window
-     * - Then tries to tile onto a monitor
-     */
-    auto_tile(win: Window.ShellWindow, ignore_focus: boolean = false) {
-        const result = this.auto_tile_fetch_mode(win, ignore_focus);
-        if (result.kind == ERR) {
-            Log.debug(`auto_tile: ${result.value}`);
-            this.auto_tile_on_workspace(win, this.workspace_id(win));
-        } else {
-            this.detach_window(win.entity);
-            this.attach_to_window(result.value, win)
-        }
-    }
-
-    private auto_tile_fetch_mode(win: Window.ShellWindow, ignore_focus: boolean = false): Result<Window.ShellWindow, string> {
-        if (ignore_focus) {
-            return Err('ignoring focus');
-        }
-
-        if (!this.prev_focused) {
-            return Err('no window has been previously focused');
-        }
-
-        let onto = this.windows.get(this.prev_focused);
-
-        if (!onto) {
-            return Err('no focus window');
-        }
-
-        if (Ecs.entity_eq(onto.entity, win.entity)) {
-            return Err('tiled window and attach window are the same window');
-        }
-
-        if (!onto.is_tilable(this)) {
-            return Err('focused window is not tilable');
-        }
-
-        return onto.meta.get_monitor() == win.meta.get_monitor() && onto.workspace_id() == win.workspace_id()
-            ? Ok(onto)
-            : Err('window is not on the same monitor or workspace');
-    }
-
-    /**
-     * Performed when a window that has been dropped is destined to be tiled
-     *
-     * @param {ShellWindow} win The window that was dropped
-     *
-     * ## Implementation Notes
-     *
-     * - If the window is dropped onto a window, tile onto it
-     * - If no window is present, tile onto the monitor
-     */
-    auto_tile_on_drop(win: Window.ShellWindow) {
-        if (this.attached && this.auto_tiler) {
-            Log.debug(`dropped Window(${win.entity})`);
-            if (this.dropped_on_sibling(win.entity)) return;
-
-            const [cursor, monitor] = this.cursor_status();
-            const workspace = this.active_workspace();
-
-            let attach_to = null;
-            for (const found of this.windows_at_pointer(cursor, monitor, workspace)) {
-                if (found != win && this.attached.contains(found.entity)) {
-                    attach_to = found;
-                    break
-                }
-            }
-
-            this.detach_window(win.entity);
-
-            if (attach_to) {
-                Log.debug(`found Window(${attach_to.entity}) at pointer`);
-                this.attach_to_window(attach_to, win);
-            } else {
-                const toplevel = this.auto_tiler.find_toplevel([monitor, workspace]);
-                if (toplevel) {
-                    attach_to = this.auto_tiler.largest_window_on(this, toplevel);
-                    if (attach_to) {
-                        this.attach_to_window(attach_to, win);
-                        return;
-                    }
-                }
-
-                this.attach_to_monitor(this, win, this.workspace_id(win));
-            }
-        }
-    }
-
-    auto_tile_on_workspace(win: Window.ShellWindow, id: [number, number]) {
-        if (this.auto_tiler) {
-            Log.debug(`workspace id: ${id}`);
-            const toplevel = this.auto_tiler.find_toplevel(id);
-
-            if (toplevel) {
-                Log.debug(`found toplevel at ${toplevel}`);
-                const onto = this.auto_tiler.largest_window_on(this, toplevel);
-                if (onto) {
-                    Log.debug(`largest window = ${onto.entity}`);
-                    if (this.attach_to_window(onto, win)) {
-                        return;
-                    }
-                }
-
-            }
-
-            this.attach_to_monitor(this, win, id);
-        }
-    }
-
     /// Connects a callback signal to a GObject, and records the signal.
     connect(object: GObject.Object, property: string, callback: (...args: any) => boolean | void) {
         object.connect(property, callback);
@@ -439,100 +221,37 @@ export class Ext extends Ecs.World {
         this.connect_meta(win, 'workspace-changed', () => this.on_workspace_changed(win));
 
         this.connect_meta(win, 'size-changed', () => {
-            if (this.attached && !win.is_maximized()) {
+            if (this.auto_tiler && !win.is_maximized()) {
                 Log.debug(`size changed: ${win.name(this)}`);
                 if (this.grab_op) {
 
                 } else if (!this.tiling) {
-                    this.reflow(win.entity);
+                    this.auto_tiler.reflow(this, win.entity);
                 }
             }
         });
 
         this.connect_meta(win, 'position-changed', () => {
-            if (this.attached && !this.grab_op && !this.tiling && !win.is_maximized()) {
+            if (this.auto_tiler && !this.grab_op && !this.tiling && !win.is_maximized()) {
                 Log.debug(`position changed: ${win.name(this)}`);
-                this.reflow(win.entity);
+                this.auto_tiler.reflow(this, win.entity);
             }
         });
 
         this.connect_meta(win, 'notify::minimized', () => {
-            if (win.meta.minimized) {
-                if (this.attached?.contains(win.entity)) {
-                    this.detach_window(win.entity);
+            if (this.auto_tiler) {
+                if (win.meta.minimized) {
+                    if (this.auto_tiler) {
+
+                    }
+                    if (this.auto_tiler.attached.contains(win.entity)) {
+                        this.auto_tiler.detach_window(this, win.entity);
+                    }
+                } else if (!this.contains_tag(win.entity, Tags.Floating)) {
+                    this.auto_tiler.auto_tile(this, win, false);
                 }
-            } else if (!this.contains_tag(win.entity, Tags.Floating)) {
-                this.auto_tile(win, false);
             }
         });
-    }
-
-    /**
-     * Detaches the window from a tiling branch, if it is attached to one.
-     *
-     * @param {Entity} win
-     */
-    detach_window(win: Entity) {
-        if (this.attached) {
-            this.attached.take_with(win, (prev_fork: Entity) => {
-                if (this.auto_tiler) {
-                    const reflow_fork = this.auto_tiler.detach(prev_fork, win);
-
-                    if (reflow_fork) {
-                        Log.debug(`found reflow_fork`);
-                        const fork = reflow_fork[1];
-                        this.tile(fork, fork.area);
-                    }
-
-                    this.log_tree_nodes();
-                }
-            });
-        }
-    }
-
-    /**
-     * Swaps the location of two windows if the dropped window was dropped onto its sibling
-     *
-     * @param {Entity} win
-     *
-     * @return bool
-     */
-    dropped_on_sibling(win: Entity): boolean {
-        if (this.attached && this.auto_tiler) {
-            const fork_entity = this.attached.get(win);
-
-            if (fork_entity) {
-                const cursor = cursor_rect();
-                const fork = this.auto_tiler.forks.get(fork_entity);
-
-                if (fork) {
-                    if (fork.left.kind == NodeKind.WINDOW && fork.right && fork.right.kind == NodeKind.WINDOW) {
-                        if (fork.left.is_window(win)) {
-                            const sibling = this.windows.get(fork.right.entity);
-                            if (sibling && sibling.rect().contains(cursor)) {
-                                Log.debug(`${this.names.get(win)} was dropped onto ${sibling.name(this)}`);
-                                fork.left.entity = fork.right.entity;
-                                fork.right.entity = win;
-                                this.tile(fork, fork.area);
-                                return true;
-                            }
-                        } else if (fork.right.is_window(win)) {
-                            const sibling = this.windows.get(fork.left.entity);
-                            if (sibling && sibling.rect().contains(cursor)) {
-                                Log.debug(`${this.names.get(win)} was dropped onto ${sibling.name(this)}`);
-                                fork.right.entity = fork.left.entity;
-                                fork.left.entity = win;
-
-                                this.tile(fork, fork.area);
-                                return true;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        return false;
     }
 
     exit_modes() {
@@ -565,13 +284,6 @@ export class Ext extends Ecs.World {
         }
     }
 
-    log_tree_nodes() {
-        if (this.auto_tiler) {
-            let buf = this.auto_tiler.fmt(this);
-            Log.info('\n\n' + buf);
-        }
-    }
-
     monitor_work_area(monitor: number): Rectangle {
         const meta = global.display.get_workspace_manager()
             .get_active_workspace()
@@ -588,10 +300,10 @@ export class Ext extends Ecs.World {
 
             this.last_focused = null;
 
-            if (this.attached && this.auto_tiler) {
-                const entity = this.attached.get(win);
+            if (this.auto_tiler) {
+                const entity = this.auto_tiler.attached.get(win);
                 if (entity) {
-                    const fork = this.auto_tiler.forks.get(entity);
+                    const fork = this.auto_tiler.forest.forks.get(entity);
                     if (fork?.right?.is_window(win)) {
                         this.windows.with(fork.right.entity, (sibling) => sibling.activate())
                     }
@@ -599,7 +311,7 @@ export class Ext extends Ecs.World {
             }
         }
 
-        if (this.auto_tiler) this.detach_window(win);
+        if (this.auto_tiler) this.auto_tiler.detach_window(this, win);
 
         this.delete_entity(win);
     }
@@ -626,8 +338,8 @@ export class Ext extends Ecs.World {
             + `  monitor: ${win.meta.get_monitor()} \n`
             + `  workspace: ${win.workspace_id()} \n`;
 
-        if (this.attached) {
-            msg += `  fork: (${this.attached.get(win.entity)}),\n`;
+        if (this.auto_tiler) {
+            msg += `  fork: (${this.auto_tiler.attached.get(win.entity)}),\n`;
         }
 
         Log.info(msg + '}');
@@ -653,7 +365,7 @@ export class Ext extends Ecs.World {
         if (win && this.grab_op && Ecs.entity_eq(this.grab_op.entity, win.entity)) {
             let crect = win.rect()
 
-            if (this.auto_tiler && this.attached) {
+            if (this.auto_tiler) {
                 const rect = this.grab_op.rect;
                 if (is_move_op(op)) {
                     Log.debug(`win: ${win.name(this)}; op: ${op}; from (${rect.x},${rect.y}) to (${crect.x},${crect.y})`);
@@ -667,19 +379,19 @@ export class Ext extends Ecs.World {
 
                     if (rect.x != crect.x || rect.y != crect.y) {
                         if (rect.contains(cursor_rect())) {
-                            this.reflow(win.entity);
+                            this.auto_tiler.reflow(this, win.entity);
                         } else {
-                            this.auto_tile_on_drop(win);
+                            this.auto_tiler.on_drop(this, win);
                         }
                     }
                 } else {
-                    const fork = this.attached.get(win.entity);
+                    const fork = this.auto_tiler.attached.get(win.entity);
                     if (fork) {
                         const movement = this.grab_op.operation(crect);
 
                         Log.debug(`resizing window: from [${rect.fmt()} to ${crect.fmt()}]`);
-                        this.auto_tiler.resize(this, fork, win.entity, movement, crect);
-                        Log.debug(`changed to: ${this.auto_tiler.fmt(this)}`);
+                        this.auto_tiler.forest.resize(this, fork, win.entity, movement, crect);
+                        Log.debug(`changed to: ${this.auto_tiler.forest.fmt(this)}`);
                     } else {
                         Log.error(`no fork found`);
                     }
@@ -752,28 +464,17 @@ export class Ext extends Ecs.World {
     on_workspace_changed(win: Window.ShellWindow) {
         if (!this.grab_op) {
             Log.debug(`workspace changed for ${win.name(this)}`);
-            const id = this.workspace_id(win);
-            const prev_id = this.monitors.get(win.entity);
-            if (!prev_id || id[0] != prev_id[0] || id[1] != prev_id[1]) {
-                Log.debug(`workspace changed from (${prev_id}) to (${id})`);
-                this.monitors.insert(win.entity, id);
-                this.detach_window(win.entity);
-                this.auto_tile_on_workspace(win, id);
+            if (this.auto_tiler) {
+                const id = this.workspace_id(win);
+                const prev_id = this.monitors.get(win.entity);
+                if (!prev_id || id[0] != prev_id[0] || id[1] != prev_id[1]) {
+                    Log.debug(`workspace changed from (${prev_id}) to (${id})`);
+                    this.monitors.insert(win.entity, id);
+                    this.auto_tiler.detach_window(this, win.entity);
+                    this.auto_tiler.attach_to_workspace(this, win, id);
+                }
             }
         }
-    }
-
-    reflow(win: Entity) {
-        if (this.attached) this.attached.with(win, (fork_entity) => {
-            GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
-                if (this.auto_tiler) {
-                    const fork = this.auto_tiler.forks.get(fork_entity);
-                    if (fork) this.tile(fork, fork.area);
-                }
-
-                return false;
-            });
-        });
     }
 
     set_gap_inner(gap: number) {
@@ -824,77 +525,6 @@ export class Ext extends Ecs.World {
         }
     }
 
-    toggle_floating() {
-        if (!this.auto_tiler) return;
-
-        const focused = this.focus_window();
-        if (!focused) return;
-
-        if (this.attached) {
-            if (this.contains_tag(focused.entity, Tags.Floating)) {
-                this.delete_tag(focused.entity, Tags.Floating);
-                this.auto_tile(focused, false);
-            } else {
-                const fork_entity = this.attached.get(focused.entity);
-                if (fork_entity) {
-                    this.detach_window(focused.entity);
-                    this.add_tag(focused.entity, Tags.Floating);
-                }
-            }
-        }
-    }
-
-    toggle_orientation() {
-        const result = this.toggle_orientation_();
-        if (result.kind == ERR) {
-            Log.warn(`toggle_orientation: ${result.value}`);
-        } else {
-            Log.info('toggled orientation');
-        }
-    }
-
-    private toggle_orientation_(): Result<void, string> {
-        if (!(this.attached && this.auto_tiler)) {
-            return Err('may only be toggled in auto-tile mode');
-        } else {
-            const focused = this.focus_window();
-            if (!focused) {
-                return Err('no focused window to toggle');
-            }
-
-            if (focused.meta.get_maximized()) {
-                return Err('cannot toggle maximized window');
-            }
-
-            const fork_entity = this.attached.get(focused.entity);
-            if (!fork_entity) {
-                return Err(`window is not attached to the tree`)
-            }
-
-            const fork = this.auto_tiler.forks.get(fork_entity);
-            if (!fork) {
-                return Err('window\'s fork attachment does not exist');
-            }
-
-            fork.toggle_orientation();
-            this.auto_tiler.measure(this, fork, fork.area);
-
-            for (const child of this.auto_tiler.iter(fork_entity, NodeKind.FORK)) {
-                const fork = this.auto_tiler.forks.get(child.entity);
-                if (fork) {
-                    fork.rebalance_orientation();
-                    this.auto_tiler.measure(this, fork, fork.area);
-                } else {
-                    Log.error('toggle_orientation: Fork(${child.entity}) does not exist to have its orientation toggled');
-                }
-            }
-
-            this.auto_tiler.arrange(this, fork.workspace);
-        }
-
-        return Ok(void (0));
-    }
-
     update_snapped() {
         for (const entity of this.snapped.find((val) => val)) {
             const window = this.windows.get(entity);
@@ -941,25 +571,12 @@ export class Ext extends Ecs.World {
             const actor = meta.get_compositor_private();
             if (this.auto_tiler && win.is_tilable(this) && actor) {
                 let id = actor.connect('first-frame', () => {
-                    this.auto_tile(win, this.init);
+                    this.auto_tiler?.auto_tile(this, win, this.init);
                     actor.disconnect(id);
                 });
             }
         }
         return entity;
-    }
-
-    windows_are_siblings(a: Entity, b: Entity): Entity | null {
-        if (this.attached) {
-            const a_parent = this.attached.get(a);
-            const b_parent = this.attached.get(b);
-
-            if (a_parent !== null && null !== b_parent && Ecs.entity_eq(a_parent, b_parent)) {
-                return a_parent;
-            }
-        }
-
-        return null;
     }
 
     /// Returns the window(s) that the mouse pointer is currently hoving above.

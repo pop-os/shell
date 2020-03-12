@@ -11,7 +11,7 @@ import type { Entity } from './ecs';
 import type { ShellWindow } from './window';
 import type { Rectangle } from './rectangle';
 import type { Ext } from './extension';
-import type { Forest } from './forest';
+import { AutoTiler } from './auto_tiler';
 
 const Main = imports.ui.main;
 
@@ -31,10 +31,13 @@ export class Tiler {
     constructor(ext: Ext) {
         this.keybindings = {
             "management-orientation": () => {
-                if (this.window) ext.windows.with(this.window, (window) => {
-                    ext.toggle_orientation();
-                    ext.set_overlay(window.rect());
-                });
+                if (ext.auto_tiler && this.window) {
+                    const window = ext.windows.get(this.window);
+                    if (window) {
+                        ext.auto_tiler.toggle_orientation(ext);
+                        ext.set_overlay(window.rect());
+                    }
+                }
             },
 
             "tile-move-left": () => this.move_left(ext),
@@ -182,21 +185,21 @@ export class Tiler {
     }
 
     move_auto_(ext: Ext, func1: (a: Rectangle) => void, func2: (a: Rectangle) => void) {
-        if (ext.auto_tiler && ext.attached && this.window) {
-            const entity = ext.attached.get(this.window);
+        if (ext.auto_tiler && this.window) {
+            const entity = ext.auto_tiler.attached.get(this.window);
             if (entity) {
-                const fork = ext.auto_tiler.forks.get(entity);
+                const fork = ext.auto_tiler.forest.forks.get(entity);
                 const window = ext.windows.get(this.window);
 
                 if (!fork || !window) return;
 
                 const workspace_id = ext.workspace_id(window);
 
-                const toplevel = ext.auto_tiler.find_toplevel(workspace_id);
+                const toplevel = ext.auto_tiler.forest.find_toplevel(workspace_id);
 
                 if (!toplevel) return;
 
-                const topfork = ext.auto_tiler.forks.get(toplevel);
+                const topfork = ext.auto_tiler.forest.forks.get(toplevel);
 
                 if (!topfork) return;
 
@@ -216,7 +219,7 @@ export class Tiler {
                         return;
                     }
 
-                    (ext.auto_tiler as Forest).resize(ext, entity, (this.window as Entity), grab_op.operation(crect), crect);
+                    (ext.auto_tiler as AutoTiler).forest.resize(ext, entity, (this.window as Entity), grab_op.operation(crect), crect);
                 };
 
                 resize(func1);
@@ -270,22 +273,22 @@ export class Tiler {
 
     move_auto(ext: Ext, move_to: ShellWindow | null) {
         const focused = ext.focus_window();
-        if (focused && move_to) {
-            const parent = ext.windows_are_siblings(focused.entity, move_to.entity);
+        if (ext.auto_tiler && focused && move_to) {
+            const parent = ext.auto_tiler.windows_are_siblings(focused.entity, move_to.entity);
             if (parent) {
-                const fork = ext.auto_tiler?.forks.get(parent);
+                const fork = ext.auto_tiler.forest.forks.get(parent);
                 if (fork) {
                     const temp = fork.left.entity;
                     fork.left.entity = (fork.right as any).entity;
                     (fork.right as any).entity = temp;
-                    ext.tile(fork, fork.area as any);
+                    ext.auto_tiler.tile(ext, fork, fork.area as any);
                     ext.set_overlay(focused.rect());
                     return;
                 }
             }
 
-            ext.detach_window(focused.entity);
-            ext.attach_to_window(move_to, focused);
+            ext.auto_tiler.detach_window(ext, focused.entity);
+            ext.auto_tiler.attach_to_window(ext, move_to, focused);
             ext.set_overlay(focused.rect());
         }
     }
@@ -413,7 +416,7 @@ export class Tiler {
                     const meta_swap = ext.windows.get(this.swap_window);
                     if (meta_swap) {
                         if (ext.auto_tiler) {
-                            ext.attach_swap(this.swap_window, this.window);
+                            ext.auto_tiler.attach_swap(this.swap_window, this.window);
                         }
                         meta_swap.move(meta.rect());
                         this.swap_window = null;

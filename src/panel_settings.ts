@@ -1,15 +1,15 @@
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
-const { Clutter, Gio, St } = imports.gi;
-const { PopupMenuItem, PopupSwitchMenuItem, PopupSubMenuMenuItem } = imports.ui.popupMenu;
-const { Button } = imports.ui.panelMenu;
-
 import * as active_hint from 'active_hint';
+import * as auto_tiler from 'auto_tiler';
 import * as Log from 'log';
 
 import type { Entity } from './ecs';
 import type { Ext } from './extension';
 
+const { Clutter, Gio, St } = imports.gi;
+const { PopupMenuItem, PopupSwitchMenuItem, PopupSubMenuMenuItem } = imports.ui.popupMenu;
+const { Button } = imports.ui.panelMenu;
 const { Forest } = Me.imports.forest;
 const GLib: GLib = imports.gi.GLib;
 
@@ -63,10 +63,10 @@ export class Indicator {
                         Log.info(`inner gap changed to ${current}`);
                         if (ext.auto_tiler) {
                             ext.switch_workspace_on_move = false;
-                            for (const [entity,] of ext.auto_tiler.toplevel.values()) {
-                                const fork = ext.auto_tiler.forks.get(entity);
+                            for (const [entity,] of ext.auto_tiler.forest.toplevel.values()) {
+                                const fork = ext.auto_tiler.forest.forks.get(entity);
                                 if (fork && fork.area) {
-                                    ext.tile(fork, fork.area);
+                                    ext.auto_tiler.tile(ext, fork, fork.area);
                                 }
                             }
                             ext.switch_workspace_on_move = true;
@@ -92,8 +92,8 @@ export class Indicator {
                         Log.info(`outer gap changed to ${current}`);
                         if (ext.auto_tiler) {
                             ext.switch_workspace_on_move = false;
-                            for (const [entity,] of ext.auto_tiler.toplevel.values()) {
-                                const fork = ext.auto_tiler.forks.get(entity);
+                            for (const [entity,] of ext.auto_tiler.forest.toplevel.values()) {
+                                const fork = ext.auto_tiler.forest.forks.get(entity);
 
                                 if (fork && fork.area) {
                                     fork.area.array[0] += diff;
@@ -101,7 +101,7 @@ export class Indicator {
                                     fork.area.array[2] -= diff * 2;
                                     fork.area.array[3] -= diff * 2;
 
-                                    ext.tile(fork, fork.area);
+                                    ext.auto_tiler.tile(ext, fork, fork.area);
                                 }
                             }
                             ext.switch_workspace_on_move = true;
@@ -220,28 +220,31 @@ function toggle(desc: string, active: boolean, connect: (toggle: any) => void): 
 
 function tiled(ext: Ext): any {
     return toggle(_("Tile Windows"), null != ext.auto_tiler, () => {
-        if (ext.attached && ext.auto_tiler) {
+        if (ext.auto_tiler) {
             Log.info(`tile by default disabled`);
+            ext.unregister_storage(ext.auto_tiler.attached);
             ext.auto_tiler = null;
-            ext.unregister_storage(ext.attached);
             ext.settings.set_tile_by_default(false);
         } else {
             Log.info(`tile by default enabled`);
 
             const original = ext.active_workspace();
 
-            ext.attached = ext.register_storage();
-            ext.settings.set_tile_by_default(true);
-            ext.auto_tiler = new Forest()
-                .connect_on_attach((entity: Entity, window: Entity) => {
-                    if (ext.attached) {
+            let tiler = new auto_tiler.AutoTiler(
+                new Forest()
+                    .connect_on_attach((entity: Entity, window: Entity) => {
                         Log.debug(`attached Window(${window}) to Fork(${entity})`);
-                        ext.attached.insert(window, entity);
-                    }
-                });
+                        tiler.attached.insert(window, entity);
+                    }),
+                    ext.register_storage()
+            );
+
+            ext.auto_tiler = tiler;
+
+            ext.settings.set_tile_by_default(true);
 
             for (const window of ext.windows.values()) {
-                if (window.is_tilable(ext)) ext.auto_tile(window, false);
+                if (window.is_tilable(ext)) tiler.auto_tile(ext, window, false);
             }
 
             GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
