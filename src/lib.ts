@@ -9,9 +9,6 @@ import type { Rectangle } from 'rectangle';
 
 const { Meta, St } = imports.gi;
 
-export var MODE_AUTO_TILE = 0;
-export var MODE_DEFAULT = 1;
-
 export enum Movement {
     NONE = 0,
     MOVED = 0b1,

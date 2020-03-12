@@ -5,7 +5,6 @@ const { PopupMenuItem, PopupSwitchMenuItem, PopupSubMenuMenuItem } = imports.ui.
 const { Button } = imports.ui.panelMenu;
 
 import * as active_hint from 'active_hint';
-import * as Lib from 'lib';
 import * as Log from 'log';
 
 import type { Entity } from './ecs';
@@ -223,7 +222,6 @@ function tiled(ext: Ext): any {
     return toggle(_("Tile Windows"), null != ext.auto_tiler, () => {
         if (ext.attached && ext.auto_tiler) {
             Log.info(`tile by default disabled`);
-            ext.mode = Lib.MODE_DEFAULT;
             ext.auto_tiler = null;
             ext.unregister_storage(ext.attached);
             ext.settings.set_tile_by_default(false);
@@ -232,7 +230,6 @@ function tiled(ext: Ext): any {
 
             const original = ext.active_workspace();
 
-            ext.mode = Lib.MODE_AUTO_TILE;
             ext.attached = ext.register_storage();
             ext.settings.set_tile_by_default(true);
             ext.auto_tiler = new Forest()

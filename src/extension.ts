@@ -56,7 +56,6 @@ export class Ext extends Ecs.World {
     grab_op: GrabOp.GrabOp | null = null;
     prev_focused: Entity | null = null;
     last_focused: Entity | null = null;
-    mode: number = Lib.MODE_DEFAULT;
 
     tiler: Tiling.Tiler;
     window_search: Launcher;
@@ -167,7 +166,6 @@ export class Ext extends Ecs.World {
 
         if (this.settings.tile_by_default()) {
             Log.info(`tile by default enabled`);
-            this.mode = Lib.MODE_AUTO_TILE;
             this.attached = this.register_storage();
 
             this.auto_tiler = new Forest.Forest()
@@ -655,7 +653,7 @@ export class Ext extends Ecs.World {
         if (win && this.grab_op && Ecs.entity_eq(this.grab_op.entity, win.entity)) {
             let crect = win.rect()
 
-            if (this.mode == Lib.MODE_AUTO_TILE) {
+            if (this.auto_tiler && this.attached) {
                 const rect = this.grab_op.rect;
                 if (is_move_op(op)) {
                     Log.debug(`win: ${win.name(this)}; op: ${op}; from (${rect.x},${rect.y}) to (${crect.x},${crect.y})`);
@@ -674,7 +672,7 @@ export class Ext extends Ecs.World {
                             this.auto_tile_on_drop(win);
                         }
                     }
-                } else if (this.attached && this.auto_tiler) {
+                } else {
                     const fork = this.attached.get(win.entity);
                     if (fork) {
                         const movement = this.grab_op.operation(crect);
@@ -940,14 +938,12 @@ export class Ext extends Ecs.World {
             this.monitors.insert(entity, [win.meta.get_monitor(), win.workspace_id()]);
 
             Log.debug(`created window (${win.entity}): ${win.name(this)}: ${id}`);
-            if (this.mode == Lib.MODE_AUTO_TILE && win.is_tilable(this)) {
-                const actor = meta.get_compositor_private();
-                if (this.mode == Lib.MODE_AUTO_TILE && win.is_tilable(this) && actor) {
-                    let id = actor.connect('first-frame', () => {
-                        this.auto_tile(win, this.init);
-                        actor.disconnect(id);
-                    });
-                }
+            const actor = meta.get_compositor_private();
+            if (this.auto_tiler && win.is_tilable(this) && actor) {
+                let id = actor.connect('first-frame', () => {
+                    this.auto_tile(win, this.init);
+                    actor.disconnect(id);
+                });
             }
         }
         return entity;
@@ -1015,7 +1011,7 @@ function init() {
 
     // Code to execute after the shell has finished initializing everything.
     GLib.idle_add(GLib.PRIORITY_LOW, () => {
-        if (ext?.mode == Lib.MODE_DEFAULT) ext.snap_windows();
+        if (ext?.auto_tiler) ext.snap_windows();
         return false;
     });
 }
