@@ -30,7 +30,7 @@ const { _defaultCssStylesheet, layoutManager, overview, panel, sessionMode } = i
 const Tags = Me.imports.tags;
 const { NodeKind } = node;
 const GLib: GLib = imports.gi.GLib;
-const { Ok, OK, Err, ERR } = result;
+const { Ok, Err, ERR } = result;
 
 export class Ext extends Ecs.World {
     private init: boolean = true;
@@ -141,17 +141,17 @@ export class Ext extends Ecs.World {
             return false;
         });
 
-        this.connect(global.display, 'window_created', (_: any, win: any) => {
+        this.connect(global.display, 'window_created', (_, win) => {
             this.on_window_create(win);
             return true;
         });
 
-        this.connect(global.display, 'grab-op-begin', (_: any, _display: any, win: any, op: any) => {
-            this.on_grab_start(win, op);
+        this.connect(global.display, 'grab-op-begin', (_, _display, win) => {
+            this.on_grab_start(win);
             return true;
         });
 
-        this.connect(global.display, 'grab-op-end', (_: any, _display: any, win: any, op: any) => {
+        this.connect(global.display, 'grab-op-end', (_, _display, win, op) => {
             this.on_grab_end(win, op);
             return true;
         });
@@ -255,7 +255,7 @@ export class Ext extends Ecs.World {
 
             Log.debug(`attached Window(${win.entity}) to Fork(${entity}) on Monitor(${workspace_id})`);
 
-            this.attach_update(fork, rect, workspace_id, true);
+            this.attach_update(fork, rect);
             this.log_tree_nodes();
         }
     }
@@ -273,10 +273,10 @@ export class Ext extends Ecs.World {
             let attached = this.auto_tiler.attach_window(this, attachee.entity, attacher.entity);
 
             if (attached) {
-                const [_e, fork] = attached;
+                const [, fork] = attached;
                 const monitor = this.monitors.get(attachee.entity);
                 if (monitor) {
-                    this.attach_update(fork, fork.area.clone(), monitor, true);
+                    this.attach_update(fork, fork.area.clone());
                     this.log_tree_nodes();
                     return true;
                 } else {
@@ -293,12 +293,12 @@ export class Ext extends Ecs.World {
     /**
      * Sets the orientation of a tiling fork, and this it according to the given area.
      */
-    attach_update(fork: Fork, area: Rectangle, workspace: [number, number], failure_allowed: boolean): boolean {
+    attach_update(fork: Fork, area: Rectangle): boolean {
         Log.debug(`setting attach area to (${area.x},${area.y}), (${area.width},${area.height})`);
-        return this.tile(fork, area, workspace[1], failure_allowed);
+        return this.tile(fork, area);
     }
 
-    tile(fork: Fork, area: Rectangle, workspace: number, failure_allowed: boolean): boolean {
+    tile(fork: Fork, area: Rectangle): boolean {
         let success = true;
         if (this.auto_tiler) {
             this.tiling = true;
@@ -459,7 +459,7 @@ export class Ext extends Ecs.World {
                     if (reflow_fork) {
                         Log.debug(`found reflow_fork`);
                         const fork = reflow_fork[1];
-                        this.tile(fork, fork.area, fork.workspace, true);
+                        this.tile(fork, fork.area);
                     }
 
                     this.log_tree_nodes();
@@ -491,7 +491,7 @@ export class Ext extends Ecs.World {
                                 Log.debug(`${this.names.get(win)} was dropped onto ${sibling.name(this)}`);
                                 fork.left.entity = fork.right.entity;
                                 fork.right.entity = win;
-                                this.tile(fork, fork.area, fork.workspace, false);
+                                this.tile(fork, fork.area);
                                 return true;
                             }
                         } else if (fork.right.is_window(win)) {
@@ -501,7 +501,7 @@ export class Ext extends Ecs.World {
                                 fork.right.entity = fork.left.entity;
                                 fork.left.entity = win;
 
-                                this.tile(fork, fork.area, fork.workspace, false);
+                                this.tile(fork, fork.area);
                                 return true;
                             }
                         }
@@ -633,7 +633,7 @@ export class Ext extends Ecs.World {
                 if (is_move_op(op)) {
                     Log.debug(`win: ${win.name(this)}; op: ${op}; from (${rect.x},${rect.y}) to (${crect.x},${crect.y})`);
 
-                    this.on_monitor_changed(win, (changed_from: number, changed_to: number, workspace: number) => {
+                    this.on_monitor_changed(win, (changed_from, changed_to, workspace) => {
                         if (win) {
                             Log.debug(`window ${win.name(this)} moved from display ${changed_from} to ${changed_to}`);
                             this.monitors.insert(win.entity, [changed_to, workspace]);
@@ -675,7 +675,8 @@ export class Ext extends Ecs.World {
      * @param {Meta.Window} meta
      * @param {*} op
      */
-    on_grab_start(meta: Meta.Window, op: any) {
+    on_grab_start(meta: Meta.Window) {
+        Log.info(`grab start`);
         let win = this.get_window(meta);
         if (win && win.is_tilable(this)) {
             let entity = win.entity;
@@ -688,16 +689,18 @@ export class Ext extends Ecs.World {
     /// Handles the event of a window moving from one monitor to another.
     on_monitor_changed(
         win: Window.ShellWindow,
-        func: (exp_mon: number, act_mon: number, act_work: number) => void
+        func: (exp_mon: null | number, act_mon: number, act_work: number) => void
     ) {
+        const actual_monitor = win.meta.get_monitor();
+        const actual_workspace = win.workspace_id();
         const monitor = this.monitors.get(win.entity);
         if (monitor) {
             const [expected_monitor, expected_workspace] = monitor;
-            const actual_monitor = win.meta.get_monitor();
-            const actual_workspace = win.workspace_id();
             if (expected_monitor != actual_monitor || actual_workspace != expected_workspace) {
                 func(expected_monitor, actual_monitor, actual_workspace);
             }
+        } else {
+            func(null, actual_monitor, actual_workspace);
         }
     }
 
@@ -740,7 +743,7 @@ export class Ext extends Ecs.World {
             GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
                 if (this.auto_tiler) {
                     const fork = this.auto_tiler.forks.get(fork_entity);
-                    if (fork) this.tile(fork, fork.area, fork.workspace, true);
+                    if (fork) this.tile(fork, fork.area);
                 }
 
                 return false;
@@ -846,7 +849,7 @@ export class Ext extends Ecs.World {
                 });
             }
 
-            this.tile(fork, fork.area, fork.workspace, true);
+            this.tile(fork, fork.area);
         }
 
         return Ok(void(0));
@@ -954,6 +957,7 @@ export class Ext extends Ecs.World {
 let ext: Ext | null = null;
 let indicator: Indicator | null = null;
 
+// @ts-ignore
 function init() {
     Log.info("init");
 
@@ -966,6 +970,7 @@ function init() {
     });
 }
 
+// @ts-ignore
 function enable() {
     if (ext) {
         Log.info("enable");
@@ -984,6 +989,7 @@ function enable() {
     }
 }
 
+// @ts-ignore
 function disable() {
     Log.info("disable");
 

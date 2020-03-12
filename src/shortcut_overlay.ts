@@ -1,5 +1,6 @@
 declare const imports: any;
 
+// @ts-ignore
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 const { GObject, St } = imports.gi;

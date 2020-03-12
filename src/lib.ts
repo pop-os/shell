@@ -1,3 +1,5 @@
+
+// @ts-ignore
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 import * as Log from 'log';

@@ -1,8 +1,9 @@
+// @ts-ignore
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 import * as Lib from 'lib';
 import * as Tags from 'tags';
-import * as Log from 'log';
+// import * as Log from 'log';
 import * as GrabOp from 'grab_op';
 import * as Rect from 'rectangle';
 
@@ -19,15 +20,6 @@ enum Direction {
     Up,
     Right,
     Down
-}
-
-enum ResizeMode {
-    Normal,
-    Reverse
-}
-
-function resize_mode_str(mode: ResizeMode): string {
-    return mode == ResizeMode.Normal ? "ResizeMode::Normal" : "ResizeMode::Reverse";
 }
 
 export class Tiler {
@@ -286,7 +278,7 @@ export class Tiler {
                     const temp = fork.left.entity;
                     fork.left.entity = (fork.right as any).entity;
                     (fork.right as any).entity = temp;
-                    ext.tile(fork, fork.area as any, fork.workspace, false);
+                    ext.tile(fork, fork.area as any);
                     ext.set_overlay(focused.rect());
                     return;
                 }
@@ -492,7 +484,7 @@ function tile_monitors(rect: Rectangle): Array<Rectangle> {
 
     let workspace = global.workspace_manager.get_active_workspace();
     return Main.layoutManager.monitors
-        .map((monitor: Rectangle, i: number) => workspace.get_work_area_for_monitor(i))
+        .map((_monitor: Rectangle, i: number) => workspace.get_work_area_for_monitor(i))
         .filter((monitor: Rectangle) => {
             return (rect.x + rect.width) > monitor.x &&
                 (rect.y + rect.height) > monitor.y &&

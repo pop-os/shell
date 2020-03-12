@@ -1,14 +1,14 @@
+// @ts-ignore
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
-const { Gio, GLib } = imports.gi;
+const { Gio } = imports.gi;
 
 import * as error from 'error';
 import * as result from 'result';
 import * as once_cell from 'once_cell';
-import * as Log from 'log';
+// import * as Log from 'log';
 
 import type { Result } from 'result';
-import { ok } from './lib';
 
 const { Err, Ok } = result;
 

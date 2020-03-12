@@ -1,4 +1,5 @@
 {
+    "compileOnSave": true,
     "compilerOptions": {
         "target": "es2015",
         "strict": true,
@@ -9,6 +10,12 @@
         "pretty": true,
         "sourceMap": true,
         "declaration": true,
-        "removeComments": true
-    }
+        "removeComments": true,
+        "incremental": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+    },
+    "include": [
+        "src/*.ts"
+    ]
 }

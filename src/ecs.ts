@@ -59,7 +59,7 @@ export class Storage<T> {
 
     /// Iterates across each stored component
     * values(): IterableIterator<T> {
-        for (const [_idx, [_gen, value]] of this._iter()) {
+        for (const [, [, value]] of this._iter()) {
             yield value;
         }
     }

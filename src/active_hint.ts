@@ -1,3 +1,4 @@
+// @ts-ignore
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 import type { Entity } from './ecs';
@@ -5,7 +6,7 @@ import type { ShellWindow } from "./window";
 
 import * as Ecs from 'ecs';
 
-const { GLib, St } = imports.gi;
+const { St } = imports.gi;
 const { main } = imports.ui;
 
 interface WindowDetails {

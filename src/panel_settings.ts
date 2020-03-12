@@ -62,10 +62,10 @@ export class Indicator {
                         Log.info(`inner gap changed to ${current}`);
                         if (ext.auto_tiler) {
                             ext.switch_workspace_on_move = false;
-                            for (const [entity, _] of ext.auto_tiler.toplevel.values()) {
+                            for (const [entity,] of ext.auto_tiler.toplevel.values()) {
                                 const fork = ext.auto_tiler.forks.get(entity);
                                 if (fork && fork.area) {
-                                    ext.tile(fork, fork.area, fork.workspace, true);
+                                    ext.tile(fork, fork.area);
                                 }
                             }
                             ext.switch_workspace_on_move = true;
@@ -91,7 +91,7 @@ export class Indicator {
                         Log.info(`outer gap changed to ${current}`);
                         if (ext.auto_tiler) {
                             ext.switch_workspace_on_move = false;
-                            for (const [entity, _] of ext.auto_tiler.toplevel.values()) {
+                            for (const [entity,] of ext.auto_tiler.toplevel.values()) {
                                 const fork = ext.auto_tiler.forks.get(entity);
 
                                 if (fork && fork.area) {
@@ -100,7 +100,7 @@ export class Indicator {
                                     fork.area.array[2] -= diff * 2;
                                     fork.area.array[3] -= diff * 2;
 
-                                    ext.tile(fork, fork.area, fork.workspace, true);
+                                    ext.tile(fork, fork.area);
                                 }
                             }
                             ext.switch_workspace_on_move = true;
@@ -218,7 +218,7 @@ function toggle(desc: string, active: boolean, connect: (toggle: any) => void): 
 }
 
 function tiled(ext: Ext): any {
-    return toggle(_("Tile Windows"), null != ext.auto_tiler, (toggle) => {
+    return toggle(_("Tile Windows"), null != ext.auto_tiler, () => {
         if (ext.attached && ext.auto_tiler) {
             Log.info(`tile by default disabled`);
             ext.mode = Lib.MODE_DEFAULT;

@@ -1,3 +1,4 @@
+// @ts-ignore
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 import type { Forest } from './forest';
@@ -10,15 +11,13 @@ import * as Lib from 'lib';
 import * as Log from 'log';
 import * as Rect from 'rectangle';
 
-const { orientation_as_str } = Lib;
-
 const XPOS = 0;
 const YPOS = 1;
 const WIDTH = 2;
 const HEIGHT = 3;
 
 /** A tiling fork contains two children nodes.
- * 
+ *
  * These nodes may either be windows, or sub-forks.
  */
 export class Fork {
@@ -112,7 +111,7 @@ export class Fork {
     }
 
     /** Sets the ratio of this fork
-     * 
+     *
      * Ensures that the ratio is never smaller or larger than the constraints.
      */
     set_ratio(left_length: number, fork_length: number): Fork {

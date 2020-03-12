@@ -1,7 +1,7 @@
+// @ts-ignore
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 import * as Geom from 'geom';
-
 
 import type { ShellWindow } from 'window';
 import type { Ext } from './extension';

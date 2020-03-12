@@ -1,3 +1,4 @@
+// @ts-ignore
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 import * as Ecs from 'ecs';

@@ -1,5 +1,3 @@
-const Me = imports.misc.extensionUtils.getCurrentExtension();
-
 const { St } = imports.gi;
 
 export class Box {

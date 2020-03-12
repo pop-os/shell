@@ -1,3 +1,4 @@
+// @ts-ignore
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 import * as Ecs from 'ecs';
@@ -25,11 +26,11 @@ interface Request {
 }
 
 /** A collection of forks separated into trees
- * 
+ *
  * Each display on each workspace has their own unique tree. A tree is a
  * collection of starting from an uppermost fork, and branching into
  * deeply-nested sub-forks.
- * 
+ *
  * Each fork represents two nodes and an orientation, whereby a node may either
  * be a window or another fork. As windows are attached to other windows,
  * forks will be dynamically removed and created to accomodate the new
@@ -227,7 +228,7 @@ export class Forest extends Ecs.World {
     fmt(ext: Ext) {
         let fmt = '';
 
-        for (const [entity, _] of this.toplevel.values()) {
+        for (const [entity,] of this.toplevel.values()) {
             Log.debug(`displaying fork (${entity})`);
             const fork = this.forks.get(entity);
 
@@ -472,7 +473,7 @@ export class Forest extends Ecs.World {
     }
 
     /** Readjusts the division of space between the left and right siblings of a fork
-     * 
+     *
      * Determines the size of the left sibling based on the new length of the right sibling
      */
     private readjust_fork_ratio_by_right(ext: Ext,
@@ -506,11 +507,9 @@ export class Forest extends Ecs.World {
         const shrinking = length < child.area.array[measure];
 
         let done = false;
-        let prev_area = child.area.clone();
         while (child.parent && !done) {
             const parent = this.forks.get(child.parent);
             if (parent) {
-                prev_area = parent.area.clone();
                 if (parent.area.contains(original)) {
                     if (shrinking) {
                         Log.debug(`Fork(${child_e}) area before: ${child.area?.fmt()}`);
