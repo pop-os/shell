@@ -26,7 +26,7 @@ import type { Result } from 'result';
 
 const { Gio, Meta, St } = imports.gi;
 const { cursor_rect, is_move_op } = Lib;
-const { _defaultCssStylesheet, layoutManager, overview, panel, sessionMode, getThemeStylesheet} = imports.ui.main;
+const { _defaultCssStylesheet, layoutManager, overview, panel, sessionMode, getThemeStylesheet } = imports.ui.main;
 const Tags = Me.imports.tags;
 const { NodeKind } = node;
 const GLib: GLib = imports.gi.GLib;
@@ -326,8 +326,10 @@ export class Ext extends Ecs.World {
             if (onto && onto.is_tilable(this) && !Ecs.entity_eq(onto.entity, win.entity)) {
                 this.detach_window(win.entity);
 
-                if (this.attach_to_window(onto, win)) {
-                    return;
+                if (onto.meta.get_monitor() == win.meta.get_monitor() && onto.workspace_id() == win.workspace_id()) {
+                    if (this.attach_to_window(onto, win)) {
+                        return;
+                    }
                 }
             }
         }
@@ -867,7 +869,7 @@ export class Ext extends Ecs.World {
             this.auto_tiler.arrange(this, fork.workspace);
         }
 
-        return Ok(void(0));
+        return Ok(void (0));
     }
 
     update_snapped() {
@@ -913,7 +915,15 @@ export class Ext extends Ecs.World {
             this.monitors.insert(entity, [win.meta.get_monitor(), win.workspace_id()]);
 
             Log.debug(`created window (${win.entity}): ${win.name(this)}: ${id}`);
-            if (this.mode == Lib.MODE_AUTO_TILE && win.is_tilable(this)) this.auto_tile(win, this.init);
+            if (this.mode == Lib.MODE_AUTO_TILE && win.is_tilable(this)) {
+                const actor = meta.get_compositor_private();
+                if (this.mode == Lib.MODE_AUTO_TILE && win.is_tilable(this) && actor) {
+                    let id = actor.connect('first-frame', () => {
+                        this.auto_tile(win, this.init);
+                        actor.disconnect(id);
+                    });
+                }
+            }
         }
         return entity;
     }
