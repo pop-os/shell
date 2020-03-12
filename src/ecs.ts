@@ -231,8 +231,8 @@ export class World {
     /// Registers a new component storage for our world
     ///
     /// This will be used to easily remove components when deleting an entity.
-    register_storage(): Storage<any> {
-        let storage = new Storage();
+    register_storage<T>(): Storage<T> {
+        let storage = new Storage<T>();
         this.storages.push(storage);
         return storage;
     }
