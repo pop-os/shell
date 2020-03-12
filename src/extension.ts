@@ -1009,7 +1009,7 @@ function load_theme() {
         let theme = new St.Theme({
             application_stylesheet: Gio.File.new_for_path(Me.path + "/stylesheet.css"),
             theme_stylesheet: getThemeStylesheet(),
-            default_stylesheet: _defaultCssStylesheet,
+            default_stylesheet: _defaultCssStylesheet
         });
 
         Log.info(`setting theme`);
