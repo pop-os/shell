@@ -56,9 +56,13 @@ export class Forest extends Ecs.World {
         super();
     }
 
+    measure(ext: Ext, fork: Fork.Fork, area: Rectangle) {
+        fork.measure(this, ext, area, this.on_record());
+    }
+
     /** Measures and arranges windows in the tree from the given fork to the specified area. */
     tile(ext: Ext, fork: Fork.Fork, area: Rectangle) {
-        fork.measure(this, ext, area, this.on_record());
+        this.measure(ext, fork, area);
         this.arrange(ext, fork.workspace);
     }
 

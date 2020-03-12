@@ -159,6 +159,14 @@ export class Fork {
         }
     }
 
+    rebalance_orientation() {
+        Log.debug(`rebalancing orientation`);
+        this.orientation = this.area.height > this.area.width
+            ? Lib.Orientation.VERTICAL
+            : Lib.Orientation.HORIZONTAL;
+        Log.debug(`orientation: ${Lib.orientation_as_str(this.orientation)} from (${this.area.fmt()})`);
+    }
+
     /** Toggles the orientation of this fork */
     toggle_orientation() {
         this.orientation = Lib.Orientation.HORIZONTAL == this.orientation

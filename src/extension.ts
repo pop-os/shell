@@ -842,14 +842,19 @@ export class Ext extends Ecs.World {
             }
 
             fork.toggle_orientation();
+            this.auto_tiler.measure(this, fork, fork.area);
 
             for (const child of this.auto_tiler.iter(fork_entity, NodeKind.FORK)) {
-                this.auto_tiler.forks.with(child.entity, (fork) => {
-                    fork.toggle_orientation();
-                });
+                const fork = this.auto_tiler.forks.get(child.entity);
+                if (fork) {
+                    fork.rebalance_orientation();
+                    this.auto_tiler.measure(this, fork, fork.area);
+                } else {
+                    Log.error('toggle_orientation: Fork(${child.entity}) does not exist to have its orientation toggled');
+                }
             }
 
-            this.tile(fork, fork.area);
+            this.auto_tiler.arrange(this, fork.workspace);
         }
 
         return Ok(void(0));
