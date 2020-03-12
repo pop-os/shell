@@ -775,6 +775,16 @@ export class Ext extends Ecs.World {
         }
     }
 
+    /** Switch to a workspace by its index */
+    switch_to_workspace(id: number) {
+        this.workspace_by_id(id)?.activate(global.get_current_time());
+    }
+
+    /** Fetch a workspace by its index */
+    workspace_by_id(id: number): Meta.Workspace | null {
+        return global.display.get_workspace_manager().get_workspace_by_index(id);
+    }
+
     tab_list(tablist: number, workspace: number | null): Array<Window.ShellWindow> {
         return global.display
             .get_tab_list(tablist, workspace)

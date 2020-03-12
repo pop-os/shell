@@ -69,8 +69,7 @@ export class Forest extends Ecs.World {
     /** Place all windows into their calculated positions. */
     arrange(ext: Ext, workspace: number) {
         let ws = ext.switch_workspace_on_move
-            ? global.display.get_workspace_manager()
-                .get_workspace_by_index(workspace)
+            ? ext.workspace_by_id(workspace)
             : null;
 
         for (const r of this.requested) {

@@ -12,6 +12,7 @@ import type { Entity } from './ecs';
 import type { Ext } from './extension';
 
 const { Forest } = Me.imports.forest;
+const GLib: GLib = imports.gi.GLib;
 
 export class Indicator {
     button: any;
@@ -228,6 +229,9 @@ function tiled(ext: Ext): any {
             ext.settings.set_tile_by_default(false);
         } else {
             Log.info(`tile by default enabled`);
+
+            const original = ext.active_workspace();
+
             ext.mode = Lib.MODE_AUTO_TILE;
             ext.attached = ext.register_storage();
             ext.settings.set_tile_by_default(true);
@@ -242,6 +246,11 @@ function tiled(ext: Ext): any {
             for (const window of ext.windows.values()) {
                 if (window.is_tilable(ext)) ext.auto_tile(window, false);
             }
+
+            GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
+                ext.switch_to_workspace(original);
+                return false;
+            });
         }
     });
 }
