@@ -54,6 +54,7 @@ export class Ext extends Ecs.World {
     focus_selector: Focus.FocusSelector;
 
     grab_op: GrabOp.GrabOp | null = null;
+    prev_focused: Entity | null = null;
     last_focused: Entity | null = null;
     mode: number = Lib.MODE_DEFAULT;
 
@@ -316,7 +317,7 @@ export class Ext extends Ecs.World {
      *
      * ## Implementation Notes
      *
-     * - First tries to tile into the focused windowo
+     * - First tries to tile into the focused window
      * - Then tries to tile onto a monitor
      */
     auto_tile(win: Window.ShellWindow, ignore_focus: boolean = false) {
@@ -335,7 +336,11 @@ export class Ext extends Ecs.World {
             return Err('ignoring focus');
         }
 
-        let onto = this.focus_window();
+        if (!this.prev_focused) {
+            return Err('no window has been previously focused');
+        }
+
+        let onto = this.windows.get(this.prev_focused);
 
         if (!onto) {
             return Err('no focus window');
@@ -608,6 +613,7 @@ export class Ext extends Ecs.World {
      */
     on_focused(win: Window.ShellWindow) {
         this.exit_modes();
+        this.prev_focused = this.last_focused;
         this.last_focused = win.entity;
 
         GLib.idle_add(GLib.PRIORITY_LOW, () => {
