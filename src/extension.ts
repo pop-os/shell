@@ -601,7 +601,9 @@ export class Ext extends Ecs.World {
         let msg = `focused Window(${win.entity}) {\n`
             + `  name: ${win.name(this)},\n`
             + `  rect: ${win.rect().fmt()},\n`
-            + `  wm_class: "${win.meta.get_wm_class()}",\n`;
+            + `  wm_class: "${win.meta.get_wm_class()}",\n`
+            + `  monitor: ${win.meta.get_monitor()} \n`
+            + `  workspace: ${win.workspace_id()} \n`;
 
         if (this.attached) {
             msg += `  fork: (${this.attached.get(win.entity)}),\n`;
