@@ -11,7 +11,7 @@ import * as Log from 'log';
 import type { Entity } from './ecs';
 import type { Ext } from './extension';
 
-const { AutoTiler } = Me.imports.auto_tiler;
+const { Forest } = Me.imports.forest;
 
 export class Indicator {
     button: any;
@@ -230,7 +230,7 @@ function tiled(ext: Ext): any {
             ext.mode = Lib.MODE_AUTO_TILE;
             ext.attached = ext.register_storage();
             ext.settings.set_tile_by_default(true);
-            ext.auto_tiler = new AutoTiler()
+            ext.auto_tiler = new Forest()
                 .connect_on_attach((entity: Entity, window: Entity) => {
                     if (ext.attached) {
                         Log.debug(`attached Window(${window}) to Fork(${entity})`);
