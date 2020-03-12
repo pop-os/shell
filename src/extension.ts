@@ -320,21 +320,38 @@ export class Ext extends Ecs.World {
      * - Then tries to tile onto a monitor
      */
     auto_tile(win: Window.ShellWindow, ignore_focus: boolean = false) {
-        if (!ignore_focus) {
-            let onto = this.focus_window();
+        const result = this.auto_tile_fetch_mode(win, ignore_focus);
+        if (result.kind == ERR) {
+            Log.debug(`auto_tile: ${result.value}`);
+            this.auto_tile_on_workspace(win, this.workspace_id(win));
+        } else {
+            this.detach_window(win.entity);
+            this.attach_to_window(result.value, win)
+        }
+    }
 
-            if (onto && onto.is_tilable(this) && !Ecs.entity_eq(onto.entity, win.entity)) {
-                this.detach_window(win.entity);
-
-                if (onto.meta.get_monitor() == win.meta.get_monitor() && onto.workspace_id() == win.workspace_id()) {
-                    if (this.attach_to_window(onto, win)) {
-                        return;
-                    }
-                }
-            }
+    private auto_tile_fetch_mode(win: Window.ShellWindow, ignore_focus: boolean = false): Result<Window.ShellWindow, string> {
+        if (ignore_focus) {
+            return Err('ignoring focus');
         }
 
-        this.auto_tile_on_workspace(win, this.workspace_id(win));
+        let onto = this.focus_window();
+
+        if (!onto) {
+            return Err('no focus window');
+        }
+
+        if (Ecs.entity_eq(onto.entity, win.entity)) {
+            return Err('tiled window and attach window are the same window');
+        }
+
+        if (!onto.is_tilable(this)) {
+            return Err('focused window is not tilable');
+        }
+
+        return onto.meta.get_monitor() == win.meta.get_monitor() && onto.workspace_id() == win.workspace_id()
+            ? Ok(onto)
+            : Err('window is not on the same monitor or workspace');
     }
 
     /**
