@@ -107,6 +107,14 @@ Switching focus to the left will calculate from the center of the east side of t
 
 The launcher is summoned with `Super` + `/`. The search list displays matching windows based on their window name and title, and applications on the system which can be launched. The arrow keys are used to select an application or window from the search list. If it is a window, the selected window will be visually highlighted with an overlay, in the event that two windows have the same name and title. Pressing `Return` on a window will bring that window to focus, switching to its workspace, and unminimizing it if it was minimized.
 
+#### Launcher Modes
+
+By default, the launcher searches windows and applications. However, you can designate a special launch mode using one of the supported prefixes:
+
+- `:`: Execute a command in `sh`
+- `t:`: Execute a command in `sh` in a terminal
+- `=`: Calculator mode, powered by [MathJS](https://mathjs.org/)
+
 ### Inner and Outer Gaps
 
 Gaps improve the aesthetics of tiled windows, and make it easier to grab the edge of a specific window. We've decided to add support for inner and outer gaps, and made these settings configurable in the extension's popup menu.
