@@ -151,8 +151,8 @@ export class Fork {
             this.area_left = region.clone();
 
             this.left.measure(tiler, ext, region, record);
-            region.array[p] = region.array[p] + length + ext.gap_inner;
-            region.array[l] = this.area.array[l] - length - ext.gap_inner;
+            region.array[p] = region.array[p] + length + ext.gap_inner_half;
+            region.array[l] = this.area.array[l] - length - ext.gap_inner_half;
             this.right.measure(tiler, ext, region, record);
         } else {
             this.left.measure(tiler, ext, this.area, record)
