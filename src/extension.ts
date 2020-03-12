@@ -26,7 +26,7 @@ import type { Result } from 'result';
 
 const { Gio, Meta, St } = imports.gi;
 const { cursor_rect, is_move_op } = Lib;
-const { _defaultCssStylesheet, layoutManager, overview, panel, sessionMode } = imports.ui.main;
+const { _defaultCssStylesheet, layoutManager, overview, panel, sessionMode, getThemeStylesheet} = imports.ui.main;
 const Tags = Me.imports.tags;
 const { NodeKind } = node;
 const GLib: GLib = imports.gi.GLib;
@@ -1014,7 +1014,8 @@ function load_theme() {
         Log.info(`loading theme`)
         let theme = new St.Theme({
             application_stylesheet: Gio.File.new_for_path(Me.path + "/stylesheet.css"),
-            theme_stylesheet: _defaultCssStylesheet,
+            theme_stylesheet: getThemeStylesheet(),
+            default_stylesheet: _defaultCssStylesheet
         });
 
         Log.info(`setting theme`);
