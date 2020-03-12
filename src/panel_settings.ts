@@ -20,9 +20,10 @@ export class Indicator {
     constructor(ext: Ext) {
         this.button = new Button(0.0, _("Pop Shell Settings"));
 
+        const icon_path = `${Me.path}/icons/pop-shell-symbolic.svg`;
         this.button.icon = new St.Icon({
-            icon_name: "focus-windows-symbolic",
-            style_class: "system-status-icon"
+            gicon: Gio.icon_new_for_string(icon_path),
+            style_class: "system-status-icon",
         });
 
         this.button.add_actor(this.button.icon);

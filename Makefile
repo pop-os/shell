@@ -25,7 +25,7 @@ transpile: $(sources)
 compile: convert metadata.json schemas
 	rm -rf _build
 	mkdir -p _build
-	cp -r metadata.json schemas target/*.js imports/*.js stylesheet.css _build
+	cp -r metadata.json icons schemas target/*.js imports/*.js stylesheet.css _build
 
 convert: transpile
 	for file in target/*.js; do \
