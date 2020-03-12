@@ -1,7 +1,7 @@
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 const { Clutter, Gio, St } = imports.gi;
-const { PopupMenuItem, PopupMenuSection, PopupSeparatorMenuItem, PopupSwitchMenuItem, PopupSubMenuMenuItem } = imports.ui.popupMenu;
+const { PopupMenuItem, PopupSwitchMenuItem, PopupSubMenuMenuItem } = imports.ui.popupMenu;
 const { Button } = imports.ui.panelMenu;
 
 import * as active_hint from 'active_hint';

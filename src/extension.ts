@@ -9,6 +9,7 @@ import * as Lib from 'lib';
 import * as Log from 'log';
 import * as PanelSettings from 'panel_settings';
 import * as Rect from 'rectangle';
+import * as result from 'result';
 import * as Settings from 'settings';
 import * as Tiling from 'tiling';
 import * as Window from 'window';
@@ -21,14 +22,15 @@ import type { Rectangle } from 'rectangle';
 import type { Indicator } from 'panel_settings';
 import type { Launcher } from './launcher';
 import type { Fork } from 'fork';
+import type { Result } from 'result';
 
 const { Gio, Meta, St } = imports.gi;
 const { cursor_rect, is_move_op } = Lib;
 const { _defaultCssStylesheet, layoutManager, overview, panel, sessionMode } = imports.ui.main;
 const Tags = Me.imports.tags;
 const { NodeKind } = node;
-
 const GLib: GLib = imports.gi.GLib;
+const { Ok, OK, Err, ERR } = result;
 
 export class Ext extends Ecs.World {
     private init: boolean = true;
@@ -805,26 +807,49 @@ export class Ext extends Ecs.World {
     }
 
     toggle_orientation() {
-        Log.info(`toggling orientation`);
-        if (!this.auto_tiler) return;
-        const focused = this.focus_window();
-        if (!focused || focused.meta.get_maximized()) return;
+        const result = this.toggle_orientation_();
+        if (result.kind == ERR) {
+            Log.warn(`toggle_orientation: ${result.value}`);
+        } else {
+            Log.info('toggled orientation');
+        }
+    }
 
-        if (this.attached) this.attached.with(focused.entity, (fork_entity) => {
-            this.auto_tiler?.forks.with(fork_entity, (fork) => {
-                if (this.auto_tiler) {
+    private toggle_orientation_(): Result<void, string> {
+        if (!(this.attached && this.auto_tiler)) {
+            return Err('may only be toggled in auto-tile mode');
+        } else {
+            const focused = this.focus_window();
+            if (!focused) {
+                return Err('no focused window to toggle');
+            }
+
+            if (focused.meta.get_maximized()) {
+                return Err('cannot toggle maximized window');
+            }
+
+            const fork_entity = this.attached.get(focused.entity);
+            if (!fork_entity) {
+                return Err(`window is not attached to the tree`)
+            }
+
+            const fork = this.auto_tiler.forks.get(fork_entity);
+            if (!fork) {
+                return Err('window\'s fork attachment does not exist');
+            }
+
+            fork.toggle_orientation();
+
+            for (const child of this.auto_tiler.iter(fork_entity, NodeKind.FORK)) {
+                this.auto_tiler.forks.with(child.entity, (fork) => {
                     fork.toggle_orientation();
+                });
+            }
 
-                    for (const child of this.auto_tiler.iter(fork_entity, NodeKind.FORK)) {
-                        this.auto_tiler.forks.with(child.entity, (fork) => {
-                            fork.toggle_orientation();
-                        });
-                    }
+            this.tile(fork, fork.area, fork.workspace, true);
+        }
 
-                    this.tile(fork, fork.area, fork.workspace, true);
-                }
-            });
-        });
+        return Ok(void(0));
     }
 
     update_snapped() {

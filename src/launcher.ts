@@ -9,6 +9,7 @@ import * as app_info from 'app_info';
 import * as error from 'error';
 import * as lib from 'lib';
 import * as log from 'log';
+import * as result from 'result';
 import * as search from 'search';
 import * as window from 'window';
 
@@ -17,7 +18,7 @@ import type { Ext } from './extension';
 import type { AppInfo } from './app_info';
 
 
-const { OK } = error;
+const { OK } = result;
 
 const HOME_DIR: string = GLib.get_home_dir();
 
