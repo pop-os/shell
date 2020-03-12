@@ -11,7 +11,7 @@ import * as Log from 'log';
 import type { Entity } from './ecs';
 import type { Ext } from './extension';
 
-const { AutoTiler } = Me.imports.auto_tiler;
+const { AutoTiler } = Me.imports.forest;
 
 export class Indicator {
     button: any;
