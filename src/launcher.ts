@@ -209,6 +209,7 @@ export class Launcher extends search.Search {
         this.active.splice(0);
 
         this.dialog.dialogLayout.x = (mon.width / 2) - (this.dialog.dialogLayout.width / 2);
+        this.dialog.dialogLayout.y = (mon.height / 2) - (this.dialog.dialogLayout.height);
 
         for (const window of ext.tab_list(Meta.TabList.NORMAL, null)) {
             if (window.workspace_id() == active) {
