@@ -56,6 +56,8 @@ dconf write ${KEYS_MEDIA}/home "['<Super>f']"
 dconf write ${KEYS_MEDIA}/email "['<Super>e']"
 # Launch web browser
 dconf write ${KEYS_MEDIA}/www "['<Super>b']"
+# Rotate Video Lock
+dconf write ${KEYS_MEDIA}/rotate-video-lock-static "@as []"
 
 # Close Window
 dconf write ${KEYS_GNOME_WM}/close "['<Super>q']"
