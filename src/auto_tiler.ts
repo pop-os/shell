@@ -75,6 +75,8 @@ export class AutoTiler {
             const [, fork] = attached;
             const monitor = ext.monitors.get(attachee.entity);
             if (monitor) {
+                fork.ratio_prev = 0.5;
+                fork.ratio = 0.5;
                 this.tile(ext, fork, fork.area.clone());
                 this.log_tree_nodes(ext);
                 return true;
