@@ -22,6 +22,7 @@ enum Measure {
 /** A request to move a window into a new location. */
 interface Request {
     entity: Entity,
+    parent: Entity,
     rect: Rectangle
 }
 
@@ -141,7 +142,7 @@ export class Forest extends Ecs.World {
         workspace: number
     ): [Entity, Fork.Fork] {
         const entity = this.create_entity();
-        let fork = new Fork.Fork(ext, left, right, area, workspace);
+        let fork = new Fork.Fork(ext, entity, left, right, area, workspace);
 
         fork.set_orientation(area && area.width > area.height ? Lib.Orientation.HORIZONTAL : Lib.Orientation.VERTICAL);
 
@@ -370,14 +371,15 @@ export class Forest extends Ecs.World {
     }
 
     /** Higher order function which forwards record events to our record method. */
-    private on_record(): (entity: Entity, rect: Rectangle) => void {
-        return (e, a) => this.record(e, a);
+    private on_record(): (entity: Entity, parent: Entity, rect: Rectangle) => void {
+        return (e, p, a) => this.record(e, p, a);
     }
 
     /** Records window movements which have been queued. */
-    private record(entity: Entity, rect: Rectangle) {
+    private record(entity: Entity, parent: Entity, rect: Rectangle) {
         Log.debug(`Window(${entity}) shall be moved to [${rect.fmt()}]`);
         this.requested.push({
+            parent: parent,
             entity: entity,
             rect: rect,
         });

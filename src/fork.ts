@@ -26,6 +26,7 @@ export class Fork {
     area: Rectangle;
     area_left: Rectangle;
     parent: Entity | null = null;
+    entity: Entity;
     workspace: number;
     ratio: number = .5;
     ratio_prev: number = .5;
@@ -33,12 +34,13 @@ export class Fork {
     orientation: Lib.Orientation = Lib.Orientation.HORIZONTAL;
     is_toplevel: boolean = false;
 
-    constructor(ext: Ext, left: Node, right: Node | null, area: Rectangle, workspace: number) {
+    constructor(ext: Ext, entity: Entity, left: Node, right: Node | null, area: Rectangle, workspace: number) {
         this.area = area;
         this.left = left;
         this.right = right;
         this.workspace = workspace;
         this.area_left = this.area_of_left(ext);
+        this.entity = entity;
     }
 
     /** The calculated left area of this fork */
@@ -134,7 +136,7 @@ export class Fork {
         tiler: Forest,
         ext: Ext,
         area: Rectangle,
-        record: (win: Entity, area: Rectangle) => void
+        record: (win: Entity, parent: Entity, area: Rectangle) => void
     ) {
         if (!this.is_toplevel) {
             this.area = this.set_area(area.clone());
@@ -150,12 +152,14 @@ export class Fork {
 
             this.area_left = region.clone();
 
-            this.left.measure(tiler, ext, region, record);
+            this.left.measure(tiler, ext, this.entity, region, record);
+
             region.array[p] = region.array[p] + length + ext.gap_inner_half;
             region.array[l] = this.area.array[l] - length - ext.gap_inner_half;
-            this.right.measure(tiler, ext, region, record);
+
+            this.right.measure(tiler, ext, this.entity, region, record);
         } else {
-            this.left.measure(tiler, ext, this.area, record)
+            this.left.measure(tiler, ext, this.entity, this.area, record)
         }
     }
 

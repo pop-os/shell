@@ -80,8 +80,9 @@ export class Node {
     measure(
         tiler: Forest,
         ext: Ext,
+        parent: Entity,
         area: Rectangle,
-        record: (win: Entity, area: Rectangle) => void
+        record: (win: Entity, parent: Entity, area: Rectangle) => void
     ) {
         if (NodeKind.FORK == this.kind) {
             const fork = tiler.forks.get(this.entity);
@@ -89,7 +90,7 @@ export class Node {
                 fork.measure(tiler, ext, area, record);
             }
         } else {
-            record(this.entity, area.clone());
+            record(this.entity, parent, area.clone());
         }
     }
 }
