@@ -9,6 +9,12 @@ import type { Rectangle } from 'rectangle';
 
 const { Meta, St } = imports.gi;
 
+export interface SizeHint {
+    minimum: [number, number];
+    increment: [number, number];
+    base: [number, number];
+}
+
 export enum Movement {
     NONE = 0,
     MOVED = 0b1,
@@ -23,6 +29,10 @@ export enum Movement {
 export enum Orientation {
     HORIZONTAL = 0,
     VERTICAL = 1,
+}
+
+export function nth_rev<T>(array: Array<T>, nth: number): T | null {
+    return array[array.length - nth - 1];
 }
 
 export function ok<T, X>(input: T | null, func: (a: T) => X | null): X | null {

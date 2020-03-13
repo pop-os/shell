@@ -1,6 +1,7 @@
 // @ts-ignore
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
+import * as lib from 'lib';
 import * as log from 'log';
 import * as once_cell from 'once_cell';
 import * as Rect from 'rectangle';
@@ -17,13 +18,22 @@ const { OnceCell } = once_cell;
 
 export var window_tracker = Shell.WindowTracker.get_default();
 
+interface X11Info {
+    normal_hints: once_cell.OnceCell<lib.SizeHint | null>;
+    wm_role_: once_cell.OnceCell<string | null>;
+    xid_: once_cell.OnceCell<string | null>;
+}
+
 export class ShellWindow {
     entity: Entity;
     meta: Meta.Window;
 
     private window_app: any;
-    private wm_role_: once_cell.OnceCell<string | null> = new OnceCell();
-    private xid_: once_cell.OnceCell<string | null> = new OnceCell();
+    private extra: X11Info = {
+        normal_hints: new OnceCell(),
+        wm_role_: new OnceCell(),
+        xid_: new OnceCell()
+    };
 
     constructor(entity: Entity, window: Meta.Window, window_app: any, ext: Ext) {
         this.window_app = window_app;
@@ -131,6 +141,13 @@ export class ShellWindow {
         return Rect.Rectangle.from_meta(this.meta.get_frame_rect());
     }
 
+    size_hint(): lib.SizeHint | null {
+        return this.extra.normal_hints.get_or_init(() => {
+            const xid = this.xid();
+            return xid ? xprop.get_size_hints(xid) : null;
+        });
+    }
+
     swap(other: ShellWindow): void {
         let ar = this.rect();
         let br = other.rect();
@@ -142,7 +159,7 @@ export class ShellWindow {
     }
 
     wm_role(): string | null {
-        return this.wm_role_.get_or_init(() => {
+        return this.extra.wm_role_.get_or_init(() => {
             const xid = this.xid();
             return xid ? xprop.get_window_role(xid) : null
         });
@@ -159,7 +176,7 @@ export class ShellWindow {
     }
 
     xid(): string | null {
-        return this.xid_.get_or_init(() => xprop.get_xid(this.meta));
+        return this.extra.xid_.get_or_init(() => xprop.get_xid(this.meta));
     }
 }
 
