@@ -81,21 +81,21 @@ export class Search {
                 return;
             }
 
-            let c = event.get_key_code();
-            if (c == 9) {
+            let c = event.get_key_symbol();
+            if (c == 65307) {
                 // Escape key was pressed
                 this.reset();
                 this.close();
                 cancel();
                 return;
-            } else if (c == 111) {
+            } else if (c == 65362) {
                 // Up arrow was pressed
                 if (0 < this.active_id) {
                     this.unselect();
                     this.active_id -= 1;
                     this.select();
                 }
-            } else if (c == 116) {
+            } else if (c == 65364) {
                 // Down arrow was pressed
                 if (this.active_id + 1 < this.widgets.length) {
                     this.unselect();

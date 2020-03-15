@@ -145,16 +145,16 @@ function number_entry(
     });
 
     entry.connect('key-release-event', (_: any, event: any) => {
-        const code = event.get_key_code();
+        const symbol = event.get_key_symbol();
 
-        Log.debug(`event code: ${code}`);
+        Log.debug(`event symbol: ${symbol}`)
 
         const number: number | null =
-            code == 36
+            symbol == 65293     // enter key
                 ? parse_number(text.text)
-                : code == 113
+                : symbol == 65361   // left key
                     ? clamp(parse_number(text.text) - 4)
-                    : code == 114
+                    : symbol == 65363   // right key
                         ? clamp(parse_number(text.text) + 4)
                         : null;
 
