@@ -102,7 +102,7 @@
         </key>
 
         <key type="as" name="toggle-floating">
-            <default><![CDATA[['<Super>grave']]]></default>
+            <default><![CDATA[['<Super>g']]]></default>
             <summary>Toggles a window between floating and tiling</summary>
         </key>
 
