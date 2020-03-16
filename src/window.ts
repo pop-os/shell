@@ -114,8 +114,12 @@ export class ShellWindow {
         return !ext.contains_tag(this.entity, Tags.Floating)
             && ext.tilable.get_or(this.entity, () => {
                 return !this.meta.is_skip_taskbar()
-                    && !blacklisted(this.meta.get_wm_class())
-                    && this.meta.window_type == Meta.WindowType.NORMAL;
+                    // Only normal windows will be considered for tiling
+                    && this.meta.window_type == Meta.WindowType.NORMAL
+                    // Transient windows are most likely dialogs
+                    && this.meta.get_transient_for() === null
+                    // Blacklist any windows that happen to leak through our filter
+                    && !blacklisted(this.meta.get_wm_class());
             });
     }
 

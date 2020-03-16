@@ -84,6 +84,7 @@ declare namespace Meta {
         maximize(flags: MaximizeFlags): void;
         move_resize_frame(user_op: boolean, x: number, y: number, w: number, h: number): boolean;
         raise(): void;
+        get_transient_for(): Window | null;
         unmaximize(flags: any): void;
         unminimize(): void;
     }
