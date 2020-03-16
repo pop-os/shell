@@ -70,7 +70,7 @@ export class Ext extends Ecs.World {
 
     auto_tiler: auto_tiler.AutoTiler | null = null;
 
-    signals: Array<any>;
+    signals: Map<GObject.Object, Array<number>> = new Map();
 
     constructor() {
         super();
@@ -80,7 +80,6 @@ export class Ext extends Ecs.World {
         this.keybindings = new Keybindings.Keybindings(this);
         this.overlay = new St.BoxLayout({ style_class: "tile-preview", visible: false });
         this.settings = new Settings.ExtensionSettings();
-        this.signals = new Array();
 
         this.load_settings();
 
@@ -102,91 +101,6 @@ export class Ext extends Ecs.World {
 
         this.focus_selector = new Focus.FocusSelector();
         this.tiler = new Tiling.Tiler(this);
-
-        // Signals: We record these so that we may detach them
-
-        const workspace_manager = global.display.get_workspace_manager();
-
-        this.connect(sessionMode, 'updated', () => {
-            if ('user' != global.sessionMode.currentMode()) {
-                this.exit_modes();
-            }
-            return true;
-        });
-
-        this.connect(overview, 'showing', () => {
-            this.exit_modes();
-            return true;
-        });
-
-        // We have to connect this signal in an idle_add; otherwise work areas stop being calculated
-        GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
-            global.display.connect('notify::focus-window', () => {
-                const window = this.focus_window();
-                if (window) {
-                    this.on_focused(window);
-                }
-
-                return true;
-            });
-
-            const window = this.focus_window();
-            if (window) {
-                this.on_focused(window);
-            }
-
-            return false;
-        });
-
-        this.connect(global.display, 'window_created', (_, win) => {
-            this.on_window_create(win);
-            return true;
-        });
-
-        this.connect(global.display, 'grab-op-begin', (_, _display, win) => {
-            this.on_grab_start(win);
-            return true;
-        });
-
-        this.connect(global.display, 'grab-op-end', (_, _display, win, op) => {
-            this.on_grab_end(win, op);
-            return true;
-        });
-
-        this.connect(workspace_manager, 'active-workspace-changed', () => {
-            this.exit_modes();
-            this.last_focused = null;
-            return true;
-        });
-
-        // Modes
-
-        if (this.settings.tile_by_default()) {
-            Log.info(`tile by default enabled`);
-
-            this.auto_tiler = new auto_tiler.AutoTiler(
-                new Forest.Forest()
-                    .connect_on_attach((entity: Entity, window: Entity) => {
-                        if (this.auto_tiler) {
-                            Log.debug(`attached Window(${window}) to Fork(${entity})`);
-                            this.auto_tiler.attached.insert(window, entity);
-                        }
-                    }),
-                this.register_storage<Entity>(),
-            )
-        }
-
-        // Post-init
-
-        for (const window of this.tab_list(Meta.TabList.NORMAL, null)) {
-            this.on_window_create(window.meta);
-        }
-
-        GLib.timeout_add(1000, GLib.PRIORITY_DEFAULT, () => {
-            this.init = false;
-            Log.debug(`init complete`);
-            return false;
-        });
     }
 
     activate_window(window: Window.ShellWindow | null) {
@@ -210,11 +124,18 @@ export class Ext extends Ecs.World {
 
     /// Connects a callback signal to a GObject, and records the signal.
     connect(object: GObject.Object, property: string, callback: (...args: any) => boolean | void) {
-        object.connect(property, callback);
+        const signal = object.connect(property, callback);
+        const entry = this.signals.get(object);
+        if (entry) {
+            entry.push(signal);
+        } else {
+            this.signals.set(object, [signal]);
+        }
+
     }
 
     connect_meta(win: Window.ShellWindow, signal: string, callback: () => void) {
-        this.connect(win.meta, signal, () => {
+        win.meta.connect(signal, () => {
             if (win.actor_exists()) callback();
         });
     }
@@ -496,6 +417,102 @@ export class Ext extends Ecs.World {
         this.overlay.height = rect.height;
     }
 
+    /** Begin listening for signals from windows, and add any pre-existing windows. */
+    signals_attach() {
+        const workspace_manager = global.display.get_workspace_manager();
+
+        this.connect(sessionMode, 'updated', () => {
+            if ('user' != global.sessionMode.currentMode()) {
+                this.exit_modes();
+            }
+            return true;
+        });
+
+        this.connect(overview, 'showing', () => {
+            this.exit_modes();
+            return true;
+        });
+
+        // We have to connect this signal in an idle_add; otherwise work areas stop being calculated
+        GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
+            this.connect(global.display, 'notify::focus-window', () => {
+                const window = this.focus_window();
+                if (window) {
+                    this.on_focused(window);
+                }
+
+                return true;
+            });
+
+            const window = this.focus_window();
+            if (window) {
+                this.on_focused(window);
+            }
+
+            return false;
+        });
+
+        this.connect(global.display, 'window_created', (_, win) => {
+            this.on_window_create(win);
+            return true;
+        });
+
+        this.connect(global.display, 'grab-op-begin', (_, _display, win) => {
+            this.on_grab_start(win);
+            return true;
+        });
+
+        this.connect(global.display, 'grab-op-end', (_, _display, win, op) => {
+            this.on_grab_end(win, op);
+            return true;
+        });
+
+        this.connect(workspace_manager, 'active-workspace-changed', () => {
+            this.exit_modes();
+            this.last_focused = null;
+            return true;
+        });
+
+        // Modes
+
+        if (this.settings.tile_by_default()) {
+            Log.info(`tile by default enabled`);
+
+            this.auto_tiler = new auto_tiler.AutoTiler(
+                new Forest.Forest()
+                    .connect_on_attach((entity: Entity, window: Entity) => {
+                        if (this.auto_tiler) {
+                            Log.debug(`attached Window(${window}) to Fork(${entity})`);
+                            this.auto_tiler.attached.insert(window, entity);
+                        }
+                    }),
+                this.register_storage<Entity>(),
+            )
+        }
+
+        // Post-init
+
+        for (const window of this.tab_list(Meta.TabList.NORMAL, null)) {
+            this.on_window_create(window.meta);
+        }
+
+        GLib.timeout_add(1000, GLib.PRIORITY_DEFAULT, () => {
+            this.init = false;
+            Log.debug(`init complete`);
+            return false;
+        });
+    }
+
+    signals_remove() {
+        for (const [object, signals] of this.signals) {
+            for (const signal of signals) {
+                object.disconnect(signal);
+            }
+        }
+
+        this.signals.clear();
+    }
+
     // Snaps all windows to the window grid
     snap_windows() {
         for (const window of this.windows.values()) {
@@ -640,6 +657,8 @@ function enable() {
     if (ext) {
         Log.info("enable");
 
+        ext.signals_attach();
+
         load_theme();
 
         layoutManager.addChrome(ext.overlay);
@@ -664,6 +683,7 @@ function disable() {
     }
 
     if (ext) {
+        ext.signals_remove();
         ext.exit_modes();
 
         layoutManager.removeChrome(ext.overlay);
