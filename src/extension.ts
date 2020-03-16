@@ -15,6 +15,7 @@ import * as Window from 'window';
 import * as launcher from 'launcher';
 import * as active_hint from 'active_hint';
 import * as auto_tiler from 'auto_tiler';
+import * as node from 'node';
 
 import type { Entity } from 'ecs';
 import type { Rectangle } from 'rectangle';
@@ -471,6 +472,36 @@ export class Ext extends Ecs.World {
             this.exit_modes();
             this.last_focused = null;
             return true;
+        });
+
+        /** When a workspace is destroyed, we need to update state to have the correct workspace info.  */
+        this.connect(workspace_manager, 'workspace-removed', (_, number) => {
+            Log.info(`workspace ${number} was removed`);
+
+            if (this.auto_tiler) {
+                for (const [entity, monitor] of this.auto_tiler.forest.toplevel.values()) {
+                    if (monitor[1] > number) {
+                        Log.info(`moving tree from Fork(${entity})`);
+
+                        monitor[1] -= 1;
+                        let fork = this.auto_tiler.forest.forks.get(entity);
+                        if (fork) {
+                            fork.workspace -= 1;
+                            for (const child of this.auto_tiler.forest.iter(entity, node.NodeKind.FORK)) {
+                                fork = this.auto_tiler.forest.forks.get(child.entity);
+                                if (fork) fork.workspace -= 1;
+                            }
+                        }
+                    }
+                }
+            }
+
+            for (const [entity, monitor] of this.monitors.iter()) {
+                if (monitor[1] > number) {
+                    Log.info(`moving window from Window(${entity})`);
+                    monitor[1] -= 1;
+                }
+            }
         });
 
         // Modes
