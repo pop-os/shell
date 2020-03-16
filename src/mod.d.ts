@@ -58,6 +58,12 @@ declare namespace Clutter {
 }
 
 declare namespace Meta {
+    enum MaximizeFlags {
+        HORIZONTAL,
+        VERTICAL,
+        BOTH
+    }
+
     interface Window extends Clutter.Actor {
         minimized: Readonly<boolean>;
         window_type: Readonly<any>;
@@ -75,6 +81,7 @@ declare namespace Meta {
         get_workspace(): Workspace | null;
         is_client_decorated(): boolean;
         is_skip_taskbar(): boolean;
+        maximize(flags: MaximizeFlags): void;
         move_resize_frame(user_op: boolean, x: number, y: number, w: number, h: number): boolean;
         raise(): void;
         unmaximize(flags: any): void;
