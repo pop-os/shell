@@ -57,15 +57,15 @@ export class Indicator {
                 _("Inner Gap"),
                 ext.set_gap_inner,
                 ext.settings.set_gap_inner,
-                () => ext.gap_inner,
+                () => ext.gap_inner / 4,
                 (prev: number, current: number) => {
-                    if (current - prev != 0) {
+                    if (current != prev) {
                         Log.info(`inner gap changed to ${current}`);
                         if (ext.auto_tiler) {
                             ext.switch_workspace_on_move = false;
                             for (const [entity,] of ext.auto_tiler.forest.toplevel.values()) {
                                 const fork = ext.auto_tiler.forest.forks.get(entity);
-                                if (fork && fork.area) {
+                                if (fork) {
                                     ext.auto_tiler.tile(ext, fork, fork.area);
                                 }
                             }
@@ -85,8 +85,9 @@ export class Indicator {
                 _("Outer Gap"),
                 ext.set_gap_outer,
                 ext.settings.set_gap_outer,
-                () => ext.gap_outer,
+                () => ext.gap_outer / 4,
                 (prev: number, current: number) => {
+                    Log.info(`${current} != ${prev}`);
                     const diff = current - prev;
                     if (diff != 0) {
                         Log.info(`outer gap changed to ${current}`);
@@ -95,11 +96,11 @@ export class Indicator {
                             for (const [entity,] of ext.auto_tiler.forest.toplevel.values()) {
                                 const fork = ext.auto_tiler.forest.forks.get(entity);
 
-                                if (fork && fork.area) {
-                                    fork.area.array[0] += diff;
-                                    fork.area.array[1] += diff;
-                                    fork.area.array[2] -= diff * 2;
-                                    fork.area.array[3] -= diff * 2;
+                                if (fork) {
+                                    fork.area.array[0] += diff * 4;
+                                    fork.area.array[1] += diff * 4;
+                                    fork.area.array[2] -= diff * 8;
+                                    fork.area.array[3] -= diff * 8;
 
                                     ext.auto_tiler.tile(ext, fork, fork.area);
                                 }
@@ -153,17 +154,18 @@ function number_entry(
             symbol == 65293     // enter key
                 ? parse_number(text.text)
                 : symbol == 65361   // left key
-                    ? clamp(parse_number(text.text) - 4)
+                    ? clamp(parse_number(text.text) - 1)
                     : symbol == 65363   // right key
-                        ? clamp(parse_number(text.text) + 4)
+                        ? clamp(parse_number(text.text) + 1)
                         : null;
 
         if (number !== null) {
             text.set_text(String(number));
 
             const prev = get_method.call(ext);
-            ext_method.call(ext, number);
+            Log.debug(`prev(${prev}), current: ${number}`);
             settings_method.call(ext.settings, number);
+            ext_method.call(ext, number);
 
             post_exec(prev, number);
         }
@@ -190,9 +192,6 @@ function parse_number(text: string): number {
     let number = parseInt(text, 10);
     if (isNaN(number)) {
         number = 0;
-    } else {
-        const diff = number % 4;
-        number = number - diff + (diff > 2 ? 4 : 0);
     }
 
     return number;

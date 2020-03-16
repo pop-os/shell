@@ -73,8 +73,6 @@ export class Ext extends Ecs.World {
 
         // Misc
 
-        this.set_gap_inner(8);
-        this.set_gap_outer(8);
         this.keybindings = new Keybindings.Keybindings(this);
         this.overlay = new St.BoxLayout({ style_class: "tile-preview", visible: false });
         this.settings = new Settings.ExtensionSettings();
@@ -478,12 +476,12 @@ export class Ext extends Ecs.World {
     }
 
     set_gap_inner(gap: number) {
-        this.gap_inner = gap - (gap % 4);
+        this.gap_inner = gap * 4;
         this.gap_inner_half = this.gap_inner / 2;
     }
 
     set_gap_outer(gap: number) {
-        this.gap_outer = gap - (gap % 4);
+        this.gap_outer = gap * 4;
         this.gap_outer_half = this.gap_outer / 2;
     }
 

@@ -21,7 +21,6 @@ interface WindowDetails {
 export class ActiveHint {
     private overlay: Clutter.Actor;
     private clone: Clutter.Actor;
-
     private window: WindowDetails | null = null;
 
     constructor() {
