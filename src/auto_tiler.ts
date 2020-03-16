@@ -15,7 +15,6 @@ import type { Result } from 'result';
 import type { ShellWindow } from 'window';
 
 const GLib: GLib = imports.gi.GLib;
-const Meta = imports.gi.Meta;
 const { Ok, Err, ERR } = result;
 const { NodeKind } = node;
 const Tags = Me.imports.tags;
@@ -64,7 +63,6 @@ export class AutoTiler {
 
         this.tile(ext, fork, rect);
         this.log_tree_nodes(ext);
-        win.meta.maximize(Meta.MaximizeFlags.BOTH)
     }
 
     /** Tiles a window into another */
@@ -137,12 +135,6 @@ export class AutoTiler {
                 log.debug(`found reflow_fork`);
                 const fork = reflow_fork[1];
                 this.tile(ext, fork, fork.area);
-                if (!reflow_fork[1].right) {
-                    const window = ext.windows.get(reflow_fork[1].left.entity);
-                    if (window) {
-                        window.meta.maximize(Meta.MaximizeFlags.BOTH);
-                    }
-                }
             }
 
             this.log_tree_nodes(ext);
