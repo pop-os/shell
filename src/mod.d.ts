@@ -81,6 +81,7 @@ declare namespace Meta {
         get_workspace(): Workspace | null;
         is_client_decorated(): boolean;
         is_skip_taskbar(): boolean;
+        make_above(): void;
         maximize(flags: MaximizeFlags): void;
         move_resize_frame(user_op: boolean, x: number, y: number, w: number, h: number): boolean;
         raise(): void;

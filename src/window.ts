@@ -41,6 +41,11 @@ export class ShellWindow {
         this.entity = entity;
         this.meta = window;
 
+        if (this.is_transient()) {
+            log.info(`making above`);
+            window.make_above();
+        }
+
         if (this.may_decorate()) {
             if (!window.is_client_decorated()) {
                 if (ext.settings.show_title()) {
@@ -117,10 +122,14 @@ export class ShellWindow {
                     // Only normal windows will be considered for tiling
                     && this.meta.window_type == Meta.WindowType.NORMAL
                     // Transient windows are most likely dialogs
-                    && this.meta.get_transient_for() === null
+                    && !this.is_transient()
                     // Blacklist any windows that happen to leak through our filter
                     && !blacklisted(this.meta.get_wm_class());
             });
+    }
+
+    is_transient(): boolean {
+        return this.meta.get_transient_for() !== null;
     }
 
     move(rect: Rectangular) {
