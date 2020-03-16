@@ -18,7 +18,7 @@ KEYS_MEDIA=/org/gnome/settings-daemon/plugins/media-keys
 # Restore the keyboard shortcuts: disable <Super>Escape
 dconf write /org/gnome/mutter/wayland/keybindings/restore-shortcuts "@as []"
 # Hide window: disable <Super>h
-dconf write ${KEYS_GNOME_WM}/minimize "@as []"
+dconf write ${KEYS_GNOME_WM}/minimize "@as ['<Super>comma']"
 # Open the application menu: disable <Super>m
 dconf write ${KEYS_GNOME_SHELL}/open-application-menu "@as []"
 # Switch to workspace left: disable <Super>Left
