@@ -62,6 +62,9 @@ dconf write ${KEYS_MEDIA}/rotate-video-lock-static "@as []"
 # Close Window
 dconf write ${KEYS_GNOME_WM}/close "['<Super>q']"
 
+# Use a window placement behavior which works better for tiling
+gnome-extensions enable native-window-placement
+
 # Enable extension
 make enable
 
