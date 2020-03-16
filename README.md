@@ -147,7 +147,7 @@ This provides the tiling window manager experience, where windows are automatica
 
 - `Super` + `O`
   - Toggles the orientation of a fork's tiling orientation
-- `Super` + `~`
+- `Super` + `G`
   - Toggles a window between floating and tiling
 
 ### Feature Overview
