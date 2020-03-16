@@ -25,7 +25,6 @@ export class Fork {
     right: Node | null;
     area: Rectangle;
     area_left: Rectangle;
-    parent: Entity | null = null;
     entity: Entity;
     workspace: number;
     ratio: number = .5;
@@ -103,12 +102,6 @@ export class Fork {
     set_orientation(orientation: Lib.Orientation): Fork {
         this.orientation = orientation;
         this.set_minimum_ratio();
-        return this;
-    }
-
-    /** Sets a nother fork entity as the parent of this fork */
-    set_parent(parent: Entity): Fork {
-        this.parent = parent;
         return this;
     }
 

@@ -47,6 +47,9 @@ export class Forest extends Ecs.World {
     /** The storage for holding all fork associations. */
     forks: Ecs.Storage<Fork.Fork> = this.register_storage();
 
+    /** Child-parent associations are stored here. */
+    parents: Ecs.Storage<Entity> = this.register_storage();
+
     /** Needed when we're storing the entities in a map, because JS limitations. */
     private string_reps: Ecs.Storage<string> = this.register_storage();
 
@@ -101,7 +104,7 @@ export class Forest extends Ecs.World {
                     const result = this.create_fork(ext, fork.left, node, area, fork.workspace);
                     fork.left = Node.Node.fork(result[0]);
                     Log.debug(`attached Fork(${result[0]}) to Fork(${entity}).left`);
-                    result[1].set_parent(entity);
+                    this.parents.insert(result[0], entity);
                     return this._attach(onto_entity, new_entity, this.on_attach, entity, fork, result);
                 } else {
                     fork.right = node;
@@ -112,7 +115,7 @@ export class Forest extends Ecs.World {
                 const result = this.create_fork(ext, fork.right, Node.Node.window(new_entity), area, fork.workspace);
                 fork.right = Node.Node.fork(result[0]);
                 Log.debug(`attached Fork(${result[0]}) to Fork(${entity}).right`);
-                result[1].set_parent(entity);
+                this.parents.insert(result[0], entity);
                 return this._attach(onto_entity, new_entity, this.on_attach, entity, fork, result);
             }
         }
@@ -187,10 +190,11 @@ export class Forest extends Ecs.World {
         this.forks.with(fork_entity, (fork) => {
             Log.debug(`detaching Window(${window}) from Fork(${fork_entity})`);
 
+            const parent = this.parents.get(fork_entity);
             if (fork.left.is_window(window)) {
-                if (fork.parent && fork.right) {
+                if (parent && fork.right) {
                     Log.debug(`detaching Fork(${fork_entity}) and holding Window(${fork.right.entity}) for reassignment`);
-                    reflow_fork = [fork.parent, this.reassign_child_to_parent(fork_entity, fork.parent, fork.right)];
+                    reflow_fork = [parent, this.reassign_child_to_parent(fork_entity, parent, fork.right)];
                 } else if (fork.right) {
                     reflow_fork = [fork_entity, fork];
                     if (fork.right.kind == Node.NodeKind.WINDOW) {
@@ -206,9 +210,9 @@ export class Forest extends Ecs.World {
                 }
             } else if (fork.right && fork.right.is_window(window)) {
                 // Same as the `fork.left` branch.
-                if (fork.parent) {
+                if (parent) {
                     Log.debug(`detaching Fork(${fork_entity}) and holding Window(${fork.left.entity}) for reassignment`);
-                    reflow_fork = [fork.parent, this.reassign_child_to_parent(fork_entity, fork.parent, fork.left)];
+                    reflow_fork = [parent, this.reassign_child_to_parent(fork_entity, parent, fork.left)];
                 } else {
                     reflow_fork = [fork_entity, fork];
 
@@ -445,7 +449,7 @@ export class Forest extends Ecs.World {
     /** Reassigns a child to the given parent */
     private reassign_parent(parent: Entity, child: Entity) {
         Log.debug(`assigning parent of Fork(${child}) to Fork(${parent})`);
-        this.forks.with(child, (fork) => fork.set_parent(parent));
+        this.parents.insert(child, parent);
     }
 
     /** Resizes the parent fork of a child fork */
@@ -512,8 +516,9 @@ export class Forest extends Ecs.World {
         const shrinking = length < child.area.array[measure];
 
         let done = false;
-        while (child.parent && !done) {
-            const parent = this.forks.get(child.parent);
+        let child_parent = this.parents.get(child_e);
+        while (child_parent && !done) {
+            const parent = this.forks.get(child_parent);
             if (parent) {
                 if (parent.area.contains(original)) {
                     if (shrinking) {
@@ -539,8 +544,9 @@ export class Forest extends Ecs.World {
 
                 this.resize_parent(parent, child, parent.left.is_fork(child_e), measure);
 
-                child_e = child.parent;
+                child_e = child_parent;
                 child = parent;
+                child_parent = this.parents.get(child_e);
             } else {
                 break
             }
