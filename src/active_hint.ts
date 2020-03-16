@@ -94,11 +94,13 @@ export class ActiveHint {
             parent.add_child(this.overlay);
             parent.set_child_below_sibling(this.overlay, actor);
 
+            this.overlay.show();
             this.overlay.visible = true;
         }
     }
 
     untrack() {
+        this.overlay.hide();
         this.overlay.visible = false;
         if (this.window) {
             const actor = this.window.meta.get_compositor_private();
