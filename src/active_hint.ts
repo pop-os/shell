@@ -19,11 +19,15 @@ interface WindowDetails {
 }
 
 export class ActiveHint {
+    dpi: number;
+
     private overlay: Clutter.Actor;
     private clone: Clutter.Actor;
     private window: WindowDetails | null = null;
 
-    constructor() {
+    constructor(dpi: number) {
+        this.dpi = dpi;
+
         this.overlay = new St.BoxLayout({
             reactive: true,
             style_class: 'pop-shell-active-hint',
@@ -114,10 +118,10 @@ export class ActiveHint {
         if (this.window) {
             const rect = this.window.meta.get_frame_rect();
 
-            this.overlay.x = rect.x - 4;
-            this.overlay.y = rect.y - 4;
-            this.overlay.width = rect.width + 8;
-            this.overlay.height = rect.height + 8;
+            this.overlay.x = rect.x - (4 * this.dpi);
+            this.overlay.y = rect.y - (4 * this.dpi);
+            this.overlay.width = rect.width + (8 * this.dpi);
+            this.overlay.height = rect.height + (8 * this.dpi);
         }
     }
 

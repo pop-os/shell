@@ -38,7 +38,7 @@ export class Indicator {
         this.appearances.menu.addMenuItem(toggle(_("Show Active Hint"), ext.settings.active_hint(), (toggle) => {
             ext.settings.set_active_hint(toggle.state);
             if (toggle.state) {
-                ext.active_hint = new active_hint.ActiveHint();
+                ext.active_hint = new active_hint.ActiveHint(ext.dpi);
 
                 const focused = ext.focus_window();
                 if (focused) {

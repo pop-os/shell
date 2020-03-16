@@ -28,12 +28,16 @@ const Tags = Me.imports.tags;
 
 const GLib: GLib = imports.gi.GLib;
 
+const THEME_CONTEXT = St.ThemeContext.get_for_stage(global.stage);
+
 export class Ext extends Ecs.World {
     private init: boolean = true;
     tiling: boolean = false;
 
     column_size: number = 128;
     row_size: number = 128;
+
+    dpi: number = THEME_CONTEXT.scale_factor;
 
     gap_inner_half: number = 0;
     gap_inner: number = 0;
@@ -278,7 +282,7 @@ export class Ext extends Ecs.World {
         this.row_size = this.settings.row_size();
 
         if (this.settings.active_hint() && !this.active_hint) {
-            this.active_hint = new active_hint.ActiveHint();
+            this.active_hint = new active_hint.ActiveHint(this.dpi);
         }
     }
 
@@ -476,12 +480,12 @@ export class Ext extends Ecs.World {
     }
 
     set_gap_inner(gap: number) {
-        this.gap_inner = gap * 4;
+        this.gap_inner = gap * 4 * this.dpi;
         this.gap_inner_half = this.gap_inner / 2;
     }
 
     set_gap_outer(gap: number) {
-        this.gap_outer = gap * 4;
+        this.gap_outer = gap * 4 * this.dpi;
         this.gap_outer_half = this.gap_outer / 2;
     }
 
@@ -681,7 +685,7 @@ function load_theme() {
 
         Log.info(`setting theme`);
 
-        St.ThemeContext.get_for_stage(global.stage).set_theme(theme);
+       THEME_CONTEXT.set_theme(theme);
         Log.info(`theme set`);
     } catch (e) {
         Log.error("failed to load stylesheet: " + e);
