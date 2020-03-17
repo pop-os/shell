@@ -1,5 +1,9 @@
 # Pop Shell - WIP
 
+> This project is currently in beta; developed for inclusion in Pop!_OS 20.04 at release.
+> 
+> See the [installation](#installation) instructions for details on how to try out the extension today.
+
 Pop Shell is a keyboard-driven layer for GNOME Shell which allows for quick and sensible navigation and management of windows. The core feature of Pop Shell is the addition of advanced tiling window management — a feature that has been highly-sought within our community. For many — ourselves included — i3wm has become the leading competitor to the GNOME desktop.
 
 Tiling window management in GNOME is virtually nonexistent, which makes the desktop awkward to interact with when your needs exceed that of two windows at a given time. Luckily, GNOME Shell is an extensible desktop with the foundations that make it possible to implement a tiling window manager on top of the desktop.
@@ -14,6 +18,7 @@ Therefore, we see an opportunity here to advance the usability of the GNOME desk
 
 - [The Proposal](#the-proposal): Possible upstreaming into GNOME
 - [The Problem](#the-problem): Why we need this in GNOME
+- [Installation](#installation): For those wanting to install this on their distribution
 - The Solution:
   - [Shared Features](#shared-features): Behaviors shared between stacking and auto-tiling modes
   - [Stacking Mode](#stacking-mode): Behaviors specific to the stacking mode
@@ -60,6 +65,22 @@ There are additionally those who do want the traditional stacking window managem
 
 ---
 
+## Installation
+
+To install this GNOME Shell extension, you MUST have the following:
+
+- GNOME Shell 3.36
+- TypeScript 3.8
+- GNU Make
+
+Proper functionality of the shell requires modifying GNOME's default keyboard shortcuts. Those developing and testing the extension must run the `rebuild.sh` script to install it locally (do not use sudo): `sh rebuild.sh`.
+
+This will call `make` to transpile the TypeScript source code into GJS-compatible JavaScript sources, followed by `make install` to install it locally into `~/.local/share/gnome-shell/extensions`, and modifying the default keyboard shortcuts in GNOME.
+
+If you want to uninstall the extension, you may invoke `make uninstall`, and then open the "Keyboard Shortcuts" panel in GNOME Settings to select the "Reset All.." button in the header bar.
+
+---
+
 ## Shared Features
 
 Features which are shared between stacking and auto-tiling modes.
@@ -72,6 +93,16 @@ These are key to many of the shortcuts utilized by tiling window managers. This 
 - `Down` or `j`
 - `Up` or `k`
 - `Right` or `l`
+
+### Overridden GNOME Shortcuts
+
+- `Super` + `q`: Close window
+- `Super` + `m`: Maximize the focused window
+- `Super` + `,`: Minimize the focused window
+- `Super` + `Esc`: Lock screen
+- `Super` + `f`: Files
+- `Super` + `e`: Email
+- `Super` + `b`: Web Browser
 
 ### Window Management Mode
 
