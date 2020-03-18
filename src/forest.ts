@@ -4,6 +4,7 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 import * as Ecs from 'ecs';
 import * as Lib from 'lib';
 import * as Log from 'log';
+import * as movement from 'movement';
 import * as Rect from 'rectangle';
 import * as Node from 'node';
 import * as Fork from 'fork';
@@ -12,6 +13,8 @@ import type { Entity } from 'ecs';
 import type { Rectangle } from './rectangle';
 import type { ShellWindow } from './window';
 import type { Ext } from './extension';
+
+const { Movement } = movement;
 
 /** A designation for using either the width or height of a rectangle. */
 enum Measure {
@@ -267,22 +270,22 @@ export class Forest extends Ecs.World {
         fork_e: Entity,
         fork_c: Fork.Fork,
         is_left: boolean,
-        movement: Lib.Movement,
+        movement: movement.Movement,
         crect: Rectangle,
     ) {
         if (fork_c.is_horizontal()) {
-            if ((movement & (Lib.Movement.DOWN | Lib.Movement.UP)) != 0) {
+            if ((movement & (Movement.DOWN | Movement.UP)) != 0) {
                 Log.debug(`growing Fork(${fork_e}) up/down`);
                 this.resize_fork_in_direction(ext, fork_e, fork_c, is_left, false, crect, 3);
             } else if (is_left) {
-                if ((movement & Lib.Movement.RIGHT) != 0) {
+                if ((movement & Movement.RIGHT) != 0) {
                     Log.debug(`growing left child of Fork(${fork_e}) from left to right`);
                     this.readjust_fork_ratio_by_left(ext, crect.width, fork_c, fork_c.area.width);
                 } else {
                     Log.debug(`growing left child of Fork(${fork_e}) from right to left`);
                     this.resize_fork_in_direction(ext, fork_e, fork_c, is_left, true, crect, 2);
                 }
-            } else if ((movement & Lib.Movement.RIGHT) != 0) {
+            } else if ((movement & Movement.RIGHT) != 0) {
                 Log.debug(`growing right child of Fork(${fork_e}) from left to right`);
                 this.resize_fork_in_direction(ext, fork_e, fork_c, is_left, true, crect, 2);
             } else {
@@ -290,18 +293,18 @@ export class Forest extends Ecs.World {
                 this.readjust_fork_ratio_by_right(ext, crect.width, fork_c, fork_c.area.width);
             }
         } else {
-            if ((movement & (Lib.Movement.LEFT | Lib.Movement.RIGHT)) != 0) {
+            if ((movement & (Movement.LEFT | Movement.RIGHT)) != 0) {
                 Log.debug(`growing Fork(${fork_e}) left/right`);
                 this.resize_fork_in_direction(ext, fork_e, fork_c, is_left, false, crect, 2);
             } else if (is_left) {
-                if ((movement & Lib.Movement.DOWN) != 0) {
+                if ((movement & Movement.DOWN) != 0) {
                     Log.debug(`growing left child of Fork(${fork_e}) from top to bottom`);
                     this.readjust_fork_ratio_by_left(ext, crect.height, fork_c, fork_c.area.height);
                 } else {
                     Log.debug(`growing left child of Fork(${fork_e}) from bottom to top`);
                     this.resize_fork_in_direction(ext, fork_e, fork_c, is_left, true, crect, 3);
                 }
-            } else if ((movement & Lib.Movement.DOWN) != 0) {
+            } else if ((movement & Movement.DOWN) != 0) {
                 Log.debug(`growing right child of Fork(${fork_e}) from top to bottom`);
                 this.resize_fork_in_direction(ext, fork_e, fork_c, is_left, true, crect, 3);
             } else {
@@ -360,11 +363,11 @@ export class Forest extends Ecs.World {
         return largest_window;
     }
 
-    /** Resize a window from a given fork based on a supplied Lib.movement. */
-    resize(ext: Ext, fork_e: Entity, fork_c: Fork.Fork, win_e: Entity, movement: Lib.Movement, crect: Rectangle) {
+    /** Resize a window from a given fork based on a supplied movement. */
+    resize(ext: Ext, fork_e: Entity, fork_c: Fork.Fork, win_e: Entity, movement: movement.Movement, crect: Rectangle) {
         const is_left = fork_c.left.is_window(win_e);
 
-        ((movement & Lib.Movement.SHRINK) != 0 ? this.shrink_sibling : this.grow_sibling)
+        ((movement & Movement.SHRINK) != 0 ? this.shrink_sibling : this.grow_sibling)
             .call(this, ext, fork_e, fork_c, is_left, movement, crect);
     }
 
@@ -555,23 +558,23 @@ export class Forest extends Ecs.World {
         fork_e: Entity,
         fork_c: Fork.Fork,
         is_left: boolean,
-        movement: Lib.Movement,
+        movement: movement.Movement,
         crect: Rectangle,
     ) {
         if (fork_c.area) {
             if (fork_c.is_horizontal()) {
-                if ((movement & (Lib.Movement.DOWN | Lib.Movement.UP)) != 0) {
+                if ((movement & (Movement.DOWN | Movement.UP)) != 0) {
                     Log.debug(`shrinking Fork(${fork_e}) up/down`);
                     this.resize_fork_in_direction(ext, fork_e, fork_c, is_left, false, crect, 3);
                 } else if (is_left) {
-                    if ((movement & Lib.Movement.LEFT) != 0) {
+                    if ((movement & Movement.LEFT) != 0) {
                         Log.debug(`shrinking left child of Fork(${fork_e}) from right to left`);
                         this.readjust_fork_ratio_by_left(ext, crect.width, fork_c, fork_c.area.array[2]);
                     } else {
                         Log.debug(`shrinking left child of Fork(${fork_e}) from left to right`);
                         this.resize_fork_in_direction(ext, fork_e, fork_c, is_left, true, crect, 2);
                     }
-                } else if ((movement & Lib.Movement.LEFT) != 0) {
+                } else if ((movement & Movement.LEFT) != 0) {
                     Log.debug(`shrinking right child of Fork(${fork_e}) from right to left`);
                     this.resize_fork_in_direction(ext, fork_e, fork_c, is_left, true, crect, 2);
                 } else {
@@ -579,18 +582,18 @@ export class Forest extends Ecs.World {
                     this.readjust_fork_ratio_by_right(ext, crect.width, fork_c, fork_c.area.array[2]);
                 }
             } else {
-                if ((movement & (Lib.Movement.LEFT | Lib.Movement.RIGHT)) != 0) {
+                if ((movement & (Movement.LEFT | Movement.RIGHT)) != 0) {
                     Log.debug(`shrinking Fork(${fork_e}) left/right`);
                     this.resize_fork_in_direction(ext, fork_e, fork_c, is_left, false, crect, 2);
                 } else if (is_left) {
-                    if ((movement & Lib.Movement.UP) != 0) {
+                    if ((movement & Movement.UP) != 0) {
                         Log.debug(`shrinking left child of Fork(${fork_e}) from bottom to top`);
                         this.readjust_fork_ratio_by_left(ext, crect.height, fork_c, fork_c.area.array[3]);
                     } else {
                         Log.debug(`shrinking left child of Fork(${fork_e}) from top to bottom`);
                         this.resize_fork_in_direction(ext, fork_e, fork_c, is_left, true, crect, 3);
                     }
-                } else if ((movement & Lib.Movement.UP) != 0) {
+                } else if ((movement & Movement.UP) != 0) {
                     Log.debug(`shrinking right child of Fork(${fork_e}) from bottom to top`);
                     this.resize_fork_in_direction(ext, fork_e, fork_c, is_left, true, crect, 3);
                 } else {
