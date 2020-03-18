@@ -15,17 +15,6 @@ export interface SizeHint {
     base: [number, number];
 }
 
-export enum Movement {
-    NONE = 0,
-    MOVED = 0b1,
-    GROW = 0b10,
-    SHRINK = 0b100,
-    LEFT = 0b1000,
-    UP = 0b10000,
-    RIGHT = 0b100000,
-    DOWN = 0b1000000,
-}
-
 export enum Orientation {
     HORIZONTAL = 0,
     VERTICAL = 1,

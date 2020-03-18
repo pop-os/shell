@@ -76,7 +76,7 @@ export class Forest extends Ecs.World {
             ? ext.workspace_by_id(workspace)
             : null;
 
-        for (const r of this.requested) {
+        for (const r of this.requested.splice(0)) {
             const window = ext.windows.get(r.entity);
             if (!window) continue;
 
@@ -88,8 +88,6 @@ export class Forest extends Ecs.World {
 
             window.move(r.rect);
         }
-
-        this.requested.splice(0);
     }
 
     /** Attaches a `new` window to the fork which `onto` is attached to. */
@@ -362,16 +360,12 @@ export class Forest extends Ecs.World {
         return largest_window;
     }
 
-    /** Resize a window from a given fork based on a supplied movement. */
-    resize(ext: Ext, fork_e: Entity, win_e: Entity, movement: Lib.Movement, crect: Rectangle) {
-        this.forks.with(fork_e, (fork_c) => {
-            const is_left = fork_c.left.is_window(win_e);
+    /** Resize a window from a given fork based on a supplied Lib.movement. */
+    resize(ext: Ext, fork_e: Entity, fork_c: Fork.Fork, win_e: Entity, movement: Lib.Movement, crect: Rectangle) {
+        const is_left = fork_c.left.is_window(win_e);
 
-            ((movement & Lib.Movement.SHRINK) != 0 ? this.shrink_sibling : this.grow_sibling)
-                .call(this, ext, fork_e, fork_c, is_left, movement, crect);
-
-            this.arrange(ext, fork_c.workspace);
-        });
+        ((movement & Lib.Movement.SHRINK) != 0 ? this.shrink_sibling : this.grow_sibling)
+            .call(this, ext, fork_e, fork_c, is_left, movement, crect);
     }
 
     /** Higher order function which forwards record events to our record method. */

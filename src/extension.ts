@@ -311,13 +311,21 @@ export class Ext extends Ecs.World {
                 } else {
                     const fork = this.auto_tiler.attached.get(win.entity);
                     if (fork) {
-                        const movement = this.grab_op.operation(crect);
+                        const component = this.auto_tiler.forest.forks.get(fork);
+                        if (component) {
+                            const movement = this.grab_op.operation(crect);
 
-                        Log.debug(`resizing window: from [${rect.fmt()} to ${crect.fmt()}]`);
-                        this.auto_tiler.forest.resize(this, fork, win.entity, movement, crect);
-                        Log.debug(`changed to: ${this.auto_tiler.forest.fmt(this)}`);
+                            Log.debug(`resizing window: from [${rect.fmt()} to ${crect.fmt()}]`);
+
+                            this.auto_tiler.forest.resize(this, fork, component, win.entity, movement, crect);
+                            this.auto_tiler.forest.arrange(this, component.workspace);
+                            Log.debug(`changed to: ${this.auto_tiler.forest.fmt(this)}`);
+                        } else {
+                            Log.error(`no fork component found`);
+                        }
+
                     } else {
-                        Log.error(`no fork found`);
+                        Log.error(`no fork entity found`);
                     }
                 }
             } else if (this.settings.snap_to_grid()) {

@@ -222,7 +222,8 @@ export class Tiler {
                         return;
                     }
 
-                    (ext.auto_tiler as AutoTiler).forest.resize(ext, entity, (this.window as Entity), grab_op.operation(crect), crect);
+                    (ext.auto_tiler as AutoTiler).forest.resize(ext, entity, fork, (this.window as Entity), grab_op.operation(crect), crect);
+                    (ext.auto_tiler as AutoTiler).forest.arrange(ext, fork.workspace);
                 };
 
                 resize(func1);
