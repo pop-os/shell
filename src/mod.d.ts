@@ -28,6 +28,29 @@ declare namespace GObject {
     }
 }
 
+declare module Gtk {
+    export enum Orientation {
+        HORIZONTAL,
+        VERTICAL,
+    }
+
+    export class Box extends Container {
+        constructor(orientation: Orientation, spacing: number);
+    }
+
+    export class Container extends Widget {
+        constructor();
+        add(widget: Widget): void;
+        set_border_width(border_width: number): void;
+    }
+
+    export class Widget {
+        constructor();
+
+        show_all(): void;
+    }
+}
+
 declare namespace Clutter {
     enum ActorAlign {
         FILL = 0,
@@ -60,6 +83,13 @@ declare namespace Clutter {
 }
 
 declare namespace Meta {
+    enum DisplayDirection {
+        UP,
+        DOWN,
+        LEFT,
+        RIGHT,
+    }
+
     enum MaximizeFlags {
         HORIZONTAL,
         VERTICAL,
