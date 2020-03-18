@@ -107,6 +107,7 @@ declare namespace Meta {
         get_frame_rect(): Rectangular;
         get_maximized(): boolean;
         get_monitor(): number;
+        get_pid(): number;
         get_stable_sequence(): number;
         get_title(): string;
         get_wm_class(): string;

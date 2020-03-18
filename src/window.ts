@@ -6,6 +6,7 @@ import * as log from 'log';
 import * as once_cell from 'once_cell';
 import * as Rect from 'rectangle';
 import * as Tags from 'tags';
+import * as utils from 'utils';
 import * as xprop from 'xprop';
 
 import type { Entity } from './ecs';
@@ -79,6 +80,19 @@ export class ShellWindow {
 
                 log.debug(`new motif for ${name}: ${xprop.motif_hints(xid)}`)
             }
+        }
+    }
+
+    cmdline(): string | null {
+        let pid = this.meta.get_pid();
+        if (-1 === pid) return null;
+
+        const result = utils.read_to_string('/proc/' + pid + '/cmdline');
+        if (result.kind == 1) {
+            return result.value.trim();
+        } else {
+            log.error(`failed to fetch cmdline: ${result.value.format()}`);
+            return null;
         }
     }
 

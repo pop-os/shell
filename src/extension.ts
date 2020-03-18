@@ -259,8 +259,9 @@ export class Ext extends Ecs.World {
             + `  name: ${win.name(this)},\n`
             + `  rect: ${win.rect().fmt()},\n`
             + `  wm_class: "${win.meta.get_wm_class()}",\n`
-            + `  monitor: ${win.meta.get_monitor()} \n`
-            + `  workspace: ${win.workspace_id()} \n`;
+            + `  monitor: ${win.meta.get_monitor()},\n`
+            + `  workspace: ${win.workspace_id()},\n`
+            + `  cmdline: ${win.cmdline()},\n`;
 
         if (this.auto_tiler) {
             msg += `  fork: (${this.auto_tiler.attached.get(win.entity)}),\n`;
