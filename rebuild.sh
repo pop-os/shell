@@ -1,3 +1,4 @@
+#!/usr/bin/bash
 set -xe
 
 # Build and install extension
