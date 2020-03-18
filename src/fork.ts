@@ -24,31 +24,31 @@ export class Fork {
     left: Node;
     right: Node | null;
     area: Rectangle;
-    area_left: Rectangle;
     entity: Entity;
     workspace: number;
-    ratio: number = .5;
-    ratio_prev: number = .5;
+    length_left: number;
+    prev_length_left: number;
     minimum_ratio: number = 0.1;
     orientation: Lib.Orientation = Lib.Orientation.HORIZONTAL;
     is_toplevel: boolean = false;
 
-    constructor(ext: Ext, entity: Entity, left: Node, right: Node | null, area: Rectangle, workspace: number) {
+    constructor(entity: Entity, left: Node, right: Node | null, area: Rectangle, workspace: number) {
         this.area = area;
         this.left = left;
         this.right = right;
         this.workspace = workspace;
-        this.area_left = this.area_of_left(ext);
+        this.length_left = this.right ? this.area.width * .5 : this.area.width;
+        this.prev_length_left = this.length_left;
         this.entity = entity;
     }
 
     /** The calculated left area of this fork */
-    area_of_left(ext: Ext): Rect.Rectangle {
+    area_of_left(): Rect.Rectangle {
         return new Rect.Rectangle(
             this.right
                 ? this.is_horizontal()
-                    ? [this.area.x, this.area.y, (this.area.width * this.ratio) - ext.gap_inner_half, this.area.height]
-                    : [this.area.x, this.area.y, this.area.width, (this.area.height * this.ratio) - ext.gap_inner_half]
+                    ? [this.area.x, this.area.y, this.length_left, this.area.height]
+                    : [this.area.x, this.area.y, this.area.width, this.length_left]
                 : [this.area.x, this.area.y, this.area.width, this.area.height]
         );
     }
@@ -58,10 +58,10 @@ export class Fork {
         let area: [number, number, number, number];
 
         if (this.is_horizontal()) {
-            const width = (this.area.width * this.ratio) + ext.gap_inner;
+            const width = this.area.width - this.length_left + ext.gap_inner;
             area = [width, this.area.y, this.area.width - width, this.area.height];
         } else {
-            const height = (this.area.height * this.ratio) + ext.gap_inner;
+            const height = this.area.height - this.length_left + ext.gap_inner;
             area = [this.area.x, height, this.area.width, this.area.height - height];
         }
 
@@ -109,11 +109,9 @@ export class Fork {
      *
      * Ensures that the ratio is never smaller or larger than the constraints.
      */
-    set_ratio(left_length: number, fork_length: number): Fork {
-        this.ratio_prev = this.ratio;
-        this.ratio = Lib.round_to(Math.min(Math.max(this.minimum_ratio, left_length / fork_length), 1.0 - this.minimum_ratio), 2);
-
-        Log.debug(`new ratio: ${this.ratio}`);
+    set_ratio(left_length: number): Fork {
+        this.prev_length_left = left_length;
+        this.length_left = left_length;
         return this;
     }
 
@@ -137,18 +135,15 @@ export class Fork {
 
         if (this.right) {
             const [l, p] = this.is_horizontal() ? [WIDTH, XPOS] : [HEIGHT, YPOS];
-            const length = Math.round(this.area.array[l] * this.ratio);
 
             let region = this.area.clone();
 
-            region.array[l] = length - ext.gap_inner_half;
-
-            this.area_left = region.clone();
+            region.array[l] = this.length_left - ext.gap_inner_half;
 
             this.left.measure(tiler, ext, this.entity, region, record);
 
-            region.array[p] = region.array[p] + length + ext.gap_inner_half;
-            region.array[l] = this.area.array[l] - length - ext.gap_inner_half;
+            region.array[p] = region.array[p] + this.length_left + ext.gap_inner_half;
+            region.array[l] = this.area.array[l] - this.length_left - ext.gap_inner_half;
 
             this.right.measure(tiler, ext, this.entity, region, record);
         } else {
@@ -158,9 +153,15 @@ export class Fork {
 
     rebalance_orientation() {
         Log.debug(`rebalancing orientation`);
-        this.orientation = this.area.height > this.area.width
+        let new_orientation = this.area.height > this.area.width
             ? Lib.Orientation.VERTICAL
             : Lib.Orientation.HORIZONTAL;
+
+        if (new_orientation !== this.orientation) {
+            this.orientation = new_orientation;
+            this.toggle_update_ratio();
+        }
+
         Log.debug(`orientation: ${Lib.orientation_as_str(this.orientation)} from (${this.area.fmt()})`);
     }
 
@@ -169,5 +170,15 @@ export class Fork {
         this.orientation = Lib.Orientation.HORIZONTAL == this.orientation
             ? Lib.Orientation.VERTICAL
             : Lib.Orientation.HORIZONTAL;
+
+        this.toggle_update_ratio();
+    }
+
+    private toggle_update_ratio() {
+        this.set_ratio(
+            this.is_horizontal()
+                ? this.area.width * (this.length_left / this.area.height)
+                : this.area.height * (this.length_left / this.area.width)
+        );
     }
 }

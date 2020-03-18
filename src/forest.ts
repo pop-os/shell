@@ -101,8 +101,8 @@ export class Forest extends Ecs.World {
             if (fork.left.is_window(onto_entity)) {
                 const node = Node.Node.window(new_entity);
                 if (fork.right) {
-                    const area = fork.area_of_left(ext);
-                    const result = this.create_fork(ext, fork.left, node, area, fork.workspace);
+                    const area = fork.area_of_left();
+                    const result = this.create_fork(fork.left, node, area, fork.workspace);
                     fork.left = Node.Node.fork(result[0]);
                     Log.debug(`attached Fork(${result[0]}) to Fork(${entity}).left`);
                     this.parents.insert(result[0], entity);
@@ -113,7 +113,7 @@ export class Forest extends Ecs.World {
                 }
             } else if (fork.right && fork.right.is_window(onto_entity)) {
                 const area = fork.area_of_right(ext);
-                const result = this.create_fork(ext, fork.right, Node.Node.window(new_entity), area, fork.workspace);
+                const result = this.create_fork(fork.right, Node.Node.window(new_entity), area, fork.workspace);
                 fork.right = Node.Node.fork(result[0]);
                 Log.debug(`attached Fork(${result[0]}) to Fork(${entity}).right`);
                 this.parents.insert(result[0], entity);
@@ -139,14 +139,13 @@ export class Forest extends Ecs.World {
 
     /** Create a new fork, where the left portion is a window `Entity` */
     create_fork(
-        ext: Ext,
         left: Node.Node,
         right: Node.Node | null,
         area: Rectangle,
         workspace: number
     ): [Entity, Fork.Fork] {
         const entity = this.create_entity();
-        let fork = new Fork.Fork(ext, entity, left, right, area, workspace);
+        let fork = new Fork.Fork(entity, left, right, area, workspace);
 
         fork.set_orientation(area && area.width > area.height ? Lib.Orientation.HORIZONTAL : Lib.Orientation.VERTICAL);
 
@@ -156,13 +155,11 @@ export class Forest extends Ecs.World {
 
     /** Create a new top level fork */
     create_toplevel(
-        ext: Ext,
         window: Entity,
         area: Rectangle,
         id: [number, number]
     ): [Entity, Fork.Fork] {
         const [entity, fork] = this.create_fork(
-            ext,
             Node.Node.window(window), null, area, id[1]
         );
 
@@ -280,7 +277,7 @@ export class Forest extends Ecs.World {
             } else if (is_left) {
                 if ((movement & Movement.RIGHT) != 0) {
                     Log.debug(`growing left child of Fork(${fork_e}) from left to right`);
-                    this.readjust_fork_ratio_by_left(ext, crect.width, fork_c, fork_c.area.width);
+                    this.readjust_fork_ratio_by_left(ext, crect.width, fork_c);
                 } else {
                     Log.debug(`growing left child of Fork(${fork_e}) from right to left`);
                     this.resize_fork_in_direction(ext, fork_e, fork_c, is_left, true, crect, 2);
@@ -299,7 +296,7 @@ export class Forest extends Ecs.World {
             } else if (is_left) {
                 if ((movement & Movement.DOWN) != 0) {
                     Log.debug(`growing left child of Fork(${fork_e}) from top to bottom`);
-                    this.readjust_fork_ratio_by_left(ext, crect.height, fork_c, fork_c.area.height);
+                    this.readjust_fork_ratio_by_left(ext, crect.height, fork_c);
                 } else {
                     Log.debug(`growing left child of Fork(${fork_e}) from bottom to top`);
                     this.resize_fork_in_direction(ext, fork_e, fork_c, is_left, true, crect, 3);
@@ -456,16 +453,11 @@ export class Forest extends Ecs.World {
         const parent_measure = parent.is_horizontal() ? Measure.Horizontal : Measure.Vertical;
         if (parent_measure != measure) return;
 
-        Log.debug(`before ratio: ${parent.ratio}; (${child.area.array} : ${parent.area.array})`);
-
         parent.set_ratio(
-            parent.ratio = is_left
+            is_left
                 ? child.area.array[parent_measure]
-                : (parent.area.array[parent_measure] - child.area.array[parent_measure]),
-            parent.area.array[parent_measure]
+                : (parent.area.array[parent_measure] - child.area.array[parent_measure])
         );
-
-        Log.debug(`after ratio: ${parent.ratio}`);
     }
 
     /** Readjusts the division of space between the left and right siblings of a fork */
@@ -473,9 +465,8 @@ export class Forest extends Ecs.World {
         ext: Ext,
         left_length: number,
         fork: Fork.Fork,
-        fork_length: number,
     ) {
-        fork.set_ratio(left_length, fork_length).measure(this, ext, fork.area, this.on_record())
+        fork.set_ratio(left_length).measure(this, ext, fork.area, this.on_record())
     }
 
     /** Readjusts the division of space between the left and right siblings of a fork
@@ -487,7 +478,7 @@ export class Forest extends Ecs.World {
         fork: Fork.Fork,
         fork_length: number,
     ) {
-        this.readjust_fork_ratio_by_left(ext, fork_length - right_length, fork, fork_length);
+        this.readjust_fork_ratio_by_left(ext, fork_length - right_length, fork);
     }
 
     /** Resizes a fork in the direction that a movement requests */
@@ -505,9 +496,10 @@ export class Forest extends Ecs.World {
         let length = (measure == Measure.Horizontal ? crect.width : crect.height);
 
         if (consider_sibling) {
+            const left_area = child.area_of_left();
             length += is_left
-                ? child.area.array[measure] - child.area_left.array[measure]
-                : child.area_left.array[measure];
+                ? child.area.array[measure] - left_area.array[measure]
+                : left_area.array[measure];
         }
 
         const shrinking = length < child.area.array[measure];
@@ -569,7 +561,7 @@ export class Forest extends Ecs.World {
                 } else if (is_left) {
                     if ((movement & Movement.LEFT) != 0) {
                         Log.debug(`shrinking left child of Fork(${fork_e}) from right to left`);
-                        this.readjust_fork_ratio_by_left(ext, crect.width, fork_c, fork_c.area.array[2]);
+                        this.readjust_fork_ratio_by_left(ext, crect.width, fork_c);
                     } else {
                         Log.debug(`shrinking left child of Fork(${fork_e}) from left to right`);
                         this.resize_fork_in_direction(ext, fork_e, fork_c, is_left, true, crect, 2);
@@ -588,7 +580,7 @@ export class Forest extends Ecs.World {
                 } else if (is_left) {
                     if ((movement & Movement.UP) != 0) {
                         Log.debug(`shrinking left child of Fork(${fork_e}) from bottom to top`);
-                        this.readjust_fork_ratio_by_left(ext, crect.height, fork_c, fork_c.area.array[3]);
+                        this.readjust_fork_ratio_by_left(ext, crect.height, fork_c);
                     } else {
                         Log.debug(`shrinking left child of Fork(${fork_e}) from top to bottom`);
                         this.resize_fork_in_direction(ext, fork_e, fork_c, is_left, true, crect, 3);

@@ -56,7 +56,7 @@ export class AutoTiler {
         rect.width -= ext.gap_outer * 2;
         rect.height -= ext.gap_outer * 2;
 
-        const [entity, fork] = this.forest.create_toplevel(ext, win.entity, rect.clone(), workspace_id)
+        const [entity, fork] = this.forest.create_toplevel(win.entity, rect.clone(), workspace_id)
         this.attached.insert(win.entity, entity);
 
         log.debug(`attached Window(${win.entity}) to Fork(${entity}) on Monitor(${workspace_id})`);
@@ -75,8 +75,12 @@ export class AutoTiler {
             const [, fork] = attached;
             const monitor = ext.monitors.get(attachee.entity);
             if (monitor) {
-                fork.ratio_prev = 0.5;
-                fork.ratio = 0.5;
+                if (fork.is_horizontal()) {
+                    fork.set_ratio(fork.area.width / 2);
+                } else {
+                    fork.set_ratio(fork.area.height / 2);
+                }
+
                 this.tile(ext, fork, fork.area.clone());
                 this.log_tree_nodes(ext);
                 return true;
