@@ -8,12 +8,12 @@
         </key>
 
         <key type="u" name="gap-inner">
-            <default>16</default>
+            <default>4</default>
             <summary>Gap between tiled windows</summary>
         </key>
 
         <key type="u" name="gap-outer">
-            <default>16</default>
+            <default>4</default>
             <summary>Gap surrounding tiled windows</summary>
         </key>
 
