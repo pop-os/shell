@@ -87,7 +87,10 @@ export class ShellWindow {
         let pid = this.meta.get_pid();
         if (-1 === pid) return null;
 
-        const result = utils.read_to_string('/proc/' + pid + '/cmdline');
+        const path = '/proc/' + pid + '/cmdline';
+        if (!utils.exists(path)) return null;
+
+        const result = utils.read_to_string(path);
         if (result.kind == 1) {
             return result.value.trim();
         } else {

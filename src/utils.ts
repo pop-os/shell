@@ -24,3 +24,7 @@ export function read_to_string(path: string): result.Result<string, error.Error>
         );
     }
 }
+
+export function exists(path: string): boolean {
+    return Gio.File.new_for_path(path).query_exists(null);
+}
