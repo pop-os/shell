@@ -25,7 +25,7 @@ export class Rectangle {
 
     set height(height: number) { this.array[3] = height; }
 
-    apply(other: Rectangular) {
+    apply(other: Rectangle) {
         this.x += other.x;
         this.y += other.y;
         this.width += other.width;
@@ -49,7 +49,7 @@ export class Rectangle {
         }
     }
 
-    clamp_diff(other: Rectangular) {
+    clamp_diff(other: Rectangle) {
         this.x = Math.max(other.x, this.x);
         this.y = Math.max(other.y, this.y);
 

@@ -8,7 +8,6 @@ import type { Rectangle } from 'rectangle';
 import type { Node } from 'node';
 
 import * as Lib from 'lib';
-import * as Log from 'log';
 import * as Rect from 'rectangle';
 
 const XPOS = 0;
@@ -43,12 +42,12 @@ export class Fork {
     }
 
     /** The calculated left area of this fork */
-    area_of_left(): Rect.Rectangle {
+    area_of_left(ext: Ext): Rect.Rectangle {
         return new Rect.Rectangle(
             this.right
                 ? this.is_horizontal()
-                    ? [this.area.x, this.area.y, this.length_left, this.area.height]
-                    : [this.area.x, this.area.y, this.area.width, this.length_left]
+                    ? [this.area.x, this.area.y, this.length_left - ext.gap_inner_half, this.area.height]
+                    : [this.area.x, this.area.y, this.area.width, this.length_left - ext.gap_inner_half]
                 : [this.area.x, this.area.y, this.area.width, this.area.height]
         );
     }
@@ -89,19 +88,12 @@ export class Fork {
     /** Sets a new area for this fork */
     set_area(area: Rectangle): Rectangle {
         this.area = area;
-        this.set_minimum_ratio();
         return this.area;
-    }
-
-    /** Defines a minimum ratio based based on a minimum sibling length */
-    private set_minimum_ratio() {
-        this.minimum_ratio = this.orientation == Lib.Orientation.HORIZONTAL ? 256 / this.area.width : 256 / this.area.height;
     }
 
     /** Sets the orientation of this fork */
     set_orientation(orientation: Lib.Orientation): Fork {
         this.orientation = orientation;
-        this.set_minimum_ratio();
         return this;
     }
 
@@ -110,8 +102,10 @@ export class Fork {
      * Ensures that the ratio is never smaller or larger than the constraints.
      */
     set_ratio(left_length: number): Fork {
-        this.prev_length_left = left_length;
-        this.length_left = left_length;
+        const fork_len = this.is_horizontal() ? this.area.width : this.area.height;
+        const clamped = Math.max(256, Math.min(fork_len - 256, left_length));
+        this.prev_length_left = clamped;
+        this.length_left = clamped;
         return this;
     }
 
@@ -138,12 +132,16 @@ export class Fork {
 
             let region = this.area.clone();
 
-            region.array[l] = this.length_left - ext.gap_inner_half;
+            const diff = this.length_left % 64;
+            let length = this.length_left - diff + (diff > 32 ? 64 : 0);
+            if (length == 0) length = 64;
+
+            region.array[l] = length - ext.gap_inner_half;
 
             this.left.measure(tiler, ext, this.entity, region, record);
 
-            region.array[p] = region.array[p] + this.length_left + ext.gap_inner_half;
-            region.array[l] = this.area.array[l] - this.length_left - ext.gap_inner_half;
+            region.array[p] = region.array[p] + length + ext.gap_inner_half;
+            region.array[l] = this.area.array[l] - length - ext.gap_inner_half;
 
             this.right.measure(tiler, ext, this.entity, region, record);
         } else {
@@ -152,7 +150,6 @@ export class Fork {
     }
 
     rebalance_orientation() {
-        Log.debug(`rebalancing orientation`);
         let new_orientation = this.area.height > this.area.width
             ? Lib.Orientation.VERTICAL
             : Lib.Orientation.HORIZONTAL;
@@ -161,8 +158,6 @@ export class Fork {
             this.orientation = new_orientation;
             this.toggle_update_ratio();
         }
-
-        Log.debug(`orientation: ${Lib.orientation_as_str(this.orientation)} from (${this.area.fmt()})`);
     }
 
     /** Toggles the orientation of this fork */

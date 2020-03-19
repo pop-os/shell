@@ -101,7 +101,7 @@ export class Forest extends Ecs.World {
             if (fork.left.is_window(onto_entity)) {
                 const node = Node.Node.window(new_entity);
                 if (fork.right) {
-                    const area = fork.area_of_left();
+                    const area = fork.area_of_left(ext);
                     const result = this.create_fork(fork.left, node, area, fork.workspace);
                     fork.left = Node.Node.fork(result[0]);
                     Log.debug(`attached Fork(${result[0]}) to Fork(${entity}).left`);
@@ -496,7 +496,7 @@ export class Forest extends Ecs.World {
         let length = (measure == Measure.Horizontal ? crect.width : crect.height);
 
         if (consider_sibling) {
-            const left_area = child.area_of_left();
+            const left_area = child.area_of_left(ext);
             length += is_left
                 ? child.area.array[measure] - left_area.array[measure]
                 : left_area.array[measure];

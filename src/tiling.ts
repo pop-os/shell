@@ -187,7 +187,7 @@ export class Tiler {
         }
     }
 
-    move_auto_(ext: Ext, func1: (a: Rectangle) => void, func2: (a: Rectangle) => void) {
+    move_auto_(ext: Ext, func1: (m: Rectangle, a: Rectangle) => void, func2: (m: Rectangle, a: Rectangle) => void) {
         if (ext.auto_tiler && this.window) {
             const entity = ext.auto_tiler.attached.get(this.window);
             if (entity) {
@@ -210,11 +210,13 @@ export class Tiler {
 
                 const before = window.rect();
 
-                let resize = (func: (a: Rectangle) => void) => {
+                const work_area = ext.monitor_work_area(workspace_id[0]);
+
+                let resize = (func: (m: Rectangle, a: Rectangle) => void) => {
                     const grab_op = new GrabOp.GrabOp((this.window as Entity), before);
 
                     let crect = grab_op.rect.clone();
-                    func(crect);
+                    func(work_area, crect);
 
                     crect.clamp_diff(toparea);
 
@@ -223,12 +225,12 @@ export class Tiler {
                     }
 
                     (ext.auto_tiler as AutoTiler).forest.resize(ext, entity, fork, (this.window as Entity), grab_op.operation(crect), crect);
-                    (ext.auto_tiler as AutoTiler).forest.arrange(ext, fork.workspace);
                 };
 
                 resize(func1);
                 resize(func2);
 
+                ext.auto_tiler.forest.arrange(ext, fork.workspace);
                 ext.set_overlay(window.rect());
             }
         }
@@ -251,28 +253,50 @@ export class Tiler {
     resize_auto(ext: Ext, direction: Direction) {
         let mov1: Rectangle, mov2: Rectangle;
 
-        const hrow = ext.row_size / 2;
-        const hcolumn = ext.column_size / 2;
+        const hrow = 64;
+        const hcolumn = 64;
 
         switch (direction) {
             case Direction.Left:
-                mov1 = new Rect.Rectangle([hrow, 0, -hrow, 0]);
-                mov2 = new Rect.Rectangle([0, 0, -hrow, 0]);
+                mov2 = new Rect.Rectangle([hrow, 0, -hrow, 0]);
+                mov1 = new Rect.Rectangle([0, 0, -hrow, 0]);
                 break;
             case Direction.Right:
                 mov1 = new Rect.Rectangle([-hrow, 0, hrow, 0]);
                 mov2 = new Rect.Rectangle([0, 0, hrow, 0]);
                 break;
             case Direction.Up:
-                mov1 = new Rect.Rectangle([0, hcolumn, 0, -hcolumn]);
-                mov2 = new Rect.Rectangle([0, 0, 0, -hcolumn]);
+                mov2 = new Rect.Rectangle([0, hcolumn, 0, -hcolumn]);
+                mov1 = new Rect.Rectangle([0, 0, 0, -hcolumn]);
                 break;
             default:
                 mov1 = new Rect.Rectangle([0, -hcolumn, 0, hcolumn]);
                 mov2 = new Rect.Rectangle([0, 0, 0, hcolumn]);
         }
 
-        this.move_auto_(ext, (crect) => crect.apply(mov1), (crect) => crect.apply(mov2));
+        this.move_auto_(
+            ext,
+            (work_area, crect) => {
+                crect.apply(mov1);
+                if (crect.x < work_area.x) {
+                    crect.width += work_area.x - crect.x;
+                }
+
+                if (crect.y < work_area.y) {
+                    crect.height += work_area.y - crect.y;
+                }
+            },
+            (work_area, crect) => {
+                crect.apply(mov2);
+                if (crect.x < work_area.x) {
+                    crect.width += work_area.x - crect.x;
+                }
+
+                if (crect.y < work_area.y) {
+                    crect.height += work_area.y - crect.y;
+                }
+            }
+        );
     }
 
     move_auto(ext: Ext, move_to: window.ShellWindow | number | null) {
