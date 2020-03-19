@@ -6,7 +6,7 @@ import type { ShellWindow } from "./window";
 
 import * as Ecs from 'ecs';
 
-const { St } = imports.gi;
+const { GLib, St } = imports.gi;
 const { main } = imports.ui;
 
 interface WindowDetails {
@@ -47,11 +47,22 @@ export class ActiveHint {
             const parent = actor.get_parent();
             if (!parent) return;
 
+            this.overlay.hide();
+
             this.window.parent.remove_child(this.clone);
             this.clone = this.overlay.ref();
 
             parent.add_child(this.overlay);
             parent.set_child_below_sibling(this.overlay, actor);
+            (parent as any).set_child_above_sibling(actor, null);
+
+            GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
+                parent.add_child(this.overlay);
+                parent.set_child_below_sibling(this.overlay, actor);
+                (parent as any).set_child_above_sibling(actor, null);
+                this.overlay.show();
+            });
+
             this.window.parent = parent;
         }
     }
@@ -93,6 +104,7 @@ export class ActiveHint {
 
             parent.add_child(this.overlay);
             parent.set_child_below_sibling(this.overlay, actor);
+            (parent as any).set_child_above_sibling(actor, null);
 
             this.overlay.show();
             this.overlay.visible = true;

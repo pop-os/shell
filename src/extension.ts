@@ -250,10 +250,7 @@ export class Ext extends Ecs.World {
         this.prev_focused = this.last_focused;
         this.last_focused = win.entity;
 
-        GLib.idle_add(GLib.PRIORITY_LOW, () => {
-            this.active_hint?.track(win);
-            return false;
-        });
+        this.active_hint?.track(win);
 
         let msg = `focused Window(${win.entity}) {\n`
             + `  name: ${win.name(this)},\n`
