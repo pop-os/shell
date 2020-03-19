@@ -24,7 +24,7 @@ import type { Launcher } from './launcher';
 
 const { Gio, Meta, St } = imports.gi;
 const { cursor_rect, is_move_op } = Lib;
-const { _defaultCssStylesheet, layoutManager, overview, panel, sessionMode, getThemeStylesheet } = imports.ui.main;
+const { layoutManager, overview, panel, sessionMode } = imports.ui.main;
 const Tags = Me.imports.tags;
 
 const GLib: GLib = imports.gi.GLib;
@@ -737,15 +737,11 @@ function disable() {
 function load_theme() {
     try {
         Log.info(`loading theme`)
-        let theme = new St.Theme({
-            application_stylesheet: Gio.File.new_for_path(Me.path + "/stylesheet.css"),
-            theme_stylesheet: getThemeStylesheet(),
-            default_stylesheet: _defaultCssStylesheet
-        });
+        let application = Gio.File.new_for_path(Me.path + "/stylesheet.css");
 
         Log.info(`setting theme`);
+        THEME_CONTEXT.get_theme().load_stylesheet(application);
 
-       THEME_CONTEXT.set_theme(theme);
         Log.info(`theme set`);
     } catch (e) {
         Log.error("failed to load stylesheet: " + e);
