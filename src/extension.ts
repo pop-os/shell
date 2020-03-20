@@ -475,6 +475,10 @@ export class Ext extends Ecs.World {
         });
 
         this.connect(workspace_manager, 'active-workspace-changed', () => {
+            if (this.active_hint) {
+                this.active_hint.untrack();
+            }
+
             this.exit_modes();
             this.last_focused = null;
             return true;

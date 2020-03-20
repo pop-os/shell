@@ -25,6 +25,9 @@ export class ActiveHint {
     private clone: Clutter.Actor;
     private window: WindowDetails | null = null;
 
+    private reparenting: number | null = null;
+    private tracking: number | null = null;
+
     constructor(dpi: number) {
         this.dpi = dpi;
 
@@ -51,16 +54,14 @@ export class ActiveHint {
 
             this.window.parent.remove_child(this.clone);
             this.clone = this.overlay.ref();
-
             parent.add_child(this.overlay);
-            parent.set_child_below_sibling(this.overlay, actor);
-            (parent as any).set_child_above_sibling(actor, null);
 
-            GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
-                parent.add_child(this.overlay);
+            this.reparenting = GLib.idle_add(GLib.PRIORITY_LOW, () => {
+                this.reparenting = null;
                 parent.set_child_below_sibling(this.overlay, actor);
                 (parent as any).set_child_above_sibling(actor, null);
                 this.overlay.show();
+                return false;
             });
 
             this.window.parent = parent;
@@ -74,6 +75,16 @@ export class ActiveHint {
             }
 
             this.untrack();
+        }
+
+        if (this.reparenting) {
+            GLib.source_remove(this.reparenting);
+            this.reparenting = null;
+        }
+
+        if (this.tracking) {
+            GLib.source_remove(this.tracking);
+            this.tracking = null;
         }
 
         const actor = window.meta.get_compositor_private();
@@ -100,14 +111,18 @@ export class ActiveHint {
                 })
             };
 
-            this.update_overlay();
+            this.tracking = GLib.idle_add(GLib.PRIORITY_LOW, () => {
+                this.tracking = null;
+                this.update_overlay();
 
-            parent.add_child(this.overlay);
-            parent.set_child_below_sibling(this.overlay, actor);
-            (parent as any).set_child_above_sibling(actor, null);
+                parent.add_child(this.overlay);
+                parent.set_child_below_sibling(this.overlay, actor);
+                (parent as any).set_child_above_sibling(actor, null);
 
-            this.overlay.show();
-            this.overlay.visible = true;
+                this.overlay.show();
+                this.overlay.visible = true;
+                return false;
+            });
         }
     }
 
