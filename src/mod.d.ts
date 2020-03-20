@@ -10,6 +10,7 @@ interface Rectangular {
 }
 
 declare type ProcessResult = [boolean, any, any, number];
+declare type SignalID = number;
 
 declare interface GLib {
     PRIORITY_DEFAULT: number;
@@ -22,8 +23,12 @@ declare interface GLib {
 
 declare namespace GObject {
     interface Object {
-        connect(signal: string, callback: (...args: any) => boolean | void): number;
-        disconnect(id: number): void;
+        connect(signal: string, callback: (...args: any) => boolean | void): SignalID;
+        disconnect(id: SignalID): void;
+
+        block_signal_handler(signal: SignalID): void;
+        unblock_signal_handler(signal: SignalID): void;
+
         ref(): this;
     }
 }

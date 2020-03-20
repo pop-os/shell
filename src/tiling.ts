@@ -14,6 +14,7 @@ import type { Rectangle } from './rectangle';
 import type { Ext } from './extension';
 import { AutoTiler } from './auto_tiler';
 
+const GLib: GLib = imports.gi.GLib;
 const { Meta } = imports.gi;
 const Main = imports.ui.main;
 const { ShellWindow } = window;
@@ -231,7 +232,11 @@ export class Tiler {
                 resize(func2);
 
                 ext.auto_tiler.forest.arrange(ext, fork.workspace);
-                ext.set_overlay(window.rect());
+
+                GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
+                    ext.set_overlay(window.rect());
+                    return false;
+                });
             }
         }
     }
@@ -440,13 +445,17 @@ export class Tiler {
 
     enter(ext: Ext) {
         if (!this.window) {
-            const meta = ext.focus_window();
-            if (!meta) return;
+            const win = ext.focus_window();
+            if (!win) return;
 
-            this.window = meta.entity;
+            this.window = win.entity;
+
+            if (win.is_maximized()) {
+                win.meta.unmaximize(Meta.MaximizeFlags.BOTH);
+            }
 
             // Set overlay to match window
-            ext.set_overlay(meta.rect());
+            ext.set_overlay(win.rect());
             ext.overlay.visible = true;
 
             if (!ext.auto_tiler) {

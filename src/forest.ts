@@ -79,6 +79,7 @@ export class Forest extends Ecs.World {
             ? ext.workspace_by_id(workspace)
             : null;
 
+        const new_positions = new Array();
         for (const r of this.requested.splice(0)) {
             const window = ext.windows.get(r.entity);
             if (!window) continue;
@@ -87,9 +88,46 @@ export class Forest extends Ecs.World {
 
             ws?.activate(global.get_current_time());
 
-            Log.debug(`Moving Window(${r.entity}) to [${r.rect.fmt()}]`);
+            const backup = window.rect();
 
-            window.move(r.rect);
+            if (!backup.eq(r.rect)) {
+                const signals = ext.size_signals.get(window.entity);
+                if (signals) {
+                    Log.debug(`Moving Window(${r.entity}) from [${backup.fmt()}] to [${r.rect.fmt()}]`);
+                    move_window(window, r.rect, signals);
+
+                    const actual = window.rect();
+                    Log.debug(`Moved Window(${r.entity}) to ${actual.fmt()}`);
+
+                    new_positions.push([window, backup, actual]);
+
+                } else {
+                    Log.error(`Attempted move of Window(${r.entity}), but it does not have attached signals`);
+                }
+            }
+        }
+
+        let reset = false;
+
+        outer:
+        for (const [, , new_area] of new_positions) {
+            for (const [, , other] of new_positions) {
+                if (!other.eq(new_area) && other.intersects(new_area)) {
+                    reset = true;
+                    break outer;
+                }
+            }
+        }
+
+        if (reset) {
+            Log.debug(`resetting windows`);
+            for (const [window, origin] of new_positions) {
+                const signals = ext.size_signals.get(window.entity);
+                if (signals) {
+                    Log.debug(`Moving Window(${window.entity}) from [${window.rect().fmt()}] to [${origin.fmt()}]`);
+                    move_window(window, origin, signals);
+                }
+            }
         }
     }
 
@@ -637,4 +675,13 @@ export class Forest extends Ecs.World {
         fmt += ' '.repeat(scope * 2) + '}';
         return fmt;
     }
+}
+
+
+function move_window(window: ShellWindow, rect: Rectangular, signals: [SignalID, SignalID]) {
+    window.meta.block_signal_handler(signals[0]);
+    window.meta.block_signal_handler(signals[1]);
+    window.move(rect);
+    window.meta.unblock_signal_handler(signals[0]);
+    window.meta.unblock_signal_handler(signals[1]);
 }

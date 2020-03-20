@@ -69,22 +69,14 @@ export class ActiveHint {
     }
 
     track(window: ShellWindow) {
+        this.disconnect_signals();
+
         if (this.window) {
             if (Ecs.entity_eq(this.window.entity, window.entity)) {
                 return;
             }
 
             this.untrack();
-        }
-
-        if (this.reparenting) {
-            GLib.source_remove(this.reparenting);
-            this.reparenting = null;
-        }
-
-        if (this.tracking) {
-            GLib.source_remove(this.tracking);
-            this.tracking = null;
         }
 
         const actor = window.meta.get_compositor_private();
@@ -127,8 +119,10 @@ export class ActiveHint {
     }
 
     untrack() {
+        this.disconnect_signals();
         this.overlay.hide();
         this.overlay.visible = false;
+
         if (this.window) {
             const actor = this.window.meta.get_compositor_private();
             if (actor) {
@@ -157,5 +151,17 @@ export class ActiveHint {
     destroy() {
         this.untrack();
         main.layoutManager.untrackChrome(this.overlay);
+    }
+
+    disconnect_signals() {
+        if (this.reparenting) {
+            GLib.source_remove(this.reparenting);
+            this.reparenting = null;
+        }
+
+        if (this.tracking) {
+            GLib.source_remove(this.tracking);
+            this.tracking = null;
+        }
     }
 }

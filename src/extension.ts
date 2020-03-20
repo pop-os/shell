@@ -33,7 +33,6 @@ const THEME_CONTEXT = St.ThemeContext.get_for_stage(global.stage);
 
 export class Ext extends Ecs.World {
     private init: boolean = true;
-    tiling: boolean = false;
 
     column_size: number = 128;
     row_size: number = 128;
@@ -68,6 +67,7 @@ export class Ext extends Ecs.World {
     snapped: Ecs.Storage<boolean>;
     tilable: Ecs.Storage<boolean>;
     windows: Ecs.Storage<Window.ShellWindow>;
+    size_signals: Ecs.Storage<[SignalID, SignalID]> = this.register_storage();
 
     auto_tiler: auto_tiler.AutoTiler | null = null;
 
@@ -135,8 +135,8 @@ export class Ext extends Ecs.World {
 
     }
 
-    connect_meta(win: Window.ShellWindow, signal: string, callback: () => void) {
-        win.meta.connect(signal, () => {
+    connect_meta(win: Window.ShellWindow, signal: string, callback: () => void): number {
+        return win.meta.connect(signal, () => {
             if (win.actor_exists()) callback();
         });
     }
@@ -144,23 +144,20 @@ export class Ext extends Ecs.World {
     connect_window(win: Window.ShellWindow) {
         this.connect_meta(win, 'workspace-changed', () => this.on_workspace_changed(win));
 
-        this.connect_meta(win, 'size-changed', () => {
-            if (this.auto_tiler && !win.is_maximized()) {
-                Log.debug(`size changed: ${win.name(this)}`);
-                if (this.grab_op) {
-
-                } else if (!this.tiling) {
+        this.size_signals.insert(win.entity, [
+            this.connect_meta(win, 'size-changed', () => {
+                if (this.auto_tiler && !win.is_maximized()) {
+                    Log.debug(`size changed: ${win.name(this)}`);
                     this.auto_tiler.reflow(this, win.entity);
                 }
-            }
-        });
-
-        this.connect_meta(win, 'position-changed', () => {
-            if (this.auto_tiler && !this.grab_op && !this.tiling && !win.is_maximized()) {
-                Log.debug(`position changed: ${win.name(this)}`);
-                this.auto_tiler.reflow(this, win.entity);
-            }
-        });
+            }),
+            this.connect_meta(win, 'position-changed', () => {
+                if (this.auto_tiler && !win.is_maximized()) {
+                    Log.debug(`position changed: ${win.name(this)}`);
+                    this.auto_tiler.reflow(this, win.entity);
+                }
+            })
+        ]);
 
         this.connect_meta(win, 'notify::minimized', () => {
             if (this.auto_tiler) {
@@ -280,6 +277,12 @@ export class Ext extends Ecs.World {
             return;
         }
 
+        const signals = this.size_signals.get(win.entity);
+        if (signals) {
+            meta.unblock_signal_handler(signals[0]);
+            meta.unblock_signal_handler(signals[1]);
+        }
+
         if (win.is_maximized()) {
             return;
         }
@@ -350,6 +353,12 @@ export class Ext extends Ecs.World {
             Log.debug(`grabbed Window(${entity}): ${this.names.get(entity)}`);
             let rect = win.rect();
             this.grab_op = new GrabOp.GrabOp(entity, rect);
+
+            const signals = this.size_signals.get(win.entity);
+            if (signals) {
+                win.meta.block_signal_handler(signals[0]);
+                win.meta.block_signal_handler(signals[1]);
+            }
         }
     }
 
