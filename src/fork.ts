@@ -128,11 +128,11 @@ export class Fork {
         }
 
         if (this.right) {
-            const [l, p] = this.is_horizontal() ? [WIDTH, XPOS] : [HEIGHT, YPOS];
+            const [l, p, startpos] = this.is_horizontal() ? [WIDTH, XPOS, this.area.x] : [HEIGHT, YPOS, this.area.y];
 
             let region = this.area.clone();
 
-            const diff = this.length_left % 32;
+            const diff = (startpos + this.length_left) % 32;
             let length = this.length_left - diff + (diff > 16 ? 32 : 0);
             if (length == 0) length = 32;
 
