@@ -21,6 +21,8 @@ dconf write /org/gnome/mutter/wayland/keybindings/restore-shortcuts "@as []"
 dconf write ${KEYS_GNOME_WM}/minimize "@as ['<Super>comma']"
 # Open the application menu: disable <Super>m
 dconf write ${KEYS_GNOME_SHELL}/open-application-menu "@as []"
+# Toggle message tray: disable <Super>m
+dconf write ${KEYS_GNOME_SHELL}/toggle-message-tray "@as ['<Super>v']"
 # Switch to workspace left: disable <Super>Left
 dconf write ${KEYS_GNOME_WM}/switch-to-workspace-left "@as []"
 # Switch to workspace right: disable <Super>Right
