@@ -71,7 +71,7 @@ export class Ext extends Ecs.World {
 
     auto_tiler: auto_tiler.AutoTiler | null = null;
 
-    signals: Map<GObject.Object, Array<number>> = new Map();
+    signals: Map<GObject.Object, Array<SignalID>> = new Map();
 
     constructor() {
         super();
@@ -438,7 +438,7 @@ export class Ext extends Ecs.World {
         const workspace_manager = global.display.get_workspace_manager();
 
         this.connect(sessionMode, 'updated', () => {
-            if ('user' != global.sessionMode.currentMode()) {
+            if ('user' != global.sessionMode.currentMode) {
                 this.exit_modes();
             }
             return true;
@@ -525,7 +525,7 @@ export class Ext extends Ecs.World {
 
         // Modes
 
-        if (this.settings.tile_by_default()) {
+        if (this.settings.tile_by_default() && !this.auto_tiler) {
             Log.info(`tile by default enabled`);
 
             this.auto_tiler = new auto_tiler.AutoTiler(
@@ -542,15 +542,17 @@ export class Ext extends Ecs.World {
 
         // Post-init
 
-        for (const window of this.tab_list(Meta.TabList.NORMAL, null)) {
-            this.on_window_create(window.meta);
-        }
+        if (this.init) {
+            for (const window of this.tab_list(Meta.TabList.NORMAL, null)) {
+                this.on_window_create(window.meta);
+            }
 
-        GLib.timeout_add(1000, GLib.PRIORITY_DEFAULT, () => {
-            this.init = false;
-            Log.debug(`init complete`);
-            return false;
-        });
+            GLib.timeout_add(1000, GLib.PRIORITY_DEFAULT, () => {
+                this.init = false;
+                Log.debug(`init complete`);
+                return false;
+            });
+        }
     }
 
     signals_remove() {
@@ -692,45 +694,40 @@ let indicator: Indicator | null = null;
 // @ts-ignore
 function init() {
     Log.info("init");
-
-    ext = new Ext();
-
-    // Code to execute after the shell has finished initializing everything.
-    GLib.idle_add(GLib.PRIORITY_LOW, () => {
-        if (ext?.auto_tiler) ext.snap_windows();
-        return false;
-    });
 }
 
 // @ts-ignore
 function enable() {
-    if (ext) {
-        Log.info("enable");
+    Log.info("enable");
 
-        ext.signals_attach();
+    if (!ext) {
+        ext = new Ext();
+
+        // Code to execute after the shell has finished initializing everything.
+        GLib.idle_add(GLib.PRIORITY_LOW, () => {
+            if (ext?.auto_tiler) ext.snap_windows();
+            return false;
+        });
 
         load_theme();
-
-        layoutManager.addChrome(ext.overlay);
-
-        if (!indicator) {
-            indicator = new PanelSettings.Indicator(ext);
-            panel.addToStatusArea('pop-shell', indicator.button);
-        }
-
-        ext.keybindings.enable(ext.keybindings.global)
-            .enable(ext.keybindings.window_focus);
     }
+
+    ext.signals_attach();
+
+    layoutManager.addChrome(ext.overlay);
+
+    if (!indicator) {
+        indicator = new PanelSettings.Indicator(ext);
+        panel.addToStatusArea('pop-shell', indicator.button);
+    }
+
+    ext.keybindings.enable(ext.keybindings.global)
+        .enable(ext.keybindings.window_focus);
 }
 
 // @ts-ignore
 function disable() {
     Log.info("disable");
-
-    if (indicator) {
-        indicator.button.destroy();
-        indicator = null;
-    }
 
     if (ext) {
         ext.signals_remove();
