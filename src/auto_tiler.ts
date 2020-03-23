@@ -66,10 +66,10 @@ export class AutoTiler {
     }
 
     /** Tiles a window into another */
-    attach_to_window(ext: Ext, attachee: ShellWindow, attacher: ShellWindow) {
+    attach_to_window(ext: Ext, attachee: ShellWindow, attacher: ShellWindow, cursor: Rectangle) {
         log.debug(`attempting to attach ${attacher.name(ext)} to ${attachee.name(ext)}`);
 
-        let attached = this.forest.attach_window(ext, attachee.entity, attacher.entity);
+        let attached = this.forest.attach_window(ext, attachee.entity, attacher.entity, cursor);
 
         if (attached) {
             const [, fork] = attached;
@@ -124,7 +124,7 @@ export class AutoTiler {
             const onto = this.forest.largest_window_on(ext, toplevel);
             if (onto) {
                 log.debug(`largest window = ${onto.entity}`);
-                if (this.attach_to_window(ext, onto, win)) {
+                if (this.attach_to_window(ext, onto, win, lib.cursor_rect())) {
                     return;
                 }
             }
@@ -148,7 +148,7 @@ export class AutoTiler {
             this.attach_to_workspace(ext, win, ext.workspace_id(win));
         } else {
             this.detach_window(ext, win.entity);
-            this.attach_to_window(ext, result.value, win)
+            this.attach_to_window(ext, result.value, win, lib.cursor_rect())
         }
     }
 
@@ -233,13 +233,13 @@ export class AutoTiler {
 
         if (attach_to) {
             log.debug(`found Window(${attach_to.entity}) at pointer`);
-            this.attach_to_window(ext, attach_to, win);
+            this.attach_to_window(ext, attach_to, win, cursor);
         } else {
             const toplevel = this.forest.find_toplevel([monitor, workspace]);
             if (toplevel) {
                 attach_to = this.forest.largest_window_on(ext, toplevel);
                 if (attach_to) {
-                    this.attach_to_window(ext, attach_to, win);
+                    this.attach_to_window(ext, attach_to, win, cursor);
                     return;
                 }
             }

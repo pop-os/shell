@@ -133,30 +133,53 @@ export class Forest extends Ecs.World {
     }
 
     /** Attaches a `new` window to the fork which `onto` is attached to. */
-    attach_window(ext: Ext, onto_entity: Entity, new_entity: Entity): [Entity, Fork.Fork] | null {
+    attach_window(ext: Ext, onto_entity: Entity, new_entity: Entity, cursor: Rectangle): [Entity, Fork.Fork] | null {
         Log.debug(`attaching Window(${new_entity}) onto Window(${onto_entity})`);
+
+        const right_node = Node.Node.window(new_entity);
 
         for (const [entity, fork] of this.forks.iter()) {
             if (fork.left.is_window(onto_entity)) {
-                const node = Node.Node.window(new_entity);
                 if (fork.right) {
                     const area = fork.area_of_left(ext);
-                    const result = this.create_fork(fork.left, node, area, fork.workspace);
-                    fork.left = Node.Node.fork(result[0]);
-                    Log.debug(`attached Fork(${result[0]}) to Fork(${entity}).left`);
-                    this.parents.insert(result[0], entity);
-                    return this._attach(onto_entity, new_entity, this.on_attach, entity, fork, result);
+                    const [fork_entity, new_fork] = this.create_fork(fork.left, right_node, area, fork.workspace);
+
+                    const inner_left = new_fork.is_horizontal()
+                        ? new Rect.Rectangle([new_fork.area.x, new_fork.area.y, new_fork.area.width / 2, new_fork.area.height])
+                        : new Rect.Rectangle([new_fork.area.x, new_fork.area.y, new_fork.area.width, new_fork.area.height / 2]);
+
+                    if (inner_left.contains(cursor)) {
+                        const temp = new_fork.left;
+                        new_fork.left = new_fork.right as Node.Node;
+                        new_fork.right = temp;
+                    }
+
+                    fork.left = Node.Node.fork(fork_entity);
+                    Log.debug(`attached Fork(${fork_entity}) to Fork(${entity}).left`);
+                    this.parents.insert(fork_entity, entity);
+                    return this._attach(onto_entity, new_entity, this.on_attach, entity, fork, [fork_entity, new_fork]);
                 } else {
-                    fork.right = node;
+                    fork.right = right_node;
                     return this._attach(onto_entity, new_entity, this.on_attach, entity, fork, null);
                 }
             } else if (fork.right && fork.right.is_window(onto_entity)) {
                 const area = fork.area_of_right(ext);
-                const result = this.create_fork(fork.right, Node.Node.window(new_entity), area, fork.workspace);
-                fork.right = Node.Node.fork(result[0]);
-                Log.debug(`attached Fork(${result[0]}) to Fork(${entity}).right`);
-                this.parents.insert(result[0], entity);
-                return this._attach(onto_entity, new_entity, this.on_attach, entity, fork, result);
+                const [fork_entity, new_fork] = this.create_fork(fork.right, right_node, area, fork.workspace);
+
+                const inner_left = new_fork.is_horizontal()
+                    ? new Rect.Rectangle([new_fork.area.x, new_fork.area.y, new_fork.area.width / 2, new_fork.area.height])
+                    : new Rect.Rectangle([new_fork.area.x, new_fork.area.y, new_fork.area.width, new_fork.area.height / 2]);
+
+                if (inner_left.contains(cursor)) {
+                    const temp = new_fork.left;
+                    new_fork.left = new_fork.right as Node.Node;
+                    new_fork.right = temp;
+                }
+
+                fork.right = Node.Node.fork(fork_entity);
+                Log.debug(`attached Fork(${fork_entity}) to Fork(${entity}).right`);
+                this.parents.insert(fork_entity, entity);
+                return this._attach(onto_entity, new_entity, this.on_attach, entity, fork, [fork_entity, new_fork]);
             }
         }
 

@@ -325,7 +325,7 @@ export class Tiler {
                 }
 
                 ext.auto_tiler.detach_window(ext, focused.entity);
-                ext.auto_tiler.attach_to_window(ext, move_to, focused);
+                ext.auto_tiler.attach_to_window(ext, move_to, focused, Lib.cursor_rect());
                 ext.set_overlay(focused.rect());
             } else {
                 global.log(`attach to monitor ${move_to}`);
