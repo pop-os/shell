@@ -14,6 +14,7 @@ import type { Rectangle } from './rectangle';
 import type { ShellWindow } from './window';
 import type { Ext } from './extension';
 
+const { Meta } = imports.gi;
 const { Movement } = movement;
 
 /** A designation for using either the width or height of a rectangle. */
@@ -679,6 +680,18 @@ export class Forest extends Ecs.World {
 
 
 function move_window(window: ShellWindow, rect: Rectangular, signals: [SignalID, SignalID]) {
+    if (!(window.meta instanceof Meta.Window)) {
+        Log.error(`attempting to a window entity in a tree which lacks a Meta.Window`);
+        return;
+    }
+
+    const actor = window.meta.get_compositor_private();
+
+    if (!actor) {
+        Log.error(`Window(${window.entity}) does not have an actor, and therefore cannot be moved`);
+        return;
+    }
+
     window.meta.block_signal_handler(signals[0]);
     window.meta.block_signal_handler(signals[1]);
     window.move(rect);
