@@ -21,25 +21,47 @@ interface WindowDetails {
 export class ActiveHint {
     dpi: number;
 
-    private overlay: Clutter.Actor;
-    private clone: Clutter.Actor;
-    private window: WindowDetails | null = null;
+    private border: [Clutter.Actor, Clutter.Actor, Clutter.Actor, Clutter.Actor] = [
+        new St.BoxLayout({
+            reactive: true,
+            style_class: 'pop-shell-active-hint',
+            visible: false
+        }),
+        new St.BoxLayout({
+            reactive: true,
+            style_class: 'pop-shell-active-hint',
+            visible: false
+        }),
+        new St.BoxLayout({
+            reactive: true,
+            style_class: 'pop-shell-active-hint',
+            visible: false
+        }),
+        new St.BoxLayout({
+            reactive: true,
+            style_class: 'pop-shell-active-hint',
+            visible: false
+        })
+    ];
+
+    private clones: [Clutter.Actor, Clutter.Actor, Clutter.Actor, Clutter.Actor] = [
+        this.border[0].ref(),
+        this.border[1].ref(),
+        this.border[2].ref(),
+        this.border[3].ref()
+    ];
 
     private reparenting: number | null = null;
     private tracking: number | null = null;
 
+    private window: WindowDetails | null = null;
+
     constructor(dpi: number) {
         this.dpi = dpi;
 
-        this.overlay = new St.BoxLayout({
-            reactive: true,
-            style_class: 'pop-shell-active-hint',
-            visible: false
-        });
-
-        this.clone = this.overlay.ref();
-
-        main.layoutManager.trackChrome(this.overlay, { affectsInputRegion: false });
+        for (const box of this.border) {
+            main.layoutManager.trackChrome(box, { affectsInputRegion: false });
+        }
     }
 
     reparent() {
@@ -50,17 +72,23 @@ export class ActiveHint {
             const parent = actor.get_parent();
             if (!parent) return;
 
-            this.overlay.hide();
+            this.clones.forEach((box, id) => {
+                this.border[id].hide();
+                (this.window as WindowDetails).parent.remove_child(box);
+                this.clones[id] = this.border[id].ref();
+                parent.add_child(this.border[id]);
+            });
 
-            this.window.parent.remove_child(this.clone);
-            this.clone = this.overlay.ref();
-            parent.add_child(this.overlay);
 
             this.reparenting = GLib.idle_add(GLib.PRIORITY_LOW, () => {
                 this.reparenting = null;
-                parent.set_child_below_sibling(this.overlay, actor);
-                (parent as any).set_child_above_sibling(actor, null);
-                this.overlay.show();
+
+                this.border.forEach((box) => {
+                    parent.set_child_below_sibling(box, actor);
+                    (parent as any).set_child_above_sibling(actor, null);
+                    box.show();
+                });
+
                 return false;
             });
 
@@ -107,12 +135,15 @@ export class ActiveHint {
                 this.tracking = null;
                 this.update_overlay();
 
-                parent.add_child(this.overlay);
-                parent.set_child_below_sibling(this.overlay, actor);
-                (parent as any).set_child_above_sibling(actor, null);
+                this.border.forEach((box) => {
+                    parent.add_child(box);
+                    parent.set_child_below_sibling(box, actor);
+                    (parent as any).set_child_above_sibling(actor, null);
 
-                this.overlay.show();
-                this.overlay.visible = true;
+                    box.show();
+                    box.visible = true;
+                });
+
                 return false;
             });
         }
@@ -120,8 +151,11 @@ export class ActiveHint {
 
     untrack() {
         this.disconnect_signals();
-        this.overlay.hide();
-        this.overlay.visible = false;
+
+        this.border.forEach((box) => {
+            box.hide();
+            box.visible = false;
+        });
 
         if (this.window) {
             const actor = this.window.meta.get_compositor_private();
@@ -131,8 +165,11 @@ export class ActiveHint {
                 actor.disconnect(this.window.source3);
             }
 
-            let clone = this.overlay;
-            this.window.parent.remove_child(clone);
+            this.border.forEach((box) => {
+                let clone = box;
+                (this.window as WindowDetails).parent.remove_child(clone);
+            });
+
             this.window = null;
         }
     }
@@ -141,16 +178,38 @@ export class ActiveHint {
         if (this.window) {
             const rect = this.window.meta.get_frame_rect();
 
-            this.overlay.x = rect.x - (4 * this.dpi);
-            this.overlay.y = rect.y - (4 * this.dpi);
-            this.overlay.width = rect.width + (8 * this.dpi);
-            this.overlay.height = rect.height + (8 * this.dpi);
+            const width = 4 * this.dpi;
+
+            const [left, top, right, bottom] = this.border;
+
+            left.x = rect.x - width;
+            left.y = rect.y;
+            left.width = width;
+            left.height = rect.height;
+
+            right.x = rect.x + rect.width;
+            right.y = rect.y;
+            right.width = width;
+            right.height = rect.height;
+
+            top.x = rect.x - width;
+            top.y = rect.y - width;
+            top.width = (2 * width) + rect.width;
+            top.height = width;
+
+            bottom.x = rect.x - width;
+            bottom.y = rect.y + rect.height;
+            bottom.width = (2 * width) + rect.width;
+            bottom.height = width;
         }
     }
 
     destroy() {
         this.untrack();
-        main.layoutManager.untrackChrome(this.overlay);
+
+        this.border.forEach((box) => {
+            main.layoutManager.untrack(box);
+        });
     }
 
     disconnect_signals() {
