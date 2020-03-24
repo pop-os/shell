@@ -17,7 +17,12 @@ declare interface GLib {
     PRIORITY_LOW: number;
 
     idle_add(priority: any, callback: () => boolean): number;
+
+    signal_handler_block(object: GObject.Object, signal: SignalID): void;
+    signal_handler_unblock(object: GObject.Object, signal: SignalID): void;
+
     spawn_command_line_sync(cmd: string): ProcessResult;
+
     timeout_add(ms: number, priority: any, callback: () => Boolean): number;
 }
 

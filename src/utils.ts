@@ -4,9 +4,17 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 import * as result from 'result';
 import * as error from 'error';
 
-const { Gio } = imports.gi;
+const { Gio, GObject } = imports.gi;
 const { Ok, Err } = result;
 const { Error } = error;
+
+export function block_signal(object: GObject.Object, signal: SignalID) {
+    GObject.signal_handler_block(object, signal);
+}
+
+export function unblock_signal(object: GObject.Object, signal: SignalID) {
+    GObject.signal_handler_unblock(object, signal);
+}
 
 export function read_to_string(path: string): result.Result<string, error.Error> {
     const file = Gio.File.new_for_path(path);

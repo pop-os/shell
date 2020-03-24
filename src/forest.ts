@@ -8,6 +8,7 @@ import * as movement from 'movement';
 import * as Rect from 'rectangle';
 import * as Node from 'node';
 import * as Fork from 'fork';
+import * as utils from 'utils';
 
 import type { Entity } from 'ecs';
 import type { Rectangle } from './rectangle';
@@ -715,9 +716,9 @@ function move_window(window: ShellWindow, rect: Rectangular, signals: [SignalID,
         return;
     }
 
-    window.meta.block_signal_handler(signals[0]);
-    window.meta.block_signal_handler(signals[1]);
+    utils.block_signal(window.meta, signals[0]);
+    utils.block_signal(window.meta, signals[1]);
     window.move(rect);
-    window.meta.unblock_signal_handler(signals[0]);
-    window.meta.unblock_signal_handler(signals[1]);
+    utils.unblock_signal(window.meta, signals[0]);
+    utils.unblock_signal(window.meta, signals[1]);
 }

@@ -16,6 +16,7 @@ import * as launcher from 'launcher';
 import * as active_hint from 'active_hint';
 import * as auto_tiler from 'auto_tiler';
 import * as node from 'node';
+import * as utils from 'utils';
 
 import type { Entity } from 'ecs';
 import type { Rectangle } from 'rectangle';
@@ -279,8 +280,8 @@ export class Ext extends Ecs.World {
 
         const signals = this.size_signals.get(win.entity);
         if (signals) {
-            meta.unblock_signal_handler(signals[0]);
-            meta.unblock_signal_handler(signals[1]);
+            utils.unblock_signal(meta, signals[0]);
+            utils.unblock_signal(meta, signals[1]);
         }
 
         if (win.is_maximized()) {
@@ -356,8 +357,8 @@ export class Ext extends Ecs.World {
 
             const signals = this.size_signals.get(win.entity);
             if (signals) {
-                win.meta.block_signal_handler(signals[0]);
-                win.meta.block_signal_handler(signals[1]);
+                utils.block_signal(meta, signals[0]);
+                utils.block_signal(meta, signals[1]);
             }
         }
     }
