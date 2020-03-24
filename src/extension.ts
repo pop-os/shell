@@ -163,9 +163,10 @@ export class Ext extends Ecs.World {
         this.connect_meta(win, 'notify::minimized', () => {
             if (this.auto_tiler) {
                 if (win.meta.minimized) {
-                    if (this.auto_tiler) {
-
+                    if (this.active_hint && this.active_hint.is_tracking(win.entity)) {
+                        this.active_hint.untrack();
                     }
+
                     if (this.auto_tiler.attached.contains(win.entity)) {
                         this.auto_tiler.detach_window(this, win.entity);
                     }

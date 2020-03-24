@@ -64,6 +64,10 @@ export class ActiveHint {
         }
     }
 
+    is_tracking(entity: Entity): boolean {
+        return this.window ? Ecs.entity_eq(entity, this.window.entity) : false;
+    }
+
     reparent() {
         if (this.window) {
             const actor = this.window.meta.get_compositor_private();
