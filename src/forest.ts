@@ -111,28 +111,28 @@ export class Forest extends Ecs.World {
 
         if (ignore_reset) return;
 
-        let reset = false;
+        // let reset = false;
 
-        outer:
-        for (const [, , new_area] of new_positions) {
-            for (const [, , other] of new_positions) {
-                if (!other.eq(new_area) && other.intersects(new_area)) {
-                    reset = true;
-                    break outer;
-                }
-            }
-        }
+        // outer:
+        // for (const [, , new_area] of new_positions) {
+        //     for (const [, , other] of new_positions) {
+        //         if (!other.eq(new_area) && other.intersects(new_area)) {
+        //             reset = true;
+        //             break outer;
+        //         }
+        //     }
+        // }
 
-        if (reset) {
-            Log.debug(`resetting windows`);
-            for (const [window, origin] of new_positions) {
-                const signals = ext.size_signals.get(window.entity);
-                if (signals) {
-                    Log.debug(`Moving Window(${window.entity}) from [${window.rect().fmt()}] to [${origin.fmt()}]`);
-                    move_window(window, origin, signals);
-                }
-            }
-        }
+        // if (reset) {
+        //     Log.debug(`resetting windows`);
+        //     for (const [window, origin] of new_positions) {
+        //         const signals = ext.size_signals.get(window.entity);
+        //         if (signals) {
+        //             Log.debug(`Moving Window(${window.entity}) from [${window.rect().fmt()}] to [${origin.fmt()}]`);
+        //             move_window(window, origin, signals);
+        //         }
+        //     }
+        // }
     }
 
     /** Attaches a `new` window to the fork which `onto` is attached to. */
