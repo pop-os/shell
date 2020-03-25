@@ -80,10 +80,7 @@ export class AutoTiler {
 
                     const attacher_sh = attacher.size_hint();
 
-                    fork.set_ratio(attacher_sh
-                        ? Math.min(split, fork.area.width - attacher_sh.minimum[0])
-                        : split
-                    );
+                    fork.set_ratio(attacher_sh ? Math.min(split, fork.area.width - attacher_sh.minimum[0]) : split);
 
                     if (attacher_sh && attacher_sh.minimum[1] > fork.area.height) {
                         // TODO: Increase size of fork to accomodate minimum height.
@@ -93,10 +90,7 @@ export class AutoTiler {
 
                     const attacher_sh = attacher.size_hint();
 
-                    fork.set_ratio(attacher_sh
-                        ? Math.min(split, fork.area.height - attacher_sh.minimum[1])
-                        : split
-                    );
+                    fork.set_ratio(attacher_sh ? Math.min(split, fork.area.height - attacher_sh.minimum[1]) : split);
 
                     if (attacher_sh && attacher_sh.minimum[1] > fork.area.width) {
                         // TODO: Increase size of fork to accomodate minimum width.
@@ -354,20 +348,22 @@ export class AutoTiler {
             return Err('window\'s fork attachment does not exist');
         }
 
+        if (!fork.right) return Ok(void (0));
+
         fork.toggle_orientation();
         this.forest.measure(ext, fork, fork.area);
 
         for (const child of this.forest.iter(fork_entity, NodeKind.FORK)) {
-            const fork = this.forest.forks.get(child.entity);
-            if (fork) {
-                fork.rebalance_orientation();
-                this.forest.measure(ext, fork, fork.area);
+            const child_fork = this.forest.forks.get(child.entity);
+            if (child_fork) {
+                child_fork.rebalance_orientation();
+                this.forest.measure(ext, child_fork, child_fork.area);
             } else {
                 log.error('toggle_orientation: Fork(${child.entity}) does not exist to have its orientation toggled');
             }
         }
 
-        this.forest.arrange(ext, fork.workspace);
+        this.forest.arrange(ext, fork.workspace, true);
 
         return Ok(void (0));
     }

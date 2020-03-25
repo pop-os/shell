@@ -29,6 +29,8 @@ export class Fork {
     prev_length_left: number;
     minimum_ratio: number = 0.1;
     orientation: Lib.Orientation = Lib.Orientation.HORIZONTAL;
+
+    orientation_changed: boolean = false;
     is_toplevel: boolean = false;
 
     constructor(entity: Entity, left: Node, right: Node | null, area: Rectangle, workspace: number) {
@@ -103,7 +105,7 @@ export class Fork {
      */
     set_ratio(left_length: number): Fork {
         const fork_len = this.is_horizontal() ? this.area.width : this.area.height;
-        const clamped = Math.max(256, Math.min(fork_len - 256, left_length));
+        const clamped = Math.round(Math.max(256, Math.min(fork_len - 256, left_length)));
         this.prev_length_left = clamped;
         this.length_left = clamped;
         return this;
@@ -123,8 +125,23 @@ export class Fork {
         area: Rectangle,
         record: (win: Entity, parent: Entity, area: Rectangle) => void
     ) {
+        let ratio;
+
         if (!this.is_toplevel) {
+            if (this.orientation_changed) {
+                this.orientation_changed = false;
+                ratio = this.length_left / (this.is_horizontal() ? this.area.height : this.area.width);
+            } else {
+                ratio = this.length_left / (this.is_horizontal() ? this.area.width : this.area.height);
+            }
+
             this.area = this.set_area(area.clone());
+        } else if (this.orientation_changed) {
+            ratio = this.length_left / (this.is_horizontal() ? this.area.height : this.area.width);
+        }
+
+        if (ratio) {
+            this.length_left = Math.round(ratio * (this.is_horizontal() ? this.area.width : this.area.height));
         }
 
         if (this.right) {
@@ -156,24 +173,16 @@ export class Fork {
 
         if (new_orientation !== this.orientation) {
             this.orientation = new_orientation;
-            this.toggle_update_ratio();
+            this.orientation_changed = true;
         }
     }
 
     /** Toggles the orientation of this fork */
     toggle_orientation() {
-        this.orientation = Lib.Orientation.HORIZONTAL == this.orientation
+        this.orientation = Lib.Orientation.HORIZONTAL === this.orientation
             ? Lib.Orientation.VERTICAL
             : Lib.Orientation.HORIZONTAL;
 
-        this.toggle_update_ratio();
-    }
-
-    private toggle_update_ratio() {
-        this.set_ratio(
-            this.is_horizontal()
-                ? this.area.width * (this.length_left / this.area.height)
-                : this.area.height * (this.length_left / this.area.width)
-        );
+        this.orientation_changed = true;
     }
 }

@@ -26,7 +26,6 @@ enum Measure {
 
 /** A request to move a window into a new location. */
 interface Request {
-    entity: Entity,
     parent: Entity,
     rect: Rectangle
 }
@@ -47,7 +46,7 @@ export class Forest extends Ecs.World {
     toplevel: Map<String, [Entity, [number, number]]> = new Map();
 
     /** Stores window positions that have been requested. */
-    requested: Array<Request> = new Array();
+    requested: Map<Entity, Request> = new Map();
 
     /** The storage for holding all fork associations. */
     forks: Ecs.Storage<Fork.Fork> = this.register_storage();
@@ -70,20 +69,20 @@ export class Forest extends Ecs.World {
     }
 
     /** Measures and arranges windows in the tree from the given fork to the specified area. */
-    tile(ext: Ext, fork: Fork.Fork, area: Rectangle) {
+    tile(ext: Ext, fork: Fork.Fork, area: Rectangle, ignore_reset: boolean = true) {
         this.measure(ext, fork, area);
-        this.arrange(ext, fork.workspace);
+        this.arrange(ext, fork.workspace, ignore_reset);
     }
 
     /** Place all windows into their calculated positions. */
-    arrange(ext: Ext, workspace: number) {
+    arrange(ext: Ext, workspace: number, ignore_reset: boolean = false) {
         let ws = ext.switch_workspace_on_move
             ? ext.workspace_by_id(workspace)
             : null;
 
         const new_positions = new Array();
-        for (const r of this.requested.splice(0)) {
-            const window = ext.windows.get(r.entity);
+        for (const [entity, r] of this.requested) {
+            const window = ext.windows.get(entity);
             if (!window) continue;
 
             window.meta.change_workspace_by_index(workspace, false);
@@ -95,19 +94,22 @@ export class Forest extends Ecs.World {
             if (!backup.eq(r.rect)) {
                 const signals = ext.size_signals.get(window.entity);
                 if (signals) {
-                    Log.debug(`Moving Window(${r.entity}) from [${backup.fmt()}] to [${r.rect.fmt()}]`);
+                    Log.debug(`Moving Window(${entity}) from [${backup.fmt()}] to [${r.rect.fmt()}]`);
                     move_window(window, r.rect, signals);
 
                     const actual = window.rect();
-                    Log.debug(`Moved Window(${r.entity}) to ${actual.fmt()}`);
+                    Log.debug(`Moved Window(${entity}) to ${actual.fmt()}`);
 
                     new_positions.push([window, backup, actual]);
-
                 } else {
-                    Log.error(`Attempted move of Window(${r.entity}), but it does not have attached signals`);
+                    Log.error(`Attempted move of Window(${entity}), but it does not have attached signals`);
                 }
             }
         }
+
+        this.requested.clear();
+
+        if (ignore_reset) return;
 
         let reset = false;
 
@@ -439,9 +441,8 @@ export class Forest extends Ecs.World {
     /** Records window movements which have been queued. */
     private record(entity: Entity, parent: Entity, rect: Rectangle) {
         Log.debug(`Window(${entity}) shall be moved to [${rect.fmt()}]`);
-        this.requested.push({
+        this.requested.set(entity, {
             parent: parent,
-            entity: entity,
             rect: rect,
         });
     }
@@ -519,7 +520,7 @@ export class Forest extends Ecs.World {
         parent.set_ratio(
             is_left
                 ? child.area.array[parent_measure]
-                : (parent.area.array[parent_measure] - child.area.array[parent_measure])
+                : (parent.area.array[parent_measure] - child.area.array[parent_measure]),
         );
     }
 
