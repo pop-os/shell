@@ -137,6 +137,7 @@ export class Fork {
 
             this.area = this.set_area(area.clone());
         } else if (this.orientation_changed) {
+            this.orientation_changed = false;
             ratio = this.length_left / (this.is_horizontal() ? this.area.height : this.area.width);
         }
 
