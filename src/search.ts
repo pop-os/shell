@@ -110,14 +110,13 @@ export class Search {
         this.list = new St.BoxLayout({
             styleClass: "pop-shell-search-list",
             vertical: true,
-            margin_top: 12
         });
 
         this.dialog.contentLayout.add_child(this.entry);
         this.dialog.contentLayout.add_child(this.list);
 
-        // Ensure that the width is at least 480 pixels wide.
-        this.dialog.contentLayout.width = Math.max(Lib.current_monitor().width / 4, 480);
+        // Ensure that the width is at least 640 pixels wide.
+        this.dialog.contentLayout.width = Math.max(Lib.current_monitor().width / 4, 640);
     }
 
     clear() {

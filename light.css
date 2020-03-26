@@ -2,16 +2,21 @@
     background: rgba(244,171,56,1);
 }
 
+.pop-shell-separator {
+    background: #aaa;
+}
+
+.pop-shell-search-active {
+    background: #f4ab38;
+    color: #000;
+}
+
 .pop-shell-search-label {
-    margin-left: 2em;
+    margin-left: 1em;
 }
 
 .pop-shell-search-cat {
-    margin-right: .5em;
-}
-
-.pop-shell-search-list {
-    margin-top: 1em;
+    margin-right: 1em;
 }
 
 .pop-shell-search-element {
@@ -21,12 +26,5 @@
 }
 
 .pop-shell-separator {
-    background: #aaa;
     padding-bottom: .1em;
 }
-
-.pop-shell-search-active {
-    background: #f4ab38;
-    color: #000;
-}
-

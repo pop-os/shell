@@ -782,14 +782,14 @@ let loaded_theme: any | null = null;
 function load_theme(stylesheet: string) {
     try {
         Log.info(`loading theme`)
-        let application = Gio.File.new_for_path(Me.path + "/" + stylesheet + ".css");
+        const file = Gio.File.new_for_path(Me.path + "/" + stylesheet + ".css");
 
         Log.info(`setting theme`);
 
-        let theme = THEME_CONTEXT.get_theme();
+        const theme = THEME_CONTEXT.get_theme();
         if (loaded_theme) theme.unload_stylesheet(loaded_theme);
-        theme.load_stylesheet(application);
-        loaded_theme = application;
+        theme.load_stylesheet(file);
+        loaded_theme = file;
 
         Log.info(`theme set`);
     } catch (e) {
