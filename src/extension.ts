@@ -38,76 +38,109 @@ enum Style {
 }
 
 export class Ext extends Ecs.World {
-    private init: boolean = true;
+    /** Mechanism for managing keybindings */
+    keybindings: Keybindings.Keybindings = new Keybindings.Keybindings(this);
 
+    /** Manage interactions with GSettings */
+    settings: Settings.ExtensionSettings = new Settings.ExtensionSettings();
+
+    // Widgets
+
+
+    /** Displays a border hint around active windows */
+    active_hint: active_hint.ActiveHint | null = null;
+
+    /** An overlay which shows a preview of where a window will be moved */
+    overlay: Clutter.Actor = new St.BoxLayout({ style_class: "tile-preview", visible: false });
+
+    /** The application launcher, focus search, and calculator dialog */
+    window_search: Launcher = new launcher.Launcher(this);
+
+
+    // State
+
+
+    /** Column sizes in snap-to-grid */
     column_size: number = 128;
+
+    /** Row size in snap-to-grid */
     row_size: number = 128;
 
+    /** The current scaling factor in GNOME Shell */
     dpi: number = THEME_CONTEXT.scale_factor;
 
-    gap_inner_half: number = 0;
+    /** The number of pixels between windows */
     gap_inner: number = 0;
-    gap_outer_half: number = 0;
+
+    /** Exactly half of the value of the inner gap */
+    gap_inner_half: number = 0;
+
+    /** The number of pixels around a display's work area */
     gap_outer: number = 0;
 
-    switch_workspace_on_move: boolean = true;
-
-    active_hint: active_hint.ActiveHint | null = null;
-    overlay: Clutter.Actor;
-
-    keybindings: Keybindings.Keybindings;
-    settings: Settings.ExtensionSettings;
-    focus_selector: Focus.FocusSelector;
-
+    /** Information about a current possible grab operation */
     grab_op: GrabOp.GrabOp | null = null;
-    prev_focused: Entity | null = null;
+
+    /** The last window that was focused */
     last_focused: Entity | null = null;
 
-    tiler: Tiling.Tiler;
-    window_search: Launcher;
+    /** The window that was focused before the last window */
+    prev_focused: Entity | null = null;
 
-    icons: Ecs.Storage<any>;
-    ids: Ecs.Storage<number>;
-    monitors: Ecs.Storage<[number, number]>;
-    names: Ecs.Storage<string>;
-    snapped: Ecs.Storage<boolean>;
-    tilable: Ecs.Storage<boolean>;
-    windows: Ecs.Storage<Window.ShellWindow>;
+    /** Track if workspaces should switch on window movements */
+    switch_workspace_on_move: boolean = true;
+
+    /** Initially set to true when the extension is initializing */
+    private init: boolean = true;
+
+    /** Record of misc. global objects and their attached signals */
+    private signals: Map<GObject.Object, Array<SignalID>> = new Map();
+
+
+    // Entity-component associations
+
+
+    /** Store for generated icons from applications */
+    icons: Ecs.Storage<any> = this.register_storage();
+
+    /** Store for stable sequences of each registered window */
+    ids: Ecs.Storage<number> = this.register_storage();
+
+    /** Store for keeping track of which monitor + workspace a window is on */
+    monitors: Ecs.Storage<[number, number]> = this.register_storage();
+
+    /** Store for names associated with windows */
+    names: Ecs.Storage<string> = this.register_storage();
+
+    /** Store for size-changed signals attached to each window */
     size_signals: Ecs.Storage<[SignalID, SignalID]> = this.register_storage();
 
+    /** Set to true if a window is snapped to the grid */
+    snapped: Ecs.Storage<boolean> = this.register_storage();
+
+    /** Set the true if the window is tilable */
+    tilable: Ecs.Storage<boolean> = this.register_storage();
+
+    /** Primary storage for the window entities, containing the actual window */
+    windows: Ecs.Storage<Window.ShellWindow> = this.register_storage();
+
+
+    // Systems
+
+
+    /** Manages automatic tiling behaviors in the shell */
     auto_tiler: auto_tiler.AutoTiler | null = null;
 
-    signals: Map<GObject.Object, Array<SignalID>> = new Map();
+    /** Performs focus selections */
+    focus_selector: Focus.FocusSelector = new Focus.FocusSelector();
+
+    /** Calculates window placements when tiling and focus-switching */
+    tiler: Tiling.Tiler = new Tiling.Tiler(this);
 
     constructor() {
         super();
 
-        // Misc
-
-        this.keybindings = new Keybindings.Keybindings(this);
-        this.overlay = new St.BoxLayout({ style_class: "tile-preview", visible: false });
-        this.settings = new Settings.ExtensionSettings();
-
         this.load_settings();
-
-        // Storages
-
-        this.icons = this.register_storage();
-        this.ids = this.register_storage();
-        this.monitors = this.register_storage();
-        this.names = this.register_storage();
-        this.tilable = this.register_storage();
-        this.windows = this.register_storage();
-        this.snapped = this.register_storage();
-
-        // Dialogs
-
-        this.window_search = new launcher.Launcher(this);
-
-        // Systems
-
-        this.focus_selector = new Focus.FocusSelector();
-        this.tiler = new Tiling.Tiler(this);
 
         let current_style = this.settings.is_dark() ? Style.Dark : Style.Light;
         this.load_theme(current_style);
@@ -454,7 +487,6 @@ export class Ext extends Ecs.World {
 
     set_gap_outer(gap: number) {
         this.gap_outer = gap * 4 * this.dpi;
-        this.gap_outer_half = this.gap_outer / 2;
     }
 
     set_overlay(rect: Rectangle) {
