@@ -74,7 +74,7 @@ declare namespace Clutter {
         x_align: ActorAlign;
         y_align: ActorAlign;
 
-        add_child(child: Actor): void;
+        add(child: Actor): void;
         destroy(): void;
         hide(): void;
         get_child_at_index(nth: number): Clutter.Actor | null;

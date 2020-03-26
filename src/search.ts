@@ -112,8 +112,8 @@ export class Search {
             vertical: true,
         });
 
-        this.dialog.contentLayout.add_child(this.entry);
-        this.dialog.contentLayout.add_child(this.list);
+        this.dialog.contentLayout.add(this.entry);
+        this.dialog.contentLayout.add(this.list);
 
         // Ensure that the width is at least 640 pixels wide.
         this.dialog.contentLayout.width = Math.max(Lib.current_monitor().width / 4, 640);
@@ -173,9 +173,9 @@ export class Search {
                     .container;
 
                 this.widgets.push(container);
-                this.list.add_child(container);
+                this.list.add(container);
             },
-            () => this.list.add_child(Lib.separator())
+            () => this.list.add(Lib.separator())
         );
 
         this.list.show();
