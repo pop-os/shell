@@ -32,6 +32,11 @@ const GLib: GLib = imports.gi.GLib;
 
 const THEME_CONTEXT = St.ThemeContext.get_for_stage(global.stage);
 
+enum Style {
+    Light,
+    Dark
+}
+
 export class Ext extends Ecs.World {
     private init: boolean = true;
 
@@ -103,6 +108,20 @@ export class Ext extends Ecs.World {
 
         this.focus_selector = new Focus.FocusSelector();
         this.tiler = new Tiling.Tiler(this);
+
+        let current_style = this.settings.is_dark() ? Style.Dark : Style.Light;
+        this.load_theme(current_style);
+        this.settings.int.connect('changed::gtk-theme', () => {
+            if (this.settings.is_dark()) {
+                if (current_style === Style.Light) {
+                    current_style = Style.Dark;
+                    this.load_theme(current_style);
+                }
+            } else if (current_style === Style.Dark) {
+                current_style = Style.Light;
+                this.load_theme(current_style);
+            }
+        });
     }
 
     activate_window(window: Window.ShellWindow | null) {
@@ -205,6 +224,10 @@ export class Ext extends Ecs.World {
         if (this.settings.active_hint() && !this.active_hint) {
             this.active_hint = new active_hint.ActiveHint(this.dpi);
         }
+    }
+
+    load_theme(style: Style) {
+        load_theme(style === Style.Dark ? 'dark' : 'light');
     }
 
     monitor_work_area(monitor: number): Rectangle {
@@ -710,8 +733,6 @@ function enable() {
             if (ext?.auto_tiler) ext.snap_windows();
             return false;
         });
-
-        load_theme();
     }
 
     ext.signals_attach();
@@ -742,14 +763,20 @@ function disable() {
     }
 }
 
+let loaded_theme: any | null = null;
+
 // Supplements the GNOME Shell theme with the extension's theme.
-function load_theme() {
+function load_theme(stylesheet: string) {
     try {
         Log.info(`loading theme`)
-        let application = Gio.File.new_for_path(Me.path + "/stylesheet.css");
+        let application = Gio.File.new_for_path(Me.path + "/" + stylesheet + ".css");
 
         Log.info(`setting theme`);
-        THEME_CONTEXT.get_theme().load_stylesheet(application);
+
+        let theme = THEME_CONTEXT.get_theme();
+        if (loaded_theme) theme.unload_stylesheet(loaded_theme);
+        theme.load_stylesheet(application);
+        loaded_theme = application;
 
         Log.info(`theme set`);
     } catch (e) {

@@ -12,7 +12,7 @@ $(info UUID is "$(UUID)")
 
 .PHONY: all clean install zip-file
 
-sources = src/*.ts stylesheet.css
+sources = src/*.ts *.css
 
 all: depcheck compile
 
@@ -25,7 +25,7 @@ transpile: $(sources)
 compile: convert metadata.json schemas
 	rm -rf _build
 	mkdir -p _build
-	cp -r metadata.json icons schemas target/*.js imports/*.js stylesheet.css _build
+	cp -r metadata.json icons schemas target/*.js imports/*.js *.css _build
 
 convert: transpile
 	for file in target/*.js; do \
