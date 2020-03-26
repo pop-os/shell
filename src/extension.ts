@@ -37,6 +37,19 @@ enum Style {
     Dark
 }
 
+interface Display {
+    area: Rectangle;
+    ws: Rectangle;
+}
+
+function display_fmt(display: Display): string {
+    return `Display { area: ${display.area.fmt()}, ws: ${display.ws.fmt()} }`;
+}
+
+interface Monitor extends Rectangular {
+    index: number;
+}
+
 export class Ext extends Ecs.World {
     /** Mechanism for managing keybindings */
     keybindings: Keybindings.Keybindings = new Keybindings.Keybindings(this);
@@ -65,6 +78,9 @@ export class Ext extends Ecs.World {
 
     /** Row size in snap-to-grid */
     row_size: number = 128;
+
+    /** The known display configuration, for tracking monitor removals and changes */
+    displays: Map<number, Display> = new Map();
 
     /** The current scaling factor in GNOME Shell */
     dpi: number = THEME_CONTEXT.scale_factor;
@@ -119,7 +135,7 @@ export class Ext extends Ecs.World {
     names: Ecs.Storage<string> = this.register_storage();
 
     /** Store for size-changed signals attached to each window */
-    size_signals: Ecs.Storage<[SignalID, SignalID]> = this.register_storage();
+    size_signals: Ecs.Storage<[SignalID, SignalID, SignalID]> = this.register_storage();
 
     /** Set to true if a window is snapped to the grid */
     snapped: Ecs.Storage<boolean> = this.register_storage();
@@ -130,9 +146,7 @@ export class Ext extends Ecs.World {
     /** Primary storage for the window entities, containing the actual window */
     windows: Ecs.Storage<Window.ShellWindow> = this.register_storage();
 
-
     // Systems
-
 
     /** Manages automatic tiling behaviors in the shell */
     auto_tiler: auto_tiler.AutoTiler | null = null;
@@ -201,8 +215,6 @@ export class Ext extends Ecs.World {
     }
 
     connect_window(win: Window.ShellWindow) {
-        this.connect_meta(win, 'workspace-changed', () => this.on_workspace_changed(win));
-
         this.size_signals.insert(win.entity, [
             this.connect_meta(win, 'size-changed', () => {
                 if (this.auto_tiler && !win.is_maximized()) {
@@ -215,7 +227,8 @@ export class Ext extends Ecs.World {
                     Log.debug(`position changed: ${win.name(this)}`);
                     this.auto_tiler.reflow(this, win.entity);
                 }
-            })
+            }),
+            this.connect_meta(win, 'workspace-changed', () => this.on_workspace_changed(win)),
         ]);
 
         this.connect_meta(win, 'notify::minimized', () => {
@@ -241,6 +254,19 @@ export class Ext extends Ecs.World {
     exit_modes() {
         this.tiler.exit(this);
         this.window_search.close();
+    }
+
+    find_monitor_to_retach(width: number, height: number): [number, Display] {
+        if (!this.settings.workspaces_only_on_primary()) {
+            for (const [index, display] of this.displays) {
+                if (display.area.width == width && display.area.height == height) {
+                    return [index, display];
+                }
+            }
+        }
+
+        const primary: number = global.display.get_primary_monitor();
+        return [primary, this.displays.get(primary) as Display];
     }
 
     focus_window(): Window.ShellWindow | null {
@@ -423,11 +449,7 @@ export class Ext extends Ecs.World {
             return;
         }
 
-        const signals = this.size_signals.get(win.entity);
-        if (signals) {
-            utils.unblock_signal(meta, signals[0]);
-            utils.unblock_signal(meta, signals[1]);
-        }
+        this.size_signals_unblock(win);
 
         if (win.is_maximized()) {
             return;
@@ -487,19 +509,14 @@ export class Ext extends Ecs.World {
 
     /** Triggered when a grab operation has been started */
     on_grab_start(meta: Meta.Window) {
-        Log.info(`grab start`);
         let win = this.get_window(meta);
         if (win && win.is_tilable(this)) {
             let entity = win.entity;
-            Log.debug(`grabbed Window(${entity}): ${this.names.get(entity)}`);
+            Log.debug(`Start grab of Window(${entity}): ${this.names.get(entity)}`);
             let rect = win.rect();
             this.grab_op = new GrabOp.GrabOp(entity, rect);
 
-            const signals = this.size_signals.get(win.entity);
-            if (signals) {
-                utils.block_signal(meta, signals[0]);
-                utils.block_signal(meta, signals[1]);
-            }
+            this.size_signals_block(win);
         }
     }
 
@@ -536,6 +553,11 @@ export class Ext extends Ecs.World {
         }
     }
 
+    /** Handles display configuration changes */
+    on_display_change() {
+        this.update_display_configuration();
+    }
+
     /** Handle window creation events */
     on_window_create(window: Meta.Window) {
         GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
@@ -559,17 +581,15 @@ export class Ext extends Ecs.World {
 
     /** Handle workspace change events */
     on_workspace_changed(win: Window.ShellWindow) {
-        if (!this.grab_op) {
-            Log.debug(`workspace changed for ${win.name(this)}`);
-            if (this.auto_tiler) {
-                const id = this.workspace_id(win);
-                const prev_id = this.monitors.get(win.entity);
-                if (!prev_id || id[0] != prev_id[0] || id[1] != prev_id[1]) {
-                    Log.debug(`workspace changed from (${prev_id}) to (${id})`);
-                    this.monitors.insert(win.entity, id);
-                    this.auto_tiler.detach_window(this, win.entity);
-                    this.auto_tiler.attach_to_workspace(this, win, id);
-                }
+        Log.debug(`workspace changed for ${win.name(this)}`);
+        if (this.auto_tiler) {
+            const id = this.workspace_id(win);
+            const prev_id = this.monitors.get(win.entity);
+            if (!prev_id || id[0] != prev_id[0] || id[1] != prev_id[1]) {
+                Log.debug(`workspace changed from (${prev_id}) to (${id})`);
+                this.monitors.insert(win.entity, id);
+                this.auto_tiler.detach_window(this, win.entity);
+                this.auto_tiler.attach_to_workspace(this, win, id);
             }
         }
     }
@@ -612,6 +632,9 @@ export class Ext extends Ecs.World {
                     break;
             }
         });
+        this.connect(this.settings.mutter, 'changed::workspaces-only-on-primary', () => this.on_display_change());
+
+        this.connect(layoutManager, 'monitors-changed', () => this.on_display_change());
 
         this.connect(sessionMode, 'updated', () => {
             if ('user' != global.sessionMode.currentMode) {
@@ -621,11 +644,20 @@ export class Ext extends Ecs.World {
         });
 
         this.connect(overview, 'showing', () => {
+            Log.info(`showing overview`);
             if (this.active_hint) {
                 this.active_hint.hide();
             }
 
             this.exit_modes();
+
+            if (this.grab_op) {
+                Log.info(`unsetting grab operation due to overview entrance`);
+                let window = this.windows.get(this.grab_op.entity);
+                if (window) this.size_signals_unblock(window);
+                this.grab_op = null;
+            }
+
             return true;
         });
 
@@ -640,6 +672,8 @@ export class Ext extends Ecs.World {
 
         // We have to connect this signal in an idle_add; otherwise work areas stop being calculated
         GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
+            this.update_display_configuration();
+
             this.connect(global.display, 'notify::focus-window', () => {
                 const window = this.focus_window();
                 if (window) {
@@ -755,6 +789,20 @@ export class Ext extends Ecs.World {
         this.signals.clear();
     }
 
+    size_signals_block(win: Window.ShellWindow) {
+        this.size_signals.with(win.entity, (signals) => {
+            Log.debug(`Blocking signals of Window(${win.entity})`);
+            for (const signal of signals) utils.block_signal(win.meta, signal);
+        });
+    }
+
+    size_signals_unblock(win: Window.ShellWindow) {
+        this.size_signals.with(win.entity, (signals) => {
+            Log.debug(`Unblocking signals of Window(${win.entity})`);
+            for (const signal of signals) utils.unblock_signal(win.meta, signal);
+        });
+    }
+
     // Snaps all windows to the window grid
     snap_windows() {
         for (const window of this.windows.values()) {
@@ -765,11 +813,6 @@ export class Ext extends Ecs.World {
     /** Switch to a workspace by its index */
     switch_to_workspace(id: number) {
         this.workspace_by_id(id)?.activate(global.get_current_time());
-    }
-
-    /** Fetch a workspace by its index */
-    workspace_by_id(id: number): Meta.Workspace | null {
-        return global.display.get_workspace_manager().get_workspace_by_index(id);
     }
 
     tab_list(tablist: number, workspace: number | null): Array<Window.ShellWindow> {
@@ -784,6 +827,101 @@ export class Ext extends Ecs.World {
                 yield entity;
             }
         }
+    }
+
+    on_display_move(_from_id: number, _to_id: number) {
+        if (!this.auto_tiler) return;
+
+
+    }
+
+    on_display_remove(id: number, display: Display) {
+        if (!this.auto_tiler) return;
+
+        Log.info(`Display(${id}) removed`);
+
+        let forest = this.auto_tiler.forest;
+
+        for (const [entity, [mon_id,]] of forest.toplevel.values()) {
+            Log.info(`Found TopLevel(${entity}, ${mon_id})`);
+            if (mon_id === id) {
+                let fork = forest.forks.get(entity);
+                if (!fork) continue;
+
+                Log.info(`finding new workspace`);
+                const [new_work_id] = find_unused_workspace();
+                Log.info('finding monitor to retach');
+                const [new_mon_id, new_mon] = this.find_monitor_to_retach(display.area.width, display.area.height);
+
+                fork.workspace = new_work_id;
+
+                let blocked = new Array();
+
+                for (const child of forest.iter(entity, node.NodeKind.FORK)) {
+                    if (child.kind === node.NodeKind.FORK) {
+                        const cfork = forest.forks.get(child.entity);
+                        if (!cfork) continue;
+                        cfork.workspace = new_work_id;
+                    } else {
+                        let window = this.windows.get(child.entity);
+                        if (window) {
+                            this.size_signals_block(window);
+                            blocked.push(window);
+                        }
+                    }
+                }
+
+                fork.migrate(this, forest, new_mon.ws, new_mon_id, new_work_id);
+
+                for (const window of blocked) {
+                    this.size_signals_unblock(window);
+                }
+            }
+        }
+    }
+
+    update_display_configuration() {
+        Log.info('Updating display configuration');
+        let moved = new Array();
+        let updated = new Map();
+
+        for (const monitor of layoutManager.monitors) {
+            const mon = monitor as Monitor;
+
+            const area = new Rect.Rectangle([mon.x, mon.y, mon.width, mon.height]);
+            const ws = this.monitor_work_area(mon.index);
+
+            for (const [id, display] of this.displays) {
+                if (display.area.eq(area) && display.ws.eq(ws)) {
+                    if (id !== mon.index) {
+                        this.displays.set(mon.index, { area, ws });
+                        moved.push([id, mon.index]);
+                    } else {
+                        updated.set(id, display);
+                    }
+
+                    this.displays.delete(id);
+                }
+            }
+
+            updated.set(mon.index, { area, ws });
+        }
+
+        for (const [id, display] of this.displays) {
+            this.on_display_remove(id, display);
+        }
+
+        this.displays = updated;
+
+        for (const [from_id, to_id] of moved) {
+            this.on_display_move(from_id, to_id);
+        }
+
+        for (const [id, display] of this.displays) {
+            Log.info(`Display(${id}): ${display_fmt(display)}`);
+        }
+
+        Log.info(`Updated display configuration`);
     }
 
     update_snapped() {
@@ -862,6 +1000,11 @@ export class Ext extends Ecs.World {
         return [cursor, monitor];
     }
 
+    /** Fetch a workspace by its index */
+    workspace_by_id(id: number): Meta.Workspace | null {
+        return global.display.get_workspace_manager().get_workspace_by_index(id);
+    }
+
     workspace_id(window: Window.ShellWindow | null = null): [number, number] {
         Log.debug(`fetching workspace ID`);
 
@@ -926,6 +1069,30 @@ function disable() {
         ext.keybindings.disable(ext.keybindings.global)
             .disable(ext.keybindings.window_focus)
     }
+}
+
+function find_unused_workspace(): [number, any] {
+    let new_work = null;
+
+    let id = 0;
+    let ws = global.workspace_manager.get_workspace_by_index(id);
+
+    while (ws !== null) {
+        if (ws.n_windows === 0) {
+            new_work = ws;
+            break
+        }
+
+        id += 1;
+        ws = global.workspace_manager.get_workspace_by_index(id);
+    }
+
+    if (new_work === null) {
+        new_work = global.workspace_manager.append_new_workspace(true, global.get_current_time());
+        id = new_work.index();
+    }
+
+    return [id, new_work];
 }
 
 let loaded_theme: any | null = null;

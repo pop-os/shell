@@ -8,6 +8,8 @@ import type { Rectangle } from 'rectangle';
 import type { Node } from 'node';
 
 import * as Lib from 'lib';
+import * as log from 'log';
+import * as node from 'node';
 import * as Rect from 'rectangle';
 
 const XPOS = 0;
@@ -69,9 +71,17 @@ export class Fork {
         return new Rect.Rectangle(area);
     }
 
+    depth(): number {
+        return this.is_horizontal() ? this.area.height : this.area.width;
+    }
+
     /** If this fork has a horizontal orientation */
     is_horizontal(): boolean {
         return Lib.Orientation.HORIZONTAL == this.orientation;
+    }
+
+    length(): number {
+        return this.is_horizontal() ? this.area.width : this.area.height;
     }
 
     /** Replaces the association of a window in a fork with another */
@@ -130,19 +140,19 @@ export class Fork {
         if (!this.is_toplevel) {
             if (this.orientation_changed) {
                 this.orientation_changed = false;
-                ratio = this.length_left / (this.is_horizontal() ? this.area.height : this.area.width);
+                ratio = this.length_left / this.depth();
             } else {
-                ratio = this.length_left / (this.is_horizontal() ? this.area.width : this.area.height);
+                ratio = this.length_left / this.length();
             }
 
             this.area = this.set_area(area.clone());
         } else if (this.orientation_changed) {
             this.orientation_changed = false;
-            ratio = this.length_left / (this.is_horizontal() ? this.area.height : this.area.width);
+            ratio = this.length_left / this.depth();
         }
 
         if (ratio) {
-            this.length_left = Math.round(ratio * (this.is_horizontal() ? this.area.width : this.area.height));
+            this.length_left = Math.round(ratio * this.length());
         }
 
         if (this.right) {
@@ -172,6 +182,29 @@ export class Fork {
         } else {
             this.left.measure(tiler, ext, this.entity, this.area, record)
         }
+    }
+
+    migrate(ext: Ext, forest: Forest, area: Rectangle, monitor: number, workspace: number) {
+        log.info(`Migrating Fork(${this.entity})`);
+        if (this.is_toplevel) {
+            forest.toplevel.set(forest.string_reps.get(this.entity) as string, [this.entity, [monitor, workspace]]);
+
+            if (this.workspace !== workspace) {
+                this.workspace = workspace;
+                for (const child_node of forest.iter(this.entity, node.NodeKind.FORK)) {
+                    let child = forest.forks.get(child_node.entity);
+                    if (child) child.workspace = workspace;
+                }
+            }
+
+            this.set_area(area.clone());
+            this.measure(forest, ext, area, forest.on_record());
+            forest.arrange(ext, workspace, true);
+        } else {
+            // TODO: Seperate into new tree?
+        }
+
+        log.info(`Migrated Fork(${this.entity})`);
     }
 
     rebalance_orientation() {

@@ -55,7 +55,7 @@ export class Forest extends Ecs.World {
     parents: Ecs.Storage<Entity> = this.register_storage();
 
     /** Needed when we're storing the entities in a map, because JS limitations. */
-    private string_reps: Ecs.Storage<string> = this.register_storage();
+    string_reps: Ecs.Storage<string> = this.register_storage();
 
     /** The callback to execute when a window has been attached to a fork. */
     private on_attach: (parent: Entity, child: Entity) => void = () => { };
@@ -377,7 +377,7 @@ export class Forest extends Ecs.World {
     }
 
     /** Walks the tree starting at a given fork entity, and filtering by node kind. */
-    * iter(entity: Entity, kind: Node.NodeKind): IterableIterator<Node.Node> {
+    * iter(entity: Entity, kind: Node.NodeKind | null = null): IterableIterator<Node.Node> {
         let fork = this.forks.get(entity);
         let forks = new Array(2);
 
@@ -434,7 +434,7 @@ export class Forest extends Ecs.World {
     }
 
     /** Higher order function which forwards record events to our record method. */
-    private on_record(): (entity: Entity, parent: Entity, rect: Rectangle) => void {
+    on_record(): (entity: Entity, parent: Entity, rect: Rectangle) => void {
         return (e, p, a) => this.record(e, p, a);
     }
 
@@ -704,7 +704,7 @@ export class Forest extends Ecs.World {
 }
 
 
-function move_window(window: ShellWindow, rect: Rectangular, signals: [SignalID, SignalID]) {
+function move_window(window: ShellWindow, rect: Rectangular, signals: [SignalID, SignalID, SignalID]) {
     if (!(window.meta instanceof Meta.Window)) {
         Log.error(`attempting to a window entity in a tree which lacks a Meta.Window`);
         return;
@@ -717,9 +717,7 @@ function move_window(window: ShellWindow, rect: Rectangular, signals: [SignalID,
         return;
     }
 
-    utils.block_signal(window.meta, signals[0]);
-    utils.block_signal(window.meta, signals[1]);
+    for (const sig of signals) utils.block_signal(window.meta, sig);
     window.move(rect);
-    utils.unblock_signal(window.meta, signals[0]);
-    utils.unblock_signal(window.meta, signals[1]);
+    for (const sig of signals) utils.unblock_signal(window.meta, sig);
 }

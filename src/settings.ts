@@ -46,6 +46,9 @@ const TILE_BY_DEFAULT = 'tile-by-default';
 export class ExtensionSettings {
     ext: Settings = settings_new_schema(extension.metadata['settings-schema']);
     int: Settings = settings_new_id('org.gnome.desktop.interface');
+    mutter: Settings = settings_new_id('org.gnome.mutter');
+
+    // Getters
 
     active_hint(): boolean {
         return this.ext.get_boolean(ACTIVE_HINT);
@@ -82,6 +85,12 @@ export class ExtensionSettings {
     tile_by_default(): boolean {
         return this.ext.get_boolean(TILE_BY_DEFAULT);
     }
+
+    workspaces_only_on_primary(): boolean {
+        return this.mutter.get_boolean('workspaces-only-on-primary');
+    }
+
+    // Setters
 
     set_active_hint(set: boolean) {
         this.ext.set_boolean(ACTIVE_HINT, set);
