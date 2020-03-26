@@ -15,11 +15,12 @@ interface WindowDetails {
     parent: Clutter.Actor;
     source1: number;
     source2: number;
-    source3: number;
 }
 
 export class ActiveHint {
     dpi: number;
+    in_overview: boolean = false;
+    was_shown: boolean = false;
 
     private border: [Clutter.Actor, Clutter.Actor, Clutter.Actor, Clutter.Actor] = [
         new St.BoxLayout({
@@ -44,14 +45,6 @@ export class ActiveHint {
         })
     ];
 
-    private clones: [Clutter.Actor, Clutter.Actor, Clutter.Actor, Clutter.Actor] = [
-        this.border[0].ref(),
-        this.border[1].ref(),
-        this.border[2].ref(),
-        this.border[3].ref()
-    ];
-
-    private reparenting: number | null = null;
     private tracking: number | null = null;
 
     private window: WindowDetails | null = null;
@@ -60,7 +53,13 @@ export class ActiveHint {
         this.dpi = dpi;
 
         for (const box of this.border) {
-            main.layoutManager.trackChrome(box, { affectsInputRegion: false });
+            main.layoutManager.addChrome(box);
+        }
+    }
+
+    hide() {
+        for (const box of this.border) {
+            box.hide();
         }
     }
 
@@ -68,35 +67,36 @@ export class ActiveHint {
         return this.window ? Ecs.entity_eq(entity, this.window.entity) : false;
     }
 
-    reparent() {
-        if (this.window) {
-            const actor = this.window.meta.get_compositor_private();
-            if (!actor) return;
+    overview_hide() {
+        this.in_overview = true;
+        if (this.border[0].is_visible()) {
+            this.was_shown = true;
+            this.hide();
+            return
+        }
 
-            const parent = actor.get_parent();
-            if (!parent) return;
+        this.was_shown = false;
+    }
 
-            this.clones.forEach((box, id) => {
-                this.border[id].hide();
-                (this.window as WindowDetails).parent.remove_child(box);
-                this.clones[id] = this.border[id].ref();
-                parent.add_child(this.border[id]);
-            });
+    overview_show() {
+        this.in_overview = false;
+        if (!this.was_shown) return;
+        this.was_shown = false;
+        this.show();
+    }
 
+    position_changed(window: ShellWindow): void {
+        if (window.is_maximized()) {
+            this.hide();
+        } else {
+            this.show();
+            this.update_overlay();
+        }
+    }
 
-            this.reparenting = GLib.idle_add(GLib.PRIORITY_LOW, () => {
-                this.reparenting = null;
-
-                this.border.forEach((box) => {
-                    parent.set_child_below_sibling(box, actor);
-                    (parent as any).set_child_above_sibling(actor, null);
-                    box.show();
-                });
-
-                return false;
-            });
-
-            this.window.parent = parent;
+    show() {
+        for (const box of this.border) {
+            box.show();
         }
     }
 
@@ -121,32 +121,20 @@ export class ActiveHint {
                 entity: window.entity,
                 meta: window.meta,
                 parent: parent,
-                source1: window.meta.connect('size-changed', () => {
-                    this.update_overlay();
-                    return true;
-                }),
-                source2: window.meta.connect('position-changed', () => {
-                    this.update_overlay();
-                    return true;
-                }),
-                source3: actor.connect('parent-set', () => {
-                    this.reparent();
-                    return true;
-                })
+                source1: window.meta.connect('size-changed', () => this.position_changed(window)),
+                source2: window.meta.connect('position-changed', () => this.position_changed(window)),
             };
 
             this.tracking = GLib.idle_add(GLib.PRIORITY_LOW, () => {
                 this.tracking = null;
                 this.update_overlay();
 
-                this.border.forEach((box) => {
-                    parent.add_child(box);
-                    parent.set_child_below_sibling(box, actor);
-                    (parent as any).set_child_above_sibling(actor, null);
+                this.show();
 
-                    box.show();
-                    box.visible = true;
-                });
+                if (this.in_overview) {
+                    this.hide();
+                    this.was_shown = true;
+                }
 
                 return false;
             });
@@ -166,13 +154,7 @@ export class ActiveHint {
             if (actor) {
                 this.window.meta.disconnect(this.window.source1);
                 this.window.meta.disconnect(this.window.source2);
-                actor.disconnect(this.window.source3);
             }
-
-            this.border.forEach((box) => {
-                let clone = box;
-                (this.window as WindowDetails).parent.remove_child(clone);
-            });
 
             this.window = null;
         }
@@ -212,16 +194,11 @@ export class ActiveHint {
         this.untrack();
 
         this.border.forEach((box) => {
-            main.layoutManager.untrack(box);
+            main.layoutManager.removeChrome(box);
         });
     }
 
     disconnect_signals() {
-        if (this.reparenting) {
-            GLib.source_remove(this.reparenting);
-            this.reparenting = null;
-        }
-
         if (this.tracking) {
             GLib.source_remove(this.tracking);
             this.tracking = null;

@@ -80,6 +80,7 @@ declare namespace Clutter {
         get_child_at_index(nth: number): Clutter.Actor | null;
         get_n_children(): number;
         get_parent(): Clutter.Actor | null;
+        is_visible(): boolean;
         remove_all_children(): void;
         remove_child(child: Actor): void;
         set_child_below_sibling(child: Actor, sibling: Actor | null): void;

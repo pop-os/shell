@@ -470,8 +470,15 @@ export class Ext extends Ecs.World {
         });
 
         this.connect(overview, 'showing', () => {
+            this.active_hint?.overview_hide();
             this.exit_modes();
             return true;
+        });
+
+        this.connect(overview, 'hiding', () => {
+            if (this.active_hint?.was_shown) {
+                this.active_hint.overview_show();
+            }
         });
 
         // We have to connect this signal in an idle_add; otherwise work areas stop being calculated
