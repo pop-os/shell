@@ -7,7 +7,6 @@ import type { ShellWindow } from "./window";
 import * as Ecs from 'ecs';
 
 const { GLib, St } = imports.gi;
-const { main } = imports.ui;
 
 interface WindowDetails {
     entity: Entity;
@@ -53,13 +52,16 @@ export class ActiveHint {
         this.dpi = dpi;
 
         for (const box of this.border) {
-            main.layoutManager.addChrome(box);
+            global.window_group.add_child(box);
+            global.window_group.set_child_above_sibling(box, null);
         }
     }
 
     hide() {
+        global.log(`hiding active hint`);
         for (const box of this.border) {
             box.hide();
+            box.visible = false;
         }
     }
 
@@ -69,13 +71,8 @@ export class ActiveHint {
 
     overview_hide() {
         this.in_overview = true;
-        if (this.border[0].is_visible()) {
-            this.was_shown = true;
-            this.hide();
-            return
-        }
-
-        this.was_shown = false;
+        this.was_shown = true;
+        this.hide();
     }
 
     overview_show() {
@@ -95,7 +92,9 @@ export class ActiveHint {
     }
 
     show() {
+        global.log(`showing active hint`);
         for (const box of this.border) {
+            box.visible = true;
             box.show();
         }
     }
@@ -144,10 +143,7 @@ export class ActiveHint {
     untrack() {
         this.disconnect_signals();
 
-        this.border.forEach((box) => {
-            box.hide();
-            box.visible = false;
-        });
+        this.hide();
 
         if (this.window) {
             const actor = this.window.meta.get_compositor_private();
@@ -193,9 +189,9 @@ export class ActiveHint {
     destroy() {
         this.untrack();
 
-        this.border.forEach((box) => {
-            main.layoutManager.removeChrome(box);
-        });
+        for (const box of this.border) {
+            global.window_group.remove_child(box);
+        }
     }
 
     disconnect_signals() {
