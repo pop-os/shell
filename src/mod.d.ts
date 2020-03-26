@@ -116,7 +116,7 @@ declare namespace Meta {
         get_compositor_private(): Clutter.Actor | null;
         get_description(): string;
         get_frame_rect(): Rectangular;
-        get_maximized(): boolean;
+        get_maximized(): number;
         get_monitor(): number;
         get_pid(): number;
         get_stable_sequence(): number;

@@ -129,7 +129,7 @@ export class ShellWindow {
     }
 
     is_maximized(): boolean {
-        return this.meta.get_maximized() == Meta.MaximizeFlags.BOTH;
+        return this.meta.get_maximized() !== 0;
     }
 
     is_tilable(ext: Ext): boolean {

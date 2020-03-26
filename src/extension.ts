@@ -194,6 +194,9 @@ export class Ext extends Ecs.World {
                 }
             }
         });
+
+        this.connect_meta(win, 'notify::maximized_horizontally', () => this.on_maximize(win));
+        this.connect_meta(win, 'notify::maximized_vertically', () => this.on_maximize(win));
     }
 
     exit_modes() {
@@ -262,11 +265,7 @@ export class Ext extends Ecs.World {
         this.delete_entity(win);
     }
 
-    /**
-     * Triggered when a window has been focused
-     *
-     * @param {ShellWindow} win
-     */
+    /** Triggered when a window has been focused */
     on_focused(win: Window.ShellWindow) {
         this.exit_modes();
         this.prev_focused = this.last_focused;
@@ -289,12 +288,7 @@ export class Ext extends Ecs.World {
         Log.info(msg + '}');
     }
 
-    /**
-     * Triggered when a grab operation has been ended
-     *
-     * @param {Meta.Window} meta
-     * @param {*} op
-     */
+    /** Triggered when a grab operation has been ended */
     on_grab_end(meta: Meta.Window, op: any) {
         let win = this.get_window(meta);
 
@@ -364,12 +358,7 @@ export class Ext extends Ecs.World {
         this.grab_op = null;
     }
 
-    /**
-     * Triggered when a grab operation has been started
-     *
-     * @param {Meta.Window} meta
-     * @param {*} op
-     */
+    /** Triggered when a grab operation has been started */
     on_grab_start(meta: Meta.Window) {
         Log.info(`grab start`);
         let win = this.get_window(meta);
@@ -387,7 +376,22 @@ export class Ext extends Ecs.World {
         }
     }
 
-    /// Handles the event of a window moving from one monitor to another.
+    /** Handle window maximization notifications */
+    on_maximize(win: Window.ShellWindow) {
+        if (win.is_maximized()) {
+            this.on_monitor_changed(win, (cfrom, cto, workspace) => {
+                if (win) {
+                    Log.debug(`window ${win.name(this)} moved from display ${cfrom} to ${cto}`);
+                    this.monitors.insert(win.entity, [cto, workspace]);
+                    this.auto_tiler?.detach_window(this, win.entity);
+                }
+            });
+        } else if (this.auto_tiler && this.auto_tiler.attached.contains(win.entity)) {
+            this.auto_tiler.attach_to_monitor(this, win, this.workspace_id(win));
+        }
+    }
+
+    /** Handles the event of a window moving from one monitor to another. */
     on_monitor_changed(
         win: Window.ShellWindow,
         func: (exp_mon: null | number, act_mon: number, act_work: number) => void
@@ -405,6 +409,7 @@ export class Ext extends Ecs.World {
         }
     }
 
+    /** Handle window creation events */
     on_window_create(window: Meta.Window) {
         GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
             let win = this.get_window(window);
@@ -425,6 +430,7 @@ export class Ext extends Ecs.World {
         });
     }
 
+    /** Handle workspace change events */
     on_workspace_changed(win: Window.ShellWindow) {
         if (!this.grab_op) {
             Log.debug(`workspace changed for ${win.name(this)}`);
