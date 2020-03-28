@@ -1,30 +1,28 @@
 .pop-shell-active-hint {
-    background: rgba(244,171,56,1);
-}
-
-.pop-shell-separator {
-    background: #aaa;
+    background: rgba(255, 173, 0, 1);
 }
 
 .pop-shell-search-active {
-    background: #f4ab38;
-    color: #000;
+    background: rgba(0, 0, 0, .1);
+    border-radius: 5px;
+    color: #black;
 }
 
 .pop-shell-search-label {
-    margin-left: 1em;
+    margin-left: 10px;
 }
 
 .pop-shell-search-cat {
-    margin-right: 1em;
+    margin-right: 15px;
 }
 
 .pop-shell-search-element {
-    padding-left: 1em;
-    padding-top: .1em;
-    padding-bottom: .1em;
+    padding-left: 10px;
+    padding-right: 2px;
+    padding-top: 6px;
+    padding-bottom: 6px;
 }
 
+/* search results separator
 .pop-shell-separator {
-    padding-bottom: .1em;
-}
+}*/
