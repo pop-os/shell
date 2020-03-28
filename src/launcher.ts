@@ -22,8 +22,8 @@ const { OK } = result;
 
 const HOME_DIR: string = GLib.get_home_dir();
 
-const LIST_MAX = 10;
-const ICON_SIZE = 48;
+const LIST_MAX = 8;
+const ICON_SIZE = 34;
 
 /// Search paths for finding applications
 const SEARCH_PATHS: Array<[string, string]> = [
@@ -112,7 +112,7 @@ export class Launcher extends search.Search {
                     data = [
                         generic ? `${generic} (${app.name()}) [${where}]` : `${app.name()} [${where}]`,
                         new St.Icon({
-                            icon_name: 'application-default',
+                            icon_name: 'application-default-symbolic',
                             icon_size: ICON_SIZE / 2,
                             style_class: "pop-shell-search-cat"
                         }),
