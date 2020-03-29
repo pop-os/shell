@@ -160,7 +160,7 @@ export class ActiveHint {
         if (this.window) {
             const rect = this.window.meta.get_frame_rect();
 
-            const width = 4 * this.dpi;
+            const width = 3 * this.dpi;
 
             const [left, top, right, bottom] = this.border;
 
