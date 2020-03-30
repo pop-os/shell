@@ -3,9 +3,10 @@
 }
 
 .pop-shell-search-active {
-    background: rgba(246, 246, 246, .1);
+    background: rgba(241, 241, 241, 0.01);
+    box-shadow: inset 0 0 0 2px #ffdbab;
     border-radius: 5px;
-    color: #white;
+    color: #EDEDED;
 }
 
 .pop-shell-search-label {
