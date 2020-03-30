@@ -75,8 +75,14 @@ export class Ext extends Ecs.World {
     /** Exactly half of the value of the inner gap */
     gap_inner_half: number = 0;
 
+    /** Previously-set value of the inner gap */
+    gap_inner_prev: number = 0;
+
     /** The number of pixels around a display's work area */
     gap_outer: number = 0;
+
+    /** Previously-set value of the outer gap */
+    gap_outer_prev: number = 0;
 
     /** Information about a current possible grab operation */
     grab_op: GrabOp.GrabOp | null = null;
@@ -252,8 +258,11 @@ export class Ext extends Ecs.World {
     }
 
     load_settings() {
-        this.set_gap_inner(this.settings.gap_inner())
+        this.set_gap_inner(this.settings.gap_inner());
         this.set_gap_outer(this.settings.gap_outer());
+        this.gap_inner_prev = this.gap_inner;
+        this.gap_outer_prev = this.gap_outer;
+
         this.column_size = this.settings.column_size();
         this.row_size = this.settings.row_size();
 
@@ -272,6 +281,20 @@ export class Ext extends Ecs.World {
             .get_work_area_for_monitor(monitor);
 
         return Rect.Rectangle.from_meta(meta);
+    }
+
+    on_active_hint() {
+        if (this.settings.active_hint()) {
+            this.active_hint = new active_hint.ActiveHint(this.dpi);
+
+            const focused = this.focus_window();
+            if (focused) {
+                this.active_hint.track(focused);
+            }
+        } else if (this.active_hint) {
+            this.active_hint.destroy();
+            this.active_hint = null;
+        }
     }
 
     on_destroy(win: Entity) {
@@ -312,13 +335,82 @@ export class Ext extends Ecs.World {
             + `  wm_class: "${win.meta.get_wm_class()}",\n`
             + `  monitor: ${win.meta.get_monitor()},\n`
             + `  workspace: ${win.workspace_id()},\n`
-            + `  cmdline: ${win.cmdline()},\n`;
+            + `  cmdline: ${win.cmdline()},\n`
+            + `  xid: ${win.xid()},\n`;
 
         if (this.auto_tiler) {
             msg += `  fork: (${this.auto_tiler.attached.get(win.entity)}),\n`;
         }
 
         Log.info(msg + '}');
+    }
+
+    on_gap_inner() {
+        let current = this.settings.gap_inner();
+        let prev_gap = this.gap_inner_prev / 4 / this.dpi;
+
+        Log.debug(`PREV: ${prev_gap}; Current = ${current}`);
+        if (current != prev_gap) {
+            this.set_gap_inner(current);
+            Log.info(`inner gap changed to ${current}`);
+            if (this.auto_tiler) {
+                this.switch_workspace_on_move = false;
+                for (const [entity,] of this.auto_tiler.forest.toplevel.values()) {
+                    const fork = this.auto_tiler.forest.forks.get(entity);
+                    if (fork) {
+                        this.auto_tiler.tile(this, fork, fork.area);
+                    }
+                }
+                this.switch_workspace_on_move = true;
+            } else {
+                this.update_snapped();
+            }
+
+            Gio.Settings.sync();
+        }
+    }
+
+    on_gap_outer() {
+        let current = this.settings.gap_outer();
+        let prev_gap = this.gap_outer_prev / 4 / this.dpi;
+
+        let diff = current - prev_gap;
+        if (diff != 0) {
+            Log.info(`outer gap changed to ${current}`);
+            this.set_gap_outer(current);
+            if (this.auto_tiler) {
+                this.switch_workspace_on_move = false;
+                for (const [entity,] of this.auto_tiler.forest.toplevel.values()) {
+                    const fork = this.auto_tiler.forest.forks.get(entity);
+
+                    if (fork) {
+                        fork.area.array[0] += diff * 4;
+                        fork.area.array[1] += diff * 4;
+                        fork.area.array[2] -= diff * 8;
+                        fork.area.array[3] -= diff * 8;
+
+                        this.auto_tiler.tile(this, fork, fork.area);
+                    }
+                }
+                this.switch_workspace_on_move = true;
+            } else {
+                this.update_snapped();
+            }
+
+            Gio.Settings.sync();
+        }
+    }
+
+    on_show_window_titles() {
+        for (const window of this.windows.values()) {
+            if (window.meta.is_client_decorated()) continue;
+
+            if (this.settings.show_title()) {
+                window.decoration_show(this);
+            } else {
+                window.decoration_hide(this);
+            }
+        }
     }
 
     /** Triggered when a grab operation has been ended */
@@ -481,11 +573,13 @@ export class Ext extends Ecs.World {
     }
 
     set_gap_inner(gap: number) {
+        this.gap_inner_prev = this.gap_inner;
         this.gap_inner = gap * 4 * this.dpi;
         this.gap_inner_half = this.gap_inner / 2;
     }
 
     set_gap_outer(gap: number) {
+        this.gap_outer_prev = this.gap_outer;
         this.gap_outer = gap * 4 * this.dpi;
     }
 
@@ -499,6 +593,23 @@ export class Ext extends Ecs.World {
     /** Begin listening for signals from windows, and add any pre-existing windows. */
     signals_attach() {
         const workspace_manager = global.display.get_workspace_manager();
+
+        this.connect(this.settings.ext, 'changed', (_s, key: string) => {
+            switch (key) {
+                case 'active-hint':
+                    this.on_active_hint();
+                    break;
+                case 'gap-inner':
+                    this.on_gap_inner();
+                    break
+                case 'gap-outer':
+                    this.on_gap_outer();
+                    break;
+                case 'show-title':
+                    this.on_show_window_titles();
+                    break;
+            }
+        });
 
         this.connect(sessionMode, 'updated', () => {
             if ('user' != global.sessionMode.currentMode) {
