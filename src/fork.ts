@@ -150,9 +150,16 @@ export class Fork {
 
             let region = this.area.clone();
 
-            const diff = (startpos + this.length_left) % 32;
-            let length = this.length_left - diff + (diff > 16 ? 32 : 0);
-            if (length == 0) length = 32;
+            const half = this.area.array[l] / 2;
+
+            let length;
+            if (this.length_left > half - 32 && this.length_left < half + 32) {
+                length = half;
+            } else {
+                const diff = (startpos + this.length_left) % 32;
+                length = this.length_left - diff + (diff > 16 ? 32 : 0);
+                if (length == 0) length = 32;
+            }
 
             region.array[l] = length - ext.gap_inner_half;
 
