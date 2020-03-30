@@ -621,14 +621,20 @@ export class Ext extends Ecs.World {
         });
 
         this.connect(overview, 'showing', () => {
-            this.active_hint?.overview_hide();
+            if (this.active_hint) {
+                this.active_hint.hide();
+            }
+
             this.exit_modes();
             return true;
         });
 
         this.connect(overview, 'hiding', () => {
-            if (this.active_hint?.was_shown) {
-                this.active_hint.overview_show();
+            if (this.active_hint && this.active_hint.window) {
+                let window = this.active_hint.window.meta;
+                if (!window.get_maximized()) {
+                    this.active_hint.show();
+                }
             }
         });
 
@@ -667,6 +673,7 @@ export class Ext extends Ecs.World {
         });
 
         this.connect(workspace_manager, 'active-workspace-changed', () => {
+            Log.debug(`active workspace changed`);
             if (this.active_hint) {
                 this.active_hint.untrack();
             }

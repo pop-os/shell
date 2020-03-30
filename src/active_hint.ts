@@ -18,8 +18,6 @@ interface WindowDetails {
 
 export class ActiveHint {
     dpi: number;
-    in_overview: boolean = false;
-    was_shown: boolean = false;
 
     private border: [Clutter.Actor, Clutter.Actor, Clutter.Actor, Clutter.Actor] = [
         new St.BoxLayout({
@@ -46,7 +44,7 @@ export class ActiveHint {
 
     private tracking: number | null = null;
 
-    private window: WindowDetails | null = null;
+    window: WindowDetails | null = null;
 
     constructor(dpi: number) {
         this.dpi = dpi;
@@ -67,19 +65,6 @@ export class ActiveHint {
 
     is_tracking(entity: Entity): boolean {
         return this.window ? Ecs.entity_eq(entity, this.window.entity) : false;
-    }
-
-    overview_hide() {
-        this.in_overview = true;
-        this.was_shown = true;
-        this.hide();
-    }
-
-    overview_show() {
-        this.in_overview = false;
-        if (!this.was_shown) return;
-        this.was_shown = false;
-        this.show();
     }
 
     position_changed(window: ShellWindow): void {
@@ -129,11 +114,6 @@ export class ActiveHint {
                 this.update_overlay();
 
                 this.show();
-
-                if (this.in_overview) {
-                    this.hide();
-                    this.was_shown = true;
-                }
 
                 return false;
             });
