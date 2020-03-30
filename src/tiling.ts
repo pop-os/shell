@@ -309,7 +309,6 @@ export class Tiler {
 
         const focused = ext.focus_window();
         if (ext.auto_tiler && focused) {
-
             if (move_to instanceof ShellWindow) {
                 const parent = ext.auto_tiler.windows_are_siblings(focused.entity, move_to.entity);
                 if (parent) {
@@ -320,6 +319,7 @@ export class Tiler {
                         (fork.right as any).entity = temp;
                         ext.auto_tiler.tile(ext, fork, fork.area as any);
                         ext.set_overlay(focused.rect());
+                        focused.activate();
                         return;
                     }
                 }
@@ -327,11 +327,13 @@ export class Tiler {
                 ext.auto_tiler.detach_window(ext, focused.entity);
                 ext.auto_tiler.attach_to_window(ext, move_to, focused, Lib.cursor_rect());
                 ext.set_overlay(focused.rect());
+                focused.activate();
             } else {
                 global.log(`attach to monitor ${move_to}`);
                 ext.auto_tiler.detach_window(ext, focused.entity);
                 ext.auto_tiler.attach_to_monitor(ext, focused, [move_to, ext.active_workspace()]);
                 ext.set_overlay(focused.rect());
+                focused.activate();
             }
         }
     }
