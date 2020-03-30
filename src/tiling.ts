@@ -331,6 +331,7 @@ export class Tiler {
                 global.log(`attach to monitor ${move_to}`);
                 ext.auto_tiler.detach_window(ext, focused.entity);
                 ext.auto_tiler.attach_to_monitor(ext, focused, [move_to, ext.active_workspace()]);
+                ext.set_overlay(focused.rect());
             }
         }
     }
