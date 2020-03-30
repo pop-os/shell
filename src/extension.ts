@@ -329,6 +329,8 @@ export class Ext extends Ecs.World {
 
         this.active_hint?.track(win);
 
+        win.meta.raise();
+
         let msg = `focused Window(${win.entity}) {\n`
             + `  name: ${win.name(this)},\n`
             + `  rect: ${win.rect().fmt()},\n`
