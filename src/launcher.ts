@@ -9,6 +9,7 @@ import * as app_info from 'app_info';
 import * as error from 'error';
 import * as lib from 'lib';
 import * as log from 'log';
+import * as once_cell from 'once_cell';
 import * as result from 'result';
 import * as search from 'search';
 import * as window from 'window';
@@ -36,6 +37,8 @@ const SEARCH_PATHS: Array<[string, string]> = [
     // User-local flatpaks
     ["Flatpak", HOME_DIR + "/.local/share/flatpak/exports/share/applications/"]
 ];
+
+let TERMINAL = new once_cell.OnceCell<string>();
 
 export class Launcher extends search.Search {
     selections: Array<ShellWindow | [string, AppInfo]>;
@@ -159,7 +162,13 @@ export class Launcher extends search.Search {
                 }
             } else if (id.startsWith('t:')) {
                 const cmd = id.slice(2).trim();
-                spawnCommandLine(`x-terminal-emulator -e sh -c '${cmd}; echo "Press to exit"; read t'`)
+
+                let terminal = TERMINAL.get_or_init(() => {
+                    let path: string | null = GLib.find_program_in_path('x-terminal-emulator');
+                    return path ?? 'gnome-terminal';
+                });
+
+                spawnCommandLine(`${terminal} -e sh -c '${cmd}; echo "Press to exit"; read t'`)
             } else if (id.startsWith(':')) {
                 const cmd = id.slice(1).trim();
                 spawnCommandLine(cmd);
