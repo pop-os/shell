@@ -72,6 +72,8 @@ export class Ext extends Ecs.World {
 
     // State
 
+    /** Animate window movements */
+    animate_windows: boolean = true;
 
     /** Column sizes in snap-to-grid */
     column_size: number = 128;
@@ -205,7 +207,6 @@ export class Ext extends Ecs.World {
         } else {
             this.signals.set(object, [signal]);
         }
-
     }
 
     connect_meta(win: Window.ShellWindow, signal: string, callback: () => void): number {
@@ -561,22 +562,28 @@ export class Ext extends Ecs.World {
     /** Handle window creation events */
     on_window_create(window: Meta.Window) {
         GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
-            let win = this.get_window(window);
             let actor = window.get_compositor_private();
-            if (win && actor) {
-                const entity = win.entity;
-                actor.connect('destroy', () => {
-                    if (win) this.on_destroy(entity);
-                    return false;
-                });
-
-                if (win.is_tilable(this)) {
-                    this.connect_window(win);
-                }
+            if (actor) {
+                this.on_window_create_inner(window, actor);
             }
 
             return false;
         });
+    }
+
+    on_window_create_inner(window: Meta.Window, actor: Clutter.Actor) {
+        let win = this.get_window(window);
+        if (win) {
+            const entity = win.entity;
+            actor.connect('destroy', () => {
+                if (win) this.on_destroy(entity);
+                return false;
+            });
+
+            if (win.is_tilable(this)) {
+                this.connect_window(win);
+            }
+        }
     }
 
     /** Handle workspace change events */
@@ -948,6 +955,9 @@ export class Ext extends Ecs.World {
 
         // If not found, create a new entity with a ShellWindow component.
         if (!entity) {
+            const actor = meta.get_compositor_private();
+            if (!actor) return null;
+
             let window_app: any, name: string;
 
             try {
@@ -967,8 +977,8 @@ export class Ext extends Ecs.World {
             this.monitors.insert(entity, [win.meta.get_monitor(), win.workspace_id()]);
 
             Log.debug(`created window (${win.entity}): ${win.name(this)}: ${id}`);
-            const actor = meta.get_compositor_private();
-            if (this.auto_tiler && win.is_tilable(this) && actor) {
+
+            if (this.auto_tiler && win.is_tilable(this)) {
                 let id = actor.connect('first-frame', () => {
                     this.auto_tiler?.auto_tile(this, win, this.init);
                     actor.disconnect(id);

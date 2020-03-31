@@ -1,6 +1,7 @@
 // @ts-ignore
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
+import * as Ecs from 'ecs';
 import * as lib from 'lib';
 import * as log from 'log';
 import * as once_cell from 'once_cell';
@@ -8,11 +9,13 @@ import * as Rect from 'rectangle';
 import * as Tags from 'tags';
 import * as utils from 'utils';
 import * as xprop from 'xprop';
+import * as Tweener from 'tweener';
 
 import type { Entity } from './ecs';
 import type { Ext } from './extension';
 import type { Rectangle } from './rectangle';
 
+// const GLib: GLib = imports.gi.GLib;
 const { Gdk, Meta, Shell, St } = imports.gi;
 
 const { OnceCell } = once_cell;
@@ -149,18 +152,58 @@ export class ShellWindow {
         return this.meta.get_transient_for() !== null;
     }
 
-    move(rect: Rectangular) {
-        this.meta.unmaximize(Meta.MaximizeFlags.HORIZONTAL);
-        this.meta.unmaximize(Meta.MaximizeFlags.VERTICAL);
-        this.meta.unmaximize(Meta.MaximizeFlags.HORIZONTAL | Meta.MaximizeFlags.VERTICAL);
+    move(ext: Ext, rect: Rectangular, on_complete: () => void = () => { }) {
+        let clone = Rect.Rectangle.from_meta(rect);
+        let actor = this.meta.get_compositor_private();
+        if (actor) {
+            this.meta.unmaximize(Meta.MaximizeFlags.HORIZONTAL);
+            this.meta.unmaximize(Meta.MaximizeFlags.VERTICAL);
+            this.meta.unmaximize(Meta.MaximizeFlags.HORIZONTAL | Meta.MaximizeFlags.VERTICAL);
 
-        this.meta.move_resize_frame(
-            true,
-            rect.x,
-            rect.y,
-            rect.width,
-            rect.height
-        );
+            if (ext.animate_windows) {
+                let current = this.meta.get_frame_rect();
+                let buffer = this.meta.get_buffer_rect();
+
+                let dx = current.x - buffer.x;
+                let dy = current.y - buffer.y;
+
+                if (ext.active_hint && ext.active_hint.window && Ecs.entity_eq(ext.active_hint.window.entity, this.entity)) {
+                    ext.active_hint.hide();
+                }
+
+                if (Tweener.is_tweening(actor)) Tweener.remove(actor);
+
+                Tweener.add(actor, {
+                    x: clone.x - dx,
+                    y: clone.y - dy,
+                    width: clone.width,
+                    height: clone.height,
+                    duration: 150,
+                    mode: null,
+                    onComplete: () => {
+                        this.meta.move_resize_frame(
+                            true,
+                            clone.x,
+                            clone.y,
+                            clone.width,
+                            clone.height
+                        );
+
+                        on_complete();
+                    }
+                });
+            } else {
+                this.meta.move_resize_frame(
+                    true,
+                    clone.x,
+                    clone.y,
+                    clone.width,
+                    clone.height
+                );
+
+                on_complete();
+            }
+        }
     }
 
     name(ext: Ext): string {
@@ -178,14 +221,12 @@ export class ShellWindow {
         });
     }
 
-    swap(other: ShellWindow): void {
-        let ar = this.rect();
-        let br = other.rect();
+    swap(ext: Ext, other: ShellWindow): void {
+        let ar = this.rect().clone();
+        let br = other.rect().clone();
 
-        this.move(br);
-        other.move(ar);
-
-        place_pointer_on(this.meta);
+        other.move(ext, ar);
+        this.move(ext, br, () => place_pointer_on(this.meta));
     }
 
     wm_role(): string | null {

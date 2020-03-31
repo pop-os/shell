@@ -76,14 +76,18 @@ declare namespace Clutter {
 
         add(child: Actor): void;
         destroy(): void;
+        ease(params: Object): void;
         hide(): void;
         get_child_at_index(nth: number): Clutter.Actor | null;
         get_n_children(): number;
         get_parent(): Clutter.Actor | null;
+        get_transition(param: string): any | null;
         is_visible(): boolean;
         remove_all_children(): void;
+        remove_all_transitions(): void;
         remove_child(child: Actor): void;
         set_child_below_sibling(child: Actor, sibling: Actor | null): void;
+        set_easing_duration(msecs: number | null): void;
         show(): void;
     }
 
@@ -113,6 +117,7 @@ declare namespace Meta {
 
         activate(time: number): void;
         change_workspace_by_index(workspace: number, append: boolean): void;
+        get_buffer_rect(): Rectangular;
         get_compositor_private(): Clutter.Actor | null;
         get_description(): string;
         get_frame_rect(): Rectangular;

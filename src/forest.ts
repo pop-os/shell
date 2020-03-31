@@ -80,7 +80,7 @@ export class Forest extends Ecs.World {
             ? ext.workspace_by_id(workspace)
             : null;
 
-        const new_positions = new Array();
+        // const new_positions = new Array();
         for (const [entity, r] of this.requested) {
             const window = ext.windows.get(entity);
             if (!window) continue;
@@ -95,12 +95,11 @@ export class Forest extends Ecs.World {
                 const signals = ext.size_signals.get(window.entity);
                 if (signals) {
                     Log.debug(`Moving Window(${entity}) from [${backup.fmt()}] to [${r.rect.fmt()}]`);
-                    move_window(window, r.rect, signals);
-
-                    const actual = window.rect();
-                    Log.debug(`Moved Window(${entity}) to ${actual.fmt()}`);
-
-                    new_positions.push([window, backup, actual]);
+                    move_window(ext, window, r.rect, signals, () => {
+                        const actual = window.rect();
+                        Log.debug(`Moved Window(${entity}) to ${actual.fmt()}`);
+                        // new_positions.push([window, backup, actual]);
+                    });
                 } else {
                     Log.error(`Attempted move of Window(${entity}), but it does not have attached signals`);
                 }
@@ -704,7 +703,7 @@ export class Forest extends Ecs.World {
 }
 
 
-function move_window(window: ShellWindow, rect: Rectangular, signals: [SignalID, SignalID, SignalID]) {
+function move_window(ext: Ext, window: ShellWindow, rect: Rectangular, signals: [SignalID, SignalID, SignalID], on_complete: () => void) {
     if (!(window.meta instanceof Meta.Window)) {
         Log.error(`attempting to a window entity in a tree which lacks a Meta.Window`);
         return;
@@ -718,6 +717,8 @@ function move_window(window: ShellWindow, rect: Rectangular, signals: [SignalID,
     }
 
     for (const sig of signals) utils.block_signal(window.meta, sig);
-    window.move(rect);
-    for (const sig of signals) utils.unblock_signal(window.meta, sig);
+    window.move(ext, rect, () => {
+        for (const sig of signals) utils.unblock_signal(window.meta, sig);
+        on_complete();
+    });
 }

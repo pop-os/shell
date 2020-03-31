@@ -8,13 +8,13 @@ import * as GrabOp from 'grab_op';
 import * as Rect from 'rectangle';
 import * as window from 'window';
 import * as shell from 'shell';
+import * as Tweener from 'tweener';
 
 import type { Entity } from './ecs';
 import type { Rectangle } from './rectangle';
 import type { Ext } from './extension';
 import { AutoTiler } from './auto_tiler';
 
-const GLib: GLib = imports.gi.GLib;
 const { Meta } = imports.gi;
 const Main = imports.ui.main;
 const { ShellWindow } = window;
@@ -233,9 +233,9 @@ export class Tiler {
 
                 ext.auto_tiler.forest.arrange(ext, fork.workspace);
 
-                GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
+                let actor = window.meta.get_compositor_private();
+                if (actor) Tweener.on_tween_completion(actor, () => {
                     ext.set_overlay(window.rect());
-                    return false;
                 });
             }
         }
@@ -308,6 +308,8 @@ export class Tiler {
         if (move_to === null) return;
 
         const focused = ext.focus_window();
+        let watching: null | window.ShellWindow = null;
+
         if (ext.auto_tiler && focused) {
             if (move_to instanceof ShellWindow) {
                 const parent = ext.auto_tiler.windows_are_siblings(focused.entity, move_to.entity);
@@ -318,23 +320,31 @@ export class Tiler {
                         fork.left.entity = (fork.right as any).entity;
                         (fork.right as any).entity = temp;
                         ext.auto_tiler.tile(ext, fork, fork.area as any);
-                        ext.set_overlay(focused.rect());
-                        focused.activate();
-                        return;
+                        watching = focused
                     }
                 }
 
-                ext.auto_tiler.detach_window(ext, focused.entity);
-                ext.auto_tiler.attach_to_window(ext, move_to, focused, Lib.cursor_rect());
-                ext.set_overlay(focused.rect());
-                focused.activate();
+                if (!watching) {
+                    ext.auto_tiler.detach_window(ext, focused.entity);
+                    ext.auto_tiler.attach_to_window(ext, move_to, focused, Lib.cursor_rect());
+                    watching = focused;
+                }
             } else {
                 global.log(`attach to monitor ${move_to}`);
                 ext.auto_tiler.detach_window(ext, focused.entity);
                 ext.auto_tiler.attach_to_monitor(ext, focused, [move_to, ext.active_workspace()]);
-                ext.set_overlay(focused.rect());
-                focused.activate();
+                watching = focused;
             }
+        }
+
+        if (watching) {
+            let actor = watching.meta.get_compositor_private();
+            if (actor) Tweener.on_tween_completion(actor, () => {
+                if (watching) {
+                    ext.set_overlay(watching.rect());
+                    watching.activate();
+                }
+            });
         }
     }
 
@@ -483,12 +493,12 @@ export class Tiler {
                         if (ext.auto_tiler) {
                             ext.auto_tiler.attach_swap(this.swap_window, this.window);
                         }
-                        meta_swap.move(meta.rect());
+                        meta_swap.move(ext, meta.rect());
                         this.swap_window = null;
                     }
                 }
 
-                meta.move(ext.overlay);
+                meta.move(ext, ext.overlay);
                 ext.add_tag(this.window, Tags.Tiled);
             }
         }
@@ -523,7 +533,7 @@ export class Tiler {
                 0, 0, 0, 0
             );
 
-            win.move(rect);
+            win.move(ext, rect);
 
             ext.snapped.insert(win.entity, true);
         }
