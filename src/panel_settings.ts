@@ -7,7 +7,7 @@ import type { Entity } from './ecs';
 import type { Ext } from './extension';
 
 const { Clutter, Gio, St } = imports.gi;
-const { PopupSwitchMenuItem, PopupSubMenuMenuItem } = imports.ui.popupMenu;
+const { PopupMenuItem, PopupSwitchMenuItem, PopupSubMenuMenuItem } = imports.ui.popupMenu;
 const { Button } = imports.ui.panelMenu;
 const { Forest } = Me.imports.forest;
 const GLib: GLib = imports.gi.GLib;
@@ -42,7 +42,91 @@ export class Indicator {
                 }
             )
         );
+
+        this.appearances.menu.addMenuItem(
+            number_entry(
+                _("Gaps"),
+                ext.settings.gap_inner(),
+                (value) => {
+                    ext.set_gap_inner(value);
+                    ext.set_gap_outer(value);
+                    ext.settings.set_gap_inner(value);
+                    ext.settings.set_gap_outer(value);
+                }
+            )
+        )
     }
+}
+
+function clamp(input: number): number {
+    return Math.min(Math.max(0, input), 128);
+}
+
+function number_entry(
+    label: string,
+    value: number,
+    callback: (a: number) => void,
+): any {
+    let entry = new St.Entry({ text: String(value) });
+    entry.set_input_purpose(Clutter.InputContentPurpose.NUMBER);
+    entry.set_x_align(Clutter.ActorAlign.FILL);
+    entry.set_x_expand(true);
+    entry.connect('button-release-event', () => {
+        return true;
+    });
+
+    let text = entry.clutter_text;
+    text.set_max_length(3);
+
+    entry.connect('key-press-event', () => {
+        Log.debug(`activated`);
+    });
+
+    entry.connect('key-release-event', (_: any, event: any) => {
+        const symbol = event.get_key_symbol();
+
+        Log.debug(`event symbol: ${symbol}`)
+
+        const number: number | null =
+            symbol == 65293     // enter key
+                ? parse_number(text.text)
+                : symbol == 65361   // left key
+                    ? clamp(parse_number(text.text) - 1)
+                    : symbol == 65363   // right key
+                        ? clamp(parse_number(text.text) + 1)
+                        : null;
+
+        if (number !== null) {
+            text.set_text(String(number));
+
+            callback(number);
+        }
+    });
+
+    text.connect('text-changed', () => {
+        const input: string = text.get_text();
+        const last = input.slice(-1);
+        const parsed = parseInt(last);
+
+        if (isNaN(parsed)) {
+            text.set_text(input.substr(0, input.length - 1));
+        }
+    });
+
+    let item = new PopupMenuItem(label);
+    item.label.set_y_align(Clutter.ActorAlign.CENTER);
+    item.add_child(entry);
+
+    return item;
+}
+
+function parse_number(text: string): number {
+    let number = parseInt(text, 10);
+    if (isNaN(number)) {
+        number = 0;
+    }
+
+    return number;
 }
 
 function toggle(desc: string, active: boolean, connect: (toggle: any) => void): any {
