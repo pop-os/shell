@@ -144,7 +144,7 @@ export class ShellWindow {
                     // Transient windows are most likely dialogs
                     && !this.is_transient()
                     // Blacklist any windows that happen to leak through our filter
-                    && !blacklisted(this.meta.get_wm_class());
+                    && !blacklisted(this.meta.get_wm_class(), this.meta.get_title());
             });
     }
 
@@ -265,9 +265,10 @@ export function activate(win: Meta.Window) {
     place_pointer_on(win)
 }
 
-export function blacklisted(window_class: string): boolean {
-    log.debug(`window class: ${window_class}`);
-    return BLACKLIST.indexOf(window_class) > -1;
+export function blacklisted(window_class: string, title: string): boolean {
+    log.debug(`window class: ${window_class}; title: ${title}`);
+    return BLACKLIST.indexOf(window_class) > -1
+        || (window_class === "Steam" && title !== "Steam");
 }
 
 export function place_pointer_on(win: Meta.Window) {

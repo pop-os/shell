@@ -360,6 +360,7 @@ export class Ext extends Ecs.World {
 
         let msg = `focused Window(${win.entity}) {\n`
             + `  name: ${win.name(this)},\n`
+            + `  title: ${win.meta.get_title()},\n`
             + `  rect: ${win.rect().fmt()},\n`
             + `  wm_class: "${win.meta.get_wm_class()}",\n`
             + `  monitor: ${win.meta.get_monitor()},\n`
