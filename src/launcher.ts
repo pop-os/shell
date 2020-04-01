@@ -40,6 +40,8 @@ const SEARCH_PATHS: Array<[string, string]> = [
 
 let TERMINAL = new once_cell.OnceCell<string>();
 
+const MODES = [':', 't:', '='];
+
 export class Launcher extends search.Search {
     selections: Array<ShellWindow | [string, AppInfo]>;
     active: Array<[string, St.Widget, St.Widget]>;
@@ -52,14 +54,18 @@ export class Launcher extends search.Search {
             ext.overlay.visible = false;
         };
 
+        let mode = (_id: number) => {
+            ext.overlay.visible = false;
+        };
+
         let search = (pattern: string): Array<[string, St.Widget, St.Widget]> | null => {
             this.selections.splice(0);
             this.active.splice(0);
             apps.splice(0);
 
             if (pattern.length == 0) {
-                ext.overlay.visible = false;
-                return null;
+                this.list_workspace(ext);
+                return this.active;
             }
 
             const needles = pattern.split(' ');
@@ -133,27 +139,30 @@ export class Launcher extends search.Search {
         };
 
         let select = (id: number) => {
+            ext.overlay.visible = false;
+
             if (id >= this.selections.length) return;
 
             const selected = this.selections[id];
             if (selected instanceof window.ShellWindow) {
-                const rect = selected.rect();
-                ext.overlay.x = rect.x
-                ext.overlay.y = rect.y;
-                ext.overlay.width = rect.width;
-                ext.overlay.height = rect.height;
-                ext.overlay.visible = selected.workspace_id() == ext.active_workspace();
-            } else {
-                ext.overlay.visible = false;
+                if (selected.workspace_id() == ext.active_workspace()) {
+                    const rect = selected.rect();
+                    ext.overlay.x = rect.x
+                    ext.overlay.y = rect.y;
+                    ext.overlay.width = rect.width;
+                    ext.overlay.height = rect.height;
+                    ext.overlay.visible = true;
+                }
             }
         };
 
         let apply = (id: number | string) => {
+            ext.overlay.visible = false;
+
             if (typeof id === 'number') {
                 const selected = this.selections[id];
                 if (selected instanceof window.ShellWindow) {
                     selected.activate();
-                    ext.overlay.visible = false;
                 } else {
                     const result = selected[1].launch();
                     if (result instanceof error.Error) {
@@ -183,7 +192,7 @@ export class Launcher extends search.Search {
             return false;
         };
 
-        super([':', 't:', '='], cancel, search, select, apply);
+        super(MODES, cancel, search, select, apply, mode);
 
         this.dialog.dialogLayout._dialog.y_align = Clutter.ActorAlign.START;
         this.dialog.dialogLayout._dialog.x_align = Clutter.ActorAlign.START;
@@ -212,16 +221,11 @@ export class Launcher extends search.Search {
         });
     }
 
-    open(ext: Ext) {
-        const mon = ext.monitor_work_area(ext.active_monitor());
+    list_workspace(ext: Ext) {
+        log.debug(`listing workspace`);
         const active = ext.active_workspace();
-        this.active.splice(0);
-
-        this.dialog.dialogLayout.x = (mon.width / 2) - (this.dialog.dialogLayout.width / 2);
-        this.dialog.dialogLayout.y = (mon.height / 2) - (this.dialog.dialogLayout.height);
-
         for (const window of ext.tab_list(Meta.TabList.NORMAL, null)) {
-            if (window.workspace_id() == active) {
+            if (window.workspace_id() === active) {
                 this.selections.push(window);
 
                 this.active.push(window_selection(ext, window));
@@ -229,7 +233,17 @@ export class Launcher extends search.Search {
                 if (this.selections.length == LIST_MAX) break;
             }
         }
+    }
 
+    open(ext: Ext) {
+        const mon = ext.monitor_work_area(ext.active_monitor());
+
+        this.active.splice(0);
+
+        this.dialog.dialogLayout.x = (mon.width / 2) - (this.dialog.dialogLayout.width / 2);
+        this.dialog.dialogLayout.y = (mon.height / 2) - (this.dialog.dialogLayout.height);
+
+        this.list_workspace(ext);
         this.update_search_list(this.active);
 
         this.dialog.open(global.get_current_time(), false);

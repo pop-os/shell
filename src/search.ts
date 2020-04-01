@@ -24,7 +24,8 @@ export class Search {
         cancel: () => void,
         search: (pattern: string) => Array<[string, St.Widget, St.Widget]> | null,
         select: (id: number) => void,
-        apply: (id: number | string) => boolean
+        apply: (id: number | string) => boolean,
+        mode: (id: number) => void,
     ) {
         this.select_cb = select;
         this.dialog = new ModalDialog({
@@ -67,7 +68,11 @@ export class Search {
             this.clear();
 
             const text = (entry as Clutter.Text).get_text();
-            if (this.has_prefix(text)) return;
+
+            let prefix = this.has_prefix(text);
+            mode(prefix);
+
+            if (prefix !== -1) return;
 
             const update = search(text.toLowerCase());
             if (update) {
@@ -189,7 +194,7 @@ export class Search {
         this.text.set_text(text);
     }
 
-    private has_prefix(text: string): boolean {
-        return this.ignore_prefixes.some((p) => text.startsWith(p));
+    private has_prefix(text: string): number {
+        return this.ignore_prefixes.findIndex((p) => text.startsWith(p));
     }
 }
