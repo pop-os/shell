@@ -52,7 +52,7 @@ export class Search {
             const text: string = this.text.get_text();
             let cont = false;
 
-            if (this.has_prefix(text)) {
+            if (this.has_prefix(text) !== -1) {
                 cont = apply(text);
             } else if (this.active_id < this.widgets.length) {
                 cont = apply(this.active_id);
@@ -61,6 +61,7 @@ export class Search {
             if (!cont) {
                 this.reset();
                 this.close();
+                cancel();
             }
         });
 
