@@ -268,7 +268,8 @@ export function activate(win: Meta.Window) {
 export function blacklisted(window_class: string, title: string): boolean {
     log.debug(`window class: ${window_class}; title: ${title}`);
     return BLACKLIST.indexOf(window_class) > -1
-        || (window_class === "Steam" && title !== "Steam");
+        || (window_class === "Steam" && title !== "Steam")
+        || (window_class === "TelegramDesktop" && title === "Media viewer");
 }
 
 export function place_pointer_on(win: Meta.Window) {
