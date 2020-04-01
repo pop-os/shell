@@ -115,7 +115,7 @@ export class Ext extends Ecs.World {
     switch_workspace_on_move: boolean = true;
 
     /** Initially set to true when the extension is initializing */
-    private init: boolean = true;
+    init: boolean = true;
 
     /** Record of misc. global objects and their attached signals */
     private signals: Map<GObject.Object, Array<SignalID>> = new Map();

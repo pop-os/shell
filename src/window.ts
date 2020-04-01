@@ -160,7 +160,7 @@ export class ShellWindow {
             this.meta.unmaximize(Meta.MaximizeFlags.VERTICAL);
             this.meta.unmaximize(Meta.MaximizeFlags.HORIZONTAL | Meta.MaximizeFlags.VERTICAL);
 
-            if (ext.animate_windows) {
+            if (ext.animate_windows && !ext.init) {
                 let current = this.meta.get_frame_rect();
                 let buffer = this.meta.get_buffer_rect();
 
