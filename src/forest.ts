@@ -209,9 +209,8 @@ export class Forest extends Ecs.World {
         workspace: number
     ): [Entity, Fork.Fork] {
         const entity = this.create_entity();
-        let fork = new Fork.Fork(entity, left, right, area, workspace);
-
-        fork.set_orientation(area && area.width > area.height ? Lib.Orientation.HORIZONTAL : Lib.Orientation.VERTICAL);
+        let orient = area && area.width > area.height ? Lib.Orientation.HORIZONTAL : Lib.Orientation.VERTICAL;
+        let fork = new Fork.Fork(entity, left, right, area, workspace, orient);
 
         this.forks.insert(entity, fork);
         return [entity, fork];

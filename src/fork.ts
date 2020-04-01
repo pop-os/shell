@@ -35,14 +35,17 @@ export class Fork {
     orientation_changed: boolean = false;
     is_toplevel: boolean = false;
 
-    constructor(entity: Entity, left: Node, right: Node | null, area: Rectangle, workspace: number) {
+    constructor(entity: Entity, left: Node, right: Node | null, area: Rectangle, workspace: number, orient: Lib.Orientation) {
         this.area = area;
         this.left = left;
         this.right = right;
         this.workspace = workspace;
-        this.length_left = this.right ? this.area.width * .5 : this.area.width;
+        this.length_left = orient === Lib.Orientation.HORIZONTAL
+            ? this.right ? this.area.width / 2 : this.area.width
+            : this.right ? this.area.height / 2 : this.area.height;
         this.prev_length_left = this.length_left;
         this.entity = entity;
+        this.orientation = orient;
     }
 
     /** The calculated left area of this fork */
