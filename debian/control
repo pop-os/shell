@@ -10,5 +10,6 @@ Vcs-Git: https://github.com/pop-os/shell
 Package: pop-shell
 Architecture: all
 Depends:
-    ${misc:Depends}
+    ${misc:Depends},
+    pop-shell-shortcuts
 Description: Pop!_OS Shell

@@ -16,6 +16,8 @@ declare interface GLib {
     PRIORITY_DEFAULT: number;
     PRIORITY_LOW: number;
 
+    find_program_in_path(prog: string): string | null;
+
     idle_add(priority: any, callback: () => boolean): number;
 
     signal_handler_block(object: GObject.Object, signal: SignalID): void;

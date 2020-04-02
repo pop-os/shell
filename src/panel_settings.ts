@@ -7,7 +7,7 @@ import type { Entity } from './ecs';
 import type { Ext } from './extension';
 
 const { Clutter, Gio, St } = imports.gi;
-const { PopupMenuItem, PopupSwitchMenuItem, PopupSubMenuMenuItem } = imports.ui.popupMenu;
+const { PopupBaseMenuItem, PopupMenuItem, PopupSwitchMenuItem, PopupSubMenuMenuItem } = imports.ui.popupMenu;
 const { Button } = imports.ui.panelMenu;
 const { Forest } = Me.imports.forest;
 const GLib: GLib = imports.gi.GLib;
@@ -28,6 +28,8 @@ export class Indicator {
         this.button.add_actor(this.button.icon);
 
         this.button.menu.addMenuItem(tiled(ext));
+
+        this.button.menu.addMenuItem(shortcuts(this.button.menu));
 
         this.appearances = new PopupSubMenuMenuItem('Appearance', true);
         this.appearances.icon.icon_name = 'preferences-desktop-display-symbolic';
@@ -56,6 +58,56 @@ export class Indicator {
             )
         )
     }
+}
+
+function settings_button(menu: any): any {
+    let button = new St.Button({
+        label: "View All",
+        x_align: St.Align.START,
+        style_class: 'shell-link',
+        margin_left: 12,
+    });
+
+    button.connect('clicked', () => {
+        let path: string | null = GLib.find_program_in_path('pop-shell-shortcuts');
+        if (path) {
+            imports.misc.util.spawn([path]);
+        } else {
+            Log.error(`You must install \`pop-shell-shortcuts\``)
+        }
+
+        menu.close();
+    });
+
+    return button;
+}
+
+function shortcuts(menu: any): any {
+    let layout_manager = new Clutter.GridLayout({ orientation: Clutter.Orientation.HORIZONTAL });
+    let widget = new St.Widget({ layout_manager, x_expand: true });
+
+    let item = new PopupBaseMenuItem();
+    item.add_child(widget);
+
+    function create_label(text: string): any {
+        return new St.Label({ text });
+    }
+
+    let launcher = create_label(_('Launcher'));
+    launcher.get_clutter_text().set_margin_left(12);
+    let navigate_windows = create_label(_('Navigate Windows'));
+    navigate_windows.get_clutter_text().set_margin_left(12);
+
+    layout_manager.set_row_spacing(12);
+    layout_manager.set_column_spacing(8);
+    layout_manager.attach(create_label(_('Shortcuts')), 0, 0, 2, 1);
+    layout_manager.attach(launcher, 0, 1, 1, 1);
+    layout_manager.attach(create_label(_('Super + /')), 1, 1, 1, 1);
+    layout_manager.attach(navigate_windows, 0, 2, 1, 1);
+    layout_manager.attach(create_label(_('Super + Arrow keys')), 1, 2, 1, 1);
+    layout_manager.attach(settings_button(menu), 0, 3, 1, 1);
+
+    return item;
 }
 
 function clamp(input: number): number {
