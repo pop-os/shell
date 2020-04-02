@@ -75,28 +75,6 @@ export class AutoTiler {
             const [, fork] = attached;
             const monitor = ext.monitors.get(attachee.entity);
             if (monitor) {
-                if (fork.is_horizontal()) {
-                    let split = fork.area.width / 2;
-
-                    const attacher_sh = attacher.size_hint();
-
-                    fork.set_ratio(attacher_sh ? Math.min(split, fork.area.width - attacher_sh.minimum[0]) : split);
-
-                    if (attacher_sh && attacher_sh.minimum[1] > fork.area.height) {
-                        // TODO: Increase size of fork to accomodate minimum height.
-                    }
-                } else {
-                    let split = fork.area.height / 2;
-
-                    const attacher_sh = attacher.size_hint();
-
-                    fork.set_ratio(attacher_sh ? Math.min(split, fork.area.height - attacher_sh.minimum[1]) : split);
-
-                    if (attacher_sh && attacher_sh.minimum[1] > fork.area.width) {
-                        // TODO: Increase size of fork to accomodate minimum width.
-                    }
-                }
-
                 this.tile(ext, fork, fork.area.clone());
                 this.log_tree_nodes(ext);
                 return true;
