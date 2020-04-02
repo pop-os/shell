@@ -516,6 +516,12 @@ export class Ext extends Ecs.World {
             let entity = win.entity;
             Log.debug(`Start grab of Window(${entity}): ${this.names.get(entity)}`);
             let rect = win.rect();
+
+            if (this.grab_op) {
+                let prev = this.windows.get(this.grab_op.entity);
+                if (prev) this.size_signals_unblock(prev);
+            }
+
             this.grab_op = new GrabOp.GrabOp(entity, rect);
 
             this.size_signals_block(win);
