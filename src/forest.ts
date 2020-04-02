@@ -144,6 +144,7 @@ export class Forest extends Ecs.World {
             if (fork.left.is_window(onto_entity)) {
                 if (fork.right) {
                     const area = fork.area_of_left(ext);
+                    Log.debug(`array of left = ${area.fmt()}`);
                     const [fork_entity, new_fork] = this.create_fork(fork.left, right_node, area, fork.workspace);
 
                     const inner_left = new_fork.is_horizontal()

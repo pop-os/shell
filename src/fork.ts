@@ -41,8 +41,8 @@ export class Fork {
         this.right = right;
         this.workspace = workspace;
         this.length_left = orient === Lib.Orientation.HORIZONTAL
-            ? this.right ? this.area.width / 2 : this.area.width
-            : this.right ? this.area.height / 2 : this.area.height;
+            ? this.area.width / 2
+            : this.area.height / 2;
         this.prev_length_left = this.length_left;
         this.entity = entity;
         this.orientation = orient;
@@ -51,11 +51,9 @@ export class Fork {
     /** The calculated left area of this fork */
     area_of_left(ext: Ext): Rect.Rectangle {
         return new Rect.Rectangle(
-            this.right
-                ? this.is_horizontal()
-                    ? [this.area.x, this.area.y, this.length_left - ext.gap_inner_half, this.area.height]
-                    : [this.area.x, this.area.y, this.area.width, this.length_left - ext.gap_inner_half]
-                : [this.area.x, this.area.y, this.area.width, this.area.height]
+            this.is_horizontal()
+                ? [this.area.x, this.area.y, this.length_left - ext.gap_inner_half, this.area.height]
+                : [this.area.x, this.area.y, this.area.width, this.length_left - ext.gap_inner_half]
         );
     }
 
