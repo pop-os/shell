@@ -18,11 +18,6 @@ import type { Ext } from './extension';
 const { Meta } = imports.gi;
 const { Movement } = movement;
 
-/** A designation for using either the width or height of a rectangle. */
-enum Measure {
-    Horizontal = 2,
-    Vertical = 3,
-}
 
 /** A request to move a window into a new location. */
 interface Request {
@@ -94,10 +89,8 @@ export class Forest extends Ecs.World {
             if (!backup.eq(r.rect)) {
                 const signals = ext.size_signals.get(window.entity);
                 if (signals) {
-                    Log.debug(`Moving Window(${entity}) from [${backup.fmt()}] to [${r.rect.fmt()}]`);
                     move_window(ext, window, r.rect, signals, () => {
-                        const actual = window.rect();
-                        Log.debug(`Moved Window(${entity}) to ${actual.fmt()}`);
+                        // const actual = window.rect();
                         // new_positions.push([window, backup, actual]);
                     });
                 } else {
@@ -123,11 +116,9 @@ export class Forest extends Ecs.World {
         // }
 
         // if (reset) {
-        //     Log.debug(`resetting windows`);
         //     for (const [window, origin] of new_positions) {
         //         const signals = ext.size_signals.get(window.entity);
         //         if (signals) {
-        //             Log.debug(`Moving Window(${window.entity}) from [${window.rect().fmt()}] to [${origin.fmt()}]`);
         //             move_window(window, origin, signals);
         //         }
         //     }
@@ -136,7 +127,6 @@ export class Forest extends Ecs.World {
 
     /** Attaches a `new` window to the fork which `onto` is attached to. */
     attach_window(ext: Ext, onto_entity: Entity, new_entity: Entity, cursor: Rectangle): [Entity, Fork.Fork] | null {
-        Log.debug(`attaching Window(${new_entity}) onto Window(${onto_entity})`);
 
         const right_node = Node.Node.window(new_entity);
 
@@ -144,7 +134,6 @@ export class Forest extends Ecs.World {
             if (fork.left.is_window(onto_entity)) {
                 if (fork.right) {
                     const area = fork.area_of_left(ext);
-                    Log.debug(`array of left = ${area.fmt()}`);
                     const [fork_entity, new_fork] = this.create_fork(fork.left, right_node, area, fork.workspace);
 
                     const inner_left = new_fork.is_horizontal()
@@ -158,7 +147,6 @@ export class Forest extends Ecs.World {
                     }
 
                     fork.left = Node.Node.fork(fork_entity);
-                    Log.debug(`attached Fork(${fork_entity}) to Fork(${entity}).left`);
                     this.parents.insert(fork_entity, entity);
                     return this._attach(onto_entity, new_entity, this.on_attach, entity, fork, [fork_entity, new_fork]);
                 } else {
@@ -180,7 +168,6 @@ export class Forest extends Ecs.World {
                 }
 
                 fork.right = Node.Node.fork(fork_entity);
-                Log.debug(`attached Fork(${fork_entity}) to Fork(${entity}).right`);
                 this.parents.insert(fork_entity, entity);
                 return this._attach(onto_entity, new_entity, this.on_attach, entity, fork, [fork_entity, new_fork]);
             }
@@ -250,12 +237,10 @@ export class Forest extends Ecs.World {
         let reflow_fork = null;
 
         this.forks.with(fork_entity, (fork) => {
-            Log.debug(`detaching Window(${window}) from Fork(${fork_entity})`);
 
             const parent = this.parents.get(fork_entity);
             if (fork.left.is_window(window)) {
                 if (parent && fork.right) {
-                    Log.debug(`detaching Fork(${fork_entity}) and holding Window(${fork.right.entity}) for reassignment`);
                     reflow_fork = [parent, this.reassign_child_to_parent(fork_entity, parent, fork.right)];
                 } else if (fork.right) {
                     reflow_fork = [fork_entity, fork];
@@ -267,13 +252,11 @@ export class Forest extends Ecs.World {
                         this.reassign_children_to_parent(fork_entity, fork.right.entity, fork);
                     }
                 } else {
-                    Log.debug(`deleting childless and parentless Fork(${fork_entity})`);
                     this.delete_entity(fork_entity);
                 }
             } else if (fork.right && fork.right.is_window(window)) {
                 // Same as the `fork.left` branch.
                 if (parent) {
-                    Log.debug(`detaching Fork(${fork_entity}) and holding Window(${fork.left.entity}) for reassignment`);
                     reflow_fork = [parent, this.reassign_child_to_parent(fork_entity, parent, fork.left)];
                 } else {
                     reflow_fork = [fork_entity, fork];
@@ -288,7 +271,6 @@ export class Forest extends Ecs.World {
         });
 
         if (reflow_fork) {
-            Log.debug(`reflowing Fork(${reflow_fork[0]})`);
         }
 
         return reflow_fork;
@@ -299,7 +281,6 @@ export class Forest extends Ecs.World {
         let fmt = '';
 
         for (const [entity,] of this.toplevel.values()) {
-            Log.debug(`displaying fork (${entity})`);
             const fork = this.forks.get(entity);
 
             fmt += ' ';
@@ -336,40 +317,30 @@ export class Forest extends Ecs.World {
     ) {
         if (fork_c.is_horizontal()) {
             if ((movement & (Movement.DOWN | Movement.UP)) != 0) {
-                Log.debug(`growing Fork(${fork_e}) up/down`);
-                this.resize_fork_in_direction(ext, fork_e, fork_c, is_left, false, crect, 3);
+                this.resize_fork_(ext, fork_e, crect);
             } else if (is_left) {
                 if ((movement & Movement.RIGHT) != 0) {
-                    Log.debug(`growing left child of Fork(${fork_e}) from left to right`);
                     this.readjust_fork_ratio_by_left(ext, crect.width, fork_c);
                 } else {
-                    Log.debug(`growing left child of Fork(${fork_e}) from right to left`);
-                    this.resize_fork_in_direction(ext, fork_e, fork_c, is_left, true, crect, 2);
+                    this.resize_fork_(ext, fork_e, crect);
                 }
             } else if ((movement & Movement.RIGHT) != 0) {
-                Log.debug(`growing right child of Fork(${fork_e}) from left to right`);
-                this.resize_fork_in_direction(ext, fork_e, fork_c, is_left, true, crect, 2);
+                this.resize_fork_(ext, fork_e, crect);
             } else {
-                Log.debug(`growing right child of Fork(${fork_e}) from right to left`);
                 this.readjust_fork_ratio_by_right(ext, crect.width, fork_c, fork_c.area.width);
             }
         } else {
             if ((movement & (Movement.LEFT | Movement.RIGHT)) != 0) {
-                Log.debug(`growing Fork(${fork_e}) left/right`);
-                this.resize_fork_in_direction(ext, fork_e, fork_c, is_left, false, crect, 2);
+                this.resize_fork_(ext, fork_e, crect);
             } else if (is_left) {
                 if ((movement & Movement.DOWN) != 0) {
-                    Log.debug(`growing left child of Fork(${fork_e}) from top to bottom`);
                     this.readjust_fork_ratio_by_left(ext, crect.height, fork_c);
                 } else {
-                    Log.debug(`growing left child of Fork(${fork_e}) from bottom to top`);
-                    this.resize_fork_in_direction(ext, fork_e, fork_c, is_left, true, crect, 3);
+                    this.resize_fork_(ext, fork_e, crect);
                 }
             } else if ((movement & Movement.DOWN) != 0) {
-                Log.debug(`growing right child of Fork(${fork_e}) from top to bottom`);
-                this.resize_fork_in_direction(ext, fork_e, fork_c, is_left, true, crect, 3);
+                this.resize_fork_(ext, fork_e, crect);
             } else {
-                Log.debug(`growing right child of Fork(${fork_e}) from bottom to top`);
                 this.readjust_fork_ratio_by_right(ext, crect.height, fork_c, fork_c.area.height);
             }
         }
@@ -439,7 +410,6 @@ export class Forest extends Ecs.World {
 
     /** Records window movements which have been queued. */
     private record(entity: Entity, parent: Entity, rect: Rectangle) {
-        Log.debug(`Window(${entity}) shall be moved to [${rect.fmt()}]`);
         this.requested.set(entity, {
             parent: parent,
             rect: rect,
@@ -450,16 +420,13 @@ export class Forest extends Ecs.World {
      * Reassigns the child of a fork to the parent
      */
     private reassign_child_to_parent(child_entity: Entity, parent_entity: Entity, branch: Node.Node): Fork.Fork | null {
-        Log.debug(`reassigning Fork(${child_entity}) to parent Fork(${parent_entity})`);
         const parent = this.forks.get(parent_entity);
 
         if (parent) {
             if (parent.left.is_fork(child_entity)) {
                 parent.left = branch;
-                Log.debug(`reassigned Fork(${parent_entity}).left to (${parent.left.entity})`);
             } else {
                 parent.right = branch;
-                Log.debug(`reassigned Fork(${parent_entity}).right to (${parent.right.entity})`);
             }
 
             this.reassign_sibling(branch, parent_entity);
@@ -486,8 +453,6 @@ export class Forest extends Ecs.World {
      * Each fork has a left and optional right child entity
      */
     private reassign_children_to_parent(parent_entity: Entity, child_entity: Entity, p_fork: Fork.Fork) {
-        Log.debug(`reassigning children of Fork(${child_entity}) to Fork(${parent_entity})`);
-
         const c_fork = this.forks.get(child_entity);
 
         if (c_fork) {
@@ -505,22 +470,7 @@ export class Forest extends Ecs.World {
 
     /** Reassigns a child to the given parent */
     private reassign_parent(parent: Entity, child: Entity) {
-        Log.debug(`assigning parent of Fork(${child}) to Fork(${parent})`);
         this.parents.insert(child, parent);
-    }
-
-    /** Resizes the parent fork of a child fork */
-    private resize_parent(parent: Fork.Fork, child: Fork.Fork, is_left: boolean, measure: Measure) {
-        if (child.area.eq(parent.area)) return;
-
-        const parent_measure = parent.is_horizontal() ? Measure.Horizontal : Measure.Vertical;
-        if (parent_measure != measure) return;
-
-        parent.set_ratio(
-            is_left
-                ? child.area.array[parent_measure]
-                : (parent.area.array[parent_measure] - child.area.array[parent_measure]),
-        );
     }
 
     /** Readjusts the division of space between the left and right siblings of a fork */
@@ -545,66 +495,53 @@ export class Forest extends Ecs.World {
     }
 
     /** Resizes a fork in the direction that a movement requests */
-    private resize_fork_in_direction(
-        ext: Ext,
-        child_e: Entity,
-        child: Fork.Fork,
-        is_left: boolean,
-        consider_sibling: boolean,
-        crect: Rectangle,
-        measure: Measure,
-    ) {
-        Log.debug(`resizing fork in direction ${measure}: considering ${consider_sibling}`);
-        const original = new Rect.Rectangle([crect.x, crect.y, crect.width, crect.height]);
-        let length = (measure == Measure.Horizontal ? crect.width : crect.height);
+    private resize_fork_(ext: Ext, child_e: Entity, crect: Rectangle) {
+        let child: Fork.Fork = this.forks.get(child_e) as Fork.Fork,
+            parent = this.parents.get(child_e),
+            is_left = child.left.is_fork(child_e),
+            length: number;
 
-        if (consider_sibling) {
-            const left_area = child.area_of_left(ext);
-            length += is_left
-                ? child.area.array[measure] - left_area.array[measure]
-                : left_area.array[measure];
-        }
+        let move_up = (child: Fork.Fork, crect: Rectangle, is_left: boolean) => {
+            return child.area.intersects(crect) && (
+                !child.area.contains(crect) || (is_left
+                    ? child.area.x < crect.x
+                    : child.area.width + child.area.x < crect.x + crect.width
+                )
+            );
+        };
 
-        const shrinking = length < child.area.array[measure];
+        // Find the first parent which does not intersect
+        while (parent !== null) {
+            child = this.forks.get(parent) as Fork.Fork;
+            is_left = child.left.is_fork(child_e);
 
-        let done = false;
-        let child_parent = this.parents.get(child_e);
-        while (child_parent && !done) {
-            const parent = this.forks.get(child_parent);
-            if (parent) {
-                if (parent.area.contains(original)) {
-                    if (shrinking) {
-                        Log.debug(`Fork(${child_e}) area before: ${child.area?.fmt()}`);
-                        child.area.array[measure] = length;
-                        Log.debug(`Fork(${child_e}) area after ${child.area?.fmt()}`);
-                    } else {
-                        Log.info("breaking");
-                        child.area.array[measure] = length;
-                        this.resize_parent(parent, child, parent.left.is_fork(child_e), measure);
-                        done = true;
-                    }
-                } else if (shrinking) {
-                    Log.info("breaking");
-                    this.resize_parent(parent, child, parent.left.is_fork(child_e), measure);
-                    done = true;
-                } else {
-                    Log.debug(`Fork(${child_e}) area before: ${child.area}`);
-                    child.area.array[measure] = length;
-                    parent.area.array[measure] = length;
-                    Log.debug(`Fork(${child_e}) area after ${child.area}`);
-                }
-
-                this.resize_parent(parent, child, parent.left.is_fork(child_e), measure);
-
-                child_e = child_parent;
-                child = parent;
-                child_parent = this.parents.get(child_e);
+            if (move_up(child, crect, is_left)) {
+                Log.debug(`${crect.fmt()} intersects ${child.area.fmt()}`);
             } else {
                 break
             }
+
+            child_e = parent;
+            parent = this.parents.get(child_e);
         }
 
-        child.measure(this, ext, child.area, this.on_record())
+        Log.debug(`horizontal = ${child.is_horizontal()}; is_left = ${is_left}`);
+
+        if (child.is_horizontal()) {
+            length = is_left
+                ? crect.x + crect.width - child.area.x
+                : crect.x - child.area.x
+        } else {
+            length = is_left
+                ? crect.y + crect.height - child.area.y
+                : child.area.height - crect.height
+        }
+
+        child.set_ratio(length);
+
+        Log.debug(`Resizing Fork(${parent} ${child.area.fmt()}) with ${child.length_left} by ${crect.fmt()}`);
+
+        child.measure(this, ext, child.area, this.on_record());
     }
 
     /** Shrinks the sibling of a fork, possibly shrinking the fork itself */
@@ -619,40 +556,30 @@ export class Forest extends Ecs.World {
         if (fork_c.area) {
             if (fork_c.is_horizontal()) {
                 if ((movement & (Movement.DOWN | Movement.UP)) != 0) {
-                    Log.debug(`shrinking Fork(${fork_e}) up/down`);
-                    this.resize_fork_in_direction(ext, fork_e, fork_c, is_left, false, crect, 3);
+                    this.resize_fork_(ext, fork_e, crect);
                 } else if (is_left) {
                     if ((movement & Movement.LEFT) != 0) {
-                        Log.debug(`shrinking left child of Fork(${fork_e}) from right to left`);
                         this.readjust_fork_ratio_by_left(ext, crect.width, fork_c);
                     } else {
-                        Log.debug(`shrinking left child of Fork(${fork_e}) from left to right`);
-                        this.resize_fork_in_direction(ext, fork_e, fork_c, is_left, true, crect, 2);
+                        this.resize_fork_(ext, fork_e, crect);
                     }
                 } else if ((movement & Movement.LEFT) != 0) {
-                    Log.debug(`shrinking right child of Fork(${fork_e}) from right to left`);
-                    this.resize_fork_in_direction(ext, fork_e, fork_c, is_left, true, crect, 2);
+                    this.resize_fork_(ext, fork_e, crect);
                 } else {
-                    Log.debug(`shrinking right child of Fork(${fork_e}) from left to right`);
                     this.readjust_fork_ratio_by_right(ext, crect.width, fork_c, fork_c.area.array[2]);
                 }
             } else {
                 if ((movement & (Movement.LEFT | Movement.RIGHT)) != 0) {
-                    Log.debug(`shrinking Fork(${fork_e}) left/right`);
-                    this.resize_fork_in_direction(ext, fork_e, fork_c, is_left, false, crect, 2);
+                    this.resize_fork_(ext, fork_e, crect);
                 } else if (is_left) {
                     if ((movement & Movement.UP) != 0) {
-                        Log.debug(`shrinking left child of Fork(${fork_e}) from bottom to top`);
                         this.readjust_fork_ratio_by_left(ext, crect.height, fork_c);
                     } else {
-                        Log.debug(`shrinking left child of Fork(${fork_e}) from top to bottom`);
-                        this.resize_fork_in_direction(ext, fork_e, fork_c, is_left, true, crect, 3);
+                        this.resize_fork_(ext, fork_e, crect);
                     }
                 } else if ((movement & Movement.UP) != 0) {
-                    Log.debug(`shrinking right child of Fork(${fork_e}) from bottom to top`);
-                    this.resize_fork_in_direction(ext, fork_e, fork_c, is_left, true, crect, 3);
+                    this.resize_fork_(ext, fork_e, crect);
                 } else {
-                    Log.debug(`shrinking right child of Fork(${fork_e}) from top to bottom`);
                     this.readjust_fork_ratio_by_right(ext, crect.height, fork_c, fork_c.area.array[3]);
                 }
             }

@@ -77,7 +77,6 @@ export class ActiveHint {
     }
 
     show() {
-        global.log(`showing active hint`);
         for (const box of this.border) {
             box.visible = true;
             box.show();

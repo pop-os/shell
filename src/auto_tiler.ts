@@ -59,16 +59,12 @@ export class AutoTiler {
         const [entity, fork] = this.forest.create_toplevel(win.entity, rect.clone(), workspace_id)
         this.attached.insert(win.entity, entity);
 
-        log.debug(`attached Window(${win.entity}) to Fork(${entity}) on Monitor(${workspace_id})`);
-
         this.tile(ext, fork, rect);
         this.log_tree_nodes(ext);
     }
 
     /** Tiles a window into another */
     attach_to_window(ext: Ext, attachee: ShellWindow, attacher: ShellWindow, cursor: Rectangle) {
-        log.debug(`attempting to attach ${attacher.name(ext)} to ${attachee.name(ext)}`);
-
         let attached = this.forest.attach_window(ext, attachee.entity, attacher.entity, cursor);
 
         if (attached) {
@@ -88,19 +84,15 @@ export class AutoTiler {
 
     /** Tile a window onto a workspace */
     attach_to_workspace(ext: Ext, win: ShellWindow, id: [number, number]) {
-        log.debug(`workspace id: ${id}`);
         const toplevel = this.forest.find_toplevel(id);
 
         if (toplevel) {
-            log.debug(`found toplevel at ${toplevel}`);
             const onto = this.forest.largest_window_on(ext, toplevel);
             if (onto) {
-                log.debug(`largest window = ${onto.entity}`);
                 if (this.attach_to_window(ext, onto, win, lib.cursor_rect())) {
                     return;
                 }
             }
-
         }
 
         this.attach_to_monitor(ext, win, id);
@@ -116,7 +108,6 @@ export class AutoTiler {
     auto_tile(ext: Ext, win: ShellWindow, ignore_focus: boolean = false) {
         const result = this.fetch_mode(ext, win, ignore_focus);
         if (result.kind == ERR) {
-            log.debug(`auto_tile: ${result.value}`);
             this.attach_to_workspace(ext, win, ext.workspace_id(win));
         } else {
             this.detach_window(ext, win.entity);
@@ -130,7 +121,6 @@ export class AutoTiler {
             const reflow_fork = this.forest.detach(prev_fork, win);
 
             if (reflow_fork) {
-                log.debug(`found reflow_fork`);
                 const fork = reflow_fork[1];
                 this.tile(ext, fork, fork.area);
             }
@@ -152,8 +142,6 @@ export class AutoTiler {
                     if (fork.left.is_window(win)) {
                         const sibling = ext.windows.get(fork.right.entity);
                         if (sibling && sibling.rect().contains(cursor)) {
-                            log.debug(`${ext.names.get(win)} was dropped onto ${sibling.name(ext)}`);
-
                             fork.left.entity = fork.right.entity;
                             fork.right.entity = win;
 
@@ -163,8 +151,6 @@ export class AutoTiler {
                     } else if (fork.right.is_window(win)) {
                         const sibling = ext.windows.get(fork.left.entity);
                         if (sibling && sibling.rect().contains(cursor)) {
-                            log.debug(`${ext.names.get(win)} was dropped onto ${sibling.name(ext)}`);
-
                             fork.right.entity = fork.left.entity;
                             fork.left.entity = win;
 
@@ -187,7 +173,6 @@ export class AutoTiler {
      * - If no window is present, tile onto the monitor
      */
     on_drop(ext: Ext, win: ShellWindow) {
-        log.debug(`dropped Window(${win.entity})`);
         if (this.dropped_on_sibling(ext, win.entity)) return;
 
         const [cursor, monitor] = ext.cursor_status();
@@ -204,7 +189,6 @@ export class AutoTiler {
         this.detach_window(ext, win.entity);
 
         if (attach_to) {
-            log.debug(`found Window(${attach_to.entity}) at pointer`);
             this.attach_to_window(ext, attach_to, win, cursor);
         } else {
             const toplevel = this.forest.find_toplevel([monitor, workspace]);

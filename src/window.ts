@@ -71,18 +71,10 @@ export class ShellWindow {
         return this.meta.get_compositor_private() !== null;
     }
 
-    private decoration(ext: Ext, callback: (xid: string) => void): void {
+    private decoration(_ext: Ext, callback: (xid: string) => void): void {
         if (this.may_decorate()) {
-            const name = this.name(ext);
             const xid = this.xid();
-
-            if (xid) {
-                log.debug(`previous motif for ${name}: ${xprop.motif_hints(xid)}`);
-
-                callback(xid);
-
-                log.debug(`new motif for ${name}: ${xprop.motif_hints(xid)}`)
-            }
+            if (xid) callback(xid);
         }
     }
 
@@ -266,7 +258,6 @@ export function activate(win: Meta.Window) {
 }
 
 export function blacklisted(window_class: string, title: string): boolean {
-    log.debug(`window class: ${window_class}; title: ${title}`);
     return BLACKLIST.indexOf(window_class) > -1
         || (window_class === "Steam" && title !== "Steam")
         || (window_class === "TelegramDesktop" && title === "Media viewer");

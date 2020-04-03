@@ -131,13 +131,11 @@ function number_entry(
     text.set_max_length(3);
 
     entry.connect('key-press-event', () => {
-        Log.debug(`activated`);
     });
 
     entry.connect('key-release-event', (_: any, event: any) => {
         const symbol = event.get_key_symbol();
 
-        Log.debug(`event symbol: ${symbol}`)
 
         const number: number | null =
             symbol == 65293     // enter key
@@ -210,7 +208,6 @@ function tiled(ext: Ext): any {
             let tiler = new auto_tiler.AutoTiler(
                 new Forest()
                     .connect_on_attach((entity: Entity, window: Entity) => {
-                        Log.debug(`attached Window(${window}) to Fork(${entity})`);
                         tiler.attached.insert(window, entity);
                     }),
                 ext.register_storage()

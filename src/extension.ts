@@ -22,6 +22,7 @@ import type { Entity } from 'ecs';
 import type { Rectangle } from 'rectangle';
 import type { Indicator } from 'panel_settings';
 import type { Launcher } from './launcher';
+import { Fork } from './fork';
 
 const { Gio, Meta, St } = imports.gi;
 const { cursor_rect, is_move_op } = Lib;
@@ -219,13 +220,11 @@ export class Ext extends Ecs.World {
         this.size_signals.insert(win.entity, [
             this.connect_meta(win, 'size-changed', () => {
                 if (this.auto_tiler && !win.is_maximized()) {
-                    Log.debug(`size changed: ${win.name(this)}`);
                     this.auto_tiler.reflow(this, win.entity);
                 }
             }),
             this.connect_meta(win, 'position-changed', () => {
                 if (this.auto_tiler && !win.is_maximized()) {
-                    Log.debug(`position changed: ${win.name(this)}`);
                     this.auto_tiler.reflow(this, win.entity);
                 }
             }),
@@ -325,7 +324,6 @@ export class Ext extends Ecs.World {
     }
 
     on_destroy(win: Entity) {
-        Log.debug(`destroying window (${win}): ${this.names.get(win)}`);
 
         if (this.last_focused == win) {
             this.active_hint?.untrack();
@@ -379,7 +377,6 @@ export class Ext extends Ecs.World {
         let current = this.settings.gap_inner();
         let prev_gap = this.gap_inner_prev / 4 / this.dpi;
 
-        Log.debug(`PREV: ${prev_gap}; Current = ${current}`);
         if (current != prev_gap) {
             this.set_gap_inner(current);
             Log.info(`inner gap changed to ${current}`);
@@ -458,16 +455,12 @@ export class Ext extends Ecs.World {
         }
 
         if (win && this.grab_op && Ecs.entity_eq(this.grab_op.entity, win.entity)) {
-            let crect = win.rect()
-
             if (this.auto_tiler) {
+                let crect = win.rect()
                 const rect = this.grab_op.rect;
                 if (is_move_op(op)) {
-                    Log.debug(`win: ${win.name(this)}; op: ${op}; from (${rect.x},${rect.y}) to (${crect.x},${crect.y})`);
-
-                    this.on_monitor_changed(win, (changed_from, changed_to, workspace) => {
+                    this.on_monitor_changed(win, (_changed_from, changed_to, workspace) => {
                         if (win) {
-                            Log.debug(`window ${win.name(this)} moved from display ${changed_from} to ${changed_to}`);
                             this.monitors.insert(win.entity, [changed_to, workspace]);
                         }
                     });
@@ -484,17 +477,19 @@ export class Ext extends Ecs.World {
                     if (fork) {
                         const component = this.auto_tiler.forest.forks.get(fork);
                         if (component) {
-                            const movement = this.grab_op.operation(crect);
+                            let top_level = this.auto_tiler.forest.find_toplevel(this.workspace_id());
+                            if (top_level) {
+                                crect.clamp((this.auto_tiler.forest.forks.get(top_level) as Fork).area);
+                            }
 
-                            Log.debug(`resizing window: from [${rect.fmt()} to ${crect.fmt()}]`);
+                            Log.debug(`moved from ${this.grab_op.rect.fmt()} to ${crect.fmt()}`);
+                            const movement = this.grab_op.operation(crect);
 
                             this.auto_tiler.forest.resize(this, fork, component, win.entity, movement, crect);
                             this.auto_tiler.forest.arrange(this, component.workspace);
-                            Log.debug(`changed to: ${this.auto_tiler.forest.fmt(this)}`);
                         } else {
                             Log.error(`no fork component found`);
                         }
-
                     } else {
                         Log.error(`no fork entity found`);
                     }
@@ -514,7 +509,6 @@ export class Ext extends Ecs.World {
         let win = this.get_window(meta);
         if (win && win.is_tilable(this)) {
             let entity = win.entity;
-            Log.debug(`Start grab of Window(${entity}): ${this.names.get(entity)}`);
             let rect = win.rect();
 
             if (this.grab_op) {
@@ -531,9 +525,8 @@ export class Ext extends Ecs.World {
     /** Handle window maximization notifications */
     on_maximize(win: Window.ShellWindow) {
         if (win.is_maximized()) {
-            this.on_monitor_changed(win, (cfrom, cto, workspace) => {
+            this.on_monitor_changed(win, (_cfrom, cto, workspace) => {
                 if (win) {
-                    Log.debug(`window ${win.name(this)} moved from display ${cfrom} to ${cto}`);
                     this.monitors.insert(win.entity, [cto, workspace]);
                     this.auto_tiler?.detach_window(this, win.entity);
                 }
@@ -595,12 +588,10 @@ export class Ext extends Ecs.World {
 
     /** Handle workspace change events */
     on_workspace_changed(win: Window.ShellWindow) {
-        Log.debug(`workspace changed for ${win.name(this)}`);
         if (this.auto_tiler) {
             const id = this.workspace_id(win);
             const prev_id = this.monitors.get(win.entity);
             if (!prev_id || id[0] != prev_id[0] || id[1] != prev_id[1]) {
-                Log.debug(`workspace changed from (${prev_id}) to (${id})`);
                 this.monitors.insert(win.entity, id);
                 this.auto_tiler.detach_window(this, win.entity);
                 this.auto_tiler.attach_to_workspace(this, win, id);
@@ -721,7 +712,6 @@ export class Ext extends Ecs.World {
         });
 
         this.connect(workspace_manager, 'active-workspace-changed', () => {
-            Log.debug(`active workspace changed`);
             if (this.active_hint) {
                 this.active_hint.untrack();
             }
@@ -770,7 +760,6 @@ export class Ext extends Ecs.World {
                 new Forest.Forest()
                     .connect_on_attach((entity: Entity, window: Entity) => {
                         if (this.auto_tiler) {
-                            Log.debug(`attached Window(${window}) to Fork(${entity})`);
                             this.auto_tiler.attached.insert(window, entity);
                         }
                     }),
@@ -787,7 +776,6 @@ export class Ext extends Ecs.World {
 
             GLib.timeout_add(1000, GLib.PRIORITY_DEFAULT, () => {
                 this.init = false;
-                Log.debug(`init complete`);
                 return false;
             });
         }
@@ -805,14 +793,12 @@ export class Ext extends Ecs.World {
 
     size_signals_block(win: Window.ShellWindow) {
         this.size_signals.with(win.entity, (signals) => {
-            Log.debug(`Blocking signals of Window(${win.entity})`);
             for (const signal of signals) utils.block_signal(win.meta, signal);
         });
     }
 
     size_signals_unblock(win: Window.ShellWindow) {
         this.size_signals.with(win.entity, (signals) => {
-            Log.debug(`Unblocking signals of Window(${win.entity})`);
             for (const signal of signals) utils.unblock_signal(win.meta, signal);
         });
     }
@@ -983,7 +969,6 @@ export class Ext extends Ecs.World {
             this.names.insert(entity, name);
             this.monitors.insert(entity, [win.meta.get_monitor(), win.workspace_id()]);
 
-            Log.debug(`created window (${win.entity}): ${win.name(this)}: ${id}`);
 
             if (this.auto_tiler && win.is_tilable(this)) {
                 let id = actor.connect('first-frame', () => {
@@ -1023,13 +1008,11 @@ export class Ext extends Ecs.World {
     }
 
     workspace_id(window: Window.ShellWindow | null = null): [number, number] {
-        Log.debug(`fetching workspace ID`);
 
         let id: [number, number] = window
             ? [window.meta.get_monitor(), window.workspace_id()]
             : [this.active_monitor(), this.active_workspace()];
 
-        Log.debug(`fetched workspace ID: ${id}`);
 
         id[0] = Math.max(0, id[0]);
         id[1] = Math.max(0, id[1]);

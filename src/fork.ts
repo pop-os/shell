@@ -8,7 +8,6 @@ import type { Rectangle } from 'rectangle';
 import type { Node } from 'node';
 
 import * as Lib from 'lib';
-import * as log from 'log';
 import * as node from 'node';
 import * as Rect from 'rectangle';
 
@@ -186,7 +185,6 @@ export class Fork {
     }
 
     migrate(ext: Ext, forest: Forest, area: Rectangle, monitor: number, workspace: number) {
-        log.info(`Migrating Fork(${this.entity})`);
         if (this.is_toplevel) {
             forest.toplevel.set(forest.string_reps.get(this.entity) as string, [this.entity, [monitor, workspace]]);
 
@@ -204,8 +202,6 @@ export class Fork {
         } else {
             // TODO: Seperate into new tree?
         }
-
-        log.info(`Migrated Fork(${this.entity})`);
     }
 
     rebalance_orientation() {

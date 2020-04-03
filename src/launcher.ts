@@ -222,7 +222,6 @@ export class Launcher extends search.Search {
     }
 
     list_workspace(ext: Ext) {
-        log.debug(`listing workspace`);
         const active = ext.active_workspace();
         for (const window of ext.tab_list(Meta.TabList.NORMAL, null)) {
             if (window.workspace_id() === active) {
