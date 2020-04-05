@@ -3,8 +3,7 @@
 }
 
 .pop-shell-search-active {
-    background: rgba(15, 15, 15, 0.01);
-    box-shadow: inset 0 0 0 2px #fec641;
+    background: rgba(0, 0, 0, .1);
     border-radius: 5px;
     color: #393634;
 }
@@ -23,7 +22,3 @@
     padding-top: 6px;
     padding-bottom: 6px;
 }
-
-/* search results separator
-.pop-shell-separator {
-}*/
