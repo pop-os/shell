@@ -173,15 +173,20 @@ export class ShellWindow {
                     duration: 150,
                     mode: null,
                     onComplete: () => {
-                        this.meta.move_resize_frame(
-                            true,
-                            clone.x,
-                            clone.y,
-                            clone.width,
-                            clone.height
-                        );
+                        const GLib: GLib = imports.gi.GLib;
 
-                        on_complete();
+                        GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
+                            this.meta.move_resize_frame(
+                                true,
+                                clone.x,
+                                clone.y,
+                                clone.width,
+                                clone.height
+                            );
+
+                            on_complete();
+                            return false;
+                        });
                     }
                 });
             } else {
