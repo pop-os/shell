@@ -36,8 +36,8 @@ export class Rectangle {
         this.x = Math.max(other.x, this.x);
         this.y = Math.max(other.y, this.y);
 
-        let tend = this.x + this.width;
-        let oend = other.x + other.width;
+        let tend = this.x + this.width,
+            oend = other.x + other.width;
         if (tend > oend) {
             this.width = oend - this.x;
         }
@@ -46,25 +46,6 @@ export class Rectangle {
         oend = other.y + other.height;
         if (tend > oend) {
             this.height = oend - this.y;
-        }
-    }
-
-    clamp_diff(other: Rectangle) {
-        this.x = Math.max(other.x, this.x);
-        this.y = Math.max(other.y, this.y);
-
-        let tend = this.x + this.width;
-        let oend = other.x + other.width;
-        if (tend > oend) {
-            this.x -= this.width - (oend - this.x);
-            this.width = (oend - this.x);
-        }
-
-        tend = this.y + this.height;
-        oend = other.y + other.height;
-        if (tend > oend) {
-            this.y -= this.height - (oend - this.y)
-            this.height = (oend - this.y);
         }
     }
 

@@ -213,13 +213,17 @@ export class Tiler {
 
                 const work_area = ext.monitor_work_area(workspace_id[0]);
 
-                let resize = (func: (m: Rectangle, a: Rectangle) => void) => {
-                    const grab_op = new GrabOp.GrabOp((this.window as Entity), before);
+                const grab_op = new GrabOp.GrabOp((this.window as Entity), before);
 
-                    let crect = grab_op.rect.clone();
+                let crect = grab_op.rect.clone();
+
+                let resize = (func: (m: Rectangle, a: Rectangle) => void) => {
+                    global.log(`BEFORE: ${crect.fmt()}`);
                     func(work_area, crect);
 
-                    crect.clamp_diff(toparea);
+                    crect.clamp(toparea);
+
+                    global.log(`AFTER: ${crect.fmt()}`);
 
                     if (crect.eq(grab_op.rect)) {
                         return;
@@ -267,38 +271,33 @@ export class Tiler {
                 mov1 = new Rect.Rectangle([0, 0, -hrow, 0]);
                 break;
             case Direction.Right:
-                mov1 = new Rect.Rectangle([-hrow, 0, hrow, 0]);
-                mov2 = new Rect.Rectangle([0, 0, hrow, 0]);
+                mov2 = new Rect.Rectangle([-hrow, 0, hrow, 0]);
+                mov1 = new Rect.Rectangle([0, 0, hrow, 0]);
                 break;
             case Direction.Up:
                 mov2 = new Rect.Rectangle([0, hcolumn, 0, -hcolumn]);
                 mov1 = new Rect.Rectangle([0, 0, 0, -hcolumn]);
                 break;
             default:
-                mov1 = new Rect.Rectangle([0, -hcolumn, 0, hcolumn]);
-                mov2 = new Rect.Rectangle([0, 0, 0, hcolumn]);
+                mov2 = new Rect.Rectangle([0, -hcolumn, 0, hcolumn]);
+                mov1 = new Rect.Rectangle([0, 0, 0, hcolumn]);
         }
 
         this.move_auto_(
             ext,
             (work_area, crect) => {
                 crect.apply(mov1);
-                if (crect.x < work_area.x) {
-                    crect.width += work_area.x - crect.x;
-                }
-
-                if (crect.y < work_area.y) {
-                    crect.height += work_area.y - crect.y;
-                }
+                crect.clamp(work_area);
             },
             (work_area, crect) => {
+                let before = crect.clone();
                 crect.apply(mov2);
-                if (crect.x < work_area.x) {
-                    crect.width += work_area.x - crect.x;
-                }
-
-                if (crect.y < work_area.y) {
-                    crect.height += work_area.y - crect.y;
+                crect.clamp(work_area);
+                if (!before.diff(crect).eq(mov2)) {
+                    crect.array[0] = before.array[0];
+                    crect.array[1] = before.array[1];
+                    crect.array[2] = before.array[2];
+                    crect.array[3] = before.array[3];
                 }
             }
         );
