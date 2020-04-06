@@ -495,37 +495,62 @@ export class Forest extends Ecs.World {
     }
 
     /** Resizes a fork in the direction that a movement requests */
-    private resize_fork_(ext: Ext, child_e: Entity, crect: Rectangle) {
+    private resize_fork_(ext: Ext, child_e: Entity, crect: Rectangle, shrunk?: movement.Movement) {
         let child: Fork.Fork = this.forks.get(child_e) as Fork.Fork,
-            parent = this.parents.get(child_e),
-            is_left = child.left.is_fork(child_e),
-            length: number;
+            is_left: boolean = child.left.is_fork(child_e),
+            length: number,
+            parent: Entity | null = this.parents.get(child_e);
 
-        let move_up = (child: Fork.Fork, crect: Rectangle, is_left: boolean) => {
-            return child.area.intersects(crect) && (
-                !child.area.contains(crect) || (is_left
-                    ? child.area.x < crect.x
-                    : child.area.width + child.area.x < crect.x + crect.width
-                )
-            );
-        };
-
-        // Find the first parent which does not intersect
-        while (parent !== null) {
-            child = this.forks.get(parent) as Fork.Fork;
-            is_left = child.left.is_fork(child_e);
-
-            if (move_up(child, crect, is_left)) {
-                Log.debug(`${crect.fmt()} intersects ${child.area.fmt()}`);
-            } else {
-                break
+        if (shrunk) {
+            let origin;
+            switch (shrunk) {
+                case Movement.DOWN:
+                    origin = child.area.y;
+                    break
+                case Movement.UP:
+                    origin = child.area.y + child.area.height;
+                    break
+                case Movement.LEFT:
+                    origin = child.area.x;
+                    break
+                default:
+                    origin = child.area.x + child.area.width;
             }
 
-            child_e = parent;
-            parent = this.parents.get(child_e);
-        }
+            outer: while (parent !== null) {
+                child = this.forks.get(parent) as Fork.Fork;
+                is_left = child.left.is_fork(child_e);
 
-        Log.debug(`horizontal = ${child.is_horizontal()}; is_left = ${is_left}`);
+                switch (shrunk) {
+                    case Movement.DOWN:
+                        if (origin > child.area.y) break outer;
+                        break
+                    case Movement.UP:
+                        if (origin < child.area.y + child.area.height) break outer;
+                        break
+                    case Movement.LEFT:
+                        if (origin > child.area.x) break outer;
+                        break
+                    default:
+                        if (origin < child.area.x + child.area.width) break outer;
+                }
+
+                child_e = parent;
+                parent = this.parents.get(child_e);
+            }
+        } else {
+            while (parent !== null) {
+                child = this.forks.get(parent) as Fork.Fork;
+                is_left = child.left.is_fork(child_e);
+
+                if (child.area.contains(crect)) {
+                    break
+                }
+
+                child_e = parent;
+                parent = this.parents.get(child_e);
+            }
+        }
 
         if (child.is_horizontal()) {
             length = is_left
@@ -538,8 +563,6 @@ export class Forest extends Ecs.World {
         }
 
         child.set_ratio(length);
-
-        Log.debug(`Resizing Fork(${parent} ${child.area.fmt()}) with ${child.length_left} by ${crect.fmt()}`);
 
         child.measure(this, ext, child.area, this.on_record());
     }
@@ -561,24 +584,24 @@ export class Forest extends Ecs.World {
                     if ((movement & Movement.LEFT) != 0) {
                         this.readjust_fork_ratio_by_left(ext, crect.width, fork_c);
                     } else {
-                        this.resize_fork_(ext, fork_e, crect);
+                        this.resize_fork_(ext, fork_e, crect, movement);
                     }
                 } else if ((movement & Movement.LEFT) != 0) {
-                    this.resize_fork_(ext, fork_e, crect);
+                    this.resize_fork_(ext, fork_e, crect, movement);
                 } else {
                     this.readjust_fork_ratio_by_right(ext, crect.width, fork_c, fork_c.area.array[2]);
                 }
             } else {
                 if ((movement & (Movement.LEFT | Movement.RIGHT)) != 0) {
-                    this.resize_fork_(ext, fork_e, crect);
+                    this.resize_fork_(ext, fork_e, crect, movement);
                 } else if (is_left) {
                     if ((movement & Movement.UP) != 0) {
                         this.readjust_fork_ratio_by_left(ext, crect.height, fork_c);
                     } else {
-                        this.resize_fork_(ext, fork_e, crect);
+                        this.resize_fork_(ext, fork_e, crect, movement);
                     }
                 } else if ((movement & Movement.UP) != 0) {
-                    this.resize_fork_(ext, fork_e, crect);
+                    this.resize_fork_(ext, fork_e, crect, movement);
                 } else {
                     this.readjust_fork_ratio_by_right(ext, crect.height, fork_c, fork_c.area.array[3]);
                 }
