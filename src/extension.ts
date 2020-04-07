@@ -81,10 +81,10 @@ export class Ext extends Ecs.System<ExtEvent> {
     animate_windows: boolean = true;
 
     /** Column sizes in snap-to-grid */
-    column_size: number = 128;
+    column_size: number = 32;
 
     /** Row size in snap-to-grid */
-    row_size: number = 128;
+    row_size: number = 32;
 
     /** The known display configuration, for tracking monitor removals and changes */
     displays: Map<number, Display> = new Map();
@@ -342,8 +342,8 @@ export class Ext extends Ecs.System<ExtEvent> {
         this.gap_inner_prev = this.gap_inner;
         this.gap_outer_prev = this.gap_outer;
 
-        this.column_size = this.settings.column_size();
-        this.row_size = this.settings.row_size();
+        this.column_size = this.settings.column_size() * this.dpi;
+        this.row_size = this.settings.row_size() * this.dpi;
 
         if (this.settings.active_hint() && !this.active_hint) {
             this.active_hint = new active_hint.ActiveHint(this.dpi);

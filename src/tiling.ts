@@ -117,27 +117,30 @@ export class Tiler {
             }
             if (max_y === null || (monitor.y + monitor.height) < max_y) {
                 max_y = monitor.y + monitor.height;
+                global.log(`MAX Y = ${max_y}`);
             }
         }
 
-        // Do not use change if maxima cannot be found
-        if (min_x === null || min_y === null || max_x === null || max_y === null) {
-            return this;
-        }
-
-        // Prevent moving too far left
-        if (changed.x < min_x) return this;
-        // Prevent moving too far right
-        if ((changed.x + changed.width) > max_x) return this;
-        // Prevent moving too far up
-        if (changed.y < min_y) return this;
-        // Prevent moving too far down
-        if ((changed.y + changed.height) > max_y) return this;
+        if (
+            // Do not use change if maxima cannot be found
+            (min_x === null || min_y === null || max_x === null || max_y === null)
+            // Prevent moving too far left
+            || changed.x < min_x
+            // Prevent moving too far right
+            || (changed.x + changed.width) > max_x
+            // Prevent moving too far up
+            || changed.y < min_y
+            // Prevent moving too far down
+            || (changed.y + changed.height) > max_y
+        ) return this;
 
         overlay.x = changed.x;
         overlay.y = changed.y;
         overlay.width = changed.width;
         overlay.height = changed.height;
+
+        global.log(`${overlay.height}`);
+
         return this;
     }
 

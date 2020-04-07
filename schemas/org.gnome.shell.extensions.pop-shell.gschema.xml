@@ -24,12 +24,12 @@
 
         <!-- Tiling Options -->
         <key type="u" name="column-size">
-            <default>128</default>
+            <default>64</default>
             <summary>Size of a column in the display grid</summary>
         </key>
 
         <key type="u" name="row-size">
-            <default>128</default>
+            <default>64</default>
             <summary>Size of a row in the display grid</summary>
         </key>
 
