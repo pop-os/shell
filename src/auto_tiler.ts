@@ -14,7 +14,6 @@ import type { Rectangle } from 'rectangle';
 import type { Result } from 'result';
 import type { ShellWindow } from 'window';
 
-const GLib: GLib = imports.gi.GLib;
 const { Ok, Err, ERR } = result;
 const { NodeKind } = node;
 const Tags = Me.imports.tags;
@@ -209,11 +208,9 @@ export class AutoTiler {
         const fork_entity = this.attached.get(win);
         if (!fork_entity) return
 
-        GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
+        ext.register_fn(() => {
             const fork = this.forest.forks.get(fork_entity);
             if (fork) this.tile(ext, fork, fork.area);
-
-            return false;
         });
     }
 

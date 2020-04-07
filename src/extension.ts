@@ -2,6 +2,7 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 import * as Forest from 'forest';
 import * as Ecs from 'ecs';
+import * as Events from 'events';
 import * as Focus from 'focus';
 import * as GrabOp from 'grab_op';
 import * as Keybindings from 'keybindings';
@@ -17,14 +18,17 @@ import * as active_hint from 'active_hint';
 import * as auto_tiler from 'auto_tiler';
 import * as node from 'node';
 import * as utils from 'utils';
+import * as Executor from 'executor';
 
 import type { Entity } from 'ecs';
+import type { ExtEvent } from 'events';
 import type { Rectangle } from 'rectangle';
 import type { Indicator } from 'panel_settings';
 import type { Launcher } from './launcher';
 import { Fork } from './fork';
 
 const { Gio, Meta, St } = imports.gi;
+const { WindowEvent } = Events;
 const { cursor_rect, is_move_op } = Lib;
 const { layoutManager, overview, panel, sessionMode } = imports.ui.main;
 const Tags = Me.imports.tags;
@@ -51,7 +55,7 @@ interface Monitor extends Rectangular {
     index: number;
 }
 
-export class Ext extends Ecs.World {
+export class Ext extends Ecs.System<ExtEvent> {
     /** Mechanism for managing keybindings */
     keybindings: Keybindings.Keybindings = new Keybindings.Keybindings(this);
 
@@ -161,7 +165,7 @@ export class Ext extends Ecs.World {
     tiler: Tiling.Tiler = new Tiling.Tiler(this);
 
     constructor() {
-        super();
+        super(new Executor.GLibExecutor());
 
         this.load_settings();
 
@@ -179,6 +183,64 @@ export class Ext extends Ecs.World {
             }
         });
     }
+
+    // System interface
+
+    /** Registers a generic callback to be executed in the event loop. */
+    register_fn(callback: () => void) {
+        this.register({ tag: 1, callback });
+    }
+
+    /** Executes an event on the system */
+    run(event: ExtEvent) {
+        switch (event.tag) {
+            /** Callback Event */
+            case 1:
+                event.callback();
+                break
+
+            /** Window Event */
+            case 2:
+                let win = event.window;
+
+                /** Validate that the window's actor still exists. */
+                if (!win.actor_exists()) return;
+
+                switch (event.event) {
+                    case WindowEvent.Maximize:
+                        this.on_maximize(win);
+                        break
+
+                    case WindowEvent.Minimize:
+                        this.on_minimize(win);
+                        break;
+
+                    case WindowEvent.Size:
+                        if (this.auto_tiler && !win.is_maximized()) {
+                            this.auto_tiler.reflow(this, win.entity);
+                        }
+
+                        break
+
+                    case WindowEvent.Workspace:
+                        this.on_workspace_changed(win)
+                        break
+                }
+
+                break
+
+            /** Window Create Event */
+            case 3:
+                let actor = event.window.get_compositor_private();
+                if (actor) {
+                    this.on_window_create(event.window, actor);
+                }
+
+                break
+        }
+    }
+
+    // Extension methods
 
     activate_window(window: Window.ShellWindow | null) {
         if (window) {
@@ -219,36 +281,27 @@ export class Ext extends Ecs.World {
     connect_window(win: Window.ShellWindow) {
         this.size_signals.insert(win.entity, [
             this.connect_meta(win, 'size-changed', () => {
-                if (this.auto_tiler && !win.is_maximized()) {
-                    this.auto_tiler.reflow(this, win.entity);
-                }
+                this.register(Events.window(win, WindowEvent.Size));
             }),
             this.connect_meta(win, 'position-changed', () => {
-                if (this.auto_tiler && !win.is_maximized()) {
-                    this.auto_tiler.reflow(this, win.entity);
-                }
+                this.register(Events.window(win, WindowEvent.Size));
             }),
-            this.connect_meta(win, 'workspace-changed', () => this.on_workspace_changed(win)),
+            this.connect_meta(win, 'workspace-changed', () => {
+                this.register(Events.window(win, WindowEvent.Workspace));
+            }),
         ]);
 
         this.connect_meta(win, 'notify::minimized', () => {
-            if (this.auto_tiler) {
-                if (win.meta.minimized) {
-                    if (this.active_hint && this.active_hint.is_tracking(win.entity)) {
-                        this.active_hint.untrack();
-                    }
-
-                    if (this.auto_tiler.attached.contains(win.entity)) {
-                        this.auto_tiler.detach_window(this, win.entity);
-                    }
-                } else if (!this.contains_tag(win.entity, Tags.Floating)) {
-                    this.auto_tiler.auto_tile(this, win, false);
-                }
-            }
+            this.register(Events.window(win, WindowEvent.Minimize));
         });
 
-        this.connect_meta(win, 'notify::maximized_horizontally', () => this.on_maximize(win));
-        this.connect_meta(win, 'notify::maximized_vertically', () => this.on_maximize(win));
+        this.connect_meta(win, 'notify::maximized_horizontally', () => {
+            this.register(Events.window(win, WindowEvent.Maximize));
+        });
+
+        this.connect_meta(win, 'notify::maximized_vertically', () => {
+            this.register(Events.window(win, WindowEvent.Maximize));
+        });
     }
 
     exit_modes() {
@@ -536,6 +589,23 @@ export class Ext extends Ecs.World {
         }
     }
 
+    /** Handle window minimization notifications */
+    on_minimize(win: Window.ShellWindow) {
+        if (this.auto_tiler) {
+            if (win.meta.minimized) {
+                if (this.active_hint && this.active_hint.is_tracking(win.entity)) {
+                    this.active_hint.untrack();
+                }
+
+                if (this.auto_tiler.attached.contains(win.entity)) {
+                    this.auto_tiler.detach_window(this, win.entity);
+                }
+            } else if (!this.contains_tag(win.entity, Tags.Floating)) {
+                this.auto_tiler.auto_tile(this, win, false);
+            }
+        }
+    }
+
     /** Handles the event of a window moving from one monitor to another. */
     on_monitor_changed(
         win: Window.ShellWindow,
@@ -559,19 +629,7 @@ export class Ext extends Ecs.World {
         this.update_display_configuration();
     }
 
-    /** Handle window creation events */
-    on_window_create(window: Meta.Window) {
-        GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
-            let actor = window.get_compositor_private();
-            if (actor) {
-                this.on_window_create_inner(window, actor);
-            }
-
-            return false;
-        });
-    }
-
-    on_window_create_inner(window: Meta.Window, actor: Clutter.Actor) {
+    on_window_create(window: Meta.Window, actor: Clutter.Actor) {
         let win = this.get_window(window);
         if (win) {
             const entity = win.entity;
@@ -676,7 +734,7 @@ export class Ext extends Ecs.World {
         });
 
         // We have to connect this signal in an idle_add; otherwise work areas stop being calculated
-        GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
+        this.register_fn(() => {
             this.update_display_configuration();
 
             this.connect(global.display, 'notify::focus-window', () => {
@@ -696,8 +754,8 @@ export class Ext extends Ecs.World {
             return false;
         });
 
-        this.connect(global.display, 'window_created', (_, win) => {
-            this.on_window_create(win);
+        this.connect(global.display, 'window_created', (_, window: Meta.Window) => {
+            this.register({ tag: 3, window });
             return true;
         });
 
@@ -771,7 +829,7 @@ export class Ext extends Ecs.World {
 
         if (this.init) {
             for (const window of this.tab_list(Meta.TabList.NORMAL, null)) {
-                this.on_window_create(window.meta);
+                this.register({ tag: 3, window: window.meta });
             }
 
             GLib.timeout_add(1000, GLib.PRIORITY_DEFAULT, () => {
@@ -831,8 +889,6 @@ export class Ext extends Ecs.World {
 
     on_display_move(_from_id: number, _to_id: number) {
         if (!this.auto_tiler) return;
-
-
     }
 
     on_display_remove(id: number, display: Display) {
@@ -1036,10 +1092,8 @@ function enable() {
     if (!ext) {
         ext = new Ext();
 
-        // Code to execute after the shell has finished initializing everything.
-        GLib.idle_add(GLib.PRIORITY_LOW, () => {
+        ext.register_fn(() => {
             if (ext?.auto_tiler) ext.snap_windows();
-            return false;
         });
     }
 

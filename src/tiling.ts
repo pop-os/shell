@@ -211,15 +211,13 @@ export class Tiler {
 
                 const before = window.rect();
 
-                const work_area = ext.monitor_work_area(workspace_id[0]);
-
                 const grab_op = new GrabOp.GrabOp((this.window as Entity), before);
 
                 let crect = grab_op.rect.clone();
 
                 let resize = (func: (m: Rectangle, a: Rectangle) => void) => {
                     global.log(`BEFORE: ${crect.fmt()}`);
-                    func(work_area, crect);
+                    func(toparea, crect);
 
                     crect.clamp(toparea);
 

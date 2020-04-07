@@ -9,6 +9,8 @@
 /// - The first 32-bit integer is the index.
 /// - The second 32-bit integer is the generation.
 
+import { Executor } from "./executor";
+
 export type Entity = [number, number];
 
 export function entity_eq(a: Entity, b: Entity): boolean {
@@ -250,4 +252,27 @@ function swap_remove<T>(array: Array<T>, index: number): T | undefined {
     const last = array.length - 1;
     array[index] = array[last];
     return array.pop();
+}
+
+/** A system registers events, and handles their execution.
+ *
+ * An executor must be provided for registering events onto.
+ *
+*/
+export class System<T> extends World {
+    #executor: Executor<T>;
+
+    constructor(executor: Executor<T>) {
+        super();
+
+        this.#executor = executor;
+    }
+
+    /** Registers an event to be executed in the event loop */
+    register(event: T): void {
+        this.#executor.wake(this, event);
+    }
+
+    /** Executs an event on the system */
+    run(_event: T): void { }
 }

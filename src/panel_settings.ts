@@ -221,10 +221,7 @@ function tiled(ext: Ext): any {
                 if (window.is_tilable(ext)) tiler.auto_tile(ext, window, false);
             }
 
-            GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
-                ext.switch_to_workspace(original);
-                return false;
-            });
+            ext.register_fn(() => ext.switch_to_workspace(original));
         }
     });
 }

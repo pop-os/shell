@@ -173,9 +173,7 @@ export class ShellWindow {
                     duration: 150,
                     mode: null,
                     onComplete: () => {
-                        const GLib: GLib = imports.gi.GLib;
-
-                        GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
+                        ext.register_fn(() => {
                             this.meta.move_resize_frame(
                                 true,
                                 clone.x,
@@ -185,7 +183,6 @@ export class ShellWindow {
                             );
 
                             on_complete();
-                            return false;
                         });
                     }
                 });
