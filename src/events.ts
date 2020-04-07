@@ -2,27 +2,58 @@
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 import * as Window from 'window';
+import { Rectangle } from './rectangle';
 
 /** Type representing all possible events handled by the extension's system. */
-export type ExtEvent = CallbackEvent | WindowUnion | WindowCreate;
+export type ExtEvent = GenericCallback | ManagedWindow | CreateWindow | GlobalEventTag | WorkspaceRemoved;
 
 /** Eevnt with generic callback */
-export interface CallbackEvent {
+export interface GenericCallback {
     tag: 1;
     callback: () => void;
 }
 
 /** Event that handles a registered window */
-export interface WindowUnion {
+export interface ManagedWindow {
     tag: 2;
     window: Window.ShellWindow;
-    event: WindowEvent;
+    kind: Movement | Basic;
 }
 
 /** Event that registers a new window */
-export interface WindowCreate {
+export interface CreateWindow {
     tag: 3;
     window: Meta.Window;
+}
+
+export interface GlobalEventTag {
+    tag: 4;
+    event: GlobalEvent;
+}
+
+export interface WorkspaceRemoved {
+    tag: 5;
+    number: number;
+}
+
+export enum GlobalEvent {
+    GtkThemeChanged,
+    MonitorsChanged,
+    OverviewShown,
+    OverviewHidden,
+    WindowFocused,
+    WorkspaceChanged,
+    WorkspaceRemoved,
+}
+
+export interface Movement {
+    tag: 1;
+    rect: Rectangle;
+}
+
+export interface Basic {
+    tag: 2;
+    event: WindowEvent
 }
 
 /** The type of event triggered on a window */
@@ -33,7 +64,15 @@ export enum WindowEvent {
     Maximize
 }
 
+export function global(event: GlobalEvent): GlobalEventTag {
+    return { tag: 4, event };
+}
+
+export function window_move(window: Window.ShellWindow, rect: Rectangle): ManagedWindow {
+    return { tag: 2, window, kind: { tag: 1, rect } };
+}
+
 /** Utility function for creating the an ExtEvent */
-export function window(window: Window.ShellWindow, event: WindowEvent): WindowUnion {
-    return { tag: 2, window, event }
+export function window_event(window: Window.ShellWindow, event: WindowEvent): ManagedWindow {
+    return { tag: 2, window, kind: { tag: 2, event } }
 }

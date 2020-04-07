@@ -28,12 +28,10 @@ import type { Launcher } from './launcher';
 import { Fork } from './fork';
 
 const { Gio, Meta, St } = imports.gi;
-const { WindowEvent } = Events;
+const { GlobalEvent, WindowEvent } = Events;
 const { cursor_rect, is_move_op } = Lib;
 const { layoutManager, overview, panel, sessionMode } = imports.ui.main;
 const Tags = Me.imports.tags;
-
-const GLib: GLib = imports.gi.GLib;
 
 const THEME_CONTEXT = St.ThemeContext.get_for_stage(global.stage);
 
@@ -82,6 +80,8 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     /** Column sizes in snap-to-grid */
     column_size: number = 32;
+
+    current_style: Style = this.settings.is_dark() ? Style.Dark : Style.Light;
 
     /** Row size in snap-to-grid */
     row_size: number = 32;
@@ -169,18 +169,9 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         this.load_settings();
 
-        let current_style = this.settings.is_dark() ? Style.Dark : Style.Light;
-        this.load_theme(current_style);
+        this.load_theme(this.current_style);
         this.settings.int.connect('changed::gtk-theme', () => {
-            if (this.settings.is_dark()) {
-                if (current_style === Style.Light) {
-                    current_style = Style.Dark;
-                    this.load_theme(current_style);
-                }
-            } else if (current_style === Style.Dark) {
-                current_style = Style.Light;
-                this.load_theme(current_style);
-            }
+            this.register(Events.global(GlobalEvent.GtkThemeChanged));
         });
     }
 
@@ -206,7 +197,19 @@ export class Ext extends Ecs.System<ExtEvent> {
                 /** Validate that the window's actor still exists. */
                 if (!win.actor_exists()) return;
 
-                switch (event.event) {
+                if (event.kind.tag === 1) {
+                    event.window.meta.move_resize_frame(
+                        true,
+                        event.kind.rect.x,
+                        event.kind.rect.y,
+                        event.kind.rect.width,
+                        event.kind.rect.height
+                    );
+
+                    return;
+                }
+
+                switch (event.kind.event) {
                     case WindowEvent.Maximize:
                         this.on_maximize(win);
                         break
@@ -232,11 +235,47 @@ export class Ext extends Ecs.System<ExtEvent> {
             /** Window Create Event */
             case 3:
                 let actor = event.window.get_compositor_private();
-                if (actor) {
-                    this.on_window_create(event.window, actor);
+                if (!actor) return;
+
+                this.on_window_create(event.window, actor);
+                break
+
+            /** Stateless global events */
+            case 4:
+                switch (event.event) {
+                    case GlobalEvent.GtkThemeChanged:
+                        this.on_gtk_theme_change();
+                        break;
+
+                    case GlobalEvent.MonitorsChanged:
+                        this.on_display_change();
+                        break;
+
+                    case GlobalEvent.OverviewShown:
+                        this.on_overview_shown();
+                        break;
+
+                    case GlobalEvent.OverviewHidden:
+                        this.on_overview_hidden();
+                        break;
+
+                    case GlobalEvent.WindowFocused:
+                        const window = this.focus_window();
+                        if (window) this.on_focused(window);
+                        break;
+
+                    case GlobalEvent.WorkspaceChanged:
+                        this.on_active_workspace_changed();
+                        break
                 }
 
                 break
+
+            /** Workspace Removed */
+            case 5:
+                this.on_workspace_removed(event.number);
+                break
+
         }
     }
 
@@ -281,26 +320,26 @@ export class Ext extends Ecs.System<ExtEvent> {
     connect_window(win: Window.ShellWindow) {
         this.size_signals.insert(win.entity, [
             this.connect_meta(win, 'size-changed', () => {
-                this.register(Events.window(win, WindowEvent.Size));
+                this.register(Events.window_event(win, WindowEvent.Size));
             }),
             this.connect_meta(win, 'position-changed', () => {
-                this.register(Events.window(win, WindowEvent.Size));
+                this.register(Events.window_event(win, WindowEvent.Size));
             }),
             this.connect_meta(win, 'workspace-changed', () => {
-                this.register(Events.window(win, WindowEvent.Workspace));
+                this.register(Events.window_event(win, WindowEvent.Workspace));
             }),
         ]);
 
         this.connect_meta(win, 'notify::minimized', () => {
-            this.register(Events.window(win, WindowEvent.Minimize));
+            this.register(Events.window_event(win, WindowEvent.Minimize));
         });
 
         this.connect_meta(win, 'notify::maximized_horizontally', () => {
-            this.register(Events.window(win, WindowEvent.Maximize));
+            this.register(Events.window_event(win, WindowEvent.Maximize));
         });
 
         this.connect_meta(win, 'notify::maximized_vertically', () => {
-            this.register(Events.window(win, WindowEvent.Maximize));
+            this.register(Events.window_event(win, WindowEvent.Maximize));
         });
     }
 
@@ -376,8 +415,16 @@ export class Ext extends Ecs.System<ExtEvent> {
         }
     }
 
-    on_destroy(win: Entity) {
+    on_active_workspace_changed() {
+        if (this.active_hint) {
+            this.active_hint.untrack();
+        }
 
+        this.exit_modes();
+        this.last_focused = null;
+    }
+
+    on_destroy(win: Entity) {
         if (this.last_focused == win) {
             this.active_hint?.untrack();
 
@@ -397,6 +444,60 @@ export class Ext extends Ecs.System<ExtEvent> {
         if (this.auto_tiler) this.auto_tiler.detach_window(this, win);
 
         this.delete_entity(win);
+    }
+
+    /** Handles display configuration changes */
+    on_display_change() {
+        this.update_display_configuration();
+    }
+
+    on_display_move(_from_id: number, _to_id: number) {
+        if (!this.auto_tiler) return;
+    }
+
+    on_display_remove(id: number, display: Display) {
+        if (!this.auto_tiler) return;
+
+        Log.info(`Display(${id}) removed`);
+
+        let forest = this.auto_tiler.forest;
+
+        for (const [entity, [mon_id,]] of forest.toplevel.values()) {
+            Log.info(`Found TopLevel(${entity}, ${mon_id})`);
+            if (mon_id === id) {
+                let fork = forest.forks.get(entity);
+                if (!fork) continue;
+
+                Log.info(`finding new workspace`);
+                const [new_work_id] = find_unused_workspace();
+                Log.info('finding monitor to retach');
+                const [new_mon_id, new_mon] = this.find_monitor_to_retach(display.area.width, display.area.height);
+
+                fork.workspace = new_work_id;
+
+                let blocked = new Array();
+
+                for (const child of forest.iter(entity, node.NodeKind.FORK)) {
+                    if (child.kind === node.NodeKind.FORK) {
+                        const cfork = forest.forks.get(child.entity);
+                        if (!cfork) continue;
+                        cfork.workspace = new_work_id;
+                    } else {
+                        let window = this.windows.get(child.entity);
+                        if (window) {
+                            this.size_signals_block(window);
+                            blocked.push(window);
+                        }
+                    }
+                }
+
+                fork.migrate(this, forest, new_mon.ws, new_mon_id, new_work_id);
+
+                for (const window of blocked) {
+                    this.size_signals_unblock(window);
+                }
+            }
+        }
     }
 
     /** Triggered when a window has been focused */
@@ -478,18 +579,6 @@ export class Ext extends Ecs.System<ExtEvent> {
             }
 
             Gio.Settings.sync();
-        }
-    }
-
-    on_show_window_titles() {
-        for (const window of this.windows.values()) {
-            if (window.meta.is_client_decorated()) continue;
-
-            if (this.settings.show_title()) {
-                window.decoration_show(this);
-            } else {
-                window.decoration_hide(this);
-            }
         }
     }
 
@@ -575,6 +664,30 @@ export class Ext extends Ecs.System<ExtEvent> {
         }
     }
 
+    on_gtk_theme_change() {
+        if (this.settings.is_dark()) {
+            if (this.current_style === Style.Light) {
+                this.current_style = Style.Dark;
+                this.load_theme(this.current_style);
+            }
+        } else if (this.current_style === Style.Dark) {
+            this.current_style = Style.Light;
+            this.load_theme(this.current_style);
+        }
+    }
+
+    on_show_window_titles() {
+        for (const window of this.windows.values()) {
+            if (window.meta.is_client_decorated()) continue;
+
+            if (this.settings.show_title()) {
+                window.decoration_show(this);
+            } else {
+                window.decoration_hide(this);
+            }
+        }
+    }
+
     /** Handle window maximization notifications */
     on_maximize(win: Window.ShellWindow) {
         if (win.is_maximized()) {
@@ -624,9 +737,29 @@ export class Ext extends Ecs.System<ExtEvent> {
         }
     }
 
-    /** Handles display configuration changes */
-    on_display_change() {
-        this.update_display_configuration();
+    on_overview_hidden() {
+        if (this.active_hint && this.active_hint.window) {
+            let window = this.active_hint.window.meta;
+            if (!window.get_maximized()) {
+                this.active_hint.show();
+            }
+        }
+    }
+
+    on_overview_shown() {
+        Log.info(`showing overview`);
+        if (this.active_hint) {
+            this.active_hint.hide();
+        }
+
+        this.exit_modes();
+
+        if (this.grab_op) {
+            Log.info(`unsetting grab operation due to overview entrance`);
+            let window = this.windows.get(this.grab_op.entity);
+            if (window) this.size_signals_unblock(window);
+            this.grab_op = null;
+        }
     }
 
     on_window_create(window: Meta.Window, actor: Clutter.Actor) {
@@ -653,6 +786,35 @@ export class Ext extends Ecs.System<ExtEvent> {
                 this.monitors.insert(win.entity, id);
                 this.auto_tiler.detach_window(this, win.entity);
                 this.auto_tiler.attach_to_workspace(this, win, id);
+            }
+        }
+    }
+
+    on_workspace_removed(number: number) {
+        Log.info(`workspace ${number} was removed`);
+
+        if (this.auto_tiler) {
+            for (const [entity, monitor] of this.auto_tiler.forest.toplevel.values()) {
+                if (monitor[1] > number) {
+                    Log.info(`moving tree from Fork(${entity})`);
+
+                    monitor[1] -= 1;
+                    let fork = this.auto_tiler.forest.forks.get(entity);
+                    if (fork) {
+                        fork.workspace -= 1;
+                        for (const child of this.auto_tiler.forest.iter(entity, node.NodeKind.FORK)) {
+                            fork = this.auto_tiler.forest.forks.get(child.entity);
+                            if (fork) fork.workspace -= 1;
+                        }
+                    }
+                }
+            }
+        }
+
+        for (const [entity, monitor] of this.monitors.iter()) {
+            if (monitor[1] > number) {
+                Log.info(`moving window from Window(${entity})`);
+                monitor[1] -= 1;
             }
         }
     }
@@ -695,42 +857,25 @@ export class Ext extends Ecs.System<ExtEvent> {
                     break;
             }
         });
-        this.connect(this.settings.mutter, 'changed::workspaces-only-on-primary', () => this.on_display_change());
 
-        this.connect(layoutManager, 'monitors-changed', () => this.on_display_change());
+        this.connect(this.settings.mutter, 'changed::workspaces-only-on-primary', () => {
+            this.register(Events.global(GlobalEvent.MonitorsChanged));
+        });
+
+        this.connect(layoutManager, 'monitors-changed', () => {
+            this.register(Events.global(GlobalEvent.MonitorsChanged));
+        });
 
         this.connect(sessionMode, 'updated', () => {
-            if ('user' != global.sessionMode.currentMode) {
-                this.exit_modes();
-            }
-            return true;
+            if ('user' != global.sessionMode.currentMode) this.exit_modes();
         });
 
         this.connect(overview, 'showing', () => {
-            Log.info(`showing overview`);
-            if (this.active_hint) {
-                this.active_hint.hide();
-            }
-
-            this.exit_modes();
-
-            if (this.grab_op) {
-                Log.info(`unsetting grab operation due to overview entrance`);
-                let window = this.windows.get(this.grab_op.entity);
-                if (window) this.size_signals_unblock(window);
-                this.grab_op = null;
-            }
-
-            return true;
+            this.register(Events.global(GlobalEvent.OverviewShown));
         });
 
         this.connect(overview, 'hiding', () => {
-            if (this.active_hint && this.active_hint.window) {
-                let window = this.active_hint.window.meta;
-                if (!window.get_maximized()) {
-                    this.active_hint.show();
-                }
-            }
+            this.register(Events.global(GlobalEvent.OverviewHidden));
         });
 
         // We have to connect this signal in an idle_add; otherwise work areas stop being calculated
@@ -738,12 +883,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             this.update_display_configuration();
 
             this.connect(global.display, 'notify::focus-window', () => {
-                const window = this.focus_window();
-                if (window) {
-                    this.on_focused(window);
-                }
-
-                return true;
+                this.register(Events.global(GlobalEvent.WindowFocused));
             });
 
             const window = this.focus_window();
@@ -756,57 +896,23 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         this.connect(global.display, 'window_created', (_, window: Meta.Window) => {
             this.register({ tag: 3, window });
-            return true;
         });
 
         this.connect(global.display, 'grab-op-begin', (_, _display, win) => {
             this.on_grab_start(win);
-            return true;
         });
 
         this.connect(global.display, 'grab-op-end', (_, _display, win, op) => {
             this.on_grab_end(win, op);
-            return true;
         });
 
         this.connect(workspace_manager, 'active-workspace-changed', () => {
-            if (this.active_hint) {
-                this.active_hint.untrack();
-            }
-
-            this.exit_modes();
-            this.last_focused = null;
-            return true;
+            this.register(Events.global(GlobalEvent.WorkspaceChanged));
         });
 
         /** When a workspace is destroyed, we need to update state to have the correct workspace info.  */
         this.connect(workspace_manager, 'workspace-removed', (_, number) => {
-            Log.info(`workspace ${number} was removed`);
-
-            if (this.auto_tiler) {
-                for (const [entity, monitor] of this.auto_tiler.forest.toplevel.values()) {
-                    if (monitor[1] > number) {
-                        Log.info(`moving tree from Fork(${entity})`);
-
-                        monitor[1] -= 1;
-                        let fork = this.auto_tiler.forest.forks.get(entity);
-                        if (fork) {
-                            fork.workspace -= 1;
-                            for (const child of this.auto_tiler.forest.iter(entity, node.NodeKind.FORK)) {
-                                fork = this.auto_tiler.forest.forks.get(child.entity);
-                                if (fork) fork.workspace -= 1;
-                            }
-                        }
-                    }
-                }
-            }
-
-            for (const [entity, monitor] of this.monitors.iter()) {
-                if (monitor[1] > number) {
-                    Log.info(`moving window from Window(${entity})`);
-                    monitor[1] -= 1;
-                }
-            }
+            this.register({ tag: 5, number });
         });
 
         // Modes
@@ -832,10 +938,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                 this.register({ tag: 3, window: window.meta });
             }
 
-            GLib.timeout_add(1000, GLib.PRIORITY_DEFAULT, () => {
-                this.init = false;
-                return false;
-            });
+            this.register_fn(() => this.init = false);
         }
     }
 
@@ -883,55 +986,6 @@ export class Ext extends Ecs.System<ExtEvent> {
         for (const entity of this.entities()) {
             if (this.contains_tag(entity, Tags.Tiled)) {
                 yield entity;
-            }
-        }
-    }
-
-    on_display_move(_from_id: number, _to_id: number) {
-        if (!this.auto_tiler) return;
-    }
-
-    on_display_remove(id: number, display: Display) {
-        if (!this.auto_tiler) return;
-
-        Log.info(`Display(${id}) removed`);
-
-        let forest = this.auto_tiler.forest;
-
-        for (const [entity, [mon_id,]] of forest.toplevel.values()) {
-            Log.info(`Found TopLevel(${entity}, ${mon_id})`);
-            if (mon_id === id) {
-                let fork = forest.forks.get(entity);
-                if (!fork) continue;
-
-                Log.info(`finding new workspace`);
-                const [new_work_id] = find_unused_workspace();
-                Log.info('finding monitor to retach');
-                const [new_mon_id, new_mon] = this.find_monitor_to_retach(display.area.width, display.area.height);
-
-                fork.workspace = new_work_id;
-
-                let blocked = new Array();
-
-                for (const child of forest.iter(entity, node.NodeKind.FORK)) {
-                    if (child.kind === node.NodeKind.FORK) {
-                        const cfork = forest.forks.get(child.entity);
-                        if (!cfork) continue;
-                        cfork.workspace = new_work_id;
-                    } else {
-                        let window = this.windows.get(child.entity);
-                        if (window) {
-                            this.size_signals_block(window);
-                            blocked.push(window);
-                        }
-                    }
-                }
-
-                fork.migrate(this, forest, new_mon.ws, new_mon_id, new_work_id);
-
-                for (const window of blocked) {
-                    this.size_signals_unblock(window);
-                }
             }
         }
     }

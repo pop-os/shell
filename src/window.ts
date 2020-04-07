@@ -173,29 +173,13 @@ export class ShellWindow {
                     duration: 150,
                     mode: null,
                     onComplete: () => {
-                        ext.register_fn(() => {
-                            this.meta.move_resize_frame(
-                                true,
-                                clone.x,
-                                clone.y,
-                                clone.width,
-                                clone.height
-                            );
-
-                            on_complete();
-                        });
+                        ext.register({ tag: 2, window: this, kind: { tag: 1, rect: clone } });
+                        ext.register_fn(on_complete);
                     }
                 });
             } else {
-                this.meta.move_resize_frame(
-                    true,
-                    clone.x,
-                    clone.y,
-                    clone.width,
-                    clone.height
-                );
-
-                on_complete();
+                ext.register({ tag: 2, window: this, kind: { tag: 1, rect: clone} });
+                ext.register_fn(on_complete);
             }
         }
     }
