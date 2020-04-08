@@ -7,7 +7,7 @@ import type { Entity } from './ecs';
 import type { Ext } from './extension';
 
 const { Clutter, Gio, St } = imports.gi;
-const { PopupBaseMenuItem, PopupMenuItem, PopupSwitchMenuItem, PopupSubMenuMenuItem } = imports.ui.popupMenu;
+const { PopupBaseMenuItem, PopupMenuItem, PopupSwitchMenuItem, PopupSeparatorMenuItem } = imports.ui.popupMenu;
 const { Button } = imports.ui.panelMenu;
 const { Forest } = Me.imports.forest;
 const GLib: GLib = imports.gi.GLib;
@@ -28,14 +28,13 @@ export class Indicator {
         this.button.add_actor(this.button.icon);
 
         this.button.menu.addMenuItem(tiled(ext));
+        this.button.menu.addMenuItem(menu_separator(''));
 
         this.button.menu.addMenuItem(shortcuts(this.button.menu));
+        this.button.menu.addMenuItem(settings_button(this.button.menu));
+        this.button.menu.addMenuItem(menu_separator(''));
 
-        this.appearances = new PopupSubMenuMenuItem('Appearance', true);
-        this.appearances.icon.icon_name = 'preferences-desktop-display-symbolic';
-        this.button.menu.addMenuItem(this.appearances);
-
-        this.appearances.menu.addMenuItem(
+        this.button.menu.addMenuItem(
             toggle(
                 _("Show Active Hint"),
                 ext.settings.active_hint(),
@@ -45,7 +44,7 @@ export class Indicator {
             )
         );
 
-        this.appearances.menu.addMenuItem(
+        this.button.menu.addMenuItem(
             number_entry(
                 _("Gaps"),
                 ext.settings.gap_inner(),
@@ -60,15 +59,14 @@ export class Indicator {
     }
 }
 
-function settings_button(menu: any): any {
-    let button = new St.Button({
-        label: "View All",
-        x_align: St.Align.START,
-        style_class: 'shell-link',
-        margin_left: 12,
-    });
+function menu_separator(text: any): any {
+    return new PopupSeparatorMenuItem(text);
+}
 
-    button.connect('clicked', () => {
+function settings_button(menu: any): any {
+
+    let item = new PopupMenuItem(_('View All'));
+    item.connect('activate', () => {
         let path: string | null = GLib.find_program_in_path('pop-shell-shortcuts');
         if (path) {
             imports.misc.util.spawn([path]);
@@ -77,9 +75,11 @@ function settings_button(menu: any): any {
         }
 
         menu.close();
-    });
+    })
 
-    return button;
+    item.label.get_clutter_text().set_margin_left(12);
+
+    return item;
 }
 
 function shortcuts(menu: any): any {
@@ -87,10 +87,26 @@ function shortcuts(menu: any): any {
     let widget = new St.Widget({ layout_manager, x_expand: true });
 
     let item = new PopupBaseMenuItem();
+    item.connect('activate', () => {
+        let path: string | null = GLib.find_program_in_path('pop-shell-shortcuts');
+        if (path) {
+            imports.misc.util.spawn([path]);
+        } else {
+            Log.error(`You must install \`pop-shell-shortcuts\``)
+        }
+
+        menu.close();
+    })
     item.add_child(widget);
 
     function create_label(text: string): any {
         return new St.Label({ text });
+    }
+
+    function create_shortcut_label(text: string): any {
+        let label = create_label(text);
+        label.set_x_align(Clutter.ActorAlign.END);
+        return label;
     }
 
     let launcher = create_label(_('Launcher'));
@@ -98,14 +114,17 @@ function shortcuts(menu: any): any {
     let navigate_windows = create_label(_('Navigate Windows'));
     navigate_windows.get_clutter_text().set_margin_left(12);
 
+    // Shortcut items
+    let launcher_shortcut = create_shortcut_label(_('Super + /'));
+    let navigate_windows_shortcut = create_shortcut_label(_('Super + Arrow Keys'));
+
     layout_manager.set_row_spacing(12);
-    layout_manager.set_column_spacing(8);
+    layout_manager.set_column_spacing(30);
     layout_manager.attach(create_label(_('Shortcuts')), 0, 0, 2, 1);
     layout_manager.attach(launcher, 0, 1, 1, 1);
-    layout_manager.attach(create_label(_('Super + /')), 1, 1, 1, 1);
+    layout_manager.attach(launcher_shortcut, 1, 1, 1, 1);
     layout_manager.attach(navigate_windows, 0, 2, 1, 1);
-    layout_manager.attach(create_label(_('Super + Arrow keys')), 1, 2, 1, 1);
-    layout_manager.attach(settings_button(menu), 0, 3, 1, 1);
+    layout_manager.attach(navigate_windows_shortcut, 1, 2, 1, 1);
 
     return item;
 }
@@ -121,8 +140,9 @@ function number_entry(
 ): any {
     let entry = new St.Entry({ text: String(value) });
     entry.set_input_purpose(Clutter.InputContentPurpose.NUMBER);
-    entry.set_x_align(Clutter.ActorAlign.FILL);
-    entry.set_x_expand(true);
+    entry.set_x_align(Clutter.ActorAlign.END);
+    entry.set_x_expand(false);
+    entry.set_style_class_name('pop-shell-gaps-entry');
     entry.connect('button-release-event', () => {
         return true;
     });
@@ -164,6 +184,7 @@ function number_entry(
     });
 
     let item = new PopupMenuItem(label);
+    item.label.get_clutter_text().set_x_expand(true);
     item.label.set_y_align(Clutter.ActorAlign.CENTER);
     item.add_child(entry);
 
