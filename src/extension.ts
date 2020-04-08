@@ -529,10 +529,10 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     on_gap_inner() {
         let current = this.settings.gap_inner();
+        this.set_gap_inner(current);
         let prev_gap = this.gap_inner_prev / 4 / this.dpi;
 
         if (current != prev_gap) {
-            this.set_gap_inner(current);
             Log.info(`inner gap changed to ${current}`);
             if (this.auto_tiler) {
                 this.switch_workspace_on_move = false;
@@ -553,14 +553,16 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     on_gap_outer() {
         let current = this.settings.gap_outer();
-        let prev_gap = this.gap_outer_prev / 4 / this.dpi;
+        this.set_gap_outer(current);
 
+        let prev_gap = this.gap_outer_prev / 4 / this.dpi;
         let diff = current - prev_gap;
+
         if (diff != 0) {
-            Log.info(`outer gap changed to ${current}`);
             this.set_gap_outer(current);
             if (this.auto_tiler) {
                 this.switch_workspace_on_move = false;
+
                 for (const [entity,] of this.auto_tiler.forest.toplevel.values()) {
                     const fork = this.auto_tiler.forest.forks.get(entity);
 
@@ -573,6 +575,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                         this.auto_tiler.tile(this, fork, fork.area);
                     }
                 }
+
                 this.switch_workspace_on_move = true;
             } else {
                 this.update_snapped();
