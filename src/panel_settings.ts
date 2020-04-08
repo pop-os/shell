@@ -34,10 +34,6 @@ export class Indicator {
         this.button.menu.addMenuItem(settings_button(this.button.menu));
         this.button.menu.addMenuItem(menu_separator(''));
 
-        // this.appearances = new PopupSubMenuMenuItem('Appearance', true);
-        // this.appearances.icon.icon_name = 'preferences-desktop-display-symbolic';
-        // this.button.menu.addMenuItem(this.appearances);
-
         this.button.menu.addMenuItem(
             toggle(
                 _("Show Active Hint"),
