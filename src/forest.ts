@@ -82,20 +82,13 @@ export class Forest extends Ecs.World {
 
             window.meta.change_workspace_by_index(workspace, false);
 
-            ws?.activate(global.get_current_time());
+            if (ws) ws.activate(global.get_current_time());
 
-            const backup = window.rect();
-
-            if (!backup.eq(r.rect)) {
-                const signals = ext.size_signals.get(window.entity);
-                if (signals) {
-                    move_window(ext, window, r.rect, signals, () => {
-                        // const actual = window.rect();
-                        // new_positions.push([window, backup, actual]);
-                    });
-                } else {
-                    Log.error(`Attempted move of Window(${entity}), but it does not have attached signals`);
-                }
+            const signals = ext.size_signals.get(window.entity);
+            if (signals) {
+                move_window(ext, window, r.rect, signals, () => { });
+            } else {
+                Log.error(`Attempted move of Window(${entity}), but it does not have attached signals`);
             }
         }
 
