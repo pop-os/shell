@@ -167,8 +167,7 @@ function number_entry(
 
     text.connect('text-changed', () => {
         const input: string = text.get_text();
-        const last = input.slice(-1);
-        let parsed = parseInt(last);
+        let parsed = parseInt(input);
 
         if (isNaN(parsed)) {
             text.set_text(input.substr(0, input.length - 1));
