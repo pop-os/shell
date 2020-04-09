@@ -262,8 +262,9 @@ export class Ext extends Ecs.System<ExtEvent> {
                         break;
 
                     case GlobalEvent.WindowFocused:
-                        const window = this.focus_window();
-                        if (window) this.on_focused(window);
+                        // TODO: Fix timing issue
+                        // const window = this.focus_window();
+                        // if (window) this.on_focused(window);
                         break;
 
                     case GlobalEvent.WorkspaceChanged:
@@ -487,6 +488,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                     } else {
                         let window = this.windows.get(child.entity);
                         if (window) {
+                            this.add_tag(window.entity, Tags.Blocked);
                             this.size_signals_block(window);
                             blocked.push(window);
                         }
@@ -909,7 +911,8 @@ export class Ext extends Ecs.System<ExtEvent> {
         });
 
         this.connect(workspace_manager, 'active-workspace-changed', () => {
-            this.register(Events.global(GlobalEvent.WorkspaceChanged));
+            // this.register(Events.global(GlobalEvent.WorkspaceChanged));
+            this.on_active_workspace_changed();
         });
 
         /** When a workspace is destroyed, we need to update state to have the correct workspace info.  */
@@ -955,6 +958,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     size_signals_block(win: Window.ShellWindow) {
+        Log.debug(`BLOCKING ${win.entity}`);
         this.size_signals.with(win.entity, (signals) => {
             for (const signal of signals) utils.block_signal(win.meta, signal);
             this.add_tag(win.entity, Tags.Blocked);
@@ -962,6 +966,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     size_signals_unblock(win: Window.ShellWindow) {
+        Log.debug(`UNBLOCKING ${win.entity}`);
         this.size_signals.with(win.entity, (signals) => {
             for (const signal of signals) utils.unblock_signal(win.meta, signal);
             this.delete_tag(win.entity, Tags.Blocked);
