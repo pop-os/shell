@@ -174,12 +174,12 @@ export class ShellWindow {
                     mode: null,
                     onComplete: () => {
                         ext.register({ tag: 2, window: this, kind: { tag: 1, rect: clone } });
-                        if (on_complete) ext.register_fn(on_complete, `REGISTERED MOVE ${this.name(ext)}`);
+                        if (on_complete) ext.register_fn(on_complete, `MOVE(${this.entity}) ${this.name(ext)}`);
                     }
                 });
             } else {
                 ext.register({ tag: 2, window: this, kind: { tag: 1, rect: clone} });
-                if (on_complete) ext.register_fn(on_complete, `REGISTERED MOVE ${this.name(ext)}`);
+                if (on_complete) ext.register_fn(on_complete, `MOVE(${this.entity}) ${this.name(ext)}`);
             }
         }
     }

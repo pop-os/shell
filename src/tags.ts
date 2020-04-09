@@ -1,2 +1,3 @@
-export var Tiled: number = 0;
-export var Floating: number = 1;
+export var Tiled = 0;
+export var Floating = 1;
+export var Blocked = 2;
