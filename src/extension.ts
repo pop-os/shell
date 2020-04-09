@@ -505,7 +505,11 @@ export class Ext extends Ecs.System<ExtEvent> {
     /** Triggered when a window has been focused */
     on_focused(win: Window.ShellWindow) {
         this.exit_modes();
-        this.size_signals_unblock(win);
+
+        if (this.contains_tag(win.entity, Tags.Blocked)) {
+            this.size_signals_unblock(win);
+        }
+
         this.prev_focused = this.last_focused;
         this.last_focused = win.entity;
 
@@ -950,16 +954,16 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     size_signals_block(win: Window.ShellWindow) {
-        Log.debug(`BLOCKING ${win.name(this)}`);
         this.size_signals.with(win.entity, (signals) => {
             for (const signal of signals) utils.block_signal(win.meta, signal);
+            this.add_tag(win.entity, Tags.Blocked);
         });
     }
 
     size_signals_unblock(win: Window.ShellWindow) {
-        Log.debug(`UNBLOCKING ${win.name(this)}`);
         this.size_signals.with(win.entity, (signals) => {
             for (const signal of signals) utils.unblock_signal(win.meta, signal);
+            this.delete_tag(win.entity, Tags.Blocked);
         });
     }
 

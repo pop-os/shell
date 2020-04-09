@@ -49,8 +49,6 @@ export class Indicator {
                 _("Gaps"),
                 ext.settings.gap_inner(),
                 (value) => {
-                    ext.set_gap_inner(value);
-                    ext.set_gap_outer(value);
                     ext.settings.set_gap_inner(value);
                     ext.settings.set_gap_outer(value);
                 }
@@ -150,12 +148,8 @@ function number_entry(
     let text = entry.clutter_text;
     text.set_max_length(3);
 
-    entry.connect('key-press-event', () => {
-    });
-
     entry.connect('key-release-event', (_: any, event: any) => {
         const symbol = event.get_key_symbol();
-
 
         const number: number | null =
             symbol == 65293     // enter key
@@ -168,8 +162,6 @@ function number_entry(
 
         if (number !== null) {
             text.set_text(String(number));
-
-            callback(number);
         }
     });
 
@@ -201,11 +193,14 @@ function number_entry(
     text.connect('text-changed', () => {
         const input: string = text.get_text();
         const last = input.slice(-1);
-        const parsed = parseInt(last);
+        let parsed = parseInt(last);
 
         if (isNaN(parsed)) {
             text.set_text(input.substr(0, input.length - 1));
+            parsed = 0;
         }
+
+        callback(parsed);
     });
 
     let item = new PopupMenuItem(label);
