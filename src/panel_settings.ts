@@ -177,7 +177,7 @@ function number_entry(
     let plus_button = new St.Icon();
     plus_button.set_icon_name('value-increase');
     plus_button.set_icon_size(16);
-    plus_button.connect('button-release-event', (_: any, event: any) => {
+    plus_button.connect('button-press-event', (_: any, event: any) => {
         event.get_key_symbol();
         let value = parseInt(text.get_text());
         value = clamp(value + 1);
@@ -187,7 +187,7 @@ function number_entry(
     let minus_button = new St.Icon();
     minus_button.set_icon_name('value-decrease');
     minus_button.set_icon_size(16);
-    minus_button.connect('button-release-event', (_: any, event: any) => {
+    minus_button.connect('button-press-event', (_: any, event: any) => {
         event.get_key_symbol();
         let value = parseInt(text.get_text());
         value = clamp(value - 1);
