@@ -177,10 +177,22 @@ function number_entry(
     let plus_button = new St.Icon();
     plus_button.set_icon_name('value-increase');
     plus_button.set_icon_size(16);
+    plus_button.connect('button-release-event', (_: any, event: any) => {
+        event.get_key_symbol();
+        let value = parseInt(text.get_text());
+        value = clamp(value + 1);
+        text.set_text(String(value));
+    })
 
     let minus_button = new St.Icon();
     minus_button.set_icon_name('value-decrease');
     minus_button.set_icon_size(16);
+    minus_button.connect('button-release-event', (_: any, event: any) => {
+        event.get_key_symbol();
+        let value = parseInt(text.get_text());
+        value = clamp(value - 1);
+        text.set_text(String(value));
+    })
 
     // Secondary is the one on the right, primary on the left.
     entry.set_secondary_icon(plus_button);
