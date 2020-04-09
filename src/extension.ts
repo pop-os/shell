@@ -884,7 +884,8 @@ export class Ext extends Ecs.System<ExtEvent> {
             this.update_display_configuration();
 
             this.connect(global.display, 'notify::focus-window', () => {
-                this.register(Events.global(GlobalEvent.WindowFocused));
+                const window = this.focus_window();
+                if (window) this.on_focused(window);
             });
 
             const window = this.focus_window();
