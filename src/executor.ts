@@ -21,14 +21,13 @@ export class GLibExecutor<T> implements Executor<T> {
      * - Events are handled within batches, yielding between each new set of events.
     */
     wake<S extends Ecs.System<T>>(system: S, event: T): void {
-        this.#events.push(event);
+        this.#events.unshift(event);
 
         if (this.#event_loop) return;
 
         this.#event_loop = GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
-            for (const event of this.#events.splice(0)) {
-                system.run(event);
-            }
+            let event = this.#events.pop();
+            if (event) system.run(event);
 
             if (this.#events.length === 0) {
                 this.#event_loop = null;
