@@ -11,6 +11,7 @@ export type ExtEvent = GenericCallback | ManagedWindow | CreateWindow | GlobalEv
 export interface GenericCallback {
     tag: 1;
     callback: () => void;
+    name?: string;
 }
 
 /** Event that handles a registered window */

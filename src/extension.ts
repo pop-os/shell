@@ -178,8 +178,9 @@ export class Ext extends Ecs.System<ExtEvent> {
     // System interface
 
     /** Registers a generic callback to be executed in the event loop. */
-    register_fn(callback: () => void) {
-        this.register({ tag: 1, callback });
+    register_fn(callback: () => void, name?: string) {
+        this.register({ tag: 1, callback, name });
+        if (name) Log.debug(`REGISTERED ${name}`);
     }
 
     /** Executes an event on the system */
@@ -187,7 +188,8 @@ export class Ext extends Ecs.System<ExtEvent> {
         switch (event.tag) {
             /** Callback Event */
             case 1:
-                event.callback();
+                if (event.name) global.log(`CALBACK EVENT ${event.name}`);
+                (event.callback)();
                 break
 
             /** Window Event */
@@ -503,6 +505,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     /** Triggered when a window has been focused */
     on_focused(win: Window.ShellWindow) {
         this.exit_modes();
+        this.size_signals_unblock(win);
         this.prev_focused = this.last_focused;
         this.last_focused = win.entity;
 
@@ -656,10 +659,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             let entity = win.entity;
             let rect = win.rect();
 
-            if (this.grab_op) {
-                let prev = this.windows.get(this.grab_op.entity);
-                if (prev) this.size_signals_unblock(prev);
-            }
+            this.unset_grab_op();
 
             this.grab_op = new GrabOp.GrabOp(entity, rect);
 
@@ -756,13 +756,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         }
 
         this.exit_modes();
-
-        if (this.grab_op) {
-            Log.info(`unsetting grab operation due to overview entrance`);
-            let window = this.windows.get(this.grab_op.entity);
-            if (window) this.size_signals_unblock(window);
-            this.grab_op = null;
-        }
+        this.unset_grab_op();
     }
 
     on_window_create(window: Meta.Window, actor: Clutter.Actor) {
@@ -915,7 +909,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         /** When a workspace is destroyed, we need to update state to have the correct workspace info.  */
         this.connect(workspace_manager, 'workspace-removed', (_, number) => {
-            this.register({ tag: 5, number });
+            this.on_workspace_removed(number);
         });
 
         // Modes
@@ -956,12 +950,14 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     size_signals_block(win: Window.ShellWindow) {
+        Log.debug(`BLOCKING ${win.name(this)}`);
         this.size_signals.with(win.entity, (signals) => {
             for (const signal of signals) utils.block_signal(win.meta, signal);
         });
     }
 
     size_signals_unblock(win: Window.ShellWindow) {
+        Log.debug(`UNBLOCKING ${win.name(this)}`);
         this.size_signals.with(win.entity, (signals) => {
             for (const signal of signals) utils.unblock_signal(win.meta, signal);
         });
@@ -990,6 +986,14 @@ export class Ext extends Ecs.System<ExtEvent> {
             if (this.contains_tag(entity, Tags.Tiled)) {
                 yield entity;
             }
+        }
+    }
+
+    unset_grab_op() {
+        if (this.grab_op !== null) {
+            let window = this.windows.get(this.grab_op.entity);
+            if (window) this.size_signals_unblock(window);
+            this.grab_op = null;
         }
     }
 

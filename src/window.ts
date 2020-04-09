@@ -144,7 +144,7 @@ export class ShellWindow {
         return this.meta.get_transient_for() !== null;
     }
 
-    move(ext: Ext, rect: Rectangular, on_complete: () => void = () => { }) {
+    move(ext: Ext, rect: Rectangular, on_complete?: () => void) {
         let clone = Rect.Rectangle.from_meta(rect);
         let actor = this.meta.get_compositor_private();
         if (actor) {
@@ -174,12 +174,12 @@ export class ShellWindow {
                     mode: null,
                     onComplete: () => {
                         ext.register({ tag: 2, window: this, kind: { tag: 1, rect: clone } });
-                        ext.register_fn(on_complete);
+                        if (on_complete) ext.register_fn(on_complete, `REGISTERED MOVE ${this.name(ext)}`);
                     }
                 });
             } else {
                 ext.register({ tag: 2, window: this, kind: { tag: 1, rect: clone} });
-                ext.register_fn(on_complete);
+                if (on_complete) ext.register_fn(on_complete, `REGISTERED MOVE ${this.name(ext)}`);
             }
         }
     }

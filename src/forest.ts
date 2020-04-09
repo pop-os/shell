@@ -8,7 +8,6 @@ import * as movement from 'movement';
 import * as Rect from 'rectangle';
 import * as Node from 'node';
 import * as Fork from 'fork';
-import * as utils from 'utils';
 
 import type { Entity } from 'ecs';
 import type { Rectangle } from './rectangle';
@@ -84,12 +83,7 @@ export class Forest extends Ecs.World {
 
             if (ws) ws.activate(global.get_current_time());
 
-            const signals = ext.size_signals.get(window.entity);
-            if (signals) {
-                move_window(ext, window, r.rect, signals, () => { });
-            } else {
-                Log.error(`Attempted move of Window(${entity}), but it does not have attached signals`);
-            }
+            move_window(ext, window, r.rect, () => { });
         }
 
         this.requested.clear();
@@ -646,7 +640,7 @@ export class Forest extends Ecs.World {
 }
 
 
-function move_window(ext: Ext, window: ShellWindow, rect: Rectangular, signals: [SignalID, SignalID, SignalID], on_complete: () => void) {
+function move_window(ext: Ext, window: ShellWindow, rect: Rectangular, on_complete: () => void) {
     if (!(window.meta instanceof Meta.Window)) {
         Log.error(`attempting to a window entity in a tree which lacks a Meta.Window`);
         return;
@@ -659,9 +653,9 @@ function move_window(ext: Ext, window: ShellWindow, rect: Rectangular, signals: 
         return;
     }
 
-    for (const sig of signals) utils.block_signal(window.meta, sig);
+    ext.size_signals_block(window);
     window.move(ext, rect, () => {
-        for (const sig of signals) utils.unblock_signal(window.meta, sig);
+        ext.size_signals_unblock(window);
         on_complete();
     });
 }

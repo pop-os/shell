@@ -33,9 +33,6 @@ declare namespace GObject {
         connect(signal: string, callback: (...args: any) => boolean | void): SignalID;
         disconnect(id: SignalID): void;
 
-        block_signal_handler(signal: SignalID): void;
-        unblock_signal_handler(signal: SignalID): void;
-
         ref(): this;
     }
 }
