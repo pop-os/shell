@@ -46,6 +46,7 @@ export class Launcher extends search.Search {
     selections: Array<ShellWindow | [string, AppInfo]>;
     active: Array<[string, St.Widget, St.Widget]>;
     desktop_apps: Array<[string, AppInfo]>;
+    mode: number;
 
     constructor(ext: Ext) {
         let apps = new Array();
@@ -54,8 +55,9 @@ export class Launcher extends search.Search {
             ext.overlay.visible = false;
         };
 
-        let mode = (_id: number) => {
+        let mode = (id: number) => {
             ext.overlay.visible = false;
+            this.mode = id;
         };
 
         let search = (pattern: string): Array<[string, St.Widget, St.Widget]> | null => {
@@ -139,6 +141,8 @@ export class Launcher extends search.Search {
         };
 
         let select = (id: number) => {
+            if (this.mode !== -1) return;
+
             ext.overlay.visible = false;
 
             if (id >= this.selections.length) return;
@@ -151,6 +155,7 @@ export class Launcher extends search.Search {
                     ext.overlay.y = rect.y;
                     ext.overlay.width = rect.width;
                     ext.overlay.height = rect.height;
+                    global.log(`SHOWING OVERVIEW`);
                     ext.overlay.visible = true;
                 }
             }
@@ -201,6 +206,7 @@ export class Launcher extends search.Search {
         this.selections = new Array();
         this.active = new Array();
         this.desktop_apps = new Array();
+        this.mode = -1;
     }
 
     load_desktop_files() {
