@@ -173,6 +173,19 @@ function number_entry(
         }
     });
 
+
+    let plus_button = new St.Icon();
+    plus_button.set_icon_name('value-increase');
+    plus_button.set_icon_size(16);
+
+    let minus_button = new St.Icon();
+    minus_button.set_icon_name('value-decrease');
+    minus_button.set_icon_size(16);
+
+    // Secondary is the one on the right, primary on the left.
+    entry.set_secondary_icon(plus_button);
+    entry.set_primary_icon(minus_button);
+
     text.connect('text-changed', () => {
         const input: string = text.get_text();
         const last = input.slice(-1);

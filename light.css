@@ -24,5 +24,6 @@
 }
 
 .pop-shell-gaps-entry {
-    width: 50px;
+    /* Seems to get the width just right to fit 3 digits */
+    width: 75px;
 }
