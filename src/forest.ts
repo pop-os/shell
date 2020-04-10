@@ -483,10 +483,16 @@ export class Forest extends Ecs.World {
 
     /** Resizes a fork in the direction that a movement requests */
     private resize_fork_(ext: Ext, child_e: Entity, crect: Rectangle, shrunk?: movement.Movement) {
-        let child: Fork.Fork = this.forks.get(child_e) as Fork.Fork,
-            is_left: boolean = child.left.is_fork(child_e),
-            length: number,
-            parent: Entity | null = this.parents.get(child_e);
+        let parent = this.parents.get(child_e),
+            child: Fork.Fork = this.forks.get(child_e) as Fork.Fork;
+
+        if (!parent) {
+            child.measure(this, ext, child.area, this.on_record());
+            return;
+        }
+
+        let is_left: boolean = child.left.is_fork(child_e),
+            length: number;
 
         if (shrunk) {
             let origin;
