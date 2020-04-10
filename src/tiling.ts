@@ -157,7 +157,7 @@ export class Tiler {
         }
     }
 
-    move_auto_(ext: Ext, func1: (m: Rectangle, a: Rectangle) => void, func2: (m: Rectangle, a: Rectangle) => void) {
+    move_auto_(ext: Ext, func1: (m: Rectangle, a: Rectangle) => boolean, func2: (m: Rectangle, a: Rectangle) => boolean) {
         if (ext.auto_tiler && this.window) {
             const entity = ext.auto_tiler.attached.get(this.window);
             if (entity) {
@@ -184,19 +184,10 @@ export class Tiler {
 
                 let crect = grab_op.rect.clone();
 
-                let resize = (func: (m: Rectangle, a: Rectangle) => void) => {
-                    global.log(`BEFORE: ${crect.fmt()}`);
-                    func(toparea, crect);
-
-                    crect.clamp(toparea);
-
-                    global.log(`AFTER: ${crect.fmt()}`);
-
-                    if (crect.eq(grab_op.rect)) {
-                        return;
-                    }
-
+                let resize = (func: (m: Rectangle, a: Rectangle) => boolean) => {
+                    if (func(toparea, crect) || crect.eq(grab_op.rect)) return;
                     (ext.auto_tiler as AutoTiler).forest.resize(ext, entity, fork, (this.window as Entity), grab_op.operation(crect), crect);
+                    grab_op.rect = crect.clone();
                 };
 
                 resize(func1);
@@ -255,17 +246,16 @@ export class Tiler {
             (work_area, crect) => {
                 crect.apply(mov1);
                 crect.clamp(work_area);
+                return false;
             },
             (work_area, crect) => {
                 let before = crect.clone();
+
                 crect.apply(mov2);
                 crect.clamp(work_area);
-                if (!before.diff(crect).eq(mov2)) {
-                    crect.array[0] = before.array[0];
-                    crect.array[1] = before.array[1];
-                    crect.array[2] = before.array[2];
-                    crect.array[3] = before.array[3];
-                }
+
+                const diff = before.diff(crect);
+                return !mov2.eq(diff);
             }
         );
     }
