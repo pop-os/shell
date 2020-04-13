@@ -3,7 +3,7 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 import * as Lib from 'lib';
 import * as Tags from 'tags';
-// import * as Log from 'log';
+import * as Log from 'log';
 import * as GrabOp from 'grab_op';
 import * as Rect from 'rectangle';
 import * as window from 'window';
@@ -157,7 +157,7 @@ export class Tiler {
         }
     }
 
-    move_auto_(ext: Ext, func1: (m: Rectangle, a: Rectangle) => boolean, func2: (m: Rectangle, a: Rectangle) => boolean) {
+    move_auto_(ext: Ext, mov1: Rectangle, mov2: Rectangle, callback: (m: Rectangle, a: Rectangle, mov: Rectangle) => boolean) {
         if (ext.auto_tiler && this.window) {
             const entity = ext.auto_tiler.attached.get(this.window);
             if (entity) {
@@ -184,14 +184,48 @@ export class Tiler {
 
                 let crect = grab_op.rect.clone();
 
-                let resize = (func: (m: Rectangle, a: Rectangle) => boolean) => {
-                    if (func(toparea, crect) || crect.eq(grab_op.rect)) return;
+                // TODO: This is a hack. Find a better solution.
+                let fix_diff = () => {
+                    let diff = before.diff(crect);
+
+                    Log.debug(`R DIFF BEFORE: ${diff.fmt()}`);
+
+                    diff.width -= diff.width % 64;
+                    diff.height -= diff.height % 64;
+
+                    if (diff.width > 64) {
+                        diff.width = (diff.width - 64) * -1;
+                    } else if (diff.width < -64) {
+                        diff.width = (diff.width + 64) * -1;
+                    }
+
+                    if (diff.height > 64) {
+                        diff.height = (diff.height - 64) * -1;
+                    } else if (diff.height < -64) {
+                        diff.height = (diff.height + 64) * -1;
+                    }
+
+                    Log.debug(`R DIFF CORRECTED: ${diff.fmt()}`);
+
+                    let tmp = before.clone();
+                    tmp.apply(diff);
+                    crect = tmp;
+                };
+
+                let resize = (mov: Rectangle, func: (m: Rectangle, a: Rectangle, mov: Rectangle) => boolean) => {
+                    if (func(toparea, crect, mov) || crect.eq(grab_op.rect)) return;
+
+                    fix_diff();
+
                     (ext.auto_tiler as AutoTiler).forest.resize(ext, entity, fork, (this.window as Entity), grab_op.operation(crect), crect);
                     grab_op.rect = crect.clone();
                 };
 
-                resize(func1);
-                resize(func2);
+                Log.debug(`R BEFORE: ${crect.fmt()}`);
+                resize(mov1, callback);
+                Log.debug(`R MID: ${crect.fmt()}`);
+                resize(mov2, callback);
+                Log.debug(`R AFTER: ${crect.fmt()}`);
 
                 ext.auto_tiler.forest.arrange(ext, fork.workspace);
 
@@ -225,38 +259,32 @@ export class Tiler {
 
         switch (direction) {
             case Direction.Left:
-                mov2 = new Rect.Rectangle([hrow, 0, -hrow, 0]);
-                mov1 = new Rect.Rectangle([0, 0, -hrow, 0]);
+                mov1 = new Rect.Rectangle([hrow, 0, -hrow, 0]);
+                mov2 = new Rect.Rectangle([0, 0, -hrow, 0]);
                 break;
             case Direction.Right:
-                mov2 = new Rect.Rectangle([-hrow, 0, hrow, 0]);
                 mov1 = new Rect.Rectangle([0, 0, hrow, 0]);
+                mov2 = new Rect.Rectangle([-hrow, 0, hrow, 0]);
                 break;
             case Direction.Up:
-                mov2 = new Rect.Rectangle([0, hcolumn, 0, -hcolumn]);
-                mov1 = new Rect.Rectangle([0, 0, 0, -hcolumn]);
+                mov1 = new Rect.Rectangle([0, hcolumn, 0, -hcolumn]);
+                mov2 = new Rect.Rectangle([0, 0, 0, -hcolumn]);
                 break;
             default:
-                mov2 = new Rect.Rectangle([0, -hcolumn, 0, hcolumn]);
                 mov1 = new Rect.Rectangle([0, 0, 0, hcolumn]);
+                mov2 = new Rect.Rectangle([0, -hcolumn, 0, hcolumn]);
         }
 
         this.move_auto_(
             ext,
-            (work_area, crect) => {
-                crect.apply(mov1);
+            mov1,
+            mov2,
+            (work_area, crect, mov) => {
+                crect.apply(mov);
                 crect.clamp(work_area);
+
                 return false;
             },
-            (work_area, crect) => {
-                let before = crect.clone();
-
-                crect.apply(mov2);
-                crect.clamp(work_area);
-
-                const diff = before.diff(crect);
-                return !mov2.eq(diff);
-            }
         );
     }
 
