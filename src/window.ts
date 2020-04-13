@@ -152,6 +152,11 @@ export class ShellWindow {
             this.meta.unmaximize(Meta.MaximizeFlags.VERTICAL);
             this.meta.unmaximize(Meta.MaximizeFlags.HORIZONTAL | Meta.MaximizeFlags.VERTICAL);
 
+            let onComplete = () => {
+                ext.register({ tag: 2, window: this, kind: { tag: 1, rect: clone } });
+                if (on_complete) ext.register_fn(on_complete);
+            };
+
             if (ext.animate_windows && !ext.init) {
                 let current = this.meta.get_frame_rect();
                 let buffer = this.meta.get_buffer_rect();
@@ -168,18 +173,12 @@ export class ShellWindow {
                 Tweener.add(actor, {
                     x: clone.x - dx,
                     y: clone.y - dy,
-                    width: clone.width,
-                    height: clone.height,
                     duration: 150,
                     mode: null,
-                    onComplete: () => {
-                        ext.register({ tag: 2, window: this, kind: { tag: 1, rect: clone } });
-                        if (on_complete) ext.register_fn(on_complete, `MOVE(${this.entity}) ${this.name(ext)}`);
-                    }
+                    onComplete
                 });
             } else {
-                ext.register({ tag: 2, window: this, kind: { tag: 1, rect: clone} });
-                if (on_complete) ext.register_fn(on_complete, `MOVE(${this.entity}) ${this.name(ext)}`);
+                onComplete();
             }
         }
     }

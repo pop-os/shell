@@ -4,8 +4,6 @@ const { Clutter } = imports.gi;
 export interface TweenParams {
     x: number;
     y: number;
-    width: number;
-    height: number;
     duration: number;
     mode: any | null;
     onComplete: () => void;
@@ -24,8 +22,6 @@ export function remove(a: Clutter.Actor) {
 export function is_tweening(a: Clutter.Actor) {
     return a.get_transition('x')
         || a.get_transition('y')
-        || a.get_transition('width')
-        || a.get_transition('height')
         || a.get_transition('scale-x')
         || a.get_transition('scale-x');
 }
