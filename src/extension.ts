@@ -142,7 +142,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     names: Ecs.Storage<string> = this.register_storage();
 
     /** Store for size-changed signals attached to each window */
-    size_signals: Ecs.Storage<[SignalID, SignalID, SignalID]> = this.register_storage();
+    size_signals: Ecs.Storage<SignalID[]> = this.register_storage();
 
     /** Set to true if a window is snapped to the grid */
     snapped: Ecs.Storage<boolean> = this.register_storage();
@@ -221,6 +221,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                         break;
 
                     case WindowEvent.Size:
+                        global.log(`SIZE EVENT`);
                         if (this.auto_tiler && !win.is_maximized()) {
                             this.auto_tiler.reflow(this, win.entity);
                         }
@@ -260,25 +261,9 @@ export class Ext extends Ecs.System<ExtEvent> {
                     case GlobalEvent.OverviewHidden:
                         this.on_overview_hidden();
                         break;
-
-                    case GlobalEvent.WindowFocused:
-                        // TODO: Fix timing issue
-                        // const window = this.focus_window();
-                        // if (window) this.on_focused(window);
-                        break;
-
-                    case GlobalEvent.WorkspaceChanged:
-                        this.on_active_workspace_changed();
-                        break
                 }
 
                 break
-
-            /** Workspace Removed */
-            case 5:
-                this.on_workspace_removed(event.number);
-                break
-
         }
     }
 
@@ -328,10 +313,11 @@ export class Ext extends Ecs.System<ExtEvent> {
             this.connect_meta(win, 'position-changed', () => {
                 this.register(Events.window_event(win, WindowEvent.Size));
             }),
-            this.connect_meta(win, 'workspace-changed', () => {
-                this.register(Events.window_event(win, WindowEvent.Workspace));
-            }),
         ]);
+
+        this.connect_meta(win, 'workspace-changed', () => {
+            this.register(Events.window_event(win, WindowEvent.Workspace));
+        });
 
         this.connect_meta(win, 'notify::minimized', () => {
             this.register(Events.window_event(win, WindowEvent.Minimize));
@@ -464,6 +450,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         Log.info(`Display(${id}) removed`);
 
         let forest = this.auto_tiler.forest;
+        let blocked = new Array();
 
         for (const [entity, [mon_id,]] of forest.toplevel.values()) {
             Log.info(`Found TopLevel(${entity}, ${mon_id})`);
@@ -478,8 +465,6 @@ export class Ext extends Ecs.System<ExtEvent> {
 
                 fork.workspace = new_work_id;
 
-                let blocked = new Array();
-
                 for (const child of forest.iter(entity, node.NodeKind.FORK)) {
                     if (child.kind === node.NodeKind.FORK) {
                         const cfork = forest.forks.get(child.entity);
@@ -488,7 +473,6 @@ export class Ext extends Ecs.System<ExtEvent> {
                     } else {
                         let window = this.windows.get(child.entity);
                         if (window) {
-                            this.add_tag(window.entity, Tags.Blocked);
                             this.size_signals_block(window);
                             blocked.push(window);
                         }
@@ -496,11 +480,11 @@ export class Ext extends Ecs.System<ExtEvent> {
                 }
 
                 fork.migrate(this, forest, new_mon.ws, new_mon_id, new_work_id);
-
-                for (const window of blocked) {
-                    this.size_signals_unblock(window);
-                }
             }
+        }
+
+        for (const window of blocked) {
+            this.size_signals_unblock(window);
         }
     }
 
@@ -508,9 +492,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     on_focused(win: Window.ShellWindow) {
         this.exit_modes();
 
-        if (this.contains_tag(win.entity, Tags.Blocked)) {
-            this.size_signals_unblock(win);
-        }
+        this.size_signals_unblock(win);
 
         this.prev_focused = this.last_focused;
         this.last_focused = win.entity;
@@ -780,8 +762,13 @@ export class Ext extends Ecs.System<ExtEvent> {
         }
     }
 
+    on_workspace_added(number: number) {
+        Log.info(`workspace ${number} was added`);
+    }
+
     /** Handle workspace change events */
     on_workspace_changed(win: Window.ShellWindow) {
+        Log.info(`workspce of ${win.name(this)} changed`);
         if (this.auto_tiler) {
             const id = this.workspace_id(win);
             const prev_id = this.monitors.get(win.entity);
@@ -793,21 +780,31 @@ export class Ext extends Ecs.System<ExtEvent> {
         }
     }
 
-    on_workspace_removed(number: number) {
-        Log.info(`workspace ${number} was removed`);
+    on_workspace_index_changed(prev: number, next: number) {
+        Log.debug(`Index ${prev} changed to ${next}`);
+        this.on_workspace_modify(
+            (current) => current == prev,
+            (_) => next
+        );
+    }
 
+    on_workspace_modify(
+        condition: (current: number) => boolean,
+        modify: (current: number) => number
+    ) {
         if (this.auto_tiler) {
             for (const [entity, monitor] of this.auto_tiler.forest.toplevel.values()) {
-                if (monitor[1] > number) {
+                if (condition(monitor[1])) {
                     Log.info(`moving tree from Fork(${entity})`);
 
-                    monitor[1] -= 1;
+                    let value = modify(monitor[1]);
+                    monitor[1] = value;
                     let fork = this.auto_tiler.forest.forks.get(entity);
                     if (fork) {
-                        fork.workspace -= 1;
+                        fork.workspace = value;
                         for (const child of this.auto_tiler.forest.iter(entity, node.NodeKind.FORK)) {
                             fork = this.auto_tiler.forest.forks.get(child.entity);
-                            if (fork) fork.workspace -= 1;
+                            if (fork) fork.workspace = value;
                         }
                     }
                 }
@@ -815,11 +812,19 @@ export class Ext extends Ecs.System<ExtEvent> {
         }
 
         for (const [entity, monitor] of this.monitors.iter()) {
-            if (monitor[1] > number) {
-                Log.info(`moving window from Window(${entity})`);
-                monitor[1] -= 1;
+            if (condition(monitor[1])) {
+                Log.info(`moving Window(${entity})`);
+                monitor[1] = modify(monitor[1]);
             }
         }
+    }
+
+    on_workspace_removed(number: number) {
+        Log.info(`workspace ${number} was removed`);
+        this.on_workspace_modify(
+            (current) => current > number,
+            (prev) => prev - 1
+        );
     }
 
     set_gap_inner(gap: number) {
@@ -843,6 +848,23 @@ export class Ext extends Ecs.System<ExtEvent> {
     /** Begin listening for signals from windows, and add any pre-existing windows. */
     signals_attach() {
         const workspace_manager = global.display.get_workspace_manager();
+
+        let idx = 0;
+        let ws = workspace_manager.get_workspace_by_index(idx);
+        while (ws !== null) {
+            idx += 1;
+            let index = ws.index();
+
+            ws.connect('notify::workspace-index', () => {
+                if (ws !== null) {
+                    let new_index = ws.index();
+                    this.on_workspace_index_changed(index, new_index);
+                    index = new_index;
+                }
+            });
+
+            ws = workspace_manager.get_workspace_by_index(idx);
+        }
 
         this.connect(this.settings.ext, 'changed', (_s, key: string) => {
             switch (key) {
@@ -885,6 +907,8 @@ export class Ext extends Ecs.System<ExtEvent> {
         this.register_fn(() => {
             this.update_display_configuration();
 
+            global.log(`WATCHING WINDOW`);
+
             this.connect(global.display, 'notify::focus-window', () => {
                 const window = this.focus_window();
                 if (window) this.on_focused(window);
@@ -915,9 +939,12 @@ export class Ext extends Ecs.System<ExtEvent> {
             this.on_active_workspace_changed();
         });
 
-        /** When a workspace is destroyed, we need to update state to have the correct workspace info.  */
         this.connect(workspace_manager, 'workspace-removed', (_, number) => {
             this.on_workspace_removed(number);
+        });
+
+        this.connect(workspace_manager, 'workspace-added', (_, number) => {
+            this.on_workspace_added(number);
         });
 
         // Modes
@@ -958,17 +985,23 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     size_signals_block(win: Window.ShellWindow) {
-        Log.debug(`BLOCKING ${win.entity}`);
         this.size_signals.with(win.entity, (signals) => {
-            for (const signal of signals) utils.block_signal(win.meta, signal);
+            for (const signal of signals) {
+                global.log(`BLOCK WIN(${win.entity})`);
+                utils.block_signal(win.meta, signal);
+            }
             this.add_tag(win.entity, Tags.Blocked);
         });
     }
 
     size_signals_unblock(win: Window.ShellWindow) {
-        Log.debug(`UNBLOCKING ${win.entity}`);
+        if (!this.contains_tag(win.entity, Tags.Blocked)) return;
+
         this.size_signals.with(win.entity, (signals) => {
-            for (const signal of signals) utils.unblock_signal(win.meta, signal);
+            for (const signal of signals) {
+                global.log(`UNBLOCK WIN(${win.entity})`);
+                utils.unblock_signal(win.meta, signal);
+            };
             this.delete_tag(win.entity, Tags.Blocked);
         });
     }

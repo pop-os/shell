@@ -5,7 +5,10 @@ import * as Window from 'window';
 import { Rectangle } from './rectangle';
 
 /** Type representing all possible events handled by the extension's system. */
-export type ExtEvent = GenericCallback | ManagedWindow | CreateWindow | GlobalEventTag | WorkspaceRemoved;
+export type ExtEvent = GenericCallback
+    | ManagedWindow
+    | CreateWindow
+    | GlobalEventTag;
 
 /** Eevnt with generic callback */
 export interface GenericCallback {
@@ -32,19 +35,11 @@ export interface GlobalEventTag {
     event: GlobalEvent;
 }
 
-export interface WorkspaceRemoved {
-    tag: 5;
-    number: number;
-}
-
 export enum GlobalEvent {
     GtkThemeChanged,
     MonitorsChanged,
     OverviewShown,
     OverviewHidden,
-    WindowFocused,
-    WorkspaceChanged,
-    WorkspaceRemoved,
 }
 
 export interface Movement {

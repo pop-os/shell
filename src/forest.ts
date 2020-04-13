@@ -661,7 +661,7 @@ function move_window(ext: Ext, window: ShellWindow, rect: Rectangular, on_comple
 
     ext.size_signals_block(window);
     window.move(ext, rect, () => {
-        ext.size_signals_unblock(window);
         on_complete();
+        ext.size_signals_unblock(window);
     });
 }
