@@ -330,6 +330,23 @@ export class Ext extends Ecs.System<ExtEvent> {
         this.connect_meta(win, 'notify::maximized_vertically', () => {
             this.register(Events.window_event(win, WindowEvent.Maximize));
         });
+
+        let prev: Rectangle | null = null;
+
+        this.connect_meta(win, 'notify::fullscreen', () => {
+            let movement = null;
+            if (win.meta.is_fullscreen()) {
+                prev = win.rect();
+                movement = global.display.get_monitor_geometry(win.meta.get_monitor());
+            } else if (prev) {
+                movement = prev;
+            }
+
+            if (movement) {
+                win.meta.move_resize_frame(false, movement.x, movement.y, movement.width, movement.height);
+                win.move(this, movement);
+            }
+        });
     }
 
     exit_modes() {
@@ -907,8 +924,6 @@ export class Ext extends Ecs.System<ExtEvent> {
         this.register_fn(() => {
             this.update_display_configuration();
 
-            global.log(`WATCHING WINDOW`);
-
             this.connect(global.display, 'notify::focus-window', () => {
                 const window = this.focus_window();
                 if (window) this.on_focused(window);
@@ -935,7 +950,6 @@ export class Ext extends Ecs.System<ExtEvent> {
         });
 
         this.connect(workspace_manager, 'active-workspace-changed', () => {
-            // this.register(Events.global(GlobalEvent.WorkspaceChanged));
             this.on_active_workspace_changed();
         });
 

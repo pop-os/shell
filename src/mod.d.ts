@@ -128,6 +128,7 @@ declare namespace Meta {
         get_wm_class(): string;
         get_workspace(): Workspace | null;
         is_client_decorated(): boolean;
+        is_fullscreen(): boolean;
         is_skip_taskbar(): boolean;
         make_above(): void;
         maximize(flags: MaximizeFlags): void;
