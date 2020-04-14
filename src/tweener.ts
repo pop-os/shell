@@ -6,7 +6,7 @@ export interface TweenParams {
     y: number;
     duration: number;
     mode: any | null;
-    onComplete: () => void;
+    onComplete?: () => void;
 }
 
 export function add(a: Clutter.Actor, p: TweenParams) {

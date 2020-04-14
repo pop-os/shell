@@ -175,8 +175,9 @@ export class ShellWindow {
                     y: clone.y - dy,
                     duration: 150,
                     mode: null,
-                    onComplete
                 });
+
+                Tweener.on_tween_completion(actor, onComplete);
             } else {
                 onComplete();
             }
