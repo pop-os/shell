@@ -221,7 +221,6 @@ export class Ext extends Ecs.System<ExtEvent> {
                         break;
 
                     case WindowEvent.Size:
-                        global.log(`SIZE EVENT`);
                         if (this.auto_tiler && !win.is_maximized()) {
                             this.auto_tiler.reflow(this, win.entity);
                         }
@@ -230,6 +229,21 @@ export class Ext extends Ecs.System<ExtEvent> {
 
                     case WindowEvent.Workspace:
                         this.on_workspace_changed(win)
+                        break
+
+                    case WindowEvent.Fullscreen:
+                        if (this.auto_tiler) {
+                            let attachment = this.auto_tiler.attached.get(win.entity);
+                            if (attachment) {
+                                if (!win.meta.is_fullscreen()) {
+                                    let fork = this.auto_tiler.forest.forks.get(win.entity);
+                                    if (fork) {
+                                        this.auto_tiler.reflow(this, win.entity);
+                                    }
+                                }
+                            }
+                        }
+
                         break
                 }
 
@@ -321,33 +335,6 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         this.connect_meta(win, 'notify::minimized', () => {
             this.register(Events.window_event(win, WindowEvent.Minimize));
-        });
-
-        let prev: Rectangle | null = null;
-
-        this.connect_meta(win, 'notify::fullscreen', () => {
-            let movement = null;
-            if (win.meta.is_fullscreen()) {
-                prev = win.rect();
-                movement = global.display.get_monitor_geometry(win.meta.get_monitor());
-            } else if (prev) {
-                if (this.auto_tiler) {
-                    let attachment = this.auto_tiler.attached.get(win.entity);
-                    if (attachment) {
-                        let fork = this.auto_tiler.forest.forks.get(win.entity);
-                        if (fork) {
-                            this.auto_tiler.tile(this, fork, fork.area);
-                            return;
-                        }
-                    }
-                }
-                movement = prev;
-            }
-
-            if (movement) {
-                win.meta.move_resize_frame(false, movement.x, movement.y, movement.width, movement.height);
-                win.move(this, movement);
-            }
         });
     }
 
@@ -891,11 +878,13 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         this.connect(global.window_manager, 'size-change', (_, actor, event, _before, _after) => {
             if (this.auto_tiler) {
-                let window = this.get_window(actor.get_meta_window());
-                if (!window) return;
+                let win = this.get_window(actor.get_meta_window());
+                if (!win) return;
 
                 if (event === Meta.SizeChange.MAXIMIZE || event === Meta.SizeChange.UNMAXIMIZE) {
-                    this.register(Events.window_event(window, WindowEvent.Maximize));
+                    this.register(Events.window_event(win, WindowEvent.Maximize));
+                } else {
+                    this.register(Events.window_event(win, WindowEvent.Fullscreen));
                 }
             }
         });
@@ -1018,7 +1007,6 @@ export class Ext extends Ecs.System<ExtEvent> {
     size_signals_block(win: Window.ShellWindow) {
         this.size_signals.with(win.entity, (signals) => {
             for (const signal of signals) {
-                global.log(`BLOCK WIN(${win.entity})`);
                 utils.block_signal(win.meta, signal);
             }
             this.add_tag(win.entity, Tags.Blocked);
@@ -1030,7 +1018,6 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         this.size_signals.with(win.entity, (signals) => {
             for (const signal of signals) {
-                global.log(`UNBLOCK WIN(${win.entity})`);
                 utils.unblock_signal(win.meta, signal);
             };
             this.delete_tag(win.entity, Tags.Blocked);

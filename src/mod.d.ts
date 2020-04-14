@@ -82,11 +82,13 @@ declare namespace Clutter {
         get_parent(): Clutter.Actor | null;
         get_transition(param: string): any | null;
         is_visible(): boolean;
+        queue_redraw(): void;
         remove_all_children(): void;
         remove_all_transitions(): void;
         remove_child(child: Actor): void;
         set_child_below_sibling(child: Actor, sibling: Actor | null): void;
         set_easing_duration(msecs: number | null): void;
+        set_opacity(value: number): void;
         show(): void;
     }
 
@@ -125,6 +127,7 @@ declare namespace Meta {
         get_pid(): number;
         get_stable_sequence(): number;
         get_title(): string;
+        get_transient_for(): Window | null;
         get_wm_class(): string;
         get_workspace(): Workspace | null;
         is_client_decorated(): boolean;
@@ -134,7 +137,6 @@ declare namespace Meta {
         maximize(flags: MaximizeFlags): void;
         move_resize_frame(user_op: boolean, x: number, y: number, w: number, h: number): boolean;
         raise(): void;
-        get_transient_for(): Window | null;
         unmaximize(flags: any): void;
         unminimize(): void;
     }

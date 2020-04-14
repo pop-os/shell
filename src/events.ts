@@ -57,7 +57,8 @@ export enum WindowEvent {
     Size,
     Workspace,
     Minimize,
-    Maximize
+    Maximize,
+    Fullscreen,
 }
 
 export function global(event: GlobalEvent): GlobalEventTag {
