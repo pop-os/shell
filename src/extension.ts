@@ -1153,8 +1153,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             this.names.insert(entity, name);
             this.monitors.insert(entity, [win.meta.get_monitor(), win.workspace_id()]);
 
-
-            if (this.auto_tiler && win.is_tilable(this)) {
+            if (this.auto_tiler && !win.meta.minimized && win.is_tilable(this)) {
                 let id = actor.connect('first-frame', () => {
                     this.auto_tiler?.auto_tile(this, win, this.init);
                     actor.disconnect(id);
