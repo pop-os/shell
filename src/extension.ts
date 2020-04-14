@@ -299,7 +299,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         }
     }
 
-    connect_meta(win: Window.ShellWindow, signal: string, callback: () => void): number {
+    connect_meta(win: Window.ShellWindow, signal: string, callback: (...args: any[]) => void): number {
         return win.meta.connect(signal, () => {
             if (win.actor_exists()) callback();
         });
@@ -321,14 +321,6 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         this.connect_meta(win, 'notify::minimized', () => {
             this.register(Events.window_event(win, WindowEvent.Minimize));
-        });
-
-        this.connect_meta(win, 'notify::maximized_horizontally', () => {
-            this.register(Events.window_event(win, WindowEvent.Maximize));
-        });
-
-        this.connect_meta(win, 'notify::maximized_vertically', () => {
-            this.register(Events.window_event(win, WindowEvent.Maximize));
         });
 
         let prev: Rectangle | null = null;
@@ -715,8 +707,12 @@ export class Ext extends Ecs.System<ExtEvent> {
                     this.auto_tiler?.detach_window(this, win.entity);
                 }
             });
-        } else if (this.auto_tiler && this.auto_tiler.attached.contains(win.entity)) {
-            this.auto_tiler.attach_to_monitor(this, win, this.workspace_id(win));
+        } else if (this.auto_tiler) {
+            let fork_ent = this.auto_tiler.attached.get(win.entity);
+            if (fork_ent) {
+                let fork = this.auto_tiler.forest.forks.get(fork_ent);
+                if (fork) this.auto_tiler.tile(this, fork, fork.area);
+            }
         }
     }
 
@@ -892,6 +888,17 @@ export class Ext extends Ecs.System<ExtEvent> {
 
             ws = workspace_manager.get_workspace_by_index(idx);
         }
+
+        this.connect(global.window_manager, 'size-change', (_, actor, event, _before, _after) => {
+            if (this.auto_tiler) {
+                let window = this.get_window(actor.get_meta_window());
+                if (!window) return;
+
+                if (event === Meta.SizeChange.MAXIMIZE || event === Meta.SizeChange.UNMAXIMIZE) {
+                    this.register(Events.window_event(window, WindowEvent.Maximize));
+                }
+            }
+        });
 
         this.connect(this.settings.ext, 'changed', (_s, key: string) => {
             switch (key) {
