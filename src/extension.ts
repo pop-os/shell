@@ -339,6 +339,16 @@ export class Ext extends Ecs.System<ExtEvent> {
                 prev = win.rect();
                 movement = global.display.get_monitor_geometry(win.meta.get_monitor());
             } else if (prev) {
+                if (this.auto_tiler) {
+                    let attachment = this.auto_tiler.attached.get(win.entity);
+                    if (attachment) {
+                        let fork = this.auto_tiler.forest.forks.get(win.entity);
+                        if (fork) {
+                            this.auto_tiler.tile(this, fork, fork.area);
+                            return;
+                        }
+                    }
+                }
                 movement = prev;
             }
 
