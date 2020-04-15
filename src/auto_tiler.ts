@@ -106,10 +106,10 @@ export class AutoTiler {
      */
     auto_tile(ext: Ext, win: ShellWindow, ignore_focus: boolean = false) {
         const result = this.fetch_mode(ext, win, ignore_focus);
+        this.detach_window(ext, win.entity);
         if (result.kind == ERR) {
             this.attach_to_workspace(ext, win, ext.workspace_id(win));
         } else {
-            this.detach_window(ext, win.entity);
             this.attach_to_window(ext, result.value, win, lib.cursor_rect())
         }
     }

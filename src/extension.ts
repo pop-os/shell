@@ -787,6 +787,12 @@ export class Ext extends Ecs.System<ExtEvent> {
                 this.auto_tiler.detach_window(this, win.entity);
                 this.auto_tiler.attach_to_workspace(this, win, id);
             }
+
+            if (win.meta.minimized) {
+                this.size_signals_block(win);
+                win.meta.unminimize();
+                this.size_signals_unblock(win);
+            }
         }
     }
 
