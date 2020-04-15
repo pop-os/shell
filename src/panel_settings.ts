@@ -36,7 +36,7 @@ export class Indicator {
 
         this.button.menu.addMenuItem(
             toggle(
-                _("Show Active Hint"),
+                _("Active Window Hint"),
                 ext.settings.active_hint(),
                 (toggle) => {
                     ext.settings.set_active_hint(toggle.state);
