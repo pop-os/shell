@@ -244,6 +244,7 @@ export class Launcher extends search.Search {
         const mon = ext.monitor_work_area(ext.active_monitor());
 
         this.active.splice(0);
+        this.clear();
 
         this.dialog.dialogLayout.x = (mon.width / 2) - (this.dialog.dialogLayout.width / 2);
         this.dialog.dialogLayout.y = (mon.height / 2) - (this.dialog.dialogLayout.height);
