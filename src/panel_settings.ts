@@ -258,7 +258,7 @@ function tiled(ext: Ext): any {
             ext.settings.set_tile_by_default(true);
 
             for (const window of ext.windows.values()) {
-                if (window.is_tilable(ext)) tiler.auto_tile(ext, window, false);
+                if (window.is_tilable(ext) && !window.meta.minimized) tiler.auto_tile(ext, window, false);
             }
 
             ext.register_fn(() => ext.switch_to_workspace(original));
