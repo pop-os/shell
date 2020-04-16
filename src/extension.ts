@@ -507,6 +507,19 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         win.meta.raise();
 
+        if (this.prev_focused !== null) {
+            let prev = this.windows.get(this.prev_focused);
+            if (prev) {
+                if (prev.is_maximized()) {
+                    prev.meta.unmaximize(Meta.MaximizeFlags.BOTH);
+                }
+
+                if (prev.meta.is_fullscreen()) {
+                    prev.meta.unmake_fullscreen();
+                }
+            }
+        }
+
         let msg = `focused Window(${win.entity}) {\n`
             + `  name: ${win.name(this)},\n`
             + `  title: ${win.meta.get_title()},\n`
