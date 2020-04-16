@@ -337,6 +337,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     exit_modes() {
         this.tiler.exit(this);
         this.window_search.close();
+        this.overlay.visible = false;
     }
 
     find_monitor_to_retach(width: number, height: number): [number, Display] {
