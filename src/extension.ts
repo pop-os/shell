@@ -503,9 +503,10 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         win.meta.raise();
 
-        if (this.prev_focused !== null) {
+        if (this.auto_tiler && this.prev_focused !== null) {
             let prev = this.windows.get(this.prev_focused);
-            if (prev) {
+            let is_attached = this.auto_tiler.attached.contains(this.prev_focused);
+            if (prev && is_attached) {
                 if (prev.is_maximized()) {
                     prev.meta.unmaximize(Meta.MaximizeFlags.BOTH);
                 }
