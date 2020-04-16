@@ -30,7 +30,7 @@ import { Fork } from './fork';
 const { Gio, Meta, St } = imports.gi;
 const { GlobalEvent, WindowEvent } = Events;
 const { cursor_rect, is_move_op } = Lib;
-const { layoutManager, overview, panel, sessionMode } = imports.ui.main;
+const { layoutManager, overview, panel, screenShield, sessionMode } = imports.ui.main;
 const Tags = Me.imports.tags;
 
 const THEME_CONTEXT = St.ThemeContext.get_for_stage(global.stage);
@@ -942,9 +942,19 @@ export class Ext extends Ecs.System<ExtEvent> {
             this.register(Events.global(GlobalEvent.OverviewHidden));
         });
 
+        if (screenShield) {
+            this.connect(screenShield, 'lock-screen-shown', () => {
+                Log.debug(`LOCK SCREEN SHOWN`);
+            });
+
+            this.connect(screenShield, 'wake-up-screen', () => {
+                Log.debug(`WAKE UP SCREEN`);
+            });
+        }
+
         // We have to connect this signal in an idle_add; otherwise work areas stop being calculated
         this.register_fn(() => {
-            this.update_display_configuration();
+            if (screenShield?.locked) this.update_display_configuration();
 
             this.connect(global.display, 'notify::focus-window', () => {
                 const window = this.focus_window();
@@ -1002,6 +1012,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         // Post-init
 
         if (this.init) {
+            Log.debug(`INITIALIZING`);
             for (const window of this.tab_list(Meta.TabList.NORMAL, null)) {
                 this.register({ tag: 3, window: window.meta });
             }
