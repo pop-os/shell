@@ -228,9 +228,10 @@ export class Launcher extends search.Search {
     }
 
     list_workspace(ext: Ext) {
+        let show_all_workspaces = true;
         const active = ext.active_workspace();
         for (const window of ext.tab_list(Meta.TabList.NORMAL, null)) {
-            if (window.workspace_id() === active) {
+            if (show_all_workspaces || window.workspace_id() === active) {
                 this.selections.push(window);
 
                 this.active.push(window_selection(ext, window));
@@ -244,6 +245,7 @@ export class Launcher extends search.Search {
         const mon = ext.monitor_work_area(ext.active_monitor());
 
         this.active.splice(0);
+        this.selections.splice(0);
         this.clear();
 
         this.dialog.dialogLayout.x = (mon.width / 2) - (this.dialog.dialogLayout.width / 2);
