@@ -89,6 +89,7 @@ declare namespace Clutter {
         set_child_below_sibling(child: Actor, sibling: Actor | null): void;
         set_easing_duration(msecs: number | null): void;
         set_opacity(value: number): void;
+        set_y_align(align: ActorAlign): void;
         show(): void;
     }
 

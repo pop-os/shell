@@ -7,8 +7,8 @@ export class Box {
         this.container = new St.BoxLayout(args);
     }
 
-    add(child: any, args: Object | null): Box {
-        this.container.add(child, args);
+    add(child: any): Box {
+        this.container.add_child(child);
         return this;
     }
 }

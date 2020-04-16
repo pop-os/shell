@@ -126,7 +126,7 @@ export class Search {
     }
 
     clear() {
-        Lib.recursive_remove_children(this.list);
+        this.list.remove_all_children();
         this.list.hide();
         this.widgets = [];
         this.active_id = 0;
@@ -165,17 +165,21 @@ export class Search {
             (element: [string, St.Widget, St.Widget]) => {
                 const [title, cat_icon, icon] = element;
 
+                cat_icon.set_y_align(Clutter.ActorAlign.CENTER);
+                icon.set_y_align(Clutter.ActorAlign.CENTER);
+
                 let label = new St.Label({
                     text: title,
-                    styleClass: "pop-shell-search-label"
+                    styleClass: "pop-shell-search-label",
+                    y_align: Clutter.ActorAlign.CENTER
                 });
 
                 label.clutter_text.set_ellipsize(Pango.EllipsizeMode.END);
 
                 let container = new widgets.Box({ styleClass: "pop-shell-search-element" })
-                    .add(cat_icon, { y_fill: false, y_align: St.Align.MIDDLE })
-                    .add(icon, { y_fill: false, y_align: St.Align.MIDDLE })
-                    .add(label, { y_fill: false, y_align: St.Align.MIDDLE })
+                    .add(cat_icon)
+                    .add(icon)
+                    .add(label)
                     .container;
 
                 this.widgets.push(container);

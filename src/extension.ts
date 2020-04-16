@@ -128,10 +128,6 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     // Entity-component associations
 
-
-    /** Store for generated icons from applications */
-    icons: Ecs.Storage<any> = this.register_storage();
-
     /** Store for stable sequences of each registered window */
     ids: Ecs.Storage<number> = this.register_storage();
 

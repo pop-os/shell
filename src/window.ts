@@ -102,20 +102,18 @@ export class ShellWindow {
         this.decoration(ext, (xid) => xprop.set_hint(xid, xprop.MOTIF_HINTS, xprop.SHOW_FLAGS));
     }
 
-    icon(ext: Ext, size: number): any {
-        return ext.icons.get_or(this.entity, () => {
-            let icon = this.window_app.create_icon_texture(size);
+    icon(_ext: Ext, size: number): any {
+        let icon = this.window_app.create_icon_texture(size);
 
-            if (!icon) {
-                icon = new St.Icon({
-                    icon_name: 'applications-other',
-                    icon_type: St.IconType.FULLCOLOR,
-                    icon_size: size
-                });
-            }
+        if (!icon) {
+            icon = new St.Icon({
+                icon_name: 'applications-other',
+                icon_type: St.IconType.FULLCOLOR,
+                icon_size: size
+            });
+        }
 
-            return icon;
-        });
+        return icon;
     }
 
     may_decorate(): boolean {
