@@ -508,7 +508,6 @@ export class Ext extends Ecs.System<ExtEvent> {
             let prev = this.windows.get(this.prev_focused);
             let is_attached = this.auto_tiler.attached.contains(this.prev_focused);
             if (prev && is_attached && prev.rect().contains(win.rect())) {
-
                 if (prev.is_maximized()) {
                     prev.meta.unmaximize(Meta.MaximizeFlags.BOTH);
                 }
@@ -780,6 +779,10 @@ export class Ext extends Ecs.System<ExtEvent> {
 
             if (win.is_tilable(this)) {
                 this.connect_window(win);
+            } else {
+                window.raise();
+                window.unminimize();
+                window.activate(global.get_current_time());
             }
         }
     }
