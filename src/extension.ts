@@ -504,7 +504,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         win.meta.raise();
 
-        if (this.auto_tiler && this.prev_focused !== null) {
+        if (this.auto_tiler && this.prev_focused !== null && win.is_tilable(this)) {
             let prev = this.windows.get(this.prev_focused);
             let is_attached = this.auto_tiler.attached.contains(this.prev_focused);
             if (prev && is_attached) {
