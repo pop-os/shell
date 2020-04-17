@@ -21,22 +21,22 @@ export class ActiveHint {
 
     private border: [Clutter.Actor, Clutter.Actor, Clutter.Actor, Clutter.Actor] = [
         new St.BoxLayout({
-            reactive: true,
+            reactive: false,
             style_class: 'pop-shell-active-hint',
             visible: false
         }),
         new St.BoxLayout({
-            reactive: true,
+            reactive: false,
             style_class: 'pop-shell-active-hint',
             visible: false
         }),
         new St.BoxLayout({
-            reactive: true,
+            reactive: false,
             style_class: 'pop-shell-active-hint',
             visible: false
         }),
         new St.BoxLayout({
-            reactive: true,
+            reactive: false,
             style_class: 'pop-shell-active-hint',
             visible: false
         })
