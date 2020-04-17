@@ -712,6 +712,10 @@ export class Ext extends Ecs.System<ExtEvent> {
                 let fork = this.auto_tiler.forest.forks.get(fork_ent);
                 if (fork) this.auto_tiler.tile(this, fork, fork.area);
             }
+
+            if (this.active_hint?.is_tracking(win.entity)) {
+                this.active_hint.show();
+            }
         }
     }
 
