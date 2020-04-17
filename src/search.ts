@@ -121,8 +121,8 @@ export class Search {
         this.dialog.contentLayout.add(this.entry);
         this.dialog.contentLayout.add(this.list);
 
-        // Ensure that the width is at least 950 pixels wide.
-        this.dialog.contentLayout.width = Math.max(Lib.current_monitor().width / 4, 950);
+        // Ensure that the width is at least 640 pixels wide.
+        this.dialog.contentLayout.width = Math.max(Lib.current_monitor().width / 4, 640);
     }
 
     clear() {
