@@ -1,7 +1,6 @@
 // @ts-ignore
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
-import * as Ecs from 'ecs';
 import * as lib from 'lib';
 import * as log from 'log';
 import * as once_cell from 'once_cell';
@@ -161,10 +160,6 @@ export class ShellWindow {
 
                 let dx = current.x - buffer.x;
                 let dy = current.y - buffer.y;
-
-                if (ext.active_hint && ext.active_hint.window && Ecs.entity_eq(ext.active_hint.window.entity, this.entity)) {
-                    ext.active_hint.hide();
-                }
 
                 if (Tweener.is_tweening(actor)) Tweener.remove(actor);
 
