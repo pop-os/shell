@@ -232,7 +232,8 @@ export class ShellWindow {
 const BLACKLIST: string[] = [
     'Conky',
     'Com.github.donadigo.eddy',
-    'Gnome-screenshot'
+    'Gnome-screenshot',
+    'Authy Desktop'
 ];
 
 /// Activates a window, and moves the mouse point to the center of it.
