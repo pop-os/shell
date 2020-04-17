@@ -26,8 +26,8 @@ export function is_tweening(a: Clutter.Actor) {
         || a.get_transition('scale-x');
 }
 
-export function on_tween_completion(actor: Clutter.Actor, callback: () => void) {
-    GLib.timeout_add(150, GLib.PRIORITY_DEFAULT, () => {
+export function on_tween_completion(actor: Clutter.Actor, callback: () => void): SignalID {
+    return GLib.timeout_add(150, GLib.PRIORITY_DEFAULT, () => {
         if (is_tweening(actor)) return true;
 
         callback();

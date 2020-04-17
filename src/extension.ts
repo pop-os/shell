@@ -119,6 +119,8 @@ export class Ext extends Ecs.System<ExtEvent> {
     /** Track if workspaces should switch on window movements */
     switch_workspace_on_move: boolean = true;
 
+    tween_signals: Map<string, SignalID> = new Map();
+
     /** Initially set to true when the extension is initializing */
     init: boolean = true;
 
@@ -235,6 +237,10 @@ export class Ext extends Ecs.System<ExtEvent> {
                                     let fork = this.auto_tiler.forest.forks.get(win.entity);
                                     if (fork) {
                                         this.auto_tiler.reflow(this, win.entity);
+                                    }
+
+                                    if (this.active_hint?.is_tracking(win.entity)) {
+                                        this.active_hint.show();
                                     }
                                 }
                             }

@@ -142,26 +142,33 @@ export class ShellWindow {
     }
 
     move(ext: Ext, rect: Rectangular, on_complete?: () => void) {
-        let clone = Rect.Rectangle.from_meta(rect);
-        let actor = this.meta.get_compositor_private();
+        const clone = Rect.Rectangle.from_meta(rect);
+        const actor = this.meta.get_compositor_private();
         if (actor) {
             this.meta.unmaximize(Meta.MaximizeFlags.HORIZONTAL);
             this.meta.unmaximize(Meta.MaximizeFlags.VERTICAL);
             this.meta.unmaximize(Meta.MaximizeFlags.HORIZONTAL | Meta.MaximizeFlags.VERTICAL);
 
-            let onComplete = () => {
+            const entity_string = String(this.entity);
+
+            const onComplete = () => {
                 ext.register({ tag: 2, window: this, kind: { tag: 1, rect: clone } });
                 if (on_complete) ext.register_fn(on_complete);
+                ext.tween_signals.delete(entity_string);
             };
 
             if (ext.animate_windows && !ext.init) {
-                let current = this.meta.get_frame_rect();
-                let buffer = this.meta.get_buffer_rect();
+                const current = this.meta.get_frame_rect();
+                const buffer = this.meta.get_buffer_rect();
 
-                let dx = current.x - buffer.x;
-                let dy = current.y - buffer.y;
+                const dx = current.x - buffer.x;
+                const dy = current.y - buffer.y;
 
-                if (Tweener.is_tweening(actor)) Tweener.remove(actor);
+                if (Tweener.is_tweening(actor)) {
+                    Tweener.remove(actor);
+                    const signal = ext.tween_signals.get(entity_string);
+                    if (signal) actor.disconnect(signal);
+                }
 
                 Tweener.add(actor, {
                     x: clone.x - dx,
@@ -170,7 +177,7 @@ export class ShellWindow {
                     mode: null,
                 });
 
-                Tweener.on_tween_completion(actor, onComplete);
+                ext.tween_signals.set(entity_string, Tweener.on_tween_completion(actor, onComplete));
             } else {
                 onComplete();
             }
