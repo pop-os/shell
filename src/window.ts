@@ -164,16 +164,16 @@ export class ShellWindow {
                 const dx = current.x - buffer.x;
                 const dy = current.y - buffer.y;
 
-                if (Tweener.is_tweening(actor)) {
+                const signal = ext.tween_signals.get(entity_string);
+                if (signal !== undefined) {
                     Tweener.remove(actor);
-                    const signal = ext.tween_signals.get(entity_string);
-                    if (signal) actor.disconnect(signal);
+                    utils.source_remove(signal);
                 }
 
                 Tweener.add(actor, {
                     x: clone.x - dx,
                     y: clone.y - dy,
-                    duration: 150,
+                    duration: 149,
                     mode: null,
                 });
 

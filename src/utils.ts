@@ -4,7 +4,7 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 import * as result from 'result';
 import * as error from 'error';
 
-const { Gio, GObject } = imports.gi;
+const { Gio, GLib, GObject } = imports.gi;
 const { Ok, Err } = result;
 const { Error } = error;
 
@@ -31,6 +31,10 @@ export function read_to_string(path: string): result.Result<string, error.Error>
                 .context(`failed to load contents of ${path}`)
         );
     }
+}
+
+export function source_remove(id: SignalID): boolean {
+    return GLib.source_remove(id);
 }
 
 export function exists(path: string): boolean {
