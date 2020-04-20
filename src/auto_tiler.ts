@@ -277,6 +277,18 @@ export class AutoTiler {
             return Err('focused window is not tilable');
         }
 
+        if (onto.meta.minimized) {
+            return Err('previous window was minimized');
+        }
+
+        for (const [entity, fork] of this.attached.iter()) {
+            global.log(`found attached entity: ${entity} to ${fork}`);
+        }
+
+        if (!this.attached.contains(onto.entity)) {
+            return Err('focused window is not attached');
+        }
+
         return onto.meta.get_monitor() == win.meta.get_monitor() && onto.workspace_id() == win.workspace_id()
             ? Ok(onto)
             : Err('window is not on the same monitor or workspace');

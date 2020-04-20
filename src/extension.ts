@@ -178,7 +178,6 @@ export class Ext extends Ecs.System<ExtEvent> {
     /** Registers a generic callback to be executed in the event loop. */
     register_fn(callback: () => void, name?: string) {
         this.register({ tag: 1, callback, name });
-        if (name) Log.debug(`REGISTERED ${name}`);
     }
 
     /** Executes an event on the system */
@@ -186,7 +185,6 @@ export class Ext extends Ecs.System<ExtEvent> {
         switch (event.tag) {
             /** Callback Event */
             case 1:
-                if (event.name) global.log(`CALBACK EVENT ${event.name}`);
                 (event.callback)();
                 break
 

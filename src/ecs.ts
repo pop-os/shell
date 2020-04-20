@@ -249,8 +249,7 @@ export class World {
 }
 
 function swap_remove<T>(array: Array<T>, index: number): T | undefined {
-    const last = array.length - 1;
-    array[index] = array[last];
+    array[index] = array[array.length - 1];
     return array.pop();
 }
 
