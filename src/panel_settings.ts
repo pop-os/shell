@@ -258,7 +258,21 @@ function tiled(ext: Ext): any {
             ext.settings.set_tile_by_default(true);
 
             for (const window of ext.windows.values()) {
-                if (window.is_tilable(ext) && !window.meta.minimized) tiler.auto_tile(ext, window, false);
+                if (window.is_tilable(ext)) {
+                    let actor = window.meta.get_compositor_private();
+                    if (actor) {
+                        let ws = window.meta.get_workspace();
+                        if (!window.meta.minimized) {
+                            tiler.auto_tile(ext, window, false);
+                        }
+
+                        if (ws === null || ws.index() !== original) {
+                            actor.hide()
+                        } else {
+                            actor.show();
+                        }
+                    }
+                }
             }
 
             ext.register_fn(() => ext.switch_to_workspace(original));
