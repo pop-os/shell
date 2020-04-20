@@ -47,6 +47,27 @@ export class AutoTiler {
         }
     }
 
+    update_toplevel(ext: Ext, fork: Fork, monitor: number) {
+        let rect = ext.monitor_work_area(monitor);
+        rect.x += ext.gap_outer;
+        rect.y += ext.gap_outer;
+        rect.width -= ext.gap_outer * 2;
+        rect.height -= ext.gap_outer * 2;
+
+        let ratio;
+
+        if (fork.orientation_changed) {
+            fork.orientation_changed = false;
+            ratio = fork.length_left / fork.depth();
+        } else {
+            ratio = fork.length_left / fork.length();
+        }
+
+        fork.area = fork.set_area(rect.clone());
+        fork.length_left = Math.round(ratio * fork.length());
+        this.tile(ext, fork, fork.area);
+    }
+
     /** Attaches `win` to an optionally-given monitor */
     attach_to_monitor(ext: Ext, win: ShellWindow, workspace_id: [number, number]) {
         let rect = ext.monitor_work_area(workspace_id[0]);
@@ -54,6 +75,7 @@ export class AutoTiler {
         rect.y += ext.gap_outer;
         rect.width -= ext.gap_outer * 2;
         rect.height -= ext.gap_outer * 2;
+
 
         const [entity, fork] = this.forest.create_toplevel(win.entity, rect.clone(), workspace_id)
         this.attached.insert(win.entity, entity);

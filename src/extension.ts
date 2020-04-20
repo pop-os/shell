@@ -1140,6 +1140,17 @@ export class Ext extends Ecs.System<ExtEvent> {
             Log.info(`Display(${id}): ${display_fmt(display)}`);
         }
 
+        if (this.auto_tiler) {
+            for (const [entity, [mon_id,]] of this.auto_tiler.forest.toplevel.values()) {
+                let fork = this.auto_tiler.forest.forks.get(entity);
+                let display = this.displays.get(mon_id);
+
+                if (fork && display) {
+                    this.auto_tiler.update_toplevel(this, fork, mon_id);
+                }
+            }
+        }
+
         Log.info(`Updated display configuration`);
     }
 
