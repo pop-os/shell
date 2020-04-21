@@ -802,8 +802,8 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     /** Handle workspace change events */
     on_workspace_changed(win: Window.ShellWindow) {
-        Log.info(`workspce of ${win.name(this)} changed`);
-        if (this.auto_tiler) {
+        Log.info(`workspace of ${win.name(this)} changed`);
+        if (this.auto_tiler && !this.contains_tag(win.entity, Tags.Floating)) {
             const id = this.workspace_id(win);
             const prev_id = this.monitors.get(win.entity);
             if (!prev_id || id[0] != prev_id[0] || id[1] != prev_id[1]) {
