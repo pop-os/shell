@@ -444,7 +444,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     /** Handles display configuration changes */
     on_display_change() {
-        this.update_display_configuration();
+        this.update_display_configuration(false);
     }
 
     on_display_move(_from_id: number, _to_id: number) {
@@ -843,6 +843,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                     if (fork) {
                         fork.workspace = value;
                         for (const child of this.auto_tiler.forest.iter(entity, node.NodeKind.FORK)) {
+
                             fork = this.auto_tiler.forest.forks.get(child.entity);
                             if (fork) fork.workspace = value;
                         }
@@ -895,7 +896,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             idx += 1;
             let index = ws.index();
 
-            ws.connect('notify::workspace-index', () => {
+            this.connect(ws, 'notify::workspace-index', () => {
                 if (ws !== null) {
                     let new_index = ws.index();
                     this.on_workspace_index_changed(index, new_index);
@@ -905,6 +906,11 @@ export class Ext extends Ecs.System<ExtEvent> {
 
             ws = workspace_manager.get_workspace_by_index(idx);
         }
+
+        this.connect(global.display, 'workareas-changed', () => {
+            global.log(`workareas-changed`);
+            this.update_display_configuration(true);
+        });
 
         this.connect(global.window_manager, 'size-change', (_, actor, event, _before, _after) => {
             if (this.auto_tiler) {
@@ -968,7 +974,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         // We have to connect this signal in an idle_add; otherwise work areas stop being calculated
         this.register_fn(() => {
-            if (screenShield?.locked) this.update_display_configuration();
+            if (screenShield?.locked) this.update_display_configuration(false);
 
             this.connect(global.display, 'notify::focus-window', () => {
                 const window = this.focus_window();
@@ -1099,7 +1105,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         }
     }
 
-    update_display_configuration() {
+    update_display_configuration(changed: boolean) {
         Log.info('Updating display configuration');
         let moved = new Array();
         let updated = new Map();
@@ -1110,16 +1116,22 @@ export class Ext extends Ecs.System<ExtEvent> {
             const area = new Rect.Rectangle([mon.x, mon.y, mon.width, mon.height]);
             const ws = this.monitor_work_area(mon.index);
 
-            for (const [id, display] of this.displays) {
-                if (display.area.eq(area) && display.ws.eq(ws)) {
-                    if (id !== mon.index) {
-                        this.displays.set(mon.index, { area, ws });
-                        moved.push([id, mon.index]);
-                    } else {
-                        updated.set(id, display);
-                    }
+            Log.debug(`display ${mon.index} has work area ${ws.fmt()}`);
 
-                    this.displays.delete(id);
+            if (changed) {
+                this.displays.delete(mon.index);
+            } else {
+                for (const [id, display] of this.displays) {
+                    if (display.area.eq(area) && display.ws.eq(ws)) {
+                        if (id !== mon.index) {
+                            this.displays.set(mon.index, { area, ws });
+                            moved.push([id, mon.index]);
+                        } else {
+                            updated.set(id, display);
+                        }
+
+                        this.displays.delete(id);
+                    }
                 }
             }
 
