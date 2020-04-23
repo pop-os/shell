@@ -57,6 +57,7 @@ export function cursor_rect(): Rectangle {
 }
 
 export function dbg<T>(value: T): T {
+    Log.debug(String(value));
     return value;
 }
 

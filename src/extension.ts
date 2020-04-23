@@ -30,15 +30,10 @@ import { Fork } from './fork';
 const { Gio, Meta, St } = imports.gi;
 const { GlobalEvent, WindowEvent } = Events;
 const { cursor_rect, is_move_op } = Lib;
-const { layoutManager, overview, panel, screenShield, sessionMode } = imports.ui.main;
+const { layoutManager, loadTheme, overview, panel, setThemeStylesheet, screenShield, sessionMode } = imports.ui.main;
 const Tags = Me.imports.tags;
 
-const THEME_CONTEXT = St.ThemeContext.get_for_stage(global.stage);
-
-enum Style {
-    Light,
-    Dark
-}
+enum Style { Light, Dark }
 
 interface Display {
     area: Rectangle;
@@ -81,6 +76,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     /** Column sizes in snap-to-grid */
     column_size: number = 32;
 
+    /** The currently-loaded theme variant */
     current_style: Style = this.settings.is_dark() ? Style.Dark : Style.Light;
 
     /** Row size in snap-to-grid */
@@ -90,7 +86,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     displays: Map<number, Display> = new Map();
 
     /** The current scaling factor in GNOME Shell */
-    dpi: number = THEME_CONTEXT.scale_factor;
+    dpi: number = St.ThemeContext.get_for_stage(global.stage).scale_factor;
 
     /** The number of pixels between windows */
     gap_inner: number = 0;
@@ -167,7 +163,8 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         this.load_settings();
 
-        this.load_theme(this.current_style);
+        this.register_fn(() => this.load_theme(this.current_style));
+
         this.settings.int.connect('changed::gtk-theme', () => {
             this.register(Events.global(GlobalEvent.GtkThemeChanged));
         });
@@ -385,9 +382,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         }
     }
 
-    load_theme(style: Style) {
-        load_theme(style === Style.Dark ? 'dark' : 'light');
-    }
+    load_theme(style: Style) { load_theme(style === Style.Dark ? 'dark' : 'light') }
 
     monitor_work_area(monitor: number): Rectangle {
         const meta = global.display.get_workspace_manager()
@@ -678,15 +673,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     on_gtk_theme_change() {
-        if (this.settings.is_dark()) {
-            if (this.current_style === Style.Light) {
-                this.current_style = Style.Dark;
-                this.load_theme(this.current_style);
-            }
-        } else if (this.current_style === Style.Dark) {
-            this.current_style = Style.Light;
-            this.load_theme(this.current_style);
-        }
+        this.load_theme(this.settings.is_dark() ? Style.Dark : Style.Light);
     }
 
     on_show_window_titles() {
@@ -1334,23 +1321,15 @@ function find_unused_workspace(): [number, any] {
     return [id, new_work];
 }
 
-let loaded_theme: any | null = null;
-
 // Supplements the GNOME Shell theme with the extension's theme.
-function load_theme(stylesheet: string) {
+function load_theme(stylesheet: string): string | any {
     try {
-        Log.info(`loading theme`)
-        const file = Gio.File.new_for_path(Me.path + "/" + stylesheet + ".css");
-
-        Log.info(`setting theme`);
-
-        const theme = THEME_CONTEXT.get_theme();
-        if (loaded_theme) theme.unload_stylesheet(loaded_theme);
-        theme.load_stylesheet(file);
-        loaded_theme = file;
-
-        Log.info(`theme set`);
+        let theme = Lib.dbg(Me.path + "/" + stylesheet + ".css");
+        setThemeStylesheet(theme);
+        loadTheme();
+        return theme;
     } catch (e) {
         Log.error("failed to load stylesheet: " + e);
+        return null;
     }
 }
