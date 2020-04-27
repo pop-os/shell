@@ -94,10 +94,12 @@ export class ShellWindow {
     }
 
     decoration_hide(ext: Ext): void {
+        if (this.ignore_decoration(ext)) return;
         this.decoration(ext, (xid) => xprop.set_hint(xid, xprop.MOTIF_HINTS, xprop.HIDE_FLAGS));
     }
 
     decoration_show(ext: Ext): void {
+        if (this.ignore_decoration(ext)) return;
         this.decoration(ext, (xid) => xprop.set_hint(xid, xprop.MOTIF_HINTS, xprop.SHOW_FLAGS));
     }
 
@@ -113,6 +115,10 @@ export class ShellWindow {
         }
 
         return icon;
+    }
+
+    ignore_decoration(ext: Ext): any {
+        return this.name(ext) === 'Firefox';
     }
 
     may_decorate(): boolean {
