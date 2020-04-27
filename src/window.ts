@@ -225,7 +225,10 @@ export class ShellWindow {
     }
 
     xid(): string | null {
-        return this.extra.xid_.get_or_init(() => xprop.get_xid(this.meta));
+        return this.extra.xid_.get_or_init(() => {
+            if (utils.is_wayland()) return null;
+            return xprop.get_xid(this.meta);
+        })
     }
 }
 

@@ -4,9 +4,13 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 import * as result from 'result';
 import * as error from 'error';
 
-const { Gio, GLib, GObject } = imports.gi;
+const { Gio, GLib, GObject, Meta } = imports.gi;
 const { Ok, Err } = result;
 const { Error } = error;
+
+export function is_wayland(): boolean {
+    return Meta.is_wayland_compositor();
+}
 
 export function block_signal(object: GObject.Object, signal: SignalID) {
     GObject.signal_handler_block(object, signal);
