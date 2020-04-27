@@ -114,7 +114,6 @@ export class Forest extends Ecs.World {
 
     /** Attaches a `new` window to the fork which `onto` is attached to. */
     attach_window(ext: Ext, onto_entity: Entity, new_entity: Entity, cursor: Rectangle): [Entity, Fork.Fork] | null {
-
         const right_node = Node.Node.window(new_entity);
 
         for (const [entity, fork] of this.forks.iter()) {

@@ -434,6 +434,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         if (this.auto_tiler) this.auto_tiler.detach_window(this, win);
 
+        this.windows.remove(win);
         this.delete_entity(win);
     }
 
@@ -769,7 +770,8 @@ export class Ext extends Ecs.System<ExtEvent> {
         if (win) {
             const entity = win.entity;
             actor.connect('destroy', () => {
-                if (win) this.on_destroy(entity);
+                global.log(`Destroying ${entity}`);
+                this.on_destroy(entity);
                 return false;
             });
 
