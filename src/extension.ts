@@ -1193,11 +1193,12 @@ export class Ext extends Ecs.System<ExtEvent> {
 
             entity = this.create_entity();
 
+            this.ids.insert(entity, id);
+            this.names.insert(entity, name);
+
             let win = new Window.ShellWindow(entity, meta, window_app, this);
 
             this.windows.insert(entity, win);
-            this.ids.insert(entity, id);
-            this.names.insert(entity, name);
             this.monitors.insert(entity, [win.meta.get_monitor(), win.workspace_id()]);
 
             if (this.auto_tiler && !win.meta.minimized && win.is_tilable(this)) {
