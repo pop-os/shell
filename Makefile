@@ -40,7 +40,9 @@ convert: transpile
 	done
 
 depcheck:
-	if ! command -v tsc >/dev/null; then \
+	@echo depcheck
+	@if ! command -v tsc >/dev/null; then \
+		echo \
 		echo 'You must install TypeScript >= 3.8 to transpile: (node-typescript on Debian systems)'; \
 		exit 1; \
 	fi
