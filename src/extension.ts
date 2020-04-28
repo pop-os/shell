@@ -324,15 +324,13 @@ export class Ext extends Ecs.System<ExtEvent> {
             this.connect_meta(win, 'position-changed', () => {
                 this.register(Events.window_event(win, WindowEvent.Size));
             }),
+            this.connect_meta(win, 'workspace-changed', () => {
+                this.register(Events.window_event(win, WindowEvent.Workspace));
+            }),
+            this.connect_meta(win, 'notify::minimized', () => {
+                this.register(Events.window_event(win, WindowEvent.Minimize));
+            }),
         ]);
-
-        this.connect_meta(win, 'workspace-changed', () => {
-            this.register(Events.window_event(win, WindowEvent.Workspace));
-        });
-
-        this.connect_meta(win, 'notify::minimized', () => {
-            this.register(Events.window_event(win, WindowEvent.Minimize));
-        });
     }
 
     exit_modes() {
@@ -434,7 +432,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         if (this.auto_tiler) this.auto_tiler.detach_window(this, win);
 
-        this.windows.remove(win);
+        this.windows.remove(win)
         this.delete_entity(win);
     }
 
@@ -842,10 +840,20 @@ export class Ext extends Ecs.System<ExtEvent> {
         }
 
         for (const [entity, monitor] of this.monitors.iter()) {
-            if (condition(monitor[1])) {
-                Log.info(`moving Window(${entity})`);
-                monitor[1] = modify(monitor[1]);
+            let window = this.windows.get(entity);
+            if (window) {
+                let actor = window.meta.get_compositor_private();
+                if (actor) {
+                    if (condition(monitor[1])) {
+                        Log.info(`moving Window(${entity})`);
+                        monitor[1] = modify(monitor[1]);
+                    }
+
+                    continue
+                }
             }
+
+            this.auto_tiler?.detach_window(this, entity);
         }
     }
 

@@ -119,6 +119,7 @@ declare namespace Meta {
 
         activate(time: number): void;
         change_workspace_by_index(workspace: number, append: boolean): void;
+        delete(timestamp: number): void;
         get_buffer_rect(): Rectangular;
         get_compositor_private(): Clutter.Actor | null;
         get_description(): string;
