@@ -118,7 +118,7 @@ export class ShellWindow {
     }
 
     ignore_decoration(ext: Ext): any {
-        return this.name(ext) === 'Firefox';
+        return this.name(ext) === 'Firefox Web Browser';
     }
 
     may_decorate(): boolean {
