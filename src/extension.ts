@@ -193,6 +193,12 @@ export class Ext extends Ecs.System<ExtEvent> {
                 if (!win.actor_exists()) return;
 
                 if (event.kind.tag === 1) {
+                    let actor = event.window.meta.get_compositor_private();
+                    if (!actor) {
+                        this.auto_tiler?.detach_window(this, event.window.entity);
+                        return;
+                    }
+
                     event.window.meta.move_resize_frame(
                         true,
                         event.kind.rect.x,
