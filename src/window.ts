@@ -170,10 +170,12 @@ export class ShellWindow {
                 const dx = current.x - buffer.x;
                 const dy = current.y - buffer.y;
 
-                const signal = ext.tween_signals.get(entity_string);
-                if (signal !== undefined) {
+                const slot = ext.tween_signals.get(entity_string);
+                if (slot !== undefined) {
+                    const [signal, callback] = slot;
                     Tweener.remove(actor);
                     utils.source_remove(signal);
+                    callback();
                 }
 
                 Tweener.add(actor, {
@@ -183,7 +185,10 @@ export class ShellWindow {
                     mode: null,
                 });
 
-                ext.tween_signals.set(entity_string, Tweener.on_tween_completion(actor, onComplete));
+                ext.tween_signals.set(entity_string, [
+                    Tweener.on_tween_completion(actor, onComplete),
+                    onComplete
+                ]);
             } else {
                 onComplete();
             }

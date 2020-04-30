@@ -115,7 +115,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     /** Track if workspaces should switch on window movements */
     switch_workspace_on_move: boolean = true;
 
-    tween_signals: Map<string, SignalID> = new Map();
+    tween_signals: Map<string, [SignalID, any]> = new Map();
 
     /** Initially set to true when the extension is initializing */
     init: boolean = true;
