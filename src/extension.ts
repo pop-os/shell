@@ -106,6 +106,9 @@ export class Ext extends Ecs.System<ExtEvent> {
     /** Information about a current possible grab operation */
     grab_op: GrabOp.GrabOp | null = null;
 
+    /** A display config update is triggered on a workspace addition */
+    ignore_display_update: boolean = false;
+
     /** The last window that was focused */
     last_focused: Entity | null = null;
 
@@ -269,7 +272,8 @@ export class Ext extends Ecs.System<ExtEvent> {
                         break;
 
                     case GlobalEvent.MonitorsChanged:
-                        this.on_display_change();
+                        global.log(`monitors changed`);
+                        this.update_display_configuration(false);
                         break;
 
                     case GlobalEvent.OverviewShown:
@@ -441,11 +445,6 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         this.windows.remove(win)
         this.delete_entity(win);
-    }
-
-    /** Handles display configuration changes */
-    on_display_change() {
-        this.update_display_configuration(false);
     }
 
     on_display_move(_from_id: number, _to_id: number) {
@@ -793,6 +792,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     on_workspace_added(number: number) {
         Log.debug(`workspace ${number} was added`);
+        this.ignore_display_update = true;
     }
 
     /** Handle workspace change events */
@@ -1113,6 +1113,11 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     update_display_configuration(changed: boolean) {
+        if (this.ignore_display_update) {
+            this.ignore_display_update = true;
+            return;
+        }
+
         Log.info('Updating display configuration');
         let moved = new Array();
         let updated = new Map();
