@@ -416,10 +416,25 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     on_active_workspace_changed() {
-        if (this.active_hint) {
-            this.active_hint.untrack();
-        }
+        Log.debug('active workspace has changed');
 
+        const refocus_hint = () => {
+            if (!this.active_hint?.window) return
+
+            let active = this.windows.get(this.active_hint.window.entity);
+            if (!active) return;
+
+            let aws = this.workspace_id(active);
+            let cws = this.workspace_id(null);
+
+            if (aws[0] === cws[0] && aws[1] === cws[1]) {
+                this.active_hint.show();
+            } else {
+                this.active_hint.hide();
+            }
+        };
+
+        refocus_hint();
         this.exit_modes();
         this.last_focused = null;
     }
