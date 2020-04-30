@@ -220,6 +220,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                         break;
 
                     case WindowEvent.Size:
+                        global.log(`Size event triggered`);
                         if (this.auto_tiler && !win.is_maximized()) {
                             this.auto_tiler.reflow(this, win.entity);
                         }
@@ -694,6 +695,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     /** Handle window maximization notifications */
     on_maximize(win: Window.ShellWindow) {
+        Log.debug(`Window(${win.entity}) maximization changed`);
         if (win.is_maximized()) {
             this.on_monitor_changed(win, (_cfrom, cto, workspace) => {
                 if (win) {
@@ -750,6 +752,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     on_overview_hidden() {
+        Log.debug('overview hidden');
         if (this.active_hint && this.active_hint.window) {
             let window = this.active_hint.window.meta;
             if (!window.get_maximized()) {
@@ -759,7 +762,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     on_overview_shown() {
-        Log.info(`showing overview`);
+        Log.debug('showing overview');
         if (this.active_hint) {
             this.active_hint.hide();
         }
@@ -789,12 +792,12 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     on_workspace_added(number: number) {
-        Log.info(`workspace ${number} was added`);
+        Log.debug(`workspace ${number} was added`);
     }
 
     /** Handle workspace change events */
     on_workspace_changed(win: Window.ShellWindow) {
-        Log.info(`workspace of ${win.name(this)} changed`);
+        Log.debug(`workspace of ${win.name(this)} changed`);
         if (this.auto_tiler && !this.contains_tag(win.entity, Tags.Floating)) {
             const id = this.workspace_id(win);
             const prev_id = this.monitors.get(win.entity);
@@ -1055,6 +1058,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     size_signals_block(win: Window.ShellWindow) {
         this.size_signals.with(win.entity, (signals) => {
+            Log.debug(`blocking signals for ${win.entity}`);
             for (const signal of signals) {
                 utils.block_signal(win.meta, signal);
             }
@@ -1063,9 +1067,10 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     size_signals_unblock(win: Window.ShellWindow) {
-        if (!this.contains_tag(win.entity, Tags.Blocked)) return;
+        // if (!this.contains_tag(win.entity, Tags.Blocked)) return;
 
         this.size_signals.with(win.entity, (signals) => {
+            Log.debug(`unblocking signals for ${win.entity}`);
             for (const signal of signals) {
                 utils.unblock_signal(win.meta, signal);
             };
