@@ -137,6 +137,7 @@ export class Forest extends Ecs.World {
                     return this._attach(onto_entity, new_entity, this.on_attach, entity, fork, [fork_entity, new_fork]);
                 } else {
                     fork.right = right_node;
+                    fork.set_ratio(fork.length() / 2);
                     return this._attach(onto_entity, new_entity, this.on_attach, entity, fork, null);
                 }
             } else if (fork.right && fork.right.is_window(onto_entity)) {
