@@ -94,14 +94,17 @@ export class Search {
                 this.close();
                 cancel();
                 return;
-            } else if (c == 65362) {
+            }
+
+            let s = event.get_state();
+            if (c == 65362 || (s == Clutter.ModifierType.CONTROL_MASK && c == 107)) {
                 // Up arrow was pressed
                 if (0 < this.active_id) {
                     this.unselect();
                     this.active_id -= 1;
                     this.select();
                 }
-            } else if (c == 65364) {
+            } else if (c == 65364 || (s == Clutter.ModifierType.CONTROL_MASK && c == 106)) {
                 // Down arrow was pressed
                 if (this.active_id + 1 < this.widgets.length) {
                     this.unselect();
