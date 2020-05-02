@@ -123,7 +123,7 @@ Activating this enables the following behaviors:
   - When `Return` is pressed, window positions will be swapped
 - `Shift` + `Ctrl` + `<Direction>`
   - In auto-tile mode, this resizes in the opposite direction
-- `O`: Toggles between horizontal and vertical tiling in auto-tile mode
+- `o`: Toggles between horizontal and vertical tiling in auto-tile mode
 - `~`: Toggles between floating and tiling in auto-tile mode
 - `Return`: Applies the changes that have been requested
 - `Esc`: Cancels any changes that were requested
@@ -143,7 +143,7 @@ The launcher is summoned with `Super` + `/`. The search list displays matching w
 By default, the launcher searches windows and applications. However, you can designate a special launch mode using one of the supported prefixes:
 
 - `:`: Execute a command in `sh`
-- `t:`: Execute a command in `sh` in a terminal
+- `t`: Execute a command in `sh` in a terminal
 - `=`: Calculator mode, powered by [MathJS](https://mathjs.org/)
 
 ### Inner and Outer Gaps
@@ -176,9 +176,9 @@ This provides the tiling window manager experience, where windows are automatica
 
 ### Keyboard Shortcuts
 
-- `Super` + `O`
+- `Super` + `o`
   - Toggles the orientation of a fork's tiling orientation
-- `Super` + `G`
+- `Super` + `g`
   - Toggles a window between floating and tiling
 
 ### Feature Overview
@@ -187,7 +187,7 @@ This provides the tiling window manager experience, where windows are automatica
 - As new windows are opened, they are tiled into the currently-focused window
 - Windows can be detached and retached to different areas of the tree by dragging and dropping them
 - The default tiling orientation is based on the dimensions of the window being attached to
-- The tiling orientation of the fork associated with the focused window can be altered with `Super` + `O`.
+- The tiling orientation of the fork associated with the focused window can be altered with `Super` + `o`.
 - The division of space between branches in a fork can be altered by resizing windows
   - Window resizes can be carried out with the mouse
   - Tiling mode may also be used to adjust sizes with the keyboard
