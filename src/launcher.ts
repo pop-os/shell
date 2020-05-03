@@ -35,10 +35,10 @@ const SEARCH_PATHS: Array<[string, string]> = [
     ["Local", HOME_DIR + "/.local/share/applications/"],
     // System-wide flatpaks
     ["Flatpak (system)", "/var/lib/flatpak/exports/share/applications/"],
-    // System-wide Snaps
-    ["Snap (system)", "/var/lib/snapd/desktop/applications/"],
     // User-local flatpaks
-    ["Flatpak", HOME_DIR + "/.local/share/flatpak/exports/share/applications/"]
+    ["Flatpak", HOME_DIR + "/.local/share/flatpak/exports/share/applications/"],
+    // System-wide Snaps
+    ["Snap (system)", "/var/lib/snapd/desktop/applications/"]
 ];
 
 let TERMINAL = new once_cell.OnceCell<string>();
