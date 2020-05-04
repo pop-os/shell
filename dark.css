@@ -2,10 +2,9 @@
     background: rgba(251, 184, 108, 1);
 }
 
-.pop-shell-search-active {
+.pop-shell-search-element:select{
     background: rgba(246, 246, 246, .2);
     border-radius: 5px;
-    color: #EDEDED;
 }
 
 .pop-shell-search-label {
