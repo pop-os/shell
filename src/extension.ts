@@ -1058,7 +1058,6 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     size_signals_block(win: Window.ShellWindow) {
         this.size_signals.with(win.entity, (signals) => {
-            Log.debug(`blocking signals for ${win.entity}`);
             for (const signal of signals) {
                 utils.block_signal(win.meta, signal);
             }
@@ -1070,7 +1069,6 @@ export class Ext extends Ecs.System<ExtEvent> {
         // if (!this.contains_tag(win.entity, Tags.Blocked)) return;
 
         this.size_signals.with(win.entity, (signals) => {
-            Log.debug(`unblocking signals for ${win.entity}`);
             for (const signal of signals) {
                 utils.unblock_signal(win.meta, signal);
             };

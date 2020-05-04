@@ -68,6 +68,13 @@ export class Forest extends Ecs.World {
         this.arrange(ext, fork.workspace, ignore_reset);
     }
 
+    /** Finds the calculated area of a child in the tree. */
+    area_of(ext: Ext, fork: Fork.Fork, child: Entity): Rectangle {
+        return (fork.left.is_window(child))
+            ? fork.area_of_left(ext)
+            : fork.area_of_right(ext);
+    }
+
     /** Place all windows into their calculated positions. */
     arrange(ext: Ext, workspace: number, ignore_reset: boolean = false) {
         let ws = ext.switch_workspace_on_move

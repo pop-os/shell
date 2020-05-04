@@ -3,7 +3,6 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 import * as Lib from 'lib';
 import * as Tags from 'tags';
-import * as Log from 'log';
 import * as GrabOp from 'grab_op';
 import * as Rect from 'rectangle';
 import * as window from 'window';
@@ -18,6 +17,9 @@ import { AutoTiler } from './auto_tiler';
 const { Meta } = imports.gi;
 const Main = imports.ui.main;
 const { ShellWindow } = window;
+
+const HROW = 64;
+const HCOLUMN = 64;
 
 enum Direction {
     Left,
@@ -117,7 +119,6 @@ export class Tiler {
             }
             if (max_y === null || (monitor.y + monitor.height) < max_y) {
                 max_y = monitor.y + monitor.height;
-                global.log(`MAX Y = ${max_y}`);
             }
         }
 
@@ -139,8 +140,6 @@ export class Tiler {
         overlay.width = changed.width;
         overlay.height = changed.height;
 
-        global.log(`${overlay.height}`);
-
         return this;
     }
 
@@ -157,7 +156,7 @@ export class Tiler {
         }
     }
 
-    move_auto_(ext: Ext, mov1: Rectangle, mov2: Rectangle, callback: (m: Rectangle, a: Rectangle, mov: Rectangle) => boolean) {
+    move_auto_(ext: Ext, movs: Rectangle[]) {
         if (ext.auto_tiler && this.window) {
             const entity = ext.auto_tiler.attached.get(this.window);
             if (entity) {
@@ -184,52 +183,25 @@ export class Tiler {
 
                 let crect = grab_op.rect.clone();
 
-                // TODO: This is a hack. Find a better solution.
-                let fix_diff = () => {
-                    let diff = before.diff(crect);
+                const resize = (mov: Rectangle): boolean => {
+                    crect.apply(mov);
+                    crect.clamp(toparea);
 
-                    Log.debug(`R DIFF BEFORE: ${diff.fmt()}`);
+                    if (crect.eq(grab_op.rect)) return true;
 
-                    diff.width -= diff.width % 64;
-                    diff.height -= diff.height % 64;
-
-                    if (diff.width > 64) {
-                        diff.width = (diff.width - 64) * -1;
-                    } else if (diff.width < -64) {
-                        diff.width = (diff.width + 64) * -1;
-                    }
-
-                    if (diff.height > 64) {
-                        diff.height = (diff.height - 64) * -1;
-                    } else if (diff.height < -64) {
-                        diff.height = (diff.height + 64) * -1;
-                    }
-
-                    Log.debug(`R DIFF CORRECTED: ${diff.fmt()}`);
-
-                    let tmp = before.clone();
-                    tmp.apply(diff);
-                    crect = tmp;
-                };
-
-                let resize = (mov: Rectangle, func: (m: Rectangle, a: Rectangle, mov: Rectangle) => boolean) => {
-                    if (func(toparea, crect, mov) || crect.eq(grab_op.rect)) return;
-
-                    fix_diff();
-
+                    const cbefore = (ext.auto_tiler as AutoTiler).forest.area_of(ext, fork, entity);
                     (ext.auto_tiler as AutoTiler).forest.resize(ext, entity, fork, (this.window as Entity), grab_op.operation(crect), crect);
+                    crect = (ext.auto_tiler as AutoTiler).forest.area_of(ext, fork, entity);
                     grab_op.rect = crect.clone();
+
+                    return cbefore.eq(crect);
                 };
 
-                Log.debug(`R BEFORE: ${crect.fmt()}`);
-                resize(mov1, callback);
-                Log.debug(`R MID: ${crect.fmt()}`);
-                resize(mov2, callback);
-                Log.debug(`R AFTER: ${crect.fmt()}`);
+                for (const mov of movs) if (!resize(mov)) break;
 
                 ext.auto_tiler.forest.arrange(ext, fork.workspace);
 
-                let actor = window.meta.get_compositor_private();
+                const actor = window.meta.get_compositor_private();
                 if (actor) Tweener.on_tween_completion(actor, () => {
                     ext.register_fn(() => ext.set_overlay(window.rect()));
                 });
@@ -252,40 +224,35 @@ export class Tiler {
     }
 
     resize_auto(ext: Ext, direction: Direction) {
-        let mov1: Rectangle, mov2: Rectangle;
-
-        const hrow = 64;
-        const hcolumn = 64;
+        let movs: Rectangle[];
 
         switch (direction) {
             case Direction.Left:
-                mov1 = new Rect.Rectangle([hrow, 0, -hrow, 0]);
-                mov2 = new Rect.Rectangle([0, 0, -hrow, 0]);
+                movs = [
+                    new Rect.Rectangle([HROW, 0, -HROW, 0]),
+                    new Rect.Rectangle([0, 0, -HROW, 0]),
+                ];
                 break;
             case Direction.Right:
-                mov1 = new Rect.Rectangle([0, 0, hrow, 0]);
-                mov2 = new Rect.Rectangle([-hrow, 0, hrow, 0]);
+                movs = [
+                    new Rect.Rectangle([-HROW, 0, HROW, 0]),
+                    new Rect.Rectangle([0, 0, HROW, 0]),
+                ];
                 break;
             case Direction.Up:
-                mov1 = new Rect.Rectangle([0, hcolumn, 0, -hcolumn]);
-                mov2 = new Rect.Rectangle([0, 0, 0, -hcolumn]);
+                movs = [
+                    new Rect.Rectangle([0, HCOLUMN, 0, -HCOLUMN]),
+                    new Rect.Rectangle([0, 0, 0, -HCOLUMN]),
+                ];
                 break;
             default:
-                mov1 = new Rect.Rectangle([0, 0, 0, hcolumn]);
-                mov2 = new Rect.Rectangle([0, -hcolumn, 0, hcolumn]);
+                movs = [
+                    new Rect.Rectangle([0, -HCOLUMN, 0, HCOLUMN]),
+                    new Rect.Rectangle([0, 0, 0, HCOLUMN]),
+                ]
         }
 
-        this.move_auto_(
-            ext,
-            mov1,
-            mov2,
-            (work_area, crect, mov) => {
-                crect.apply(mov);
-                crect.clamp(work_area);
-
-                return false;
-            },
-        );
+        this.move_auto_(ext, movs);
     }
 
     move_auto(ext: Ext, move_to: window.ShellWindow | number | null) {
@@ -314,7 +281,6 @@ export class Tiler {
                     watching = focused;
                 }
             } else {
-                global.log(`attach to monitor ${move_to}`);
                 ext.auto_tiler.detach_window(ext, focused.entity);
                 ext.auto_tiler.attach_to_monitor(ext, focused, [move_to, ext.active_workspace()]);
                 watching = focused;
