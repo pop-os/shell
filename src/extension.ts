@@ -79,7 +79,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     column_size: number = 32;
 
     /** The currently-loaded theme variant */
-    current_style: Style = this.settings.is_dark() ? Style.Dark : Style.Light;
+    current_style: Style = this.settings.is_dark_shell() ? Style.Dark : Style.Light;
 
     /** Row size in snap-to-grid */
     row_size: number = 32;
@@ -170,9 +170,15 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         this.register_fn(() => load_theme(this.current_style));
 
-        this.settings.int.connect('changed::gtk-theme', () => {
-            this.register(Events.global(GlobalEvent.GtkThemeChanged));
-        });
+        if(this.settings.int !== null)
+            this.settings.int.connect('changed::gtk-theme', () => {
+                this.register(Events.global(GlobalEvent.GtkThemeChanged));
+            });
+
+        if(this.settings.shell !== null)
+            this.settings.shell.connect('changed::name', () => {
+                this.register(Events.global(GlobalEvent.GtkShellChanged));
+            });
     }
 
     // System interface
@@ -269,6 +275,10 @@ export class Ext extends Ecs.System<ExtEvent> {
             /** Stateless global events */
             case 4:
                 switch (event.event) {
+                    case GlobalEvent.GtkShellChanged:
+                        this.on_gtk_shell_changed();
+                        break;
+
                     case GlobalEvent.GtkThemeChanged:
                         this.on_gtk_theme_change();
                         break;
@@ -677,8 +687,12 @@ export class Ext extends Ecs.System<ExtEvent> {
         }
     }
 
+    on_gtk_shell_changed() {
+        load_theme(this.settings.is_dark_shell() ? Style.Dark : Style.Light);
+    }
+
     on_gtk_theme_change() {
-        load_theme(this.settings.is_dark() ? Style.Dark : Style.Light);
+        load_theme(this.settings.is_dark_shell() ? Style.Dark : Style.Light);
     }
 
     on_show_window_titles() {
@@ -948,9 +962,10 @@ export class Ext extends Ecs.System<ExtEvent> {
             }
         });
 
-        this.connect(this.settings.mutter, 'changed::workspaces-only-on-primary', () => {
-            this.register(Events.global(GlobalEvent.MonitorsChanged));
-        });
+        if(this.settings.mutter !== null)
+            this.connect(this.settings.mutter, 'changed::workspaces-only-on-primary', () => {
+                this.register(Events.global(GlobalEvent.MonitorsChanged));
+            });
 
         this.connect(layoutManager, 'monitors-changed', () => {
             this.register(Events.global(GlobalEvent.MonitorsChanged));

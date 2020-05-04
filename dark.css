@@ -5,6 +5,7 @@
 .pop-shell-search-element:select{
     background: rgba(246, 246, 246, .2);
     border-radius: 5px;
+    color: #EDEDED;
 }
 
 .pop-shell-search-label {
