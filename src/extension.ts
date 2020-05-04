@@ -30,7 +30,7 @@ import { Fork } from './fork';
 const { Gio, Meta, St } = imports.gi;
 const { GlobalEvent, WindowEvent } = Events;
 const { cursor_rect, is_move_op } = Lib;
-const { layoutManager, loadTheme, overview, panel, setThemeStylesheet, screenShield, sessionMode } = imports.ui.main;
+const { layoutManager, overview, panel, screenShield, sessionMode } = imports.ui.main;
 const Tags = Me.imports.tags;
 
 enum Style { Light, Dark }
@@ -163,8 +163,6 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         this.load_settings();
 
-        this.register_fn(() => this.load_theme(this.current_style));
-
         this.settings.int.connect('changed::gtk-theme', () => {
             this.register(Events.global(GlobalEvent.GtkThemeChanged));
         });
@@ -264,10 +262,6 @@ export class Ext extends Ecs.System<ExtEvent> {
             /** Stateless global events */
             case 4:
                 switch (event.event) {
-                    case GlobalEvent.GtkThemeChanged:
-                        this.on_gtk_theme_change();
-                        break;
-
                     case GlobalEvent.MonitorsChanged:
                         this.on_display_change();
                         break;
@@ -386,8 +380,6 @@ export class Ext extends Ecs.System<ExtEvent> {
             this.active_hint = new active_hint.ActiveHint(this.dpi);
         }
     }
-
-    load_theme(style: Style) { load_theme(style === Style.Dark ? 'dark' : 'light') }
 
     monitor_work_area(monitor: number): Rectangle {
         const meta = global.display.get_workspace_manager()
@@ -675,10 +667,6 @@ export class Ext extends Ecs.System<ExtEvent> {
 
             this.size_signals_block(win);
         }
-    }
-
-    on_gtk_theme_change() {
-        this.load_theme(this.settings.is_dark() ? Style.Dark : Style.Light);
     }
 
     on_show_window_titles() {
@@ -1342,15 +1330,3 @@ function find_unused_workspace(): [number, any] {
     return [id, new_work];
 }
 
-// Supplements the GNOME Shell theme with the extension's theme.
-function load_theme(stylesheet: string): string | any {
-    try {
-        let theme = Lib.dbg(Me.path + "/" + stylesheet + ".css");
-        setThemeStylesheet(theme);
-        loadTheme();
-        return theme;
-    } catch (e) {
-        Log.error("failed to load stylesheet: " + e);
-        return null;
-    }
-}

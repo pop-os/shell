@@ -1,11 +1,9 @@
 .pop-shell-active-hint {
-    background: rgba(255, 173, 0, 1);
+    background: rgba(251, 184, 108, 1);
 }
 
-.pop-shell-search-active {
-    background: rgba(0, 0, 0, .1);
+.pop-shell-search {
     border-radius: 5px;
-    color: #393634;
 }
 
 .pop-shell-search-label {

@@ -29,7 +29,7 @@ export class Search {
     ) {
         this.select_cb = select;
         this.dialog = new ModalDialog({
-            styleClass: "pop-shell-search",
+            styleClass: "pop-shell-search modal-dialog",
             destroyOnClose: false,
             shellReactive: true,
             shouldFadeIn: false,
@@ -55,6 +55,9 @@ export class Search {
             if (this.has_prefix(text) !== -1) {
                 cont = apply(text);
             } else if (this.active_id < this.widgets.length) {
+                this.widgets[this.active_id].add_style_pseudo_class(
+                    "active"
+                );
                 cont = apply(this.active_id);
             }
 
@@ -148,14 +151,26 @@ export class Search {
     }
 
     select() {
-        this.widgets[this.active_id].set_style_class_name(
-            "pop-shell-search-element pop-shell-search-active"
+        this.widgets[this.active_id].add_style_pseudo_class(
+            "focus"
+        );
+        this.widgets[this.active_id].add_style_pseudo_class(
+            "hover"
+        );
+        this.widgets[this.active_id].add_style_pseudo_class(
+            "active"
         );
     }
 
     unselect() {
-        this.widgets[this.active_id].set_style_class_name(
-            "pop-shell-search-element"
+        this.widgets[this.active_id].remove_style_pseudo_class(
+            "focus"
+        );
+        this.widgets[this.active_id].remove_style_pseudo_class(
+            "hover"
+        );
+        this.widgets[this.active_id].remove_style_pseudo_class(
+            "active"
         );
     }
 
@@ -170,13 +185,13 @@ export class Search {
 
                 let label = new St.Label({
                     text: title,
-                    styleClass: "pop-shell-search-label",
+                    styleClass: "pop-shell-search-label list-search-result-title",
                     y_align: Clutter.ActorAlign.CENTER
                 });
 
                 label.clutter_text.set_ellipsize(Pango.EllipsizeMode.END);
 
-                let container = new widgets.Box({ styleClass: "pop-shell-search-element" })
+                let container = new widgets.Box({ styleClass: "pop-shell-search-element button" })
                     .add(cat_icon)
                     .add(icon)
                     .add(label)
