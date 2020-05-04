@@ -1347,13 +1347,30 @@ function find_unused_workspace(): [number, any] {
     return [id, new_work];
 }
 
-// Supplements the GNOME Shell theme with the extension's theme.
+// Supplements the loaded theme with the extension's theme.
 function load_theme(stylesheet: string): string | any {
     try {
-        let theme = Lib.dbg(Me.path + "/" + stylesheet + ".css");
-        setThemeStylesheet(theme);
-        loadTheme();
-        return theme;
+        const themeContext = St.ThemeContext.get_for_stage(global.stage);
+
+        // Get the existing shell theme if exists
+        const existingTheme = themeContext.get_theme();
+
+        // Load the pop theme style sheet
+        const popStyleSheet = Lib.dbg(Me.path + "/" + stylesheet + ".css");
+
+        if (existingTheme) {
+            // User has an existing theme, so merge update with pop styling
+            existingTheme.load_stylesheet(Gio.File.new_for_path(popStyleSheet));
+
+            // Perform theme update
+            themeContext.set_theme(existingTheme);
+        } else {
+            // User does not have a theme loaded, so use pop styling + default
+            setThemeStylesheet(popStyleSheet);
+            loadTheme();
+        }
+
+        return popStyleSheet;
     } catch (e) {
         Log.error("failed to load stylesheet: " + e);
         return null;
