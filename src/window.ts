@@ -21,6 +21,11 @@ const { OnceCell } = once_cell;
 
 export var window_tracker = Shell.WindowTracker.get_default();
 
+const TITLE_BLACKLIST: Array<string> = [
+    'Firefox',
+    'Tor Browser'
+];
+
 interface X11Info {
     normal_hints: once_cell.OnceCell<lib.SizeHint | null>;
     wm_role_: once_cell.OnceCell<string | null>;
@@ -117,8 +122,9 @@ export class ShellWindow {
         return icon;
     }
 
-    ignore_decoration(ext: Ext): any {
-        return this.name(ext) === 'Firefox Web Browser';
+    ignore_decoration(ext: Ext): boolean {
+        const name = this.name(ext);
+        return TITLE_BLACKLIST.findIndex((n) => name.startsWith(n)) !== -1;
     }
 
     may_decorate(): boolean {
