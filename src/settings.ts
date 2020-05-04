@@ -67,7 +67,7 @@ export class ExtensionSettings {
     }
 
     is_dark(): boolean {
-        return this.int.get_string('gtk-theme').endsWith('dark');
+        return this.int.get_string('gtk-theme').toLowerCase().includes('dark');
     }
 
     row_size(): number {

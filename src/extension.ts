@@ -34,6 +34,8 @@ const { layoutManager, loadTheme, overview, panel, setThemeStylesheet, screenShi
 const Tags = Me.imports.tags;
 
 enum Style { Light, Dark }
+const STYLESHEET_PATHS = ['light', 'dark'].map(get_stylesheet_path);
+const STYLESHEETS = STYLESHEET_PATHS.map(Gio.File.new_for_path);
 
 interface Display {
     area: Rectangle;
@@ -166,7 +168,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         this.load_settings();
 
-        this.register_fn(() => this.load_theme(this.current_style));
+        this.register_fn(() => load_theme(this.current_style));
 
         this.settings.int.connect('changed::gtk-theme', () => {
             this.register(Events.global(GlobalEvent.GtkThemeChanged));
@@ -391,7 +393,6 @@ export class Ext extends Ecs.System<ExtEvent> {
         }
     }
 
-    load_theme(style: Style) { load_theme(style === Style.Dark ? 'dark' : 'light') }
 
     monitor_work_area(monitor: number): Rectangle {
         const meta = global.display.get_workspace_manager()
@@ -677,7 +678,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     on_gtk_theme_change() {
-        this.load_theme(this.settings.is_dark() ? Style.Dark : Style.Light);
+        load_theme(this.settings.is_dark() ? Style.Dark : Style.Light);
     }
 
     on_show_window_titles() {
@@ -1347,13 +1348,41 @@ function find_unused_workspace(): [number, any] {
     return [id, new_work];
 }
 
-// Supplements the GNOME Shell theme with the extension's theme.
-function load_theme(stylesheet: string): string | any {
+function get_stylesheet_path(name: string) {return Lib.dbg(Me.path + "/" + name + ".css");}
+
+// Supplements the loaded theme with the extension's theme.
+function load_theme(style: Style): string | any {
+    let index = Number(style)
     try {
-        let theme = Lib.dbg(Me.path + "/" + stylesheet + ".css");
-        setThemeStylesheet(theme);
-        loadTheme();
-        return theme;
+        const themeContext = St.ThemeContext.get_for_stage(global.stage);
+
+        // Get the existing shell theme if exists
+        const existingTheme = themeContext.get_theme();
+
+        // Load the pop shell style sheet
+        const popStyleSheet = STYLESHEET_PATHS[index]
+
+        if (existingTheme) {
+            /* 
+            Must unload stylesheets or else the previously loaded stylesheets
+            will persist when loadTheme() is called 
+            (found in source code of imports.ui.main)
+            */
+            for (let i: number = 0; i < STYLESHEETS.length; i++) {
+                existingTheme.unload_stylesheet(STYLESHEETS[i]);
+            }
+            // User has an existing theme, so merge update with pop styling
+            existingTheme.load_stylesheet(STYLESHEETS[index]);
+
+            // Perform theme update
+            themeContext.set_theme(existingTheme);
+        } else {
+            // User does not have a theme loaded, so use pop styling + default
+            setThemeStylesheet(popStyleSheet);
+            loadTheme();
+        }
+
+        return popStyleSheet;
     } catch (e) {
         Log.error("failed to load stylesheet: " + e);
         return null;
