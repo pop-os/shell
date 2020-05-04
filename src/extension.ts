@@ -77,7 +77,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     column_size: number = 32;
 
     /** The currently-loaded theme variant */
-    current_style: Style = this.settings.is_dark() ? Style.Dark : Style.Light;
+    current_style: Style = this.settings.is_dark_shell() ? Style.Dark : Style.Light;
 
     /** Row size in snap-to-grid */
     row_size: number = 32;
@@ -170,6 +170,10 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         this.settings.int.connect('changed::gtk-theme', () => {
             this.register(Events.global(GlobalEvent.GtkThemeChanged));
+        });
+
+        this.settings.shell.connect('changed::name', () => {
+            this.register(Events.global(GlobalEvent.GtkShellChanged));
         });
     }
 
@@ -267,6 +271,10 @@ export class Ext extends Ecs.System<ExtEvent> {
             /** Stateless global events */
             case 4:
                 switch (event.event) {
+                    case GlobalEvent.GtkShellChanged:
+                        this.on_gtk_shell_changed();
+                        break;
+
                     case GlobalEvent.GtkThemeChanged:
                         this.on_gtk_theme_change();
                         break;
@@ -676,8 +684,12 @@ export class Ext extends Ecs.System<ExtEvent> {
         }
     }
 
+    on_gtk_shell_changed() {
+        this.load_theme(this.settings.is_dark_shell() ? Style.Dark : Style.Light);
+    }
+
     on_gtk_theme_change() {
-        this.load_theme(this.settings.is_dark() ? Style.Dark : Style.Light);
+        this.load_theme(this.settings.is_dark_shell() ? Style.Dark : Style.Light);
     }
 
     on_show_window_titles() {

@@ -47,6 +47,7 @@ export class ExtensionSettings {
     ext: Settings = settings_new_schema(extension.metadata['settings-schema']);
     int: Settings = settings_new_id('org.gnome.desktop.interface');
     mutter: Settings = settings_new_id('org.gnome.mutter');
+    shell: Settings = settings_new_id('org.gnome.shell.extensions.user-theme');
 
     // Getters
 
@@ -68,6 +69,10 @@ export class ExtensionSettings {
 
     is_dark(): boolean {
         return this.int.get_string('gtk-theme').endsWith('dark');
+    }
+
+    is_dark_shell(): boolean {
+        return this.shell.get_string('name').endsWith('dark');
     }
 
     row_size(): number {
