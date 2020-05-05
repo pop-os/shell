@@ -224,7 +224,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
                     case WindowEvent.Size:
                         global.log(`Size event triggered`);
-                        if (this.auto_tiler && !win.is_maximized()) {
+                        if (this.auto_tiler && !win.is_maximized() && !win.meta.is_fullscreen()) {
                             this.auto_tiler.reflow(this, win.entity);
                         }
 
