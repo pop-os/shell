@@ -73,6 +73,10 @@ Tasks for a tester to verify when approving a patch. Use complex window layouts 
 - [ ] : executes a commang in sh
 - [ ] = calculates and equation
 
+### Window Titles
+
+- [ ] Disabling window titles in Firefox works (Check debian and flatpak packages)
+
 ## With Tiling Disabled
 
 ### Tiling
