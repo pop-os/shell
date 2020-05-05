@@ -50,15 +50,15 @@ Tasks for a tester to verify when approving a patch. Use complex window layouts 
 - [ ] Moving windows to another workspace re-tiled the previous and new workspace
 - [ ] Active hint is present on the new workspace and once the window is returned to its previous workspace
 - [ ] Floating windows move across workspaces
-- [ ] Windows correctly move workspaces when a workspace is destroyed
+- [ ] Remove windows from the 2nd worspace in a 3 workspace setup. The 3rd workspace becomes the 2nd workspace, and tiling is unaffected by the move.
 
 ### Displays
 
 - [ ] Windows move across displays in adjustment mode with directions keys
 - [ ] Windows move across displays with the mouse
 - [ ] Changing the primary display moves the top bar. Window heights adjust on all monitors for the new position.
-- [ ] Unplugging and plugging in displays re-tiles all workspaces correctly
-- [ ] Windows correctly move across workspaces after display changes
+- [ ] Unplug a display - windows from the display retile on a new workspace on the remaining display
+- [ ] Plug in a display - windows and workspaces don't change
 - [ ] NOTE: Add vertical monitor layout test
 
 ### Launcher
