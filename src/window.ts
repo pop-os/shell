@@ -21,8 +21,9 @@ const { OnceCell } = once_cell;
 
 export var window_tracker = Shell.WindowTracker.get_default();
 
-const TITLE_BLACKLIST: Array<string> = [
+const WM_TITLE_BLACKLIST: Array<string> = [
     'Firefox',
+    'Nightly', // Firefox Nightly
     'Tor Browser'
 ];
 
@@ -99,12 +100,12 @@ export class ShellWindow {
     }
 
     decoration_hide(ext: Ext): void {
-        if (this.ignore_decoration(ext)) return;
+        if (this.ignore_decoration()) return;
         this.decoration(ext, (xid) => xprop.set_hint(xid, xprop.MOTIF_HINTS, xprop.HIDE_FLAGS));
     }
 
     decoration_show(ext: Ext): void {
-        if (this.ignore_decoration(ext)) return;
+        if (this.ignore_decoration()) return;
         this.decoration(ext, (xid) => xprop.set_hint(xid, xprop.MOTIF_HINTS, xprop.SHOW_FLAGS));
     }
 
@@ -122,9 +123,9 @@ export class ShellWindow {
         return icon;
     }
 
-    ignore_decoration(ext: Ext): boolean {
-        const name = this.name(ext);
-        return TITLE_BLACKLIST.findIndex((n) => name.startsWith(n)) !== -1;
+    ignore_decoration(): boolean {
+        const name = this.meta.get_wm_class();
+        return WM_TITLE_BLACKLIST.findIndex((n) => name.startsWith(n)) !== -1;
     }
 
     may_decorate(): boolean {
