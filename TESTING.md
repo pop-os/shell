@@ -27,12 +27,12 @@ Tasks for a tester to verify when approving a patch. Use complex window layouts 
 - [ ] Windows can be resized with the keyboard (Test resizing four windows above, below, right, and left to ensure shortcut consistency)
 - [ ] Windows can be resized with the mouse
 - [ ] Minimizing a window detaches it from the tree and re-tiles remaining windows
-- [ ] Unminimizing a window re-tiles it into it's previous location
+- [ ] Unminimizing a window re-tiles it into its previous location
 - [ ] Maximizing removes the active hint and covers tiled windows
 - [ ] Umaximizing adds active hint and re-tiles into place
 - [ ] Full-screening removes the hint and full-screens on one display (Not required, currently has a bug)
 - [ ] Unfull-screening adds active hint and re-tiles into place (Not required, currently has a bug)
-- [ ] Maximizing a YouTube fills the screen and unmaximizing retiles the browser in place
+- [ ] Maximizing a YouTube video fills the screen and unmaximizing retiles the browser in place
 - [ ] VIM shortcuts work as direction keys
 - [ ] `Super` `O` changes window orientation
 - [ ] `Super` `G` floats and then re-tiles a window
@@ -54,7 +54,7 @@ Tasks for a tester to verify when approving a patch. Use complex window layouts 
 
 ### Displays
 
-- [ ] Windows move across displays in adjustment mode with directions keys
+- [ ] Windows move across displays in adjustment mode with direction keys
 - [ ] Windows move across displays with the mouse
 - [ ] Changing the primary display moves the top bar. Window heights adjust on all monitors for the new position.
 - [ ] Unplug a display - windows from the display retile on a new workspace on the remaining display
@@ -70,8 +70,8 @@ Tasks for a tester to verify when approving a patch. Use complex window layouts 
 - [ ] Search works for applications and windows
 - [ ] The overlay hint correctly highlights the selected window
 - [ ] t: executes a command in a terminal
-- [ ] : executes a commang in sh
-- [ ] = calculates and equation
+- [ ] : executes a command in sh
+- [ ] = calculates an equation
 
 ### Window Titles
 
