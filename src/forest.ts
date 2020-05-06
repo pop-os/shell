@@ -70,18 +70,12 @@ export class Forest extends Ecs.World {
 
     /** Place all windows into their calculated positions. */
     arrange(ext: Ext, workspace: number, ignore_reset: boolean = false) {
-        let ws = ext.switch_workspace_on_move
-            ? ext.workspace_by_id(workspace)
-            : null;
-
         // const new_positions = new Array();
         for (const [entity, r] of this.requested) {
             const window = ext.windows.get(entity);
             if (!window) continue;
 
             window.meta.change_workspace_by_index(workspace, false);
-
-            if (ws) ws.activate(global.get_current_time());
 
             move_window(ext, window, r.rect, () => { });
         }
