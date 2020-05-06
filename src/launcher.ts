@@ -1,23 +1,20 @@
+//@ts-ignore
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 const { Clutter, GLib, Meta, St } = imports.gi;
-const { spawnCommandLine } = imports.misc.util;
-
-const { evaluate } = Me.imports.math.math;
 
 import * as app_info from 'app_info';
 import * as error from 'error';
 import * as lib from 'lib';
 import * as log from 'log';
-import * as once_cell from 'once_cell';
 import * as result from 'result';
 import * as search from 'search';
 import * as window from 'window';
+import * as launchers from 'launcherext';
 
 import type { ShellWindow } from 'window';
-import type { Ext } from './extension';
-import type { AppInfo } from './app_info';
-
+import type { Ext } from 'extension';
+import type { AppInfo } from 'app_info';
 
 const { OK } = result;
 
@@ -41,9 +38,7 @@ const SEARCH_PATHS: Array<[string, string]> = [
     ["Snap (system)", "/var/lib/snapd/desktop/applications/"]
 ];
 
-let TERMINAL = new once_cell.OnceCell<string>();
-
-const MODES = [':', 't:', '='];
+const MODES: launchers.LauncherExtension[] = [new launchers.TerminalLauncher(), new launchers.CommandLauncher(), new launchers.CalcLauncher()];
 
 export class Launcher extends search.Search {
     selections: Array<ShellWindow | [string, AppInfo]>;
@@ -163,11 +158,11 @@ export class Launcher extends search.Search {
             }
         };
 
-        let apply = (id: number | string) => {
+        let apply = (text: string, index: number) => {
             ext.overlay.visible = false;
 
-            if (typeof id === 'number') {
-                const selected = this.selections[id];
+            if (this.mode === -1) {
+                const selected = this.selections[index];
                 if (selected instanceof window.ShellWindow) {
                     selected.activate();
                 } else {
@@ -176,30 +171,16 @@ export class Launcher extends search.Search {
                         log.error(result.format());
                     }
                 }
-            } else if (id.startsWith('t:')) {
-                const cmd = id.slice(2).trim();
 
-                let terminal = TERMINAL.get_or_init(() => {
-                    let path: string | null = GLib.find_program_in_path('x-terminal-emulator');
-                    return path ?? 'gnome-terminal';
-                });
-
-                spawnCommandLine(`${terminal} -e sh -c '${cmd}; echo "Press to exit"; read t'`)
-            } else if (id.startsWith(':')) {
-                const cmd = id.slice(1).trim();
-                spawnCommandLine(cmd);
-            } else if (id.startsWith('=')) {
-                const expr = id.slice(1).trim();
-                const value: string = evaluate(expr).toString();
-                log.info(`${expr} = ${value}`);
-                this.set_text('= ' + value);
-                return true;
+                return false;
             }
 
-            return false;
+            const launcher = MODES[this.mode].init(ext, this);
+            log.info(`Launcher Mode: "${launcher.prefix}"`);
+            return launcher.apply(text.slice(launcher.prefix.length).trim(), index);
         };
 
-        super(MODES, cancel, search, select, apply, mode);
+        super(MODES.map(mode => mode.prefix), cancel, search, select, apply, mode);
 
         this.dialog.dialogLayout._dialog.y_align = Clutter.ActorAlign.START;
         this.dialog.dialogLayout._dialog.x_align = Clutter.ActorAlign.START;
