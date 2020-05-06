@@ -115,9 +115,6 @@ export class Ext extends Ecs.System<ExtEvent> {
     /** The window that was focused before the last window */
     prev_focused: Entity | null = null;
 
-    /** Track if workspaces should switch on window movements */
-    switch_workspace_on_move: boolean = true;
-
     tween_signals: Map<string, [SignalID, any]> = new Map();
 
     /** Initially set to true when the extension is initializing */
@@ -547,14 +544,12 @@ export class Ext extends Ecs.System<ExtEvent> {
         if (current != prev_gap) {
             Log.info(`inner gap changed to ${current}`);
             if (this.auto_tiler) {
-                this.switch_workspace_on_move = false;
                 for (const [entity,] of this.auto_tiler.forest.toplevel.values()) {
                     const fork = this.auto_tiler.forest.forks.get(entity);
                     if (fork) {
                         this.auto_tiler.tile(this, fork, fork.area);
                     }
                 }
-                this.switch_workspace_on_move = true;
             } else {
                 this.update_snapped();
             }
@@ -573,8 +568,6 @@ export class Ext extends Ecs.System<ExtEvent> {
         if (diff != 0) {
             this.set_gap_outer(current);
             if (this.auto_tiler) {
-                this.switch_workspace_on_move = false;
-
                 for (const [entity,] of this.auto_tiler.forest.toplevel.values()) {
                     const fork = this.auto_tiler.forest.forks.get(entity);
 
@@ -587,8 +580,6 @@ export class Ext extends Ecs.System<ExtEvent> {
                         this.auto_tiler.tile(this, fork, fork.area);
                     }
                 }
-
-                this.switch_workspace_on_move = true;
             } else {
                 this.update_snapped();
             }
