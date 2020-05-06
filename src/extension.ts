@@ -1112,9 +1112,11 @@ export class Ext extends Ecs.System<ExtEvent> {
         }
     }
 
-    update_display_configuration(changed: boolean) {
+    update_display_configuration(workareas_only: boolean) {
+        if (!this.auto_tiler) return;
+
         if (this.ignore_display_update) {
-            this.ignore_display_update = true;
+            this.ignore_display_update = false;
             return;
         }
 
@@ -1130,8 +1132,8 @@ export class Ext extends Ecs.System<ExtEvent> {
 
             Log.debug(`display ${mon.index} has work area ${ws.fmt()}`);
 
-            if (changed) {
-                this.displays.delete(mon.index);
+            if (workareas_only) {
+                updated = this.displays;
             } else {
                 for (const [id, display] of this.displays) {
                     if (display.area.eq(area) && display.ws.eq(ws)) {
@@ -1164,14 +1166,12 @@ export class Ext extends Ecs.System<ExtEvent> {
             Log.info(`Display(${id}): ${display_fmt(display)}`);
         }
 
-        if (this.auto_tiler) {
-            for (const [entity, [mon_id,]] of this.auto_tiler.forest.toplevel.values()) {
-                let fork = this.auto_tiler.forest.forks.get(entity);
-                let display = this.displays.get(mon_id);
+        for (const [entity, [mon_id,]] of this.auto_tiler.forest.toplevel.values()) {
+            let fork = this.auto_tiler.forest.forks.get(entity);
+            let display = this.displays.get(mon_id);
 
-                if (fork && display) {
-                    this.auto_tiler.update_toplevel(this, fork, mon_id);
-                }
+            if (fork && display) {
+                this.auto_tiler.update_toplevel(this, fork, mon_id);
             }
         }
 
