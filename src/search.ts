@@ -11,7 +11,7 @@ export class Search {
     dialog: Shell.ModalDialog;
 
     private active_id: number;
-    private ignore_prefixes: Array<string>;
+    private mode_prefixes: Array<string>;
     private entry: St.Entry;
     private list: St.Widget;
     private text: Clutter.Text;
@@ -20,7 +20,7 @@ export class Search {
     private select_cb: (id: number) => void;
 
     constructor(
-        ignore_prefixes: Array<string>,
+        mode_prefixes: Array<string>,
         cancel: () => void,
         search: (pattern: string) => Array<[string, St.Widget, St.Widget]> | null,
         select: (id: number) => void,
@@ -37,7 +37,7 @@ export class Search {
         });
 
         this.active_id = 0;
-        this.ignore_prefixes = ignore_prefixes;
+        this.mode_prefixes = mode_prefixes;
         this.widgets = [];
 
         this.entry = new St.Entry({
@@ -67,9 +67,7 @@ export class Search {
             let prefix = this.has_prefix(text);
             mode(prefix);
 
-            if (prefix !== -1) return;
-
-            const update = search(text.toLowerCase());
+            const update = search((prefix === -1) ? text.toLowerCase() : text);
             if (update) {
                 this.update_search_list(update);
             }
@@ -131,6 +129,14 @@ export class Search {
 
     close() {
         this.dialog.close(global.get_current_time());
+    }
+
+    icon_size() {
+        return 34;
+    }
+
+    list_max() {
+        return 8;
     }
 
     reset() {
@@ -197,6 +203,6 @@ export class Search {
     }
 
     private has_prefix(text: string): number {
-        return this.ignore_prefixes.findIndex((p) => text.startsWith(p));
+        return this.mode_prefixes.findIndex((p) => text.startsWith(p));
     }
 }
