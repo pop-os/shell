@@ -220,7 +220,6 @@ export class Ext extends Ecs.System<ExtEvent> {
                         break;
 
                     case WindowEvent.Size:
-                        global.log(`Size event triggered`);
                         if (this.auto_tiler && !win.is_maximized() && !win.meta.is_fullscreen()) {
                             this.auto_tiler.reflow(this, win.entity);
                         }
@@ -269,7 +268,6 @@ export class Ext extends Ecs.System<ExtEvent> {
                         break;
 
                     case GlobalEvent.MonitorsChanged:
-                        global.log(`monitors changed`);
                         this.update_display_configuration(false);
                         break;
 
@@ -413,8 +411,6 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     on_active_workspace_changed() {
-        Log.debug('active workspace has changed');
-
         const refocus_hint = () => {
             if (!this.active_hint?.window) return
 
@@ -645,7 +641,6 @@ export class Ext extends Ecs.System<ExtEvent> {
                                 crect.clamp((this.auto_tiler.forest.forks.get(top_level) as Fork).area);
                             }
 
-                            Log.debug(`moved from ${this.grab_op.rect.fmt()} to ${crect.fmt()}`);
                             const movement = this.grab_op.operation(crect);
 
                             this.auto_tiler.forest.resize(this, fork, component, win.entity, movement, crect);
@@ -700,7 +695,6 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     /** Handle window maximization notifications */
     on_maximize(win: Window.ShellWindow) {
-        Log.debug(`Window(${win.entity}) maximization changed`);
         if (win.is_maximized()) {
             this.on_monitor_changed(win, (_cfrom, cto, workspace) => {
                 if (win) {
@@ -757,7 +751,6 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     on_overview_hidden() {
-        Log.debug('overview hidden');
         if (this.active_hint && this.active_hint.window) {
             let window = this.active_hint.window.meta;
             if (!window.get_maximized()) {
@@ -767,7 +760,6 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     on_overview_shown() {
-        Log.debug('showing overview');
         if (this.active_hint) {
             this.active_hint.hide();
         }
@@ -781,7 +773,6 @@ export class Ext extends Ecs.System<ExtEvent> {
         if (win) {
             const entity = win.entity;
             actor.connect('destroy', () => {
-                global.log(`Destroying ${entity}`);
                 this.on_destroy(entity);
                 return false;
             });
@@ -796,14 +787,12 @@ export class Ext extends Ecs.System<ExtEvent> {
         }
     }
 
-    on_workspace_added(number: number) {
-        Log.debug(`workspace ${number} was added`);
+    on_workspace_added(_number: number) {
         this.ignore_display_update = true;
     }
 
     /** Handle workspace change events */
     on_workspace_changed(win: Window.ShellWindow) {
-        Log.debug(`workspace of ${win.name(this)} changed`);
         if (this.auto_tiler && !this.contains_tag(win.entity, Tags.Floating)) {
             const id = this.workspace_id(win);
             const prev_id = this.monitors.get(win.entity);
@@ -822,7 +811,6 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     on_workspace_index_changed(prev: number, next: number) {
-        Log.debug(`Index ${prev} changed to ${next}`);
         this.on_workspace_modify(
             (current) => current == prev,
             (_) => next
@@ -919,7 +907,6 @@ export class Ext extends Ecs.System<ExtEvent> {
         }
 
         this.connect(global.display, 'workareas-changed', () => {
-            global.log(`workareas-changed`);
             this.update_display_configuration(true);
         });
 
@@ -972,16 +959,6 @@ export class Ext extends Ecs.System<ExtEvent> {
         this.connect(overview, 'hiding', () => {
             this.register(Events.global(GlobalEvent.OverviewHidden));
         });
-
-        if (screenShield) {
-            this.connect(screenShield, 'lock-screen-shown', () => {
-                Log.debug(`LOCK SCREEN SHOWN`);
-            });
-
-            this.connect(screenShield, 'wake-up-screen', () => {
-                Log.debug(`WAKE UP SCREEN`);
-            });
-        }
 
         // We have to connect this signal in an idle_add; otherwise work areas stop being calculated
         this.register_fn(() => {
@@ -1043,7 +1020,6 @@ export class Ext extends Ecs.System<ExtEvent> {
         // Post-init
 
         if (this.init) {
-            Log.debug(`INITIALIZING`);
             for (const window of this.tab_list(Meta.TabList.NORMAL, null)) {
                 this.register({ tag: 3, window: window.meta });
             }
@@ -1064,7 +1040,6 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     size_signals_block(win: Window.ShellWindow) {
         this.size_signals.with(win.entity, (signals) => {
-            Log.debug(`blocking signals for ${win.entity}`);
             for (const signal of signals) {
                 utils.block_signal(win.meta, signal);
             }
@@ -1076,7 +1051,6 @@ export class Ext extends Ecs.System<ExtEvent> {
         // if (!this.contains_tag(win.entity, Tags.Blocked)) return;
 
         this.size_signals.with(win.entity, (signals) => {
-            Log.debug(`unblocking signals for ${win.entity}`);
             for (const signal of signals) {
                 utils.unblock_signal(win.meta, signal);
             };
@@ -1127,6 +1101,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         }
 
         Log.info('Updating display configuration');
+
         let moved = new Array();
         let updated = new Map();
 
@@ -1135,8 +1110,6 @@ export class Ext extends Ecs.System<ExtEvent> {
 
             const area = new Rect.Rectangle([mon.x, mon.y, mon.width, mon.height]);
             const ws = this.monitor_work_area(mon.index);
-
-            Log.debug(`display ${mon.index} has work area ${ws.fmt()}`);
 
             if (workareas_only) {
                 updated = this.displays;

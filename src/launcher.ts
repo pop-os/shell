@@ -158,7 +158,6 @@ export class Launcher extends search.Search {
                     ext.overlay.y = rect.y;
                     ext.overlay.width = rect.width;
                     ext.overlay.height = rect.height;
-                    global.log(`SHOWING OVERVIEW`);
                     ext.overlay.visible = true;
                 }
             }

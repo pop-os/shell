@@ -117,7 +117,6 @@ export class Tiler {
             }
             if (max_y === null || (monitor.y + monitor.height) < max_y) {
                 max_y = monitor.y + monitor.height;
-                global.log(`MAX Y = ${max_y}`);
             }
         }
 
@@ -138,8 +137,6 @@ export class Tiler {
         overlay.y = changed.y;
         overlay.width = changed.width;
         overlay.height = changed.height;
-
-        global.log(`${overlay.height}`);
 
         return this;
     }
@@ -314,7 +311,6 @@ export class Tiler {
                     watching = focused;
                 }
             } else {
-                global.log(`attach to monitor ${move_to}`);
                 ext.auto_tiler.detach_window(ext, focused.entity);
                 ext.auto_tiler.attach_to_monitor(ext, focused, [move_to, ext.active_workspace()]);
                 watching = focused;

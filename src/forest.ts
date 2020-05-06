@@ -649,7 +649,7 @@ function move_window(ext: Ext, window: ShellWindow, rect: Rectangular, on_comple
     const actor = window.meta.get_compositor_private();
 
     if (!actor) {
-        Log.debug(`Window(${window.entity}) does not have an actor, and therefore cannot be moved`);
+        Log.warn(`Window(${window.entity}) does not have an actor, and therefore cannot be moved`);
         return;
     }
 

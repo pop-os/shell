@@ -303,10 +303,6 @@ export class AutoTiler {
             return Err('previous window was minimized');
         }
 
-        for (const [entity, fork] of this.attached.iter()) {
-            global.log(`found attached entity: ${entity} to ${fork}`);
-        }
-
         if (!this.attached.contains(onto.entity)) {
             return Err('focused window is not attached');
         }
