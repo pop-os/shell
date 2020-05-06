@@ -5,7 +5,6 @@ import type { Entity } from './ecs';
 import type { ShellWindow } from "./window";
 
 import * as Ecs from 'ecs';
-import * as Log from 'log';
 
 const { GLib, St } = imports.gi;
 
@@ -57,7 +56,6 @@ export class ActiveHint {
     }
 
     hide() {
-        Log.debug(`hiding active hint`);
         for (const box of this.border) {
             box.hide();
             box.visible = false;
@@ -69,7 +67,6 @@ export class ActiveHint {
     }
 
     position_changed(window: ShellWindow): void {
-        Log.debug(`active_hint: position changed`)
         if (window.is_maximized()) {
             this.hide();
         } else {
@@ -122,7 +119,6 @@ export class ActiveHint {
     }
 
     untrack() {
-        Log.debug(`active_hint: untracking window`);
         this.disconnect_signals();
 
         this.hide();
