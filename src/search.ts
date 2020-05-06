@@ -24,7 +24,7 @@ export class Search {
         cancel: () => void,
         search: (pattern: string) => Array<[string, St.Widget, St.Widget]> | null,
         select: (id: number) => void,
-        apply: (id: number | string) => boolean,
+        apply: (text: string, index: number) => boolean,
         mode: (id: number) => void,
     ) {
         this.select_cb = select;
@@ -50,13 +50,7 @@ export class Search {
 
         this.text.connect("activate", () => {
             const text: string = this.text.get_text();
-            let cont = false;
-
-            if (this.has_prefix(text) !== -1) {
-                cont = apply(text);
-            } else if (this.active_id < this.widgets.length) {
-                cont = apply(this.active_id);
-            }
+            const cont = apply(text, this.active_id);
 
             if (!cont) {
                 this.reset();
