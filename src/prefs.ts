@@ -12,9 +12,17 @@ import * as settings from 'settings';
 interface AppWidgets {
     window_titles: any,
     snap_to_grid: any,
+    search_engine: any,
     outer_gap: any,
     inner_gap: any,
 }
+
+const SEARCH_ENGINES: string[] = [
+    "https://en.wikipedia.org/wiki/",
+    "https://www.bing.com/search?q=",
+    "https://www.duckduckgo.com/?q=",
+    "https://www.google.com/search?q="
+];
 
 // @ts-ignore
 function init() { }
@@ -35,6 +43,12 @@ function settings_dialog_new(): Gtk.Container {
         ext.set_snap_to_grid(state);
         Settings.sync();
     });
+
+    const current_engine = ext.search_engine();
+    app.search_engine.set_active(SEARCH_ENGINES.findIndex(engine => engine === current_engine));
+    app.search_engine.connect('changed', () => {
+        ext.set_search_engine(SEARCH_ENGINES[app.search_engine.get_active()]);
+    })
 
     app.outer_gap.set_text(String(ext.gap_outer()));
     app.outer_gap.connect('activate', (widget: any) => {
@@ -84,9 +98,11 @@ function settings_dialog_view(): [AppWidgets, Gtk.Container] {
     grid.attach(snap_label, 0, 1, 1, 1);
     grid.attach(snap_to_grid, 1, 1, 1, 1);
 
-    let [inner_gap, outer_gap] = gaps_section(grid, 2);
+    const search_engine = search_engine_section(grid, 2);
 
-    let settings = { inner_gap, outer_gap, snap_to_grid, window_titles };
+    let [inner_gap, outer_gap] = gaps_section(grid, 3);
+
+    let settings = { inner_gap, outer_gap, snap_to_grid, window_titles, search_engine };
 
     return [settings, grid];
 }
@@ -120,6 +136,23 @@ function gaps_section(grid: any, top: number): [any, any] {
     grid.attach(inner_entry, 1, top + 2, 1, 1);
 
     return [inner_entry, outer_entry];
+}
+
+function search_engine_section(grid: any, top: number): any {
+    const label = new Gtk.Label({
+        label: "Search Engine",
+        xalign: 0.0
+    });
+
+    const combo_box = new Gtk.ComboBoxText();
+    SEARCH_ENGINES.forEach(engine => {
+        combo_box.append_text(engine);
+    });
+
+    grid.attach(label, 0, top, 1, 1);
+    grid.attach(combo_box, 1, top, 1, 1);
+
+    return combo_box;
 }
 
 function number_entry(): Gtk.Widget {

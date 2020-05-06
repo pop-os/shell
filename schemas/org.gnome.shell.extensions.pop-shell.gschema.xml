@@ -173,5 +173,11 @@
             <default><![CDATA[['<Primary>Right','<Primary>l']]]></default>
             <summary>Swap window right</summary>
         </key>
+
+        <!-- Launcher Options -->
+        <key type="s" name="search-engine">
+            <default>"https://www.duckduckgo.com/?q="</default>
+            <summary>Search engine query string</summary>
+        </key>
     </schema>
 </schemalist>

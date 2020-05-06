@@ -71,17 +71,19 @@ export class CalcLauncher implements LauncherExtension {
     }
 
     search_results(expr: string): Array<[string, St.Widget, St.Widget]> | null {
+        const icon_size = this.search?.icon_size() ?? DEFAULT_ICON_SIZE;
+
         const item: [string, St.Widget, St.Widget] =
             [
                 `=${evaluate(expr).toString()}`,
                 new St.Icon({
                     icon_name: 'x-office-spreadsheet', // looks like calculations?
-                    icon_size: this.search?.icon_size() ?? DEFAULT_ICON_SIZE / 2,
+                    icon_size: icon_size / 2,
                     style_class: "pop-shell-search-cat"
                 }),
                 new St.Icon({
                     icon_name: 'accessories-calculator',
-                    icon_size: this.search?.icon_size() ?? DEFAULT_ICON_SIZE
+                    icon_size: icon_size
                 })
             ];
 
@@ -121,3 +123,51 @@ export class TerminalLauncher implements LauncherExtension {
         return false;
     }
 }
+
+export class WebSearchLauncher implements LauncherExtension {
+    prefix = 'w:';
+    name = 'web-search';
+    ext?: Ext;
+    search?: Search;
+
+    init(ext: Ext, search: Search): this {
+        this.ext = ext;
+        this.search = search;
+
+        return this;
+    }
+
+    private get_query(webSearch: string): string {
+        const searchBase = this.ext?.settings.search_engine();
+        log.info(searchBase ?? 'search engine undefined');
+        return searchBase + encodeURIComponent(webSearch);
+    }
+
+    apply(webSearch: string): boolean {
+        // xdg-open should use user's default browser
+        const cmd = `xdg-open "${this.get_query(webSearch)}"`;
+        spawnCommandLine(cmd);
+
+        return false;
+    }
+
+    search_results(webSearch: string): Array<[string, St.Widget, St.Widget]> | null {
+        const icon_size = this.search?.icon_size() ?? DEFAULT_ICON_SIZE;
+
+        const item: [string, St.Widget, St.Widget] =
+            [
+                `${this.get_query(webSearch)}`,
+                new St.Icon({
+                    icon_name: 'modem',
+                    icon_size: icon_size / 2,
+                    style_class: "pop-shell-search-cat"
+                }),
+                new St.Icon({
+                    icon_name: 'system-search',
+                    icon_size: icon_size
+                })
+            ];
+
+        return [item];
+    }
+} 

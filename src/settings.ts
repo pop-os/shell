@@ -10,6 +10,7 @@ interface Settings extends GObject.Object {
     set_uint(key: string, value: number): void;
 
     get_string(key: string): string;
+    set_string(key: string, value: string): void;
 }
 
 function settings_new_id(schema_id: string): Settings {
@@ -39,6 +40,7 @@ const COLUMN_SIZE = 'column-size';
 const GAP_INNER = 'gap-inner';
 const GAP_OUTER = 'gap-outer';
 const ROW_SIZE = 'row-size';
+const SEARCH_ENGINE = 'search-engine';
 const SHOW_TITLE = 'show-title';
 const SNAP_TO_GRID = 'snap-to-grid';
 const TILE_BY_DEFAULT = 'tile-by-default';
@@ -72,6 +74,10 @@ export class ExtensionSettings {
 
     row_size(): number {
         return this.ext.get_uint(ROW_SIZE);
+    }
+
+    search_engine(): string {
+        return this.ext.get_string(SEARCH_ENGINE);
     }
 
     show_title(): boolean {
@@ -110,6 +116,10 @@ export class ExtensionSettings {
 
     set_row_size(size: number) {
         this.ext.set_uint(ROW_SIZE, size);
+    }
+
+    set_search_engine(search: string) {
+        this.ext.set_string(SEARCH_ENGINE, search);
     }
 
     set_show_title(set: boolean) {
