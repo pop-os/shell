@@ -20,9 +20,6 @@ const { OK } = result;
 
 const HOME_DIR: string = GLib.get_home_dir();
 
-const LIST_MAX = 8;
-const ICON_SIZE = 34;
-
 /// Search paths for finding applications
 const SEARCH_PATHS: Array<[string, string]> = [
     // System-wide
@@ -62,6 +59,16 @@ export class Launcher extends search.Search {
             this.selections.splice(0);
             this.active.splice(0);
             apps.splice(0);
+
+            if (this.mode !== -1) {
+                const launcher = MODES[this.mode].init(ext, this);
+                const results = launcher.search_results?.(pattern.slice(launcher.prefix.length).trim()) ?? null;
+                results?.forEach(result => {
+                    this.active.push(result);
+                });
+
+                return this.active;
+            }
 
             if (pattern.length == 0) {
                 this.list_workspace(ext);
@@ -107,13 +114,13 @@ export class Launcher extends search.Search {
             });
 
             // Truncate excess items from the list
-            this.selections.splice(LIST_MAX);
+            this.selections.splice(this.list_max());
 
             for (const selection of this.selections) {
                 let data: [string, St.Widget, St.Widget];
 
                 if (selection instanceof window.ShellWindow) {
-                    data = window_selection(ext, selection);
+                    data = window_selection(ext, selection, this.icon_size());
                 } else {
                     const [where, app] = selection;
                     const generic = app.generic_name();
@@ -122,12 +129,12 @@ export class Launcher extends search.Search {
                         generic ? `${generic} (${app.name()}) [${where}]` : `${app.name()} [${where}]`,
                         new St.Icon({
                             icon_name: 'application-default-symbolic',
-                            icon_size: ICON_SIZE / 2,
+                            icon_size: this.icon_size() / 2,
                             style_class: "pop-shell-search-cat"
                         }),
                         new St.Icon({
                             icon_name: app.icon() ?? 'applications-other',
-                            icon_size: ICON_SIZE
+                            icon_size: this.icon_size()
                         })
                     ];
                 }
@@ -139,8 +146,6 @@ export class Launcher extends search.Search {
         };
 
         let select = (id: number) => {
-            if (this.mode !== -1) return;
-
             ext.overlay.visible = false;
 
             if (id >= this.selections.length) return;
@@ -217,9 +222,9 @@ export class Launcher extends search.Search {
             if (show_all_workspaces || window.workspace_id() === active) {
                 this.selections.push(window);
 
-                this.active.push(window_selection(ext, window));
+                this.active.push(window_selection(ext, window, this.icon_size()));
 
-                if (this.selections.length == LIST_MAX) break;
+                if (this.selections.length == this.list_max()) break;
             }
         }
     }
@@ -241,7 +246,7 @@ export class Launcher extends search.Search {
     }
 }
 
-function window_selection(ext: Ext, window: ShellWindow): [string, St.Widget, St.Widget] {
+function window_selection(ext: Ext, window: ShellWindow, icon_size: number): [string, St.Widget, St.Widget] {
     let name = window.name(ext);
     let title = window.meta.get_title();
 
@@ -253,9 +258,9 @@ function window_selection(ext: Ext, window: ShellWindow): [string, St.Widget, St
         name,
         new St.Icon({
             icon_name: 'focus-windows-symbolic',
-            icon_size: ICON_SIZE / 2,
+            icon_size: icon_size / 2,
             style_class: "pop-shell-search-cat"
         }),
-        window.icon(ext, ICON_SIZE)
+        window.icon(ext, icon_size)
     ];
 }
