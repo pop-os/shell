@@ -96,6 +96,7 @@ Tasks for a tester to verify when approving a patch. Use complex window layouts 
 - [ ] Windows swap with the keyboard (test with different size windows)
 - [ ] Windows can be resized with the keyboard (Test resizing four windows above, below, right, and left to ensure shortcut consistency)
 - [ ] Windows can be resized with the mouse
+- [ ] Windows can be half-tiled left and right with `Ctrl``Super``left`/`right`
 
 ### Displays
 
