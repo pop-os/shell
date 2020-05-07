@@ -24,15 +24,18 @@ Tasks for a tester to verify when approving a patch. Use complex window layouts 
 - [ ] Windows moved with the keyboard tile into place
 - [ ] Windows moved with the mouse tile into place
 - [ ] Windows swap with the keyboard (test with different size windows)
+  - mostly works but has bug: https://github.com/pop-os/shell/issues/307
 - [ ] Windows can be resized with the keyboard (Test resizing four windows above, below, right, and left to ensure shortcut consistency)
 - [ ] Windows can be resized with the mouse
 - [ ] Minimizing a window detaches it from the tree and re-tiles remaining windows
 - [ ] Unminimizing a window re-tiles it into its previous location
 - [ ] Maximizing removes the active hint and covers tiled windows
 - [ ] Umaximizing adds active hint and re-tiles into place
-- [ ] Full-screening removes the hint and full-screens on one display (Not required, currently has a bug)
+- [ ] Full-screening removes the hint and full-screens on one display 
+  - Not required, currently has a bug: https://github.com/pop-os/shell/issues/222
 - [ ] Unfull-screening adds active hint and re-tiles into place (Not required, currently has a bug)
 - [ ] Maximizing a YouTube video fills the screen and unmaximizing retiles the browser in place
+  - fullscreen bug is present here too
 - [ ] VIM shortcuts work as direction keys
 - [ ] `Super` `O` changes window orientation
 - [ ] `Super` `G` floats and then re-tiles a window
@@ -41,14 +44,18 @@ Tasks for a tester to verify when approving a patch. Use complex window layouts 
 - [ ] Turn off auto-tiling. New windows launch floating.
 - [ ] Turn on auto-tiling. Windows automatically tile.
 - [ ] Disabling and enabling auto-tiling correctly handles minimized, maximized, fullscreen, floating, and non-floating windows
+- [ ] Float a window with `Super` `G`. It should be movable and resizeable in window management mode with keyboard keys
+  - Not required, currently has a bug: https://github.com/pop-os/shell/issues/155
 
 ### Workspaces
 
 - [ ] Windows can be moved to another workspace with the keyboard
 - [ ] Windows can be moved to another workspace with the mouse
 - [ ] Windows can be moved to workspaces between existing workspaces
+  - Works except when moving to a new workspace at the very beginning of the stack. 
 - [ ] Moving windows to another workspace re-tiled the previous and new workspace
 - [ ] Active hint is present on the new workspace and once the window is returned to its previous workspace
+  - Broke, but commit is made that should fix it: https://github.com/pop-os/shell/pull/300/commits/255c01d11c6f4f327e93137b310201ee42351635
 - [ ] Floating windows move across workspaces
 - [ ] Remove windows from the 2nd worspace in a 3 workspace setup. The 3rd workspace becomes the 2nd workspace, and tiling is unaffected by the move.
 
@@ -59,6 +66,7 @@ Tasks for a tester to verify when approving a patch. Use complex window layouts 
 - [ ] Changing the primary display moves the top bar. Window heights adjust on all monitors for the new position.
 - [ ] Unplug a display - windows from the display retile on a new workspace on the remaining display
 - [ ] Plug in a display - windows and workspaces don't change
+  - Still buggy: https://github.com/pop-os/shell/issues/171
 - [ ] NOTE: Add vertical monitor layout test
 
 ### Launcher
@@ -76,6 +84,7 @@ Tasks for a tester to verify when approving a patch. Use complex window layouts 
 ### Window Titles
 
 - [ ] Disabling window titles in Firefox works (Check debian and flatpak packages)
+  - This may make firefox windows move around randomly when toggled, and you may have to restart firefox for it to work properly, but it should work besides that.
 
 ## With Tiling Disabled
 
@@ -91,4 +100,5 @@ Tasks for a tester to verify when approving a patch. Use complex window layouts 
 ### Displays
 
 - [ ] Windows move across displays in adjustment mode with directions keys
+  - In floating mode, this works unless the windows have to cross the top bar. Bug: https://github.com/pop-os/shell/issues/184
 - [ ] Windows move across displays with the mouse
