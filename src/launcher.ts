@@ -147,7 +147,11 @@ export class Launcher extends search.Search {
                 this.active.push(data);
             }
 
-            return this.active;
+            if (this.active.length > 0) {
+                return this.active;
+            } else {
+                return (new launchers.WebSearchLauncher()).init(ext, this)?.search_results(pattern) ?? this.active;
+            }
         };
 
         let select = (id: number) => {
@@ -171,7 +175,7 @@ export class Launcher extends search.Search {
         let apply = (text: string, index: number) => {
             ext.overlay.visible = false;
 
-            if (this.mode === -1) {
+            if (this.mode === -1 && this.selections.length > 0) {
                 const selected = this.selections[index];
                 if (selected instanceof window.ShellWindow) {
                     selected.activate();
@@ -185,9 +189,11 @@ export class Launcher extends search.Search {
                 return false;
             }
 
-            const launcher = MODES[this.mode].init(ext, this);
+            const launcher = (this.mode >= 0) ? MODES[this.mode] : new launchers.WebSearchLauncher();
+            launcher.init(ext, this);
             log.info(`Launcher Mode: "${launcher.prefix}"`);
-            return launcher.apply(text.slice(launcher.prefix.length).trim(), index);
+            const input = text.startsWith(launcher.prefix) ? text.slice(launcher.prefix.length).trim() : text;
+            return launcher.apply(input, index);
         };
 
         super(MODES.map(mode => mode.prefix), cancel, search, select, apply, mode);

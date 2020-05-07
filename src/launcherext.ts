@@ -139,7 +139,10 @@ export class WebSearchLauncher implements LauncherExtension {
 
     private get_query(webSearch: string): string {
         const searchBase = this.ext?.settings.search_engine();
-        log.info(searchBase ?? 'search engine undefined');
+        if (!searchBase) {
+            log.error('search engine undefined');
+        }
+
         return searchBase + encodeURIComponent(webSearch);
     }
 
