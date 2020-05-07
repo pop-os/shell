@@ -14,33 +14,81 @@ Note that because the logs are from GNOME Shell, there will be messages from all
 
 ## Checklists
 
-Tasks for a tester to verify when approving a patch
+Tasks for a tester to verify when approving a patch. Use complex window layouts and at least two displays. Turn on active hint during testing.
 
-### Workspaces
-
-- [ ] Tiled windows move across workspaces
-- [ ] Floating windows move across workspaces
-- [ ] Windows can be moved with the mouse and keyboard
-- [ ] Windows correctly move workspaces when a workspace is destroyed
-
-### Displays
-
-- [ ] Unplugging and plugging in displays re-tiles all workspaces correctly
-- [ ] Primary display changes are working correctly
-- [ ] Windows correctly move across workspaces after display changes
+## With tiling enabled
 
 ### Tiling
 
-- [ ] Windows can be rearranged with the mouse and keyboard
-- [ ] Windows can be swapped with the mouse and keyboard
-- [ ] Try all forms of resizing a fork with the mouse and keyboard
-- [ ] Minimizing a window should detach it from the tree
-- [ ] Fullscreening, unfullscreening, maximizing, and unmaximizing are all working
-- [ ] Restarting the extension; or toggling auto-tile; correctly handles minimized, maximized, fullscreen, floating, and non-floating windows
+- [ ] Super direction keys changes focus in the correct direction
+- [ ] Windows moved with the keyboard tile into place
+- [ ] Windows moved with the mouse tile into place
+- [ ] Windows swap with the keyboard (test with different size windows)
+- [ ] Windows can be resized with the keyboard (Test resizing four windows above, below, right, and left to ensure shortcut consistency)
+- [ ] Windows can be resized with the mouse
+- [ ] Minimizing a window detaches it from the tree and re-tiles remaining windows
+- [ ] Unminimizing a window re-tiles it into its previous location
+- [ ] Maximizing removes the active hint and covers tiled windows
+- [ ] Umaximizing adds active hint and re-tiles into place
+- [ ] Full-screening removes the hint and full-screens on one display (Not required, currently has a bug)
+- [ ] Unfull-screening adds active hint and re-tiles into place (Not required, currently has a bug)
+- [ ] Maximizing a YouTube video fills the screen and unmaximizing retiles the browser in place
+- [ ] VIM shortcuts work as direction keys
+- [ ] `Super` `O` changes window orientation
+- [ ] `Super` `G` floats and then re-tiles a window
+- [ ] `Super` `Q` Closes a window
+- [ ] `Super` `M` Maximizes and un-maximizes a window
+- [ ] Turn off auto-tiling. New windows launch floating.
+- [ ] Turn on auto-tiling. Windows automatically tile.
+- [ ] Disabling and enabling auto-tiling correctly handles minimized, maximized, fullscreen, floating, and non-floating windows
+
+### Workspaces
+
+- [ ] Windows can be moved to another workspace with the keyboard
+- [ ] Windows can be moved to another workspace with the mouse
+- [ ] Windows can be moved to workspaces between existing workspaces
+- [ ] Moving windows to another workspace re-tiled the previous and new workspace
+- [ ] Active hint is present on the new workspace and once the window is returned to its previous workspace
+- [ ] Floating windows move across workspaces
+- [ ] Remove windows from the 2nd worspace in a 3 workspace setup. The 3rd workspace becomes the 2nd workspace, and tiling is unaffected by the move.
+
+### Displays
+
+- [ ] Windows move across displays in adjustment mode with direction keys
+- [ ] Windows move across displays with the mouse
+- [ ] Changing the primary display moves the top bar. Window heights adjust on all monitors for the new position.
+- [ ] Unplug a display - windows from the display retile on a new workspace on the remaining display
+- [ ] Plug in a display - windows and workspaces don't change
+- [ ] NOTE: Add vertical monitor layout test
 
 ### Launcher
 
-- [ ] Windows should appear on launch
+- [ ] All windows on all workspaces appear on launch
+- [ ] Choosing an app on another workspace moves workspaces and focus to that app
+- [ ] Launching an application works
 - [ ] Typing text and then removing it will re-show those windows
 - [ ] Search works for applications and windows
 - [ ] The overlay hint correctly highlights the selected window
+- [ ] t: executes a command in a terminal
+- [ ] : executes a command in sh
+- [ ] = calculates an equation
+
+### Window Titles
+
+- [ ] Disabling window titles in Firefox works (Check debian and flatpak packages)
+
+## With Tiling Disabled
+
+### Tiling
+
+- [ ] Super direction keys changes focus in the correct direction
+- [ ] Windows can be moved with the keyboard
+- [ ] Windows can be moved with the mouse
+- [ ] Windows swap with the keyboard (test with different size windows)
+- [ ] Windows can be resized with the keyboard (Test resizing four windows above, below, right, and left to ensure shortcut consistency)
+- [ ] Windows can be resized with the mouse
+
+### Displays
+
+- [ ] Windows move across displays in adjustment mode with directions keys
+- [ ] Windows move across displays with the mouse
