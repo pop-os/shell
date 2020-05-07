@@ -1,6 +1,6 @@
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
-const { Clutter, GLib, Meta, St } = imports.gi;
+const { Clutter, Gio, GLib, Meta, St } = imports.gi;
 const { spawnCommandLine } = imports.misc.util;
 
 const { evaluate } = Me.imports.math.math;
@@ -131,7 +131,7 @@ export class Launcher extends search.Search {
                             style_class: "pop-shell-search-cat"
                         }),
                         new St.Icon({
-                            icon_name: app.icon() ?? 'applications-other',
+                            gicon: Gio.icon_new_for_string(app.icon() ?? 'applications-other'),
                             icon_size: ICON_SIZE
                         })
                     ];
