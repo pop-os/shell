@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 set -xe
 
 # Build and install extension
