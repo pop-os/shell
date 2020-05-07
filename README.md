@@ -139,7 +139,7 @@ The launcher is summoned with `Super` + `/`. The search list displays matching w
 By default, the launcher searches windows and applications. However, you can designate a special launch mode using one of the supported prefixes:
 
 - `:`: Execute a command in `sh`
-- `t`: Execute a command in `sh` in a terminal
+- `t:`: Execute a command in `sh` in a terminal
 - `=`: Calculator mode, powered by [MathJS](https://mathjs.org/)
 
 ### Inner and Outer Gaps
