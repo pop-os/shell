@@ -131,7 +131,7 @@ export class Launcher extends search.Search {
                             style_class: "pop-shell-search-cat"
                         }),
                         new St.Icon({
-                            icon_name: app.icon() ?? 'applications-other',
+                            gicon: app.icon(),
                             icon_size: ICON_SIZE
                         })
                     ];
