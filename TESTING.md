@@ -24,11 +24,12 @@ Tasks for a tester to verify when approving a patch. Use complex window layouts 
 - [ ] Windows moved with the keyboard tile into place
 - [ ] Windows moved with the mouse tile into place
 - [ ] Windows swap with the keyboard (test with different size windows)
-  - mostly works but has bug: https://github.com/pop-os/shell/issues/307
+  - mostly works but has bug: https://github.com/pop-os/shell/issues/306
 - [ ] Windows can be resized with the keyboard (Test resizing four windows above, below, right, and left to ensure shortcut consistency)
 - [ ] Windows can be resized with the mouse
 - [ ] Minimizing a window detaches it from the tree and re-tiles remaining windows
 - [ ] Unminimizing a window re-tiles it into its previous location
+  - mostly works but has bug: https://github.com/pop-os/shell/issues/307
 - [ ] Maximizing removes the active hint and covers tiled windows
 - [ ] Umaximizing adds active hint and re-tiles into place
 - [ ] Full-screening removes the hint and full-screens on one display 
