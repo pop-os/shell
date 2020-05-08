@@ -124,7 +124,7 @@ export function* load_desktop_entries(path: string): IterableIterator<Result<App
             const desktop_path = path + '/' + name;
             const info = AppInfo.try_from(desktop_path);
 
-            if (info instanceof AppInfo && (info.app_info.get_is_hidden() || info.app_info.get_nodisplay())) {
+            if (info.kind === result.OK && (info.value.app_info.get_is_hidden() || info.value.app_info.get_nodisplay())) {
                 continue
             }
 

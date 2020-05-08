@@ -1,6 +1,6 @@
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
-const { Clutter, GLib, Meta, St } = imports.gi;
+const { Clutter, Gio, GLib, Meta, St } = imports.gi;
 const { spawnCommandLine } = imports.misc.util;
 
 const { evaluate } = Me.imports.math.math;
