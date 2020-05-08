@@ -16,7 +16,6 @@ const OnceCell = once_cell.OnceCell;
 
 export class AppInfo {
     app_info: any;
-
     desktop_name: string;
 
     private categories_: once_cell.OnceCell<string> = new OnceCell();
@@ -25,24 +24,14 @@ export class AppInfo {
     private icon_: once_cell.OnceCell<string | null> = new OnceCell();
     private generic: once_cell.OnceCell<string | null> = new OnceCell();
     private keywords_: once_cell.OnceCell<Array<string>> = new OnceCell();
+    private should_show_: once_cell.OnceCell<boolean> = new OnceCell();
 
     private name_: string;
 
-    constructor(path: string, app_info: any) {
+    constructor(app_info: any) {
         this.app_info = app_info;
-        this.desktop_name = path.split('/').slice(-1)[0];
-
-        const pos = this.desktop_name.lastIndexOf('.');
-        this.desktop_name = this.desktop_name.slice(0, pos);
-
-        this.name_ = this.string("Name") ?? "unknown";
-    }
-
-    static try_from(path: string): Result<AppInfo, error.Error> {
-        const app_info = Gio.DesktopAppInfo.new_from_filename(path);
-        return app_info
-            ? Ok(new AppInfo(path, app_info))
-            : Err(new error.Error(`failed to open app info for ${path}`));
+        this.name_ = app_info.get_display_name();
+        this.desktop_name = app_info.get_name();
     }
 
     get filename(): string {
@@ -77,6 +66,10 @@ export class AppInfo {
         return this.name_;
     }
 
+    should_show(): boolean {
+        return this.should_show_.get_or_init(() => this.app_info.should_show());
+    }
+
     launch(): Result<null, error.Error> {
         return this.app_info.launch([], null)
             ? Ok(null)
@@ -101,36 +94,11 @@ export class AppInfo {
     }
 }
 
-export function* load_desktop_entries(path: string): IterableIterator<Result<AppInfo, error.Error>> {
-    let dir = Gio.file_new_for_path(path);
-    if (!dir.query_exists(null)) {
-        return new error.Error(`desktop path is missing: ${path}`);
-    }
-
-    let entries, entry;
-    try {
-        entries = dir.enumerate_children('standard::*', Gio.FileQueryInfoFlags.NONE, null);
-    } catch (e) {
-        return new error.Error(String(e))
-            .context(`failed to enumerate children of ${path}`);
-    }
-
-    while ((entry = entries.next_file(null)) != null) {
-        const ft = entry.get_file_type();
-        if (!(ft == Gio.FileType.REGULAR || ft == Gio.FileType.SYMBOLIC_LINK)) {
-            continue
-        }
-
-        const name: string = entry.get_name();
-        if (name.indexOf('.desktop') > -1) {
-            const desktop_path = path + '/' + name;
-            const info = AppInfo.try_from(desktop_path);
-
-            if (info instanceof AppInfo && (info.app_info.get_is_hidden() || info.app_info.get_nodisplay())) {
-                continue
-            }
-
-            yield info;
+export function* load_desktop_entries(): IterableIterator<AppInfo> {
+    const entries: Array<any> = Gio.AppInfo.get_all();
+    for (const entry of entries) {
+        if (entry.should_show()) {
+            yield new AppInfo(entry);
         }
     }
 }

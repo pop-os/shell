@@ -10,7 +10,6 @@ import * as error from 'error';
 import * as lib from 'lib';
 import * as log from 'log';
 import * as once_cell from 'once_cell';
-import * as result from 'result';
 import * as search from 'search';
 import * as window from 'window';
 
@@ -18,37 +17,17 @@ import type { ShellWindow } from 'window';
 import type { Ext } from './extension';
 import type { AppInfo } from './app_info';
 
-
-const { OK } = result;
-
-const HOME_DIR: string = GLib.get_home_dir();
-
 const LIST_MAX = 8;
 const ICON_SIZE = 34;
-
-/// Search paths for finding applications
-const SEARCH_PATHS: Array<[string, string]> = [
-    // System-wide
-    ["System", "/usr/share/applications/"],
-    ["System-Local", "/usr/local/share/applications/"],
-    // User-local
-    ["Local", HOME_DIR + "/.local/share/applications/"],
-    // System-wide flatpaks
-    ["Flatpak (system)", "/var/lib/flatpak/exports/share/applications/"],
-    // User-local flatpaks
-    ["Flatpak", HOME_DIR + "/.local/share/flatpak/exports/share/applications/"],
-    // System-wide Snaps
-    ["Snap (system)", "/var/lib/snapd/desktop/applications/"]
-];
 
 let TERMINAL = new once_cell.OnceCell<string>();
 
 const MODES = [':', 't:', '='];
 
 export class Launcher extends search.Search {
-    selections: Array<ShellWindow | [string, AppInfo]>;
+    selections: Array<ShellWindow | AppInfo>;
     active: Array<[string, St.Widget, St.Widget]>;
-    desktop_apps: Array<[string, AppInfo]>;
+    desktop_apps: Array<AppInfo>;
     mode: number;
 
     constructor(ext: Ext) {
@@ -91,7 +70,7 @@ export class Launcher extends search.Search {
             }
 
             // Filter matching desktop apps
-            for (const [where, info] of this.desktop_apps) {
+            for (const info of this.desktop_apps) {
                 const retain = contains_pattern(info.name(), needles)
                     || contains_pattern(info.desktop_name, needles)
                     || lib.ok(info.generic_name(), (s) => contains_pattern(s, needles))
@@ -99,14 +78,14 @@ export class Launcher extends search.Search {
                     || lib.ok(info.categories(), (s) => contains_pattern(s, needles));
 
                 if (retain) {
-                    this.selections.push([where, info]);
+                    this.selections.push(info);
                 }
             }
 
             // Sort the list of matched selections
             this.selections.sort((a, b) => {
-                const a_name = a instanceof window.ShellWindow ? a.name(ext) : a[1].name();
-                const b_name = b instanceof window.ShellWindow ? b.name(ext) : b[1].name();
+                const a_name = a instanceof window.ShellWindow ? a.name(ext) : a.name();
+                const b_name = b instanceof window.ShellWindow ? b.name(ext) : b.name();
 
                 return a_name.toLowerCase() > b_name.toLowerCase() ? 1 : 0;
             });
@@ -120,11 +99,11 @@ export class Launcher extends search.Search {
                 if (selection instanceof window.ShellWindow) {
                     data = window_selection(ext, selection);
                 } else {
-                    const [where, app] = selection;
+                    const app = selection;
                     const generic = app.generic_name();
 
                     data = [
-                        generic ? `${generic} (${app.name()}) [${where}]` : `${app.name()} [${where}]`,
+                        generic ? `${generic} (${app.name()}) [${app.comment()}]` : `${app.name()} [${app.comment()}]`,
                         new St.Icon({
                             icon_name: 'application-default-symbolic',
                             icon_size: ICON_SIZE / 2,
@@ -171,7 +150,7 @@ export class Launcher extends search.Search {
                 if (selected instanceof window.ShellWindow) {
                     selected.activate();
                 } else {
-                    const result = selected[1].launch();
+                    const result = selected.launch();
                     if (result instanceof error.Error) {
                         log.error(result.format());
                     }
@@ -214,17 +193,10 @@ export class Launcher extends search.Search {
     load_desktop_files() {
         lib.bench("load_desktop_files", () => {
             this.desktop_apps.splice(0);
-            for (const [where, path] of SEARCH_PATHS) {
-                for (const result of app_info.load_desktop_entries(path)) {
-                    if (result.kind == OK) {
-                        const value = result.value;
-                        log.info(value.display());
-                        this.desktop_apps.push([where, value]);
-                    } else {
-                        const why = result.value;
-                        log.warn(why.context(`failed to load desktop app`).format());
-                    }
-                }
+            for (const result of app_info.load_desktop_entries()) {
+                const value = result;
+                log.info(value.display());
+                this.desktop_apps.push(value);
             }
         });
     }
