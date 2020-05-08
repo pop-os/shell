@@ -25,6 +25,7 @@ export class AppInfo {
     private generic: once_cell.OnceCell<string | null> = new OnceCell();
     private keywords_: once_cell.OnceCell<Array<string>> = new OnceCell();
     private should_show_: once_cell.OnceCell<boolean> = new OnceCell();
+    private executable_: once_cell.OnceCell<string> = new OnceCell();
 
     private name_: string;
 
@@ -48,6 +49,10 @@ export class AppInfo {
 
     exec(): string | null {
         return this.exec_.get_or_init(() => this.string("Exec"));
+    }
+
+    executable(): string {
+        return this.executable_.get_or_init(() => this.app_info.get_executable());
     }
 
     icon(): string | null {

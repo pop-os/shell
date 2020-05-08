@@ -75,7 +75,8 @@ export class Launcher extends search.Search {
                     || contains_pattern(info.desktop_name, needles)
                     || lib.ok(info.generic_name(), (s) => contains_pattern(s, needles))
                     || lib.ok(info.comment(), (s) => contains_pattern(s, needles))
-                    || lib.ok(info.categories(), (s) => contains_pattern(s, needles));
+                    || lib.ok(info.categories(), (s) => contains_pattern(s, needles))
+                    || lib.ok(info.executable(), (s) => contains_pattern(s, needles));
 
                 if (retain) {
                     this.selections.push(info);
