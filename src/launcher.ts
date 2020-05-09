@@ -150,7 +150,7 @@ export class Launcher extends search.Search {
             if (this.active.length > 0) {
                 return this.active;
             } else {
-                return (new launchers.WebSearchLauncher()).init(ext, this)?.search_results(pattern) ?? this.active;
+                return (new launchers.WebSearchLauncher()).init(ext, this).search_results(pattern);
             }
         };
 
@@ -191,7 +191,7 @@ export class Launcher extends search.Search {
 
             const launcher = (this.mode >= 0) ? MODES[this.mode] : new launchers.WebSearchLauncher();
             launcher.init(ext, this);
-            log.info(`Launcher Mode: "${launcher.prefix}"`);
+            log.info(`Launcher Extension: "${launcher.name}"`);
             const input = text.startsWith(launcher.prefix) ? text.slice(launcher.prefix.length).trim() : text;
             return launcher.apply(input, index);
         };

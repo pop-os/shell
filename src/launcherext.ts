@@ -3,7 +3,7 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 const { evaluate } = Me.imports.math.math;
 const { spawnCommandLine } = imports.misc.util;
 
-const { GLib, St } = imports.gi;
+const { Gio, GLib, St } = imports.gi;
 
 import * as log from 'log';
 import * as once_cell from 'once_cell';
@@ -127,6 +127,7 @@ export class TerminalLauncher implements LauncherExtension {
 export class WebSearchLauncher implements LauncherExtension {
     prefix = 'w:';
     name = 'web-search';
+    app_info = Gio.AppInfo.get_default_for_uri_scheme('https');
     ext?: Ext;
     search?: Search;
 
@@ -147,26 +148,27 @@ export class WebSearchLauncher implements LauncherExtension {
     }
 
     apply(webSearch: string): boolean {
-        // xdg-open should use user's default browser
-        const cmd = `xdg-open "${this.get_query(webSearch)}"`;
-        spawnCommandLine(cmd);
+        this.app_info?.launch_uris([this.get_query(webSearch)], null);
 
         return false;
     }
 
     search_results(webSearch: string): Array<[string, St.Widget, St.Widget]> | null {
         const icon_size = this.search?.icon_size() ?? DEFAULT_ICON_SIZE;
+        if (!this.app_info) {
+            return null;
+        }
 
-        const item: [string, St.Widget, St.Widget] =
+        const item: [string, St.Widget, St.Widget] | null =
             [
-                `${this.get_query(webSearch)}`,
+                `${this.app_info.get_display_name()}: ${this.get_query(webSearch)}`,
                 new St.Icon({
-                    icon_name: 'modem',
+                    icon_name: 'application-default-symbolic',
                     icon_size: icon_size / 2,
                     style_class: "pop-shell-search-cat"
                 }),
                 new St.Icon({
-                    icon_name: 'system-search',
+                    gicon: this.app_info.get_icon(),
                     icon_size: icon_size
                 })
             ];
