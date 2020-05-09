@@ -75,6 +75,10 @@
         </key>
 
         <!-- Launcher -->
+        <key type="b" name="use-launcher">
+            <default>true</default>
+            <summary>Use Launcher</summary>
+        </key>
         <key type="as" name="search">
             <default><![CDATA[['<Super>slash']]]></default>
             <summary>Search key combo</summary>

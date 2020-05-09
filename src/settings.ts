@@ -38,6 +38,7 @@ const ACTIVE_HINT = 'active-hint';
 const COLUMN_SIZE = 'column-size';
 const GAP_INNER = 'gap-inner';
 const GAP_OUTER = 'gap-outer';
+const USE_LAUNCHER='use-launcher'
 const ROW_SIZE = 'row-size';
 const SHOW_TITLE = 'show-title';
 const SNAP_TO_GRID = 'snap-to-grid';
@@ -64,6 +65,10 @@ export class ExtensionSettings {
 
     gap_outer(): number {
         return this.ext.get_uint(GAP_OUTER);
+    }
+
+    use_launcher(): boolean {
+        return this.ext.get_boolean(USE_LAUNCHER);
     }
 
     is_dark(): boolean {
@@ -106,6 +111,10 @@ export class ExtensionSettings {
 
     set_gap_outer(gap: number) {
         this.ext.set_uint(GAP_OUTER, gap);
+    }
+
+    set_use_launcher(use: boolean) {
+        this.ext.set_boolean(USE_LAUNCHER, use)
     }
 
     set_row_size(size: number) {

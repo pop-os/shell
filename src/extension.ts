@@ -49,11 +49,11 @@ interface Monitor extends Rectangular {
 }
 
 export class Ext extends Ecs.System<ExtEvent> {
-    /** Mechanism for managing keybindings */
-    keybindings: Keybindings.Keybindings = new Keybindings.Keybindings(this);
-
     /** Manage interactions with GSettings */
     settings: Settings.ExtensionSettings = new Settings.ExtensionSettings();
+
+    /** Mechanism for managing keybindings */
+    keybindings: Keybindings.Keybindings = new Keybindings.Keybindings(this);
 
     // Widgets
 

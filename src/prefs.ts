@@ -12,6 +12,7 @@ import * as settings from 'settings';
 interface AppWidgets {
     window_titles: any,
     snap_to_grid: any,
+    use_launcher: any,
     outer_gap: any,
     inner_gap: any,
 }
@@ -33,6 +34,12 @@ function settings_dialog_new(): Gtk.Container {
     app.snap_to_grid.set_active(ext.snap_to_grid());
     app.snap_to_grid.connect('state-set', (_widget: any, state: boolean) => {
         ext.set_snap_to_grid(state);
+        Settings.sync();
+    });
+
+    app.use_launcher.set_active(ext.use_launcher());
+    app.use_launcher.connect('state-set', (_widget: any, state: boolean) => {
+        ext.set_use_launcher(state);
         Settings.sync();
     });
 
@@ -78,15 +85,25 @@ function settings_dialog_view(): [AppWidgets, Gtk.Container] {
 
     let snap_to_grid = new Gtk.Switch({ halign: Gtk.Align.START });
 
+    let use_launcher_label = new Gtk.Label({
+        label: "Use Launcher",
+        xalign: 0.0
+    });
+
+    let use_launcher = new Gtk.Switch({ halign: Gtk.Align.START });
+
     grid.attach(win_label, 0, 0, 1, 1);
     grid.attach(window_titles, 1, 0, 1, 1);
 
     grid.attach(snap_label, 0, 1, 1, 1);
     grid.attach(snap_to_grid, 1, 1, 1, 1);
 
-    let [inner_gap, outer_gap] = gaps_section(grid, 2);
+    grid.attach(use_launcher_label, 0, 2, 1, 1);
+    grid.attach(use_launcher, 1, 2, 1, 1);
 
-    let settings = { inner_gap, outer_gap, snap_to_grid, window_titles };
+    let [inner_gap, outer_gap] = gaps_section(grid, 3);
+
+    let settings = { inner_gap, outer_gap, snap_to_grid, use_launcher, window_titles };
 
     return [settings, grid];
 }
