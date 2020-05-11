@@ -2,12 +2,11 @@
     background: rgba(255, 173, 0, 1);
 }
 
-.pop-shell-search-active {
+.pop-shell-search-element:select{
     background: rgba(0, 0, 0, .1);
     border-radius: 5px;
     color: #393634;
 }
-
 .pop-shell-search-label {
     margin-left: 10px;
 }

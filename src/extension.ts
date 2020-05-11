@@ -33,6 +33,9 @@ const { cursor_rect, is_move_op } = Lib;
 const { layoutManager, loadTheme, overview, panel, setThemeStylesheet, screenShield, sessionMode } = imports.ui.main;
 const Tags = Me.imports.tags;
 
+const STYLESHEET_PATHS = ['light', 'dark'].map(stylesheet_path);
+const STYLESHEETS = STYLESHEET_PATHS.map(Gio.File.new_for_path);
+
 enum Style { Light, Dark }
 
 interface Display {
@@ -77,7 +80,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     column_size: number = 32;
 
     /** The currently-loaded theme variant */
-    current_style: Style = this.settings.is_dark() ? Style.Dark : Style.Light;
+    current_style: Style = this.settings.is_dark_shell() ? Style.Dark : Style.Light;
 
     /** Row size in snap-to-grid */
     row_size: number = 32;
@@ -135,6 +138,9 @@ export class Ext extends Ecs.System<ExtEvent> {
     /** Store for names associated with windows */
     names: Ecs.Storage<string> = this.register_storage();
 
+    /** Signal ID which handles size-changed signals */
+    size_changed_signal: SignalID = 0;
+
     /** Store for size-changed signals attached to each window */
     size_signals: Ecs.Storage<SignalID[]> = this.register_storage();
 
@@ -163,11 +169,19 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         this.load_settings();
 
-        this.register_fn(() => this.load_theme(this.current_style));
+        this.register_fn(() => load_theme(this.current_style));
 
-        this.settings.int.connect('changed::gtk-theme', () => {
-            this.register(Events.global(GlobalEvent.GtkThemeChanged));
-        });
+        if (this.settings.int) {
+            this.settings.int.connect('changed::gtk-theme', () => {
+                this.register(Events.global(GlobalEvent.GtkThemeChanged));
+            });
+        }
+
+        if (this.settings.shell) {
+            this.settings.shell.connect('changed::name', () => {
+                this.register(Events.global(GlobalEvent.GtkShellChanged));
+            });
+        }
     }
 
     // System interface
@@ -243,6 +257,11 @@ export class Ext extends Ecs.System<ExtEvent> {
                                     if (this.active_hint?.is_tracking(win.entity)) {
                                         this.active_hint.show();
                                     }
+                                } else if (win.is_maximized()) {
+                                    this.size_changed_block();
+                                    win.meta.unmaximize(Meta.MaximizeFlags.BOTH);
+                                    win.meta.make_fullscreen();
+                                    this.size_changed_unblock();
                                 }
                             }
                         }
@@ -263,6 +282,10 @@ export class Ext extends Ecs.System<ExtEvent> {
             /** Stateless global events */
             case 4:
                 switch (event.event) {
+                    case GlobalEvent.GtkShellChanged:
+                        this.on_gtk_shell_changed();
+                        break;
+
                     case GlobalEvent.GtkThemeChanged:
                         this.on_gtk_theme_change();
                         break;
@@ -306,7 +329,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     /// Connects a callback signal to a GObject, and records the signal.
-    connect(object: GObject.Object, property: string, callback: (...args: any) => boolean | void) {
+    connect(object: GObject.Object, property: string, callback: (...args: any) => boolean | void): SignalID {
         const signal = object.connect(property, callback);
         const entry = this.signals.get(object);
         if (entry) {
@@ -314,6 +337,8 @@ export class Ext extends Ecs.System<ExtEvent> {
         } else {
             this.signals.set(object, [signal]);
         }
+
+        return signal;
     }
 
     connect_meta(win: Window.ShellWindow, signal: string, callback: (...args: any[]) => void): number {
@@ -386,7 +411,6 @@ export class Ext extends Ecs.System<ExtEvent> {
         }
     }
 
-    load_theme(style: Style) { load_theme(style === Style.Dark ? 'dark' : 'light') }
 
     monitor_work_area(monitor: number): Rectangle {
         const meta = global.display.get_workspace_manager()
@@ -677,8 +701,12 @@ export class Ext extends Ecs.System<ExtEvent> {
         }
     }
 
+    on_gtk_shell_changed() {
+        load_theme(this.settings.is_dark_shell() ? Style.Dark : Style.Light);
+    }
+
     on_gtk_theme_change() {
-        this.load_theme(this.settings.is_dark() ? Style.Dark : Style.Light);
+        load_theme(this.settings.is_dark_shell() ? Style.Dark : Style.Light);
     }
 
     on_show_window_titles() {
@@ -696,6 +724,13 @@ export class Ext extends Ecs.System<ExtEvent> {
     /** Handle window maximization notifications */
     on_maximize(win: Window.ShellWindow) {
         if (win.is_maximized()) {
+            if (win.meta.is_fullscreen()) {
+                this.size_changed_block();
+                win.meta.unmake_fullscreen();
+                win.meta.maximize(Meta.MaximizeFlags.BOTH);
+                this.size_changed_unblock();
+            }
+
             this.on_monitor_changed(win, (_cfrom, cto, workspace) => {
                 if (win) {
                     this.monitors.insert(win.entity, [cto, workspace]);
@@ -723,11 +758,30 @@ export class Ext extends Ecs.System<ExtEvent> {
                     this.active_hint.untrack();
                 }
 
-                if (this.auto_tiler.attached.contains(win.entity)) {
-                    this.auto_tiler.detach_window(this, win.entity);
-                }
+                const attached = this.auto_tiler.attached.get(win.entity)
+                if (!attached) return;
+
+                const fork = this.auto_tiler.forest.forks.get(attached);
+                if (!fork) return;
+
+                win.was_attached_to = [attached, fork.left.is_window(win.entity)];
+                this.auto_tiler.detach_window(this, win.entity);
             } else if (!this.contains_tag(win.entity, Tags.Floating)) {
-                this.auto_tiler.auto_tile(this, win, false);
+                if (win.was_attached_to) {
+                    const [entity, is_left] = win.was_attached_to;
+                    delete win.was_attached_to;
+
+                    const tiler = this.auto_tiler;
+
+                    const fork = tiler.forest.forks.get(entity);
+                    if (fork) {
+                        tiler.forest.attach_fork(this, fork, win.entity, is_left);
+                        tiler.tile(this, fork, fork.area);
+                        return
+                    }
+                } else {
+                    this.auto_tiler.auto_tile(this, win, false);
+                }
             }
         }
     }
@@ -822,40 +876,42 @@ export class Ext extends Ecs.System<ExtEvent> {
         modify: (current: number) => number
     ) {
         if (this.auto_tiler) {
+            let detach = new Array();
+
             for (const [entity, monitor] of this.auto_tiler.forest.toplevel.values()) {
                 if (condition(monitor[1])) {
                     Log.info(`moving tree from Fork(${entity})`);
 
-                    let value = modify(monitor[1]);
+                    const value = modify(monitor[1]);
                     monitor[1] = value;
                     let fork = this.auto_tiler.forest.forks.get(entity);
                     if (fork) {
                         fork.workspace = value;
-                        for (const child of this.auto_tiler.forest.iter(entity, node.NodeKind.FORK)) {
+                        for (const child of this.auto_tiler.forest.iter(entity)) {
+                            if (child.kind === node.NodeKind.FORK) {
+                                fork = this.auto_tiler.forest.forks.get(child.entity);
+                                if (fork) fork.workspace = value;
+                            } else if (child.kind === node.NodeKind.WINDOW) {
+                                const window = this.windows.get(child.entity);
+                                if (window) {
+                                    const win_monitor = this.monitors.get(child.entity);
+                                    if (win_monitor) {
+                                        win_monitor[1] = value;
+                                    }
 
-                            fork = this.auto_tiler.forest.forks.get(child.entity);
-                            if (fork) fork.workspace = value;
+                                    if (window.actor_exists()) continue;
+                                }
+
+                                detach.push(child.entity);
+                            }
                         }
                     }
                 }
             }
-        }
 
-        for (const [entity, monitor] of this.monitors.iter()) {
-            let window = this.windows.get(entity);
-            if (window) {
-                let actor = window.meta.get_compositor_private();
-                if (actor) {
-                    if (condition(monitor[1])) {
-                        Log.info(`moving Window(${entity})`);
-                        monitor[1] = modify(monitor[1]);
-                    }
-
-                    continue
-                }
+            for (const child of detach) {
+                this.auto_tiler.detach_window(this, child);
             }
-
-            this.auto_tiler?.detach_window(this, entity);
         }
     }
 
@@ -910,7 +966,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             this.update_display_configuration(true);
         });
 
-        this.connect(global.window_manager, 'size-change', (_, actor, event, _before, _after) => {
+        this.size_changed_signal = this.connect(global.window_manager, 'size-change', (_, actor, event, _before, _after) => {
             if (this.auto_tiler) {
                 let win = this.get_window(actor.get_meta_window());
                 if (!win) return;
@@ -940,9 +996,11 @@ export class Ext extends Ecs.System<ExtEvent> {
             }
         });
 
-        this.connect(this.settings.mutter, 'changed::workspaces-only-on-primary', () => {
-            this.register(Events.global(GlobalEvent.MonitorsChanged));
-        });
+        if (this.settings.mutter) {
+            this.connect(this.settings.mutter, 'changed::workspaces-only-on-primary', () => {
+                this.register(Events.global(GlobalEvent.MonitorsChanged));
+            });
+        }
 
         this.connect(layoutManager, 'monitors-changed', () => {
             this.register(Events.global(GlobalEvent.MonitorsChanged));
@@ -1038,6 +1096,14 @@ export class Ext extends Ecs.System<ExtEvent> {
         this.signals.clear();
     }
 
+    size_changed_block() {
+        utils.block_signal(global.window_manager, this.size_changed_signal);
+    }
+
+    size_changed_unblock() {
+        utils.unblock_signal(global.window_manager, this.size_changed_signal);
+    }
+
     size_signals_block(win: Window.ShellWindow) {
         this.size_signals.with(win.entity, (signals) => {
             for (const signal of signals) {
@@ -1112,7 +1178,9 @@ export class Ext extends Ecs.System<ExtEvent> {
             const ws = this.monitor_work_area(mon.index);
 
             if (workareas_only) {
+                global.log(`only adjusting work areas`);
                 updated = this.displays;
+                this.displays.clear();
             } else {
                 for (const [id, display] of this.displays) {
                     if (display.area.eq(area) && display.ws.eq(ws)) {
@@ -1131,7 +1199,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             updated.set(mon.index, { area, ws });
         }
 
-        for (const [id, display] of this.displays) {
+        if (!workareas_only) for (const [id, display] of this.displays) {
             this.on_display_remove(id, display);
         }
 
@@ -1326,13 +1394,39 @@ function find_unused_workspace(): [number, any] {
     return [id, new_work];
 }
 
-// Supplements the GNOME Shell theme with the extension's theme.
-function load_theme(stylesheet: string): string | any {
+function stylesheet_path(name: string) { return Me.path + "/" + name + ".css"; }
+
+// Supplements the loaded theme with the extension's theme.
+function load_theme(style: Style): string | any {
+    let pop_stylesheet = Number(style)
     try {
-        let theme = Lib.dbg(Me.path + "/" + stylesheet + ".css");
-        setThemeStylesheet(theme);
-        loadTheme();
-        return theme;
+        const theme_context = St.ThemeContext.get_for_stage(global.stage);
+
+        const existing_theme: null | any = theme_context.get_theme();
+
+        const pop_stylesheet_path = STYLESHEET_PATHS[pop_stylesheet];
+
+        if (existing_theme) {
+            /* Must unload stylesheets, or else the previously loaded
+             * stylesheets will persist when loadTheme() is called
+             * (found in source code of imports.ui.main).
+             */
+            for (const s of STYLESHEETS) {
+                existing_theme.unload_stylesheet(s);
+            }
+
+            // Merge theme update with pop shell styling
+            existing_theme.load_stylesheet(STYLESHEETS[pop_stylesheet]);
+
+            // Perform theme update
+            theme_context.set_theme(existing_theme);
+        } else {
+            // User does not have a theme loaded, so use pop styling + default
+            setThemeStylesheet(pop_stylesheet_path);
+            loadTheme();
+        }
+
+        return pop_stylesheet_path;
     } catch (e) {
         Log.error("failed to load stylesheet: " + e);
         return null;
