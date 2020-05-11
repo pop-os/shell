@@ -106,6 +106,30 @@ export class Forest extends Ecs.World {
         // }
     }
 
+    attach_fork(ext: Ext, fork: Fork.Fork, window: Entity, is_left: boolean) {
+        const node = Node.Node.window(window);
+
+        if (is_left) {
+            if (fork.right) {
+                const new_fork = this.create_fork(fork.left, fork.right, fork.area_of_right(ext), fork.workspace)[0];
+                fork.right = Node.Node.fork(new_fork);
+            } else {
+                fork.right = fork.left;
+            }
+
+            fork.left = node;
+        } else {
+            if (fork.right) {
+                const new_fork = this.create_fork(fork.left, fork.right, fork.area_of_left(ext), fork.workspace)[0];
+                fork.left = Node.Node.fork(new_fork);
+            }
+
+            fork.right = node;
+        }
+
+        this.on_attach(fork.entity, window);
+    }
+
     /** Attaches a `new` window to the fork which `onto` is attached to. */
     attach_window(ext: Ext, onto_entity: Entity, new_entity: Entity, cursor: Rectangle): [Entity, Fork.Fork] | null {
         const right_node = Node.Node.window(new_entity);

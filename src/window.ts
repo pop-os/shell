@@ -37,6 +37,8 @@ export class ShellWindow {
     entity: Entity;
     meta: Meta.Window;
 
+    was_attached_to?: [Entity, boolean];
+
     private window_app: any;
     private extra: X11Info = {
         normal_hints: new OnceCell(),
