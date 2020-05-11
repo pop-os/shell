@@ -840,40 +840,42 @@ export class Ext extends Ecs.System<ExtEvent> {
         modify: (current: number) => number
     ) {
         if (this.auto_tiler) {
+            let detach = new Array();
+
             for (const [entity, monitor] of this.auto_tiler.forest.toplevel.values()) {
                 if (condition(monitor[1])) {
                     Log.info(`moving tree from Fork(${entity})`);
 
-                    let value = modify(monitor[1]);
+                    const value = modify(monitor[1]);
                     monitor[1] = value;
                     let fork = this.auto_tiler.forest.forks.get(entity);
                     if (fork) {
                         fork.workspace = value;
-                        for (const child of this.auto_tiler.forest.iter(entity, node.NodeKind.FORK)) {
+                        for (const child of this.auto_tiler.forest.iter(entity)) {
+                            if (child.kind === node.NodeKind.FORK) {
+                                fork = this.auto_tiler.forest.forks.get(child.entity);
+                                if (fork) fork.workspace = value;
+                            } else if (child.kind === node.NodeKind.WINDOW) {
+                                const window = this.windows.get(child.entity);
+                                if (window) {
+                                    const win_monitor = this.monitors.get(child.entity);
+                                    if (win_monitor) {
+                                        win_monitor[1] = value;
+                                    }
 
-                            fork = this.auto_tiler.forest.forks.get(child.entity);
-                            if (fork) fork.workspace = value;
+                                    if (window.actor_exists()) continue;
+                                }
+
+                                detach.push(child.entity);
+                            }
                         }
                     }
                 }
             }
-        }
 
-        for (const [entity, monitor] of this.monitors.iter()) {
-            let window = this.windows.get(entity);
-            if (window) {
-                let actor = window.meta.get_compositor_private();
-                if (actor) {
-                    if (condition(monitor[1])) {
-                        Log.info(`moving Window(${entity})`);
-                        monitor[1] = modify(monitor[1]);
-                    }
-
-                    continue
-                }
+            for (const child of detach) {
+                this.auto_tiler.detach_window(this, child);
             }
-
-            this.auto_tiler?.detach_window(this, entity);
         }
     }
 
