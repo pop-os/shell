@@ -1132,7 +1132,9 @@ export class Ext extends Ecs.System<ExtEvent> {
             const ws = this.monitor_work_area(mon.index);
 
             if (workareas_only) {
+                global.log(`only adjusting work areas`);
                 updated = this.displays;
+                this.displays.clear();
             } else {
                 for (const [id, display] of this.displays) {
                     if (display.area.eq(area) && display.ws.eq(ws)) {
@@ -1151,7 +1153,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             updated.set(mon.index, { area, ws });
         }
 
-        for (const [id, display] of this.displays) {
+        if (!workareas_only) for (const [id, display] of this.displays) {
             this.on_display_remove(id, display);
         }
 
