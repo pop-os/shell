@@ -7,6 +7,7 @@ const { GLib, St } = imports.gi;
 
 import * as log from 'log';
 import * as once_cell from 'once_cell';
+import * as widgets from 'widgets';
 
 import type { Ext } from 'extension';
 import type { Search } from 'search';
@@ -42,7 +43,7 @@ export type LauncherExtension = {
      * @param text The currently typed text in input
      * @returns An array of tuples containing string to display
      */
-    search_results?: (text: string) => Array<[string, St.Widget, St.Widget]> | null;
+    search_results?: (text: string) => Array<St.Widget> | null;
 }
 
 export class CalcLauncher implements LauncherExtension {
@@ -70,7 +71,7 @@ export class CalcLauncher implements LauncherExtension {
         return true;
     }
 
-    search_results(expr: string): Array<[string, St.Widget, St.Widget]> | null {
+    search_results(expr: string): Array<St.Widget> | null {
         if (expr.length === 0) return null;
 
         let out: string;
@@ -81,21 +82,21 @@ export class CalcLauncher implements LauncherExtension {
             out = expr + ' x = ?'
         }
 
-        const item: [string, St.Widget, St.Widget] =
-            [
-                out,
-                new St.Icon({
-                    icon_name: 'x-office-spreadsheet', // looks like calculations?
-                    icon_size: this.search?.icon_size() ?? DEFAULT_ICON_SIZE / 2,
-                    style_class: "pop-shell-search-cat"
-                }),
-                new St.Icon({
-                    icon_name: 'accessories-calculator',
-                    icon_size: this.search?.icon_size() ?? DEFAULT_ICON_SIZE
-                })
-            ];
+        const icon_size = this.search?.icon_size() ?? DEFAULT_ICON_SIZE;
 
-        return [item];
+        const item = new widgets.ApplicationBox(
+            out,
+            new St.Icon({
+                icon_name: 'x-office-spreadsheet', // looks like calculations?
+                icon_size: icon_size / 2,
+                style_class: "pop-shell-search-cat"
+            }),
+            new St.Icon({
+                icon_name: 'accessories-calculator',
+                icon_size: icon_size
+            }));
+
+        return [item.container];
     }
 }
 

@@ -11,6 +11,7 @@ import * as result from 'result';
 import * as search from 'search';
 import * as window from 'window';
 import * as launchers from 'launcherext';
+import * as widgets from 'widgets';
 
 import type { ShellWindow } from 'window';
 import type { Ext } from 'extension';
@@ -39,7 +40,7 @@ const MODES: launchers.LauncherExtension[] = [new launchers.TerminalLauncher(), 
 
 export class Launcher extends search.Search {
     selections: Array<ShellWindow | [string, AppInfo]>;
-    active: Array<[string, St.Widget, St.Widget]>;
+    active: Array<St.Widget>;
     desktop_apps: Array<[string, AppInfo]>;
     mode: number;
 
@@ -55,7 +56,7 @@ export class Launcher extends search.Search {
             this.mode = id;
         };
 
-        let search = (pattern: string): Array<[string, St.Widget, St.Widget]> | null => {
+        let search = (pattern: string): Array<St.Widget> | null => {
             this.selections.splice(0);
             this.active.splice(0);
             apps.splice(0);
@@ -117,7 +118,7 @@ export class Launcher extends search.Search {
             this.selections.splice(this.list_max());
 
             for (const selection of this.selections) {
-                let data: [string, St.Widget, St.Widget];
+                let data: St.Widget;
 
                 if (selection instanceof window.ShellWindow) {
                     data = window_selection(ext, selection, this.icon_size());
@@ -125,7 +126,7 @@ export class Launcher extends search.Search {
                     const [where, app] = selection;
                     const generic = app.generic_name();
 
-                    data = [
+                    data = new widgets.ApplicationBox(
                         generic ? `${generic} (${app.name()}) [${where}]` : `${app.name()} [${where}]`,
                         new St.Icon({
                             icon_name: 'application-default-symbolic',
@@ -136,7 +137,7 @@ export class Launcher extends search.Search {
                             gicon: app.icon(),
                             icon_size: this.icon_size(),
                         })
-                    ];
+                    ).container;
                 }
 
                 this.active.push(data);
@@ -246,7 +247,7 @@ export class Launcher extends search.Search {
     }
 }
 
-function window_selection(ext: Ext, window: ShellWindow, icon_size: number): [string, St.Widget, St.Widget] {
+function window_selection(ext: Ext, window: ShellWindow, icon_size: number): St.Widget {
     let name = window.name(ext);
     let title = window.meta.get_title();
 
@@ -254,13 +255,12 @@ function window_selection(ext: Ext, window: ShellWindow, icon_size: number): [st
         name += ': ' + title;
     }
 
-    return [
+    return new widgets.ApplicationBox(
         name,
         new St.Icon({
             icon_name: 'focus-windows-symbolic',
             icon_size: icon_size / 2,
             style_class: "pop-shell-search-cat"
         }),
-        window.icon(ext, icon_size)
-    ];
+        window.icon(ext, icon_size)).container;
 }

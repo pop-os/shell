@@ -2,9 +2,8 @@
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 import * as Lib from 'lib';
-import * as widgets from 'widgets';
 
-const { Clutter, Pango, St } = imports.gi;
+const { Clutter, St } = imports.gi;
 const { ModalDialog } = imports.ui.modalDialog;
 
 export class Search {
@@ -22,7 +21,7 @@ export class Search {
     constructor(
         mode_prefixes: Array<string>,
         cancel: () => void,
-        search: (pattern: string) => Array<[string, St.Widget, St.Widget]> | null,
+        search: (pattern: string) => Array<St.Widget> | null,
         select: (id: number) => void,
         apply: (text: string, index: number) => boolean,
         mode: (id: number) => void,
@@ -162,31 +161,12 @@ export class Search {
         );
     }
 
-    update_search_list(list: Array<[string, St.Widget, St.Widget]>) {
+    update_search_list(list: Array<St.Widget>) {
         Lib.join(
             list.values(),
-            (element: [string, St.Widget, St.Widget]) => {
-                const [title, cat_icon, icon] = element;
-
-                cat_icon.set_y_align(Clutter.ActorAlign.CENTER);
-                icon.set_y_align(Clutter.ActorAlign.CENTER);
-
-                let label = new St.Label({
-                    text: title,
-                    styleClass: "pop-shell-search-label",
-                    y_align: Clutter.ActorAlign.CENTER
-                });
-
-                label.clutter_text.set_ellipsize(Pango.EllipsizeMode.END);
-
-                let container = new widgets.Box({ styleClass: "pop-shell-search-element" })
-                    .add(cat_icon)
-                    .add(icon)
-                    .add(label)
-                    .container;
-
-                this.widgets.push(container);
-                this.list.add(container);
+            (element: St.Widget) => {
+                this.widgets.push(element);
+                this.list.add(element);
             },
             () => this.list.add(Lib.separator())
         );
