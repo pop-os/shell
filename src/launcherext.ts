@@ -7,6 +7,7 @@ const { Gio, GLib, St } = imports.gi;
 
 import * as log from 'log';
 import * as once_cell from 'once_cell';
+import * as widgets from 'widgets';
 
 import type { Ext } from 'extension';
 import type { Search } from 'search';
@@ -42,7 +43,7 @@ export type LauncherExtension = {
      * @param text The currently typed text in input
      * @returns An array of tuples containing string to display
      */
-    search_results?: (text: string) => Array<[string, St.Widget, St.Widget]> | null;
+    search_results?: (text: string) => Array<St.Widget> | null;
 }
 
 export class CalcLauncher implements LauncherExtension {
@@ -70,24 +71,21 @@ export class CalcLauncher implements LauncherExtension {
         return true;
     }
 
-    search_results(expr: string): Array<[string, St.Widget, St.Widget]> | null {
+    search_results(expr: string): Array<St.Widget> | null {
         const icon_size = this.search?.icon_size() ?? DEFAULT_ICON_SIZE;
 
-        const item: [string, St.Widget, St.Widget] =
-            [
-                `=${evaluate(expr).toString()}`,
-                new St.Icon({
-                    icon_name: 'x-office-spreadsheet', // looks like calculations?
-                    icon_size: icon_size / 2,
-                    style_class: "pop-shell-search-cat"
-                }),
-                new St.Icon({
-                    icon_name: 'accessories-calculator',
-                    icon_size: icon_size
-                })
-            ];
+        const item = new widgets.ApplicationBox(`=${evaluate(expr).toString()}`,
+            new St.Icon({
+                icon_name: 'x-office-spreadsheet', // looks like calculations?
+                icon_size: icon_size / 2,
+                style_class: "pop-shell-search-cat"
+            }),
+            new St.Icon({
+                icon_name: 'accessories-calculator',
+                icon_size: icon_size
+            }));
 
-        return [item];
+        return [item.container];
     }
 }
 
@@ -153,26 +151,23 @@ export class WebSearchLauncher implements LauncherExtension {
         return false;
     }
 
-    search_results(webSearch: string): Array<[string, St.Widget, St.Widget]> | null {
+    search_results(webSearch: string): Array<St.Widget> | null {
         const icon_size = this.search?.icon_size() ?? DEFAULT_ICON_SIZE;
         if (!this.app_info) {
             return null;
         }
 
-        const item: [string, St.Widget, St.Widget] | null =
-            [
-                `${this.app_info.get_display_name()}: ${this.get_query(webSearch)}`,
-                new St.Icon({
-                    icon_name: 'application-default-symbolic',
-                    icon_size: icon_size / 2,
-                    style_class: "pop-shell-search-cat"
-                }),
-                new St.Icon({
-                    gicon: this.app_info.get_icon(),
-                    icon_size: icon_size
-                })
-            ];
+        const item = new widgets.ApplicationBox(`${this.app_info.get_display_name()}: ${this.get_query(webSearch)}`,
+            new St.Icon({
+                icon_name: 'application-default-symbolic',
+                icon_size: icon_size / 2,
+                style_class: "pop-shell-search-cat"
+            }),
+            new St.Icon({
+                gicon: this.app_info.get_icon(),
+                icon_size: icon_size
+            }));
 
-        return [item];
+        return [item.container];
     }
 } 
