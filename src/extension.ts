@@ -138,6 +138,9 @@ export class Ext extends Ecs.System<ExtEvent> {
     /** Store for names associated with windows */
     names: Ecs.Storage<string> = this.register_storage();
 
+    /** Signal ID which handles size-changed signals */
+    size_changed_signal: SignalID = 0;
+
     /** Store for size-changed signals attached to each window */
     size_signals: Ecs.Storage<SignalID[]> = this.register_storage();
 
@@ -254,6 +257,11 @@ export class Ext extends Ecs.System<ExtEvent> {
                                     if (this.active_hint?.is_tracking(win.entity)) {
                                         this.active_hint.show();
                                     }
+                                } else if (win.is_maximized()) {
+                                    this.size_changed_block();
+                                    win.meta.unmaximize(Meta.MaximizeFlags.BOTH);
+                                    win.meta.make_fullscreen();
+                                    this.size_changed_unblock();
                                 }
                             }
                         }
@@ -321,7 +329,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     /// Connects a callback signal to a GObject, and records the signal.
-    connect(object: GObject.Object, property: string, callback: (...args: any) => boolean | void) {
+    connect(object: GObject.Object, property: string, callback: (...args: any) => boolean | void): SignalID {
         const signal = object.connect(property, callback);
         const entry = this.signals.get(object);
         if (entry) {
@@ -329,6 +337,8 @@ export class Ext extends Ecs.System<ExtEvent> {
         } else {
             this.signals.set(object, [signal]);
         }
+
+        return signal;
     }
 
     connect_meta(win: Window.ShellWindow, signal: string, callback: (...args: any[]) => void): number {
@@ -714,6 +724,13 @@ export class Ext extends Ecs.System<ExtEvent> {
     /** Handle window maximization notifications */
     on_maximize(win: Window.ShellWindow) {
         if (win.is_maximized()) {
+            if (win.meta.is_fullscreen()) {
+                this.size_changed_block();
+                win.meta.unmake_fullscreen();
+                win.meta.maximize(Meta.MaximizeFlags.BOTH);
+                this.size_changed_unblock();
+            }
+
             this.on_monitor_changed(win, (_cfrom, cto, workspace) => {
                 if (win) {
                     this.monitors.insert(win.entity, [cto, workspace]);
@@ -949,7 +966,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             this.update_display_configuration(true);
         });
 
-        this.connect(global.window_manager, 'size-change', (_, actor, event, _before, _after) => {
+        this.size_changed_signal = this.connect(global.window_manager, 'size-change', (_, actor, event, _before, _after) => {
             if (this.auto_tiler) {
                 let win = this.get_window(actor.get_meta_window());
                 if (!win) return;
@@ -1077,6 +1094,14 @@ export class Ext extends Ecs.System<ExtEvent> {
         }
 
         this.signals.clear();
+    }
+
+    size_changed_block() {
+        utils.block_signal(global.window_manager, this.size_changed_signal);
+    }
+
+    size_changed_unblock() {
+        utils.unblock_signal(global.window_manager, this.size_changed_signal);
     }
 
     size_signals_block(win: Window.ShellWindow) {
