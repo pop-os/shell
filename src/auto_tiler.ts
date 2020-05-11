@@ -76,7 +76,6 @@ export class AutoTiler {
         rect.width -= ext.gap_outer * 2;
         rect.height -= ext.gap_outer * 2;
 
-
         const [entity, fork] = this.forest.create_toplevel(win.entity, rect.clone(), workspace_id)
         this.attached.insert(win.entity, entity);
 

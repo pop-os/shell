@@ -741,11 +741,30 @@ export class Ext extends Ecs.System<ExtEvent> {
                     this.active_hint.untrack();
                 }
 
-                if (this.auto_tiler.attached.contains(win.entity)) {
-                    this.auto_tiler.detach_window(this, win.entity);
-                }
+                const attached = this.auto_tiler.attached.get(win.entity)
+                if (!attached) return;
+
+                const fork = this.auto_tiler.forest.forks.get(attached);
+                if (!fork) return;
+
+                win.was_attached_to = [attached, fork.left.is_window(win.entity)];
+                this.auto_tiler.detach_window(this, win.entity);
             } else if (!this.contains_tag(win.entity, Tags.Floating)) {
-                this.auto_tiler.auto_tile(this, win, false);
+                if (win.was_attached_to) {
+                    const [entity, is_left] = win.was_attached_to;
+                    delete win.was_attached_to;
+
+                    const tiler = this.auto_tiler;
+
+                    const fork = tiler.forest.forks.get(entity);
+                    if (fork) {
+                        tiler.forest.attach_fork(this, fork, win.entity, is_left);
+                        tiler.tile(this, fork, fork.area);
+                        return
+                    }
+                } else {
+                    this.auto_tiler.auto_tile(this, win, false);
+                }
             }
         }
     }
