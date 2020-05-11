@@ -475,15 +475,25 @@ export class Tiler {
                         if (ext.auto_tiler) {
                             ext.auto_tiler.attach_swap(this.swap_window, this.window);
                         }
-                        meta_swap.move(ext, meta.rect());
-                        this.swap_window = null;
+
+                        ext.size_signals_block(meta);
+                        ext.size_signals_block(meta_swap);
+
+                        meta_swap.move(ext, meta.rect(), () => {
+                            ext.size_signals_unblock(meta_swap);
+                        });
+
+                        const meta_entity = this.window;
+                        meta.move(ext, ext.overlay, () => {
+                            ext.size_signals_unblock(meta);
+                            ext.add_tag(meta_entity, Tags.Tiled);
+                        });
                     }
                 }
-
-                meta.move(ext, ext.overlay);
-                ext.add_tag(this.window, Tags.Tiled);
             }
         }
+
+        this.swap_window = null;
 
         this.exit(ext);
     }
