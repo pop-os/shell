@@ -555,20 +555,20 @@ export class Ext extends Ecs.System<ExtEvent> {
             }
         }
 
-        let msg = `focused Window(${win.entity}) {\n`
-            + `  name: ${win.name(this)},\n`
-            + `  rect: ${win.rect().fmt()},\n`
-            + `  wm_class: "${win.meta.get_wm_class()}",\n`
-            + `  monitor: ${win.meta.get_monitor()},\n`
-            + `  workspace: ${win.workspace_id()},\n`
-            + `  cmdline: ${win.cmdline()},\n`
-            + `  xid: ${win.xid()},\n`;
+        // let msg = `focused Window(${win.entity}) {\n`
+        //     + `  name: ${win.name(this)},\n`
+        //     + `  rect: ${win.rect().fmt()},\n`
+        //     + `  wm_class: "${win.meta.get_wm_class()}",\n`
+        //     + `  monitor: ${win.meta.get_monitor()},\n`
+        //     + `  workspace: ${win.workspace_id()},\n`
+        //     + `  cmdline: ${win.cmdline()},\n`
+        //     + `  xid: ${win.xid()},\n`;
 
-        if (this.auto_tiler) {
-            msg += `  fork: (${this.auto_tiler.attached.get(win.entity)}),\n`;
-        }
+        // if (this.auto_tiler) {
+        //     msg += `  fork: (${this.auto_tiler.attached.get(win.entity)}),\n`;
+        // }
 
-        Log.info(msg + '}');
+        // Log.info(msg + '}');
     }
 
     on_gap_inner() {
@@ -1166,10 +1166,12 @@ export class Ext extends Ecs.System<ExtEvent> {
             return;
         }
 
-        Log.info('Updating display configuration');
-
         let moved = new Array();
         let updated = new Map();
+
+        if (workareas_only) {
+            this.displays.clear();
+        }
 
         for (const monitor of layoutManager.monitors) {
             const mon = monitor as Monitor;
@@ -1177,11 +1179,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             const area = new Rect.Rectangle([mon.x, mon.y, mon.width, mon.height]);
             const ws = this.monitor_work_area(mon.index);
 
-            if (workareas_only) {
-                global.log(`only adjusting work areas`);
-                updated = this.displays;
-                this.displays.clear();
-            } else {
+            if (!workareas_only) {
                 for (const [id, display] of this.displays) {
                     if (display.area.eq(area) && display.ws.eq(ws)) {
                         if (id !== mon.index) {
@@ -1221,8 +1219,6 @@ export class Ext extends Ecs.System<ExtEvent> {
                 this.auto_tiler.update_toplevel(this, fork, mon_id);
             }
         }
-
-        Log.info(`Updated display configuration`);
     }
 
     update_snapped() {
