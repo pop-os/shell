@@ -1166,51 +1166,35 @@ export class Ext extends Ecs.System<ExtEvent> {
             return;
         }
 
-        let moved = new Array();
         let updated = new Map();
 
-        if (workareas_only) {
-            this.displays.clear();
-        }
-
+        // Fetch a new list of monitors
         for (const monitor of layoutManager.monitors) {
             const mon = monitor as Monitor;
 
             const area = new Rect.Rectangle([mon.x, mon.y, mon.width, mon.height]);
             const ws = this.monitor_work_area(mon.index);
 
-            if (!workareas_only) {
-                for (const [id, display] of this.displays) {
-                    if (display.area.eq(area) && display.ws.eq(ws)) {
-                        if (id !== mon.index) {
-                            this.displays.set(mon.index, { area, ws });
-                            moved.push([id, mon.index]);
-                        } else {
-                            updated.set(id, display);
-                        }
-
-                        this.displays.delete(id);
-                    }
-                }
-            }
-
             updated.set(mon.index, { area, ws });
         }
 
-        if (!workareas_only) for (const [id, display] of this.displays) {
-            this.on_display_remove(id, display);
+        // Remove missing monitors from previous recording
+        if (!workareas_only) {
+            for (const [id, display] of this.displays) {
+                if (!updated.has(id)) {
+                    this.on_display_remove(id, display);
+                }
+            }
         }
 
+        // Remember our new list
         this.displays = updated;
-
-        for (const [from_id, to_id] of moved) {
-            this.on_display_move(from_id, to_id);
-        }
 
         for (const [id, display] of this.displays) {
             Log.info(`Display(${id}): ${display_fmt(display)}`);
         }
 
+        // Update every tree on each display with the new dimensions
         for (const [entity, [mon_id,]] of this.auto_tiler.forest.toplevel.values()) {
             let fork = this.auto_tiler.forest.forks.get(entity);
             let display = this.displays.get(mon_id);
