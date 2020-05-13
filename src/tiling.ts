@@ -146,7 +146,6 @@ export class Tiler {
             this.move_auto(ext, focus());
         } else {
             this.swap_window = null;
-
             this.rect_by_active_area(ext, (_monitor, rect) => {
                 this.change(ext.overlay, rect, x, y, w, h)
                     .change(ext.overlay, rect, 0, 0, 0, 0);
@@ -482,14 +481,14 @@ export class Tiler {
                         meta_swap.move(ext, meta.rect(), () => {
                             ext.size_signals_unblock(meta_swap);
                         });
-
-                        const meta_entity = this.window;
-                        meta.move(ext, ext.overlay, () => {
-                            ext.size_signals_unblock(meta);
-                            ext.add_tag(meta_entity, Tags.Tiled);
-                        });
                     }
                 }
+
+                const meta_entity = this.window;
+                meta.move(ext, ext.overlay, () => {
+                    ext.size_signals_unblock(meta);
+                    ext.add_tag(meta_entity, Tags.Tiled);
+                });
             }
         }
 
