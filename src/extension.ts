@@ -34,7 +34,7 @@ const { layoutManager, loadTheme, overview, panel, setThemeStylesheet, screenShi
 const Tags = Me.imports.tags;
 
 const STYLESHEET_PATHS = ['light', 'dark'].map(stylesheet_path);
-const STYLESHEETS = STYLESHEET_PATHS.map(Gio.File.new_for_path);
+const STYLESHEETS = STYLESHEET_PATHS.map((path) => Gio.File.new_for_path(path));
 
 enum Style { Light, Dark }
 
