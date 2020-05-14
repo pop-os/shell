@@ -779,9 +779,9 @@ export class Ext extends Ecs.System<ExtEvent> {
                         tiler.tile(this, fork, fork.area);
                         return
                     }
-                } else {
-                    this.auto_tiler.auto_tile(this, win, false);
                 }
+
+                this.auto_tiler.auto_tile(this, win, false);
             }
         }
     }
