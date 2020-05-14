@@ -221,6 +221,11 @@ export class Ext extends Ecs.System<ExtEvent> {
                         event.kind.rect.height
                     );
 
+                    this.monitors.insert(event.window.entity, [
+                        win.meta.get_monitor(),
+                        win.workspace_id()
+                    ]);
+
                     return;
                 }
 
