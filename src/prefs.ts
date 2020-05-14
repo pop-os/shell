@@ -17,10 +17,11 @@ interface AppWidgets {
     inner_gap: any,
 }
 
-const SEARCH_ENGINES: SearchEngine[] = [
-    settings.SearchEngine.Bing,
-    settings.SearchEngine.DuckDuckGo,
-    settings.SearchEngine.Google
+const SEARCH_ENGINES: string[] = [
+    "https://en.wikipedia.org/wiki/",
+    "https://www.bing.com/search?q=",
+    "https://www.duckduckgo.com/?q=",
+    "https://www.google.com/search?q="
 ];
 
 // @ts-ignore
