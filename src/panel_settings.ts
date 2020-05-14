@@ -55,6 +55,10 @@ export class Indicator {
             )
         )
     }
+
+    destroy() {
+        this.button.destroy();
+    }
 }
 
 function menu_separator(text: any): any {
