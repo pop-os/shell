@@ -55,6 +55,16 @@ const SHOW_TITLE = 'show-title';
 const SNAP_TO_GRID = 'snap-to-grid';
 const TILE_BY_DEFAULT = 'tile-by-default';
 
+export enum SearchEngine {
+    Bing = "https://www.bing.com/search?q=",
+    DuckDuckGo = "https://www.duckduckgo.com/?q=",
+    Google = "https://www.google.com/search?q="
+}
+
+export function isSearchEngine(uri: string): uri is SearchEngine {
+    return uri in SearchEngine;
+}
+
 export class ExtensionSettings {
     ext: Settings = settings_new_schema(extension.metadata['settings-schema']);
     int: Settings | null = settings_new_id('org.gnome.desktop.interface');
@@ -100,8 +110,15 @@ export class ExtensionSettings {
         return this.ext.get_uint(ROW_SIZE);
     }
 
-    search_engine(): string {
-        return this.ext.get_string(SEARCH_ENGINE);
+    search_engine(): SearchEngine {
+        const uri = this.ext.get_string(SEARCH_ENGINE);
+        if (isSearchEngine(uri)) {
+            return uri;
+        }
+
+        // Overwrite unsupported value.
+        this.set_search_engine(SearchEngine.DuckDuckGo);
+        return SearchEngine.DuckDuckGo;
     }
 
     show_title(): boolean {
@@ -144,7 +161,7 @@ export class ExtensionSettings {
         this.ext.set_uint(ROW_SIZE, size);
     }
 
-    set_search_engine(search: string) {
+    set_search_engine(search: SearchEngine) {
         this.ext.set_string(SEARCH_ENGINE, search);
     }
 
