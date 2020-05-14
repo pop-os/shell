@@ -1355,6 +1355,11 @@ function disable() {
         ext.keybindings.disable(ext.keybindings.global)
             .disable(ext.keybindings.window_focus)
     }
+
+    if (indicator) {
+        indicator.destroy();
+        indicator = null;
+    }
 }
 
 function find_unused_workspace(): [number, any] {
