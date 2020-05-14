@@ -883,8 +883,6 @@ export class Ext extends Ecs.System<ExtEvent> {
         modify: (current: number) => number
     ) {
         if (this.auto_tiler) {
-            let detach = new Array();
-
             for (const [entity, monitor] of this.auto_tiler.forest.toplevel.values()) {
                 if (condition(monitor[1])) {
                     Log.info(`moving tree from Fork(${entity})`);
@@ -894,30 +892,17 @@ export class Ext extends Ecs.System<ExtEvent> {
                     let fork = this.auto_tiler.forest.forks.get(entity);
                     if (fork) {
                         fork.workspace = value;
-                        for (const child of this.auto_tiler.forest.iter(entity)) {
-                            if (child.kind === node.NodeKind.FORK) {
-                                fork = this.auto_tiler.forest.forks.get(child.entity);
-                                if (fork) fork.workspace = value;
-                            } else if (child.kind === node.NodeKind.WINDOW) {
-                                const window = this.windows.get(child.entity);
-                                if (window) {
-                                    const win_monitor = this.monitors.get(child.entity);
-                                    if (win_monitor) {
-                                        win_monitor[1] = value;
-                                    }
-
-                                    if (window.actor_exists()) continue;
-                                }
-
-                                detach.push(child.entity);
-                            }
+                        for (const child of this.auto_tiler.forest.iter(entity, node.NodeKind.FORK)) {
+                            fork = this.auto_tiler.forest.forks.get(child.entity);
+                            if (fork) fork.workspace = value;
                         }
                     }
                 }
             }
 
-            for (const child of detach) {
-                this.auto_tiler.detach_window(this, child);
+            // Fix phantom apps in dash
+            for (const window of this.windows.values()) {
+                if (!window.actor_exists()) this.auto_tiler.detach_window(this, window.entity);
             }
         }
     }
