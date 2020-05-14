@@ -538,7 +538,9 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         this.active_hint?.track(win);
 
-        win.meta.raise();
+        if (this.auto_tiler) {
+            win.meta.raise();
+        }
 
         if (this.auto_tiler && this.prev_focused !== null && win.is_tilable(this)) {
             let prev = this.windows.get(this.prev_focused);
