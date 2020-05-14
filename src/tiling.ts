@@ -142,11 +142,11 @@ export class Tiler {
     }
 
     move(ext: Ext, x: number, y: number, w: number, h: number, focus: () => window.ShellWindow | number | null) {
-        if (ext.auto_tiler) {
+        if (!this.window) return;
+        if (ext.auto_tiler && !ext.contains_tag(this.window, Tags.Floating)) {
             this.move_auto(ext, focus());
         } else {
             this.swap_window = null;
-
             this.rect_by_active_area(ext, (_monitor, rect) => {
                 this.change(ext.overlay, rect, x, y, w, h)
                     .change(ext.overlay, rect, 0, 0, 0, 0);
@@ -363,7 +363,9 @@ export class Tiler {
     }
 
     resize(ext: Ext, direction: Direction) {
-        if (ext.auto_tiler) {
+        if (!this.window) return;
+
+        if (ext.auto_tiler && !ext.contains_tag(this.window, Tags.Floating)) {
             this.resize_auto(ext, direction);
         } else {
             let array: [number, number, number, number];
@@ -453,8 +455,9 @@ export class Tiler {
             ext.set_overlay(win.rect());
             ext.overlay.visible = true;
 
-            if (!ext.auto_tiler) {
+            if (!ext.auto_tiler || ext.contains_tag(win.entity, Tags.Floating)) {
                 // Make sure overlay is valid
+                global.log(`make sure overlay is valid`);
                 this.rect_by_active_area(ext, (_monitor, rect) => {
                     this.change(ext.overlay, rect, 0, 0, 0, 0);
                 });
@@ -482,14 +485,14 @@ export class Tiler {
                         meta_swap.move(ext, meta.rect(), () => {
                             ext.size_signals_unblock(meta_swap);
                         });
-
-                        const meta_entity = this.window;
-                        meta.move(ext, ext.overlay, () => {
-                            ext.size_signals_unblock(meta);
-                            ext.add_tag(meta_entity, Tags.Tiled);
-                        });
                     }
                 }
+
+                const meta_entity = this.window;
+                meta.move(ext, ext.overlay, () => {
+                    ext.size_signals_unblock(meta);
+                    ext.add_tag(meta_entity, Tags.Tiled);
+                });
             }
         }
 

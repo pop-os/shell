@@ -71,14 +71,14 @@ export class AppInfo {
         return this.keywords_.get_or_init(() => this.app_info.get_keywords());
     }
 
-    name(): string {
-        return this.name_;
-    }
-
     launch(): Result<null, error.Error> {
         return this.app_info.launch([], null)
             ? Ok(null)
             : Err(new error.Error(`failed to launch ${this.filename}`));
+    }
+
+    name(): string {
+        return this.name_;
     }
 
     display(): string {
@@ -124,11 +124,12 @@ export function* load_desktop_entries(path: string): IterableIterator<Result<App
             const desktop_path = path + '/' + name;
             const info = AppInfo.try_from(desktop_path);
 
-            if (info.kind === result.OK && (info.value.app_info.get_is_hidden() || info.value.app_info.get_nodisplay())) {
-                continue
+            if (info.kind === result.OK) {
+                const exec = info.value.exec();
+                const show = info.value.app_info.should_show()
+                    || (exec?.startsWith('gnome-control-center'))
+                if (show) yield info;
             }
-
-            yield info;
         }
     }
 }

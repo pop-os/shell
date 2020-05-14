@@ -64,16 +64,6 @@
             <summary>Focus right window</summary>
         </key>
 
-        <key type="as" name="focus-monitor-left">
-            <default><![CDATA[['<Primary><Super>Left','<Primary><Super>h']]]></default>
-            <summary>Focus right monitor</summary>
-        </key>
-
-        <key type="as" name="focus-monitor-right">
-            <default><![CDATA[['<Primary><Super>Right','<Primary><Super>l']]]></default>
-            <summary>Focus right monitor</summary>
-        </key>
-
         <!-- Launcher -->
         <key type="as" name="search">
             <default><![CDATA[['<Super>slash']]]></default>

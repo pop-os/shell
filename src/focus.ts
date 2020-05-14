@@ -6,8 +6,6 @@ import * as Geom from 'geom';
 import type { ShellWindow } from 'window';
 import type { Ext } from './extension';
 
-const Main = imports.ui.main;
-
 export class FocusSelector {
     select(
         ext: Ext,
@@ -38,14 +36,6 @@ export class FocusSelector {
     up(ext: Ext, window: ShellWindow | null): ShellWindow | null {
         return this.select(ext, window_up, window);
     }
-
-    monitor_left(ext: Ext, window: ShellWindow | null): ShellWindow | null {
-        return this.select(ext, window_monitor_left, window);
-    }
-
-    monitor_right(ext: Ext, window: ShellWindow | null): ShellWindow | null {
-        return this.select(ext, window_monitor_right, window);
-    }
 }
 
 function select(
@@ -67,20 +57,6 @@ function window_left(focused: ShellWindow, windows: Array<ShellWindow>) {
     return windows
         .filter((win) => win.meta.get_frame_rect().x < focused.meta.get_frame_rect().x)
         .sort((a, b) => Geom.leftward_distance(a.meta, focused.meta) - Geom.leftward_distance(b.meta, focused.meta));
-}
-
-function window_monitor_left(focused: ShellWindow, windows: Array<ShellWindow>) {
-    return windows
-        .filter((win) => win.meta.get_monitor() != Main.layoutManager.focusIndex)
-        .filter((win) => win.meta.get_frame_rect().x < focused.meta.get_frame_rect().x)
-        .sort((a, b) => Geom.window_distance(a.meta, focused.meta) - Geom.window_distance(b.meta, focused.meta));
-}
-
-function window_monitor_right(focused: ShellWindow, windows: Array<ShellWindow>) {
-    return windows
-        .filter((win) => win.meta.get_monitor() != Main.layoutManager.focusIndex)
-        .filter((win) => win.meta.get_frame_rect().x > focused.meta.get_frame_rect().x)
-        .sort((a, b) => Geom.window_distance(a.meta, focused.meta) - Geom.window_distance(b.meta, focused.meta));
 }
 
 function window_right(focused: ShellWindow, windows: Array<ShellWindow>) {

@@ -34,7 +34,7 @@ const { layoutManager, loadTheme, overview, panel, setThemeStylesheet, screenShi
 const Tags = Me.imports.tags;
 
 const STYLESHEET_PATHS = ['light', 'dark'].map(stylesheet_path);
-const STYLESHEETS = STYLESHEET_PATHS.map(Gio.File.new_for_path);
+const STYLESHEETS = STYLESHEET_PATHS.map((path) => Gio.File.new_for_path(path));
 
 enum Style { Light, Dark }
 
@@ -220,6 +220,11 @@ export class Ext extends Ecs.System<ExtEvent> {
                         event.kind.rect.width,
                         event.kind.rect.height
                     );
+
+                    this.monitors.insert(event.window.entity, [
+                        win.meta.get_monitor(),
+                        win.workspace_id()
+                    ]);
 
                     return;
                 }
@@ -538,7 +543,9 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         this.active_hint?.track(win);
 
-        win.meta.raise();
+        if (this.auto_tiler) {
+            win.meta.raise();
+        }
 
         if (this.auto_tiler && this.prev_focused !== null && win.is_tilable(this)) {
             let prev = this.windows.get(this.prev_focused);
@@ -555,20 +562,20 @@ export class Ext extends Ecs.System<ExtEvent> {
             }
         }
 
-        let msg = `focused Window(${win.entity}) {\n`
-            + `  name: ${win.name(this)},\n`
-            + `  rect: ${win.rect().fmt()},\n`
-            + `  wm_class: "${win.meta.get_wm_class()}",\n`
-            + `  monitor: ${win.meta.get_monitor()},\n`
-            + `  workspace: ${win.workspace_id()},\n`
-            + `  cmdline: ${win.cmdline()},\n`
-            + `  xid: ${win.xid()},\n`;
+        // let msg = `focused Window(${win.entity}) {\n`
+        //     + `  name: ${win.name(this)},\n`
+        //     + `  rect: ${win.rect().fmt()},\n`
+        //     + `  wm_class: "${win.meta.get_wm_class()}",\n`
+        //     + `  monitor: ${win.meta.get_monitor()},\n`
+        //     + `  workspace: ${win.workspace_id()},\n`
+        //     + `  cmdline: ${win.cmdline()},\n`
+        //     + `  xid: ${win.xid()},\n`;
 
-        if (this.auto_tiler) {
-            msg += `  fork: (${this.auto_tiler.attached.get(win.entity)}),\n`;
-        }
+        // if (this.auto_tiler) {
+        //     msg += `  fork: (${this.auto_tiler.attached.get(win.entity)}),\n`;
+        // }
 
-        Log.info(msg + '}');
+        // Log.info(msg + '}');
     }
 
     on_gap_inner() {
@@ -779,9 +786,9 @@ export class Ext extends Ecs.System<ExtEvent> {
                         tiler.tile(this, fork, fork.area);
                         return
                     }
-                } else {
-                    this.auto_tiler.auto_tile(this, win, false);
                 }
+
+                this.auto_tiler.auto_tile(this, win, false);
             }
         }
     }
@@ -1044,7 +1051,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         });
 
         this.connect(global.display, 'grab-op-end', (_, _display, win, op) => {
-            this.on_grab_end(win, op);
+            this.register_fn(() => this.on_grab_end(win, op));
         });
 
         this.connect(workspace_manager, 'active-workspace-changed', () => {
@@ -1166,53 +1173,35 @@ export class Ext extends Ecs.System<ExtEvent> {
             return;
         }
 
-        Log.info('Updating display configuration');
-
-        let moved = new Array();
         let updated = new Map();
 
+        // Fetch a new list of monitors
         for (const monitor of layoutManager.monitors) {
             const mon = monitor as Monitor;
 
             const area = new Rect.Rectangle([mon.x, mon.y, mon.width, mon.height]);
             const ws = this.monitor_work_area(mon.index);
 
-            if (workareas_only) {
-                global.log(`only adjusting work areas`);
-                updated = this.displays;
-                this.displays.clear();
-            } else {
-                for (const [id, display] of this.displays) {
-                    if (display.area.eq(area) && display.ws.eq(ws)) {
-                        if (id !== mon.index) {
-                            this.displays.set(mon.index, { area, ws });
-                            moved.push([id, mon.index]);
-                        } else {
-                            updated.set(id, display);
-                        }
-
-                        this.displays.delete(id);
-                    }
-                }
-            }
-
             updated.set(mon.index, { area, ws });
         }
 
-        if (!workareas_only) for (const [id, display] of this.displays) {
-            this.on_display_remove(id, display);
+        // Remove missing monitors from previous recording
+        if (!workareas_only) {
+            for (const [id, display] of this.displays) {
+                if (!updated.has(id)) {
+                    this.on_display_remove(id, display);
+                }
+            }
         }
 
+        // Remember our new list
         this.displays = updated;
-
-        for (const [from_id, to_id] of moved) {
-            this.on_display_move(from_id, to_id);
-        }
 
         for (const [id, display] of this.displays) {
             Log.info(`Display(${id}): ${display_fmt(display)}`);
         }
 
+        // Update every tree on each display with the new dimensions
         for (const [entity, [mon_id,]] of this.auto_tiler.forest.toplevel.values()) {
             let fork = this.auto_tiler.forest.forks.get(entity);
             let display = this.displays.get(mon_id);
@@ -1221,8 +1210,6 @@ export class Ext extends Ecs.System<ExtEvent> {
                 this.auto_tiler.update_toplevel(this, fork, mon_id);
             }
         }
-
-        Log.info(`Updated display configuration`);
     }
 
     update_snapped() {
