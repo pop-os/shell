@@ -1051,7 +1051,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         });
 
         this.connect(global.display, 'grab-op-end', (_, _display, win, op) => {
-            this.on_grab_end(win, op);
+            this.register_fn(() => this.on_grab_end(win, op));
         });
 
         this.connect(workspace_manager, 'active-workspace-changed', () => {
