@@ -551,7 +551,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             let prev = this.windows.get(this.prev_focused);
             let is_attached = this.auto_tiler.attached.contains(this.prev_focused);
 
-            if (prev && is_attached && prev.actor_exists() && prev.rect().contains(win.rect())) {
+            if (prev && prev !== win && is_attached && prev.actor_exists() && prev.rect().contains(win.rect())) {
                 if (prev.is_maximized()) {
                     prev.meta.unmaximize(Meta.MaximizeFlags.BOTH);
                 }
@@ -1253,7 +1253,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         return entity;
     }
 
-    /// Returns the window(s) that the mouse pointer is currently hoving above.
+    /// Returns the window(s) that the mouse pointer is currently hovering above.
     * windows_at_pointer(
         cursor: Rectangle,
         monitor: number,
