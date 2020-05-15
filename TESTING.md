@@ -28,8 +28,10 @@ Tasks for a tester to verify when approving a patch. Use complex window layouts 
 - [ ] Windows can be resized with the mouse
 - [ ] Minimizing a window detaches it from the tree and re-tiles remaining windows
 - [ ] Unminimizing a window re-tiles the window
-- [ ] Maximizing removes the active hint and covers tiled windows
-- [ ] Umaximizing adds active hint and re-tiles into place
+- [ ] Maximizing with the keyboard removes the active hint and covers tiled windows
+- [ ] Umaximizing with keyboard adds active hint and re-tiles into place
+- [ ] Maximizing with the mouse removes the active hint and covers tiled windows
+- [ ] Umaximizing with mouse adds active hint and re-tiles into place
 - [ ] Full-screening removes the hint and full-screens on one display 
 - [ ] Unfull-screening adds active hint and re-tiles into place
 - [ ] Maximizing a YouTube video fills the screen and unmaximizing retiles the browser in place
