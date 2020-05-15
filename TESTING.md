@@ -27,7 +27,7 @@ Tasks for a tester to verify when approving a patch. Use complex window layouts 
 - [ ] Windows can be resized with the keyboard (Test resizing four windows above, below, right, and left to ensure shortcut consistency)
 - [ ] Windows can be resized with the mouse
 - [ ] Minimizing a window detaches it from the tree and re-tiles remaining windows
-- [ ] Unminimizing a window re-tiles it into its previous location
+- [ ] Unminimizing a window re-tiles the window
 - [ ] Maximizing removes the active hint and covers tiled windows
 - [ ] Umaximizing adds active hint and re-tiles into place
 - [ ] Full-screening removes the hint and full-screens on one display 
