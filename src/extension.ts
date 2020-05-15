@@ -1327,6 +1327,8 @@ function enable() {
         ext.register_fn(() => {
             if (ext?.auto_tiler) ext.snap_windows();
         });
+
+        ext.on_active_hint();
     }
 
     ext.signals_attach();
@@ -1349,6 +1351,10 @@ function disable() {
     if (ext) {
         ext.signals_remove();
         ext.exit_modes();
+
+        if (ext.settings.active_hint()) {
+            ext.active_hint?.untrack();
+        }
 
         layoutManager.removeChrome(ext.overlay);
 
