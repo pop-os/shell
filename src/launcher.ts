@@ -61,14 +61,14 @@ export class Launcher extends search.Search {
             this.mode = id;
         };
 
-        let search = (pattern: string): Array<St.Widget> | null => {
+        let search = async (pattern: string): Promise<Array<St.Widget> | undefined> => {
             this.selections.splice(0);
             this.active.splice(0);
             apps.splice(0);
 
             if (this.mode !== -1) {
                 const launcher = MODES[this.mode].init(ext, this);
-                const results = launcher.search_results?.(pattern.slice(launcher.prefix.length).trim()) ?? null;
+                const results = await launcher.search_results?.(pattern.slice(launcher.prefix.length).trim()) ?? undefined;
                 results?.forEach(result => {
                     this.active.push(result);
                 });

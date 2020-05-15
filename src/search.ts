@@ -21,7 +21,7 @@ export class Search {
     constructor(
         mode_prefixes: Array<string>,
         cancel: () => void,
-        search: (pattern: string) => Array<St.Widget> | null,
+        search: (pattern: string) => Promise<Array<St.Widget> | undefined>,
         select: (id: number) => void,
         apply: (text: string, index: number) => boolean,
         mode: (id: number) => void,
@@ -66,10 +66,11 @@ export class Search {
             let prefix = this.has_prefix(text);
             mode(prefix);
 
-            const update = search((prefix === -1) ? text.toLowerCase() : text);
-            if (update) {
-                this.update_search_list(update);
-            }
+            search((prefix === -1) ? text.toLowerCase() : text).then(update => {
+                if (update && this.dialog.state === 0) {
+                    this.update_search_list(update);
+                }
+            });
         });
 
         this.text.connect("key-press-event", (_: any, event: any) => {

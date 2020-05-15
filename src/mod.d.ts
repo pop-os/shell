@@ -160,6 +160,7 @@ declare namespace Shell {
     interface ModalDialog extends St.Widget {
         contentLayout: St.Widget;
         dialogLayout: Dialog;
+        state: number;
 
         close(timestamp: number): void;
         open(timestamp: number, on_primary: boolean): void;
