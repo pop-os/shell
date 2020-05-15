@@ -30,12 +30,15 @@ const ICON_SIZE = 34;
 const SEARCH_PATHS: Array<[string, string]> = [
     // System-wide
     ["System", "/usr/share/applications/"],
+    ["System-Local", "/usr/local/share/applications/"],
     // User-local
     ["Local", HOME_DIR + "/.local/share/applications/"],
     // System-wide flatpaks
     ["Flatpak (system)", "/var/lib/flatpak/exports/share/applications/"],
     // User-local flatpaks
-    ["Flatpak", HOME_DIR + "/.local/share/flatpak/exports/share/applications/"]
+    ["Flatpak", HOME_DIR + "/.local/share/flatpak/exports/share/applications/"],
+    // System-wide Snaps
+    ["Snap (system)", "/var/lib/snapd/desktop/applications/"]
 ];
 
 let TERMINAL = new once_cell.OnceCell<string>();
@@ -128,7 +131,7 @@ export class Launcher extends search.Search {
                             style_class: "pop-shell-search-cat"
                         }),
                         new St.Icon({
-                            icon_name: app.icon() ?? 'applications-other',
+                            gicon: app.icon(),
                             icon_size: ICON_SIZE
                         })
                     ];
@@ -155,7 +158,6 @@ export class Launcher extends search.Search {
                     ext.overlay.y = rect.y;
                     ext.overlay.width = rect.width;
                     ext.overlay.height = rect.height;
-                    global.log(`SHOWING OVERVIEW`);
                     ext.overlay.visible = true;
                 }
             }

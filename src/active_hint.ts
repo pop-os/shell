@@ -56,7 +56,6 @@ export class ActiveHint {
     }
 
     hide() {
-        global.log(`hiding active hint`);
         for (const box of this.border) {
             box.hide();
             box.visible = false;

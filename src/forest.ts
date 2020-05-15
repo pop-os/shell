@@ -70,18 +70,12 @@ export class Forest extends Ecs.World {
 
     /** Place all windows into their calculated positions. */
     arrange(ext: Ext, workspace: number, ignore_reset: boolean = false) {
-        let ws = ext.switch_workspace_on_move
-            ? ext.workspace_by_id(workspace)
-            : null;
-
         // const new_positions = new Array();
         for (const [entity, r] of this.requested) {
             const window = ext.windows.get(entity);
             if (!window) continue;
 
             window.meta.change_workspace_by_index(workspace, false);
-
-            if (ws) ws.activate(global.get_current_time());
 
             move_window(ext, window, r.rect, () => { });
         }
@@ -112,6 +106,30 @@ export class Forest extends Ecs.World {
         // }
     }
 
+    attach_fork(ext: Ext, fork: Fork.Fork, window: Entity, is_left: boolean) {
+        const node = Node.Node.window(window);
+
+        if (is_left) {
+            if (fork.right) {
+                const new_fork = this.create_fork(fork.left, fork.right, fork.area_of_right(ext), fork.workspace)[0];
+                fork.right = Node.Node.fork(new_fork);
+            } else {
+                fork.right = fork.left;
+            }
+
+            fork.left = node;
+        } else {
+            if (fork.right) {
+                const new_fork = this.create_fork(fork.left, fork.right, fork.area_of_left(ext), fork.workspace)[0];
+                fork.left = Node.Node.fork(new_fork);
+            }
+
+            fork.right = node;
+        }
+
+        this.on_attach(fork.entity, window);
+    }
+
     /** Attaches a `new` window to the fork which `onto` is attached to. */
     attach_window(ext: Ext, onto_entity: Entity, new_entity: Entity, cursor: Rectangle): [Entity, Fork.Fork] | null {
         const right_node = Node.Node.window(new_entity);
@@ -137,6 +155,7 @@ export class Forest extends Ecs.World {
                     return this._attach(onto_entity, new_entity, this.on_attach, entity, fork, [fork_entity, new_fork]);
                 } else {
                     fork.right = right_node;
+                    fork.set_ratio(fork.length() / 2);
                     return this._attach(onto_entity, new_entity, this.on_attach, entity, fork, null);
                 }
             } else if (fork.right && fork.right.is_window(onto_entity)) {
@@ -654,7 +673,7 @@ function move_window(ext: Ext, window: ShellWindow, rect: Rectangular, on_comple
     const actor = window.meta.get_compositor_private();
 
     if (!actor) {
-        Log.debug(`Window(${window.entity}) does not have an actor, and therefore cannot be moved`);
+        Log.warn(`Window(${window.entity}) does not have an actor, and therefore cannot be moved`);
         return;
     }
 

@@ -76,7 +76,6 @@ export class AutoTiler {
         rect.width -= ext.gap_outer * 2;
         rect.height -= ext.gap_outer * 2;
 
-
         const [entity, fork] = this.forest.create_toplevel(win.entity, rect.clone(), workspace_id)
         this.attached.insert(win.entity, entity);
 
@@ -301,10 +300,6 @@ export class AutoTiler {
 
         if (onto.meta.minimized) {
             return Err('previous window was minimized');
-        }
-
-        for (const [entity, fork] of this.attached.iter()) {
-            global.log(`found attached entity: ${entity} to ${fork}`);
         }
 
         if (!this.attached.contains(onto.entity)) {

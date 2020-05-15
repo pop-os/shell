@@ -2,6 +2,8 @@ const ExtensionUtils = imports.misc.extensionUtils;
 const extension = ExtensionUtils.getCurrentExtension();
 const Gio = imports.gi.Gio;
 
+const DARK = ['dark', 'adapta', 'plata', 'dracula']
+
 interface Settings extends GObject.Object {
     get_boolean(key: string): boolean;
     set_boolean(key: string, value: boolean): void;
@@ -12,8 +14,16 @@ interface Settings extends GObject.Object {
     get_string(key: string): string;
 }
 
-function settings_new_id(schema_id: string): Settings {
-    return new Gio.Settings({ schema_id });
+function settings_new_id(schema_id: string): Settings | null {
+    try {
+        return new Gio.Settings({ schema_id });
+    } catch (err) {
+        if (schema_id !== 'org.gnome.shell.extensions.user-theme') {
+            global.log(err)
+        }
+
+        return null
+    }
 }
 
 function settings_new_schema(schema: string): Settings {
@@ -45,8 +55,9 @@ const TILE_BY_DEFAULT = 'tile-by-default';
 
 export class ExtensionSettings {
     ext: Settings = settings_new_schema(extension.metadata['settings-schema']);
-    int: Settings = settings_new_id('org.gnome.desktop.interface');
-    mutter: Settings = settings_new_id('org.gnome.mutter');
+    int: Settings | null = settings_new_id('org.gnome.desktop.interface');
+    mutter: Settings | null = settings_new_id('org.gnome.mutter');
+    shell: Settings | null = settings_new_id('org.gnome.shell.extensions.user-theme');
 
     // Getters
 
@@ -67,7 +78,20 @@ export class ExtensionSettings {
     }
 
     is_dark(): boolean {
-        return this.int.get_string('gtk-theme').endsWith('dark');
+        if (this.int) {
+            let theme = this.int.get_string('gtk-theme').toLowerCase();
+            return DARK.some(dark => theme.includes(dark))
+        }
+
+        return false
+    }
+
+    is_dark_shell(): boolean {
+        if (this.shell) {
+            let theme = this.shell.get_string('name').toLowerCase()
+            return DARK.some(dark => theme.includes(dark) || theme.length === 0)
+        }
+        return this.is_dark();
     }
 
     row_size(): number {
@@ -87,7 +111,9 @@ export class ExtensionSettings {
     }
 
     workspaces_only_on_primary(): boolean {
-        return this.mutter.get_boolean('workspaces-only-on-primary');
+        return this.mutter
+            ? this.mutter.get_boolean('workspaces-only-on-primary')
+            : false;
     }
 
     // Setters

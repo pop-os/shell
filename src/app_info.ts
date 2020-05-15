@@ -6,7 +6,6 @@ const { Gio } = imports.gi;
 import * as error from 'error';
 import * as result from 'result';
 import * as once_cell from 'once_cell';
-// import * as Log from 'log';
 
 import type { Result } from 'result';
 
@@ -22,7 +21,6 @@ export class AppInfo {
     private categories_: once_cell.OnceCell<string> = new OnceCell();
     private comment_: once_cell.OnceCell<string | null> = new OnceCell();
     private exec_: once_cell.OnceCell<string | null> = new OnceCell();
-    private icon_: once_cell.OnceCell<string | null> = new OnceCell();
     private generic: once_cell.OnceCell<string | null> = new OnceCell();
     private keywords_: once_cell.OnceCell<Array<string>> = new OnceCell();
 
@@ -61,8 +59,8 @@ export class AppInfo {
         return this.exec_.get_or_init(() => this.string("Exec"));
     }
 
-    icon(): string | null {
-        return this.icon_.get_or_init(() => this.string("Icon"));
+    icon(): St.Widget {
+        return this.app_info.get_icon();
     }
 
     generic_name(): string | null {
@@ -73,14 +71,14 @@ export class AppInfo {
         return this.keywords_.get_or_init(() => this.app_info.get_keywords());
     }
 
-    name(): string {
-        return this.name_;
-    }
-
     launch(): Result<null, error.Error> {
         return this.app_info.launch([], null)
             ? Ok(null)
             : Err(new error.Error(`failed to launch ${this.filename}`));
+    }
+
+    name(): string {
+        return this.name_;
     }
 
     display(): string {
@@ -126,11 +124,12 @@ export function* load_desktop_entries(path: string): IterableIterator<Result<App
             const desktop_path = path + '/' + name;
             const info = AppInfo.try_from(desktop_path);
 
-            if (info instanceof AppInfo && (info.app_info.get_is_hidden() || info.app_info.get_nodisplay())) {
-                continue
+            if (info.kind === result.OK) {
+                const exec = info.value.exec();
+                const show = info.value.app_info.should_show()
+                    || (exec?.startsWith('gnome-control-center'))
+                if (show) yield info;
             }
-
-            yield info;
         }
     }
 }
