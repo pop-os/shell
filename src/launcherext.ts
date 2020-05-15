@@ -43,7 +43,7 @@ export type LauncherExtension = {
      * @param text The currently typed text in input
      * @returns An array of tuples containing string to display
      */
-    search_results?: (text: string) => Promise<Array<St.Widget> | undefined>;
+    search_results?: (text: string) => Array<St.Widget> | null;
 }
 
 export class CalcLauncher implements LauncherExtension {
@@ -71,7 +71,7 @@ export class CalcLauncher implements LauncherExtension {
         return true;
     }
 
-    async search_results(expr: string): Promise<Array<St.Widget> | undefined> {
+    search_results(expr: string): Array<St.Widget> | null {
         const icon_size = this.search?.icon_size() ?? DEFAULT_ICON_SIZE;
 
         const item = new widgets.ApplicationBox(`=${evaluate(expr).toString()}`,
@@ -151,10 +151,10 @@ export class WebSearchLauncher implements LauncherExtension {
         return false;
     }
 
-    async search_results(webSearch: string): Promise<Array<St.Widget> | undefined> {
+    search_results(webSearch: string): Array<St.Widget> | null {
         const icon_size = this.search?.icon_size() ?? DEFAULT_ICON_SIZE;
         if (!this.app_info) {
-            return undefined;
+            return null;
         }
 
         const item = new widgets.ApplicationBox(`${this.app_info.get_display_name()}: ${this.get_query(webSearch)}`,
