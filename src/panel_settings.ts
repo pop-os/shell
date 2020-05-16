@@ -1,15 +1,14 @@
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
-import * as auto_tiler from 'auto_tiler';
+// import * as auto_tiler from 'auto_tiler';
 import * as Log from 'log';
 
-import type { Entity } from './ecs';
+//import type { Entity } from './ecs';
 import type { Ext } from './extension';
 
 const { Clutter, Gio, St } = imports.gi;
 const { PopupBaseMenuItem, PopupMenuItem, PopupSwitchMenuItem, PopupSeparatorMenuItem } = imports.ui.popupMenu;
 const { Button } = imports.ui.panelMenu;
-const { Forest } = Me.imports.forest;
 const GLib: GLib = imports.gi.GLib;
 
 export class Indicator {
@@ -233,49 +232,7 @@ function toggle(desc: string, active: boolean, connect: (toggle: any) => void): 
     return toggle;
 }
 
+
 function tiled(ext: Ext): any {
-    return toggle(_("Tile Windows"), null != ext.auto_tiler, () => {
-        if (ext.auto_tiler) {
-            Log.info(`tile by default disabled`);
-            ext.unregister_storage(ext.auto_tiler.attached);
-            ext.auto_tiler = null;
-            ext.settings.set_tile_by_default(false);
-        } else {
-            Log.info(`tile by default enabled`);
-
-            const original = ext.active_workspace();
-
-            let tiler = new auto_tiler.AutoTiler(
-                new Forest()
-                    .connect_on_attach((entity: Entity, window: Entity) => {
-                        tiler.attached.insert(window, entity);
-                    }),
-                ext.register_storage()
-            );
-
-            ext.auto_tiler = tiler;
-
-            ext.settings.set_tile_by_default(true);
-
-            for (const window of ext.windows.values()) {
-                if (window.is_tilable(ext)) {
-                    let actor = window.meta.get_compositor_private();
-                    if (actor) {
-                        let ws = window.meta.get_workspace();
-                        if (!window.meta.minimized) {
-                            tiler.auto_tile(ext, window, false);
-                        }
-
-                        if (ws === null || ws.index() !== original) {
-                            actor.hide()
-                        } else {
-                            actor.show();
-                        }
-                    }
-                }
-            }
-
-            ext.register_fn(() => ext.switch_to_workspace(original));
-        }
-    });
+    return toggle(_("Tile Windows"), null != ext.auto_tiler, () => ext.toggle_tiling());
 }
