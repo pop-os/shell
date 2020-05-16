@@ -99,7 +99,7 @@
         <!-- Tiling Mode -->
         <key type="as" name="toggle-tiling">
             <default><![CDATA[['<Super>y']]]></default>
-            <summary>Toggles a window between floating and tiling</summary>
+            <summary>Toggles auto-tiling on and off</summary>
         </key>
 
 
