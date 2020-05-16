@@ -97,6 +97,12 @@
         </key>
 
         <!-- Tiling Mode -->
+        <key type="as" name="toggle-tiling">
+            <default><![CDATA[['<Super>y']]]></default>
+            <summary>Toggles a window between floating and tiling</summary>
+        </key>
+
+
         <key type="as" name="tile-move-left">
             <default><![CDATA[['Left','h']]]></default>
             <summary>Move window left</summary>

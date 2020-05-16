@@ -313,6 +313,53 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     // Extension methods
+    
+    toggle_tiling() : any {
+
+        if (this.auto_tiler) {
+            Log.info(`tile by default disabled!`);
+            this.unregister_storage(this.auto_tiler.attached);
+            this.auto_tiler = null;
+            this.settings.set_tile_by_default(false);
+        } else {
+            Log.info(`tile by default enabled!`);
+
+            const original = this.active_workspace();
+
+            let tiler = new auto_tiler.AutoTiler(
+                new Forest.Forest()
+                    .connect_on_attach((entity: Entity, window: Entity) => {
+                        tiler.attached.insert(window, entity);
+                    }),
+                this.register_storage()
+            );
+
+            this.auto_tiler = tiler;
+
+            this.settings.set_tile_by_default(true);
+
+            for (const window of this.windows.values()) {
+                if (window.is_tilable(this)) {
+                    let actor = window.meta.get_compositor_private();
+                    if (actor) {
+                        let ws = window.meta.get_workspace();
+                        if (!window.meta.minimized) {
+                            tiler.auto_tile(this, window, false);
+                        }
+
+                        if (ws === null || ws.index() !== original) {
+                            actor.hide()
+                        } else {
+                            actor.show();
+                        }
+                    }
+                }
+            }
+
+            this.register_fn(() => this.switch_to_workspace(original));
+        }
+    }
+
 
     activate_window(window: Window.ShellWindow | null) {
         if (window) {

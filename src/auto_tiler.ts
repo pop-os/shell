@@ -6,16 +6,16 @@ import * as log from 'log';
 import * as node from 'node';
 import * as result from 'result';
 
-import type { Entity } from 'ecs';
-import type { Ext } from 'extension';
-import type { Forest } from 'forest';
-import type { Fork } from 'fork';
-import type { Rectangle } from 'rectangle';
-import type { Result } from 'result';
-import type { ShellWindow } from 'window';
+import type {Entity} from 'ecs';
+import type {Ext} from 'extension';
+import type {Forest} from 'forest';
+import type {Fork} from 'fork';
+import type {Rectangle} from 'rectangle';
+import type {Result} from 'result';
+import type {ShellWindow} from 'window';
 
-const { Ok, Err, ERR } = result;
-const { NodeKind } = node;
+const {Ok, Err, ERR} = result;
+const {NodeKind} = node;
 const Tags = Me.imports.tags;
 
 export class AutoTiler {
@@ -28,10 +28,10 @@ export class AutoTiler {
     }
 
     /** Swap window associations in the auto-tiler
-    *
-    * Call this when a window has swapped positions with another, so that we
-    * may update the associations in the auto-tiler world.
-    */
+     *
+     * Call this when a window has swapped positions with another, so that we
+     * may update the associations in the auto-tiler world.
+     */
     attach_swap(a: Entity, b: Entity) {
         const a_ent = this.attached.remove(a);
         const b_ent = this.attached.remove(b);
