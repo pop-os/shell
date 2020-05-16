@@ -40,6 +40,7 @@ const MODES: launchers.LauncherExtension[] = [
     new launchers.TerminalLauncher(),
     new launchers.CommandLauncher(),
     new launchers.CalcLauncher(),
+    new launchers.RecentDocumentLauncher(),
     new launchers.WebSearchLauncher()
 ];
 
