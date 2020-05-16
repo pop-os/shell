@@ -36,7 +36,12 @@ const SEARCH_PATHS: Array<[string, string]> = [
     ["Snap (system)", "/var/lib/snapd/desktop/applications/"]
 ];
 
-const MODES: launchers.LauncherExtension[] = [new launchers.TerminalLauncher(), new launchers.CommandLauncher(), new launchers.CalcLauncher()];
+const MODES: launchers.LauncherExtension[] = [
+    new launchers.TerminalLauncher(),
+    new launchers.CommandLauncher(),
+    new launchers.CalcLauncher(),
+    new launchers.RecentDocumentLauncher(),
+];
 
 export class Launcher extends search.Search {
     selections: Array<ShellWindow | [string, AppInfo]>;

@@ -3,7 +3,7 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 const { evaluate } = Me.imports.math.math;
 const { spawnCommandLine } = imports.misc.util;
 
-const { GLib, St } = imports.gi;
+const { GLib, Gtk, St } = imports.gi;
 
 import * as log from 'log';
 import * as once_cell from 'once_cell';
@@ -111,6 +111,68 @@ export class CommandLauncher implements LauncherExtension {
     apply(cmd: string): boolean {
         spawnCommandLine(cmd);
         return false;
+    }
+}
+
+type RecentItem = {
+    display_name: string;
+    icon: any;
+    uri: string;
+}
+
+export class RecentDocumentLauncher implements LauncherExtension {
+    search?: Search;
+    prefix = 'd:';
+    name = 'recent docs';
+    recent_manager = Gtk.RecentManager.get_default();
+    results?: Array<RecentItem>;
+
+    init(_: Ext, search: Search): this {
+        this.search = search;
+        return this;
+    }
+
+    apply(_: string, index: number): boolean {
+        if (!this.results) { return false; }
+        const uri = this.results[index].uri;
+        const cmd = `xdg-open ${uri}`;
+        spawnCommandLine(cmd);
+        return false;
+    }
+
+    items(): Array<RecentItem> | undefined {
+        const recent_items = this.recent_manager.get_items();
+        if (!recent_items) { return undefined; }
+        const items: Array<RecentItem> = recent_items.filter((item: any): boolean => item.exists()).map((item: any): RecentItem => {
+            return {
+                display_name: item.get_display_name(),
+                icon: item.get_gicon(),
+                uri: item.get_uri()
+            };
+        });
+
+        return items;
+    }
+
+    search_results(query: string): Array<St.Widget> | null {
+        const items = this.items();
+        if (!items) { return null; }
+        if (!this.search) {
+            log.error('init not called before performing search');
+            return null;
+        }
+
+        const normalized_query = query.toLowerCase();
+        this.results = items.filter(item => item.display_name.toLowerCase().includes(normalized_query) || item.uri.toLowerCase().includes(normalized_query)).slice(0, this.search.list_max()).sort((a, b) => a.display_name.localeCompare(b.display_name));
+        return this.results.map((item): St.Widget => new widgets.ApplicationBox(`${item.display_name}: ${decodeURI(item.uri)}`,
+        new St.Icon({
+            icon_name: 'system-file-manager',
+            icon_size: (this.search?.icon_size() ?? DEFAULT_ICON_SIZE) / 2,
+            style_class: "pop-shell-search-cat"
+        }), new St.Icon({
+            gicon: item.icon,
+            icon_size: this.search?.icon_size() ?? DEFAULT_ICON_SIZE
+        })).container);
     }
 }
 
