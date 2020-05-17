@@ -62,7 +62,6 @@ Tasks for a tester to verify when approving a patch. Use complex window layouts 
 - [ ] Windows move across displays with the mouse
 - [ ] Changing the primary display moves the top bar. Window heights adjust on all monitors for the new position.
 - [ ] Unplug a display - windows from the display retile on a new workspace on the remaining display
-- [ ] Plug in a display - windows and workspaces don't change
 - [ ] NOTE: Add vertical monitor layout test
 
 ### Launcher
@@ -99,3 +98,9 @@ Tasks for a tester to verify when approving a patch. Use complex window layouts 
 
 - [ ] Windows move across displays in adjustment mode with directions keys
 - [ ] Windows move across displays with the mouse
+
+## Enhancement Tests
+
+Enhancement test don't have to pass for release. Once an enhancement test passes, move up to the standard required-pass test for release.
+
+- [ ] Plus an additional display into a laptop - windows and workspaces don't change
