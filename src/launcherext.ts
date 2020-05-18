@@ -60,7 +60,7 @@ export class CalcLauncher implements LauncherExtension {
 
     apply(expr: string): boolean {
         const value: string = evaluate(expr).toString();
-        log.info(`${expr} = ${value}`);
+
         if (!this.search) {
             log.error("init was never called");
         }
@@ -71,9 +71,19 @@ export class CalcLauncher implements LauncherExtension {
     }
 
     search_results(expr: string): Array<[string, St.Widget, St.Widget]> | null {
+        if (expr.length === 0) return null;
+
+        let out: string;
+
+        try {
+            out = '= ' + evaluate(expr).toString();
+        } catch (e) {
+            out = expr + ' x = ?'
+        }
+
         const item: [string, St.Widget, St.Widget] =
             [
-                `=${evaluate(expr).toString()}`,
+                out,
                 new St.Icon({
                     icon_name: 'x-office-spreadsheet', // looks like calculations?
                     icon_size: this.search?.icon_size() ?? DEFAULT_ICON_SIZE / 2,
