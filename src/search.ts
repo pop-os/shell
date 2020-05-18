@@ -61,7 +61,7 @@ export class Search {
         this.text.connect("text-changed", (entry: any) => {
             this.clear();
 
-            const text = (entry as Clutter.Text).get_text();
+            const text = (entry as Clutter.Text).get_text().trim();
 
             let prefix = this.has_prefix(text);
             mode(prefix);
