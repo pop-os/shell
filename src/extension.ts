@@ -120,6 +120,8 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     tween_signals: Map<string, [SignalID, any]> = new Map();
 
+    tiling_toggle_switch: any | null = null;  /** reference to the PopupSwitchMenuItem menu item, so state can be toggled */
+
     /** Initially set to true when the extension is initializing */
     init: boolean = true;
 
@@ -1148,6 +1150,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             this.unregister_storage(this.auto_tiler.attached);
             this.auto_tiler = null;
             this.settings.set_tile_by_default(false);
+            this.tiling_toggle_switch._switch.state = false;
         } else {
             Log.info(`tile by default enabled!`);
 
@@ -1164,6 +1167,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             this.auto_tiler = tiler;
 
             this.settings.set_tile_by_default(true);
+            this.tiling_toggle_switch._switch.state = true;
 
             for (const window of this.windows.values()) {
                 if (window.is_tilable(this)) {
