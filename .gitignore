@@ -9,3 +9,4 @@ debian/*
 !debian/control
 !debian/copyright
 !debian/rules
+.confirm_shortcut_change
