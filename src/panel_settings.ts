@@ -236,7 +236,8 @@ function toggle(desc: string, active: boolean, connect: (toggle: any) => void): 
     return toggle;
 }
 
-
 function tiled(ext: Ext): any {
-    return toggle(_("Tile Windows"), null != ext.auto_tiler, () => ext.toggle_tiling());
+    let t = toggle(_("Tile Windows"), null != ext.auto_tiler, () => ext.toggle_tiling());
+    ext.tiling_toggle_switch = t;  // property _switch is the actual UI element
+    return t;
 }
