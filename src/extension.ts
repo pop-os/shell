@@ -1150,7 +1150,8 @@ export class Ext extends Ecs.System<ExtEvent> {
             this.unregister_storage(this.auto_tiler.attached);
             this.auto_tiler = null;
             this.settings.set_tile_by_default(false);
-            this.tiling_toggle_switch._switch.state = false;
+            //this.tiling_toggle_switch._switch.state = false;
+            this.tiling_toggle_switch.setToggleState(false);
         } else {
             Log.info(`tile by default enabled!`);
 
@@ -1167,7 +1168,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             this.auto_tiler = tiler;
 
             this.settings.set_tile_by_default(true);
-            this.tiling_toggle_switch._switch.state = true;
+            this.tiling_toggle_switch.setToggleState(true);
 
             for (const window of this.windows.values()) {
                 if (window.is_tilable(this)) {
