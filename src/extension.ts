@@ -76,6 +76,10 @@ export class Ext extends Ecs.System<ExtEvent> {
     /** Animate window movements */
     animate_windows: boolean = true;
 
+    button: any = null;
+    button_gio_icon_auto_on: any = null;
+    button_gio_icon_auto_off: any = null;
+
     /** Column sizes in snap-to-grid */
     column_size: number = 32;
 
@@ -120,7 +124,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     tween_signals: Map<string, [SignalID, any]> = new Map();
 
-    tiling_toggle_switch: any | null = null;  /** reference to the PopupSwitchMenuItem menu item, so state can be toggled */
+    tiling_toggle_switch: any = null;  /** reference to the PopupSwitchMenuItem menu item, so state can be toggled */
 
     /** Initially set to true when the extension is initializing */
     init: boolean = true;
@@ -1153,7 +1157,8 @@ export class Ext extends Ecs.System<ExtEvent> {
             this.unregister_storage(this.auto_tiler.attached);
             this.auto_tiler = null;
             this.settings.set_tile_by_default(false);
-            this.tiling_toggle_switch._switch.state = false;
+            this.tiling_toggle_switch.setToggleState(false);
+            this.button.icon.gicon = this.button_gio_icon_auto_off; // type: Gio.Icon
         } else {
             Log.info(`tile by default enabled!`);
 
@@ -1170,7 +1175,8 @@ export class Ext extends Ecs.System<ExtEvent> {
             this.auto_tiler = tiler;
 
             this.settings.set_tile_by_default(true);
-            this.tiling_toggle_switch._switch.state = true;
+            this.tiling_toggle_switch.setToggleState(true);
+            this.button.icon.gicon = this.button_gio_icon_auto_on; // type: Gio.Icon
 
             for (const window of this.windows.values()) {
                 if (window.is_tilable(this)) {

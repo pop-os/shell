@@ -17,12 +17,24 @@ export class Indicator {
 
     constructor(ext: Ext) {
         this.button = new Button(0.0, _("Pop Shell Settings"));
+        ext.button = this.button;
+        ext.button_gio_icon_auto_on = Gio.icon_new_for_string(`${Me.path}/icons/pop-shell-auto-on-symbolic.svg`);
+        ext.button_gio_icon_auto_off = Gio.icon_new_for_string(`${Me.path}/icons/pop-shell-auto-off-symbolic.svg`);
 
-        const icon_path = `${Me.path}/icons/pop-shell-symbolic.svg`;
-        this.button.icon = new St.Icon({
-            gicon: Gio.icon_new_for_string(icon_path),
+        let button_icon_auto_on = new St.Icon({
+            gicon: ext.button_gio_icon_auto_on ,
             style_class: "system-status-icon",
         });
+        let button_icon_auto_off = new St.Icon({
+            gicon:  ext.button_gio_icon_auto_off,
+            style_class: "system-status-icon",
+        });
+
+        if (ext.settings.tile_by_default()){
+            this.button.icon = button_icon_auto_on;
+        } else {
+            this.button.icon = button_icon_auto_off;
+        }
 
         this.button.add_actor(this.button.icon);
 
@@ -230,7 +242,6 @@ function toggle(desc: string, active: boolean, connect: (toggle: any) => void): 
 
     toggle.connect('toggled', () => {
         connect(toggle);
-
         return true;
     });
 
