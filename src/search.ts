@@ -95,12 +95,22 @@ export class Search {
                     this.active_id -= 1;
                     this.select();
                 }
+                else if (this.active_id == 0) {
+                	this.unselect();
+                	this.active_id = this.widgets.length - 1;
+                	this.select();
+                }
             } else if (c == 65364 || (s == Clutter.ModifierType.CONTROL_MASK && c == 106)) {
                 // Down arrow was pressed
                 if (this.active_id + 1 < this.widgets.length) {
                     this.unselect();
                     this.active_id += 1;
                     this.select();
+                }
+                else if (this.active_id + 1 == this.widgets.length) {
+                	this.unselect();
+                	this.active_id = 0;
+                	this.select();
                 }
             }
 
