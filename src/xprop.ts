@@ -3,6 +3,8 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 import * as lib from 'lib';
 
+import * as utils from 'utils';
+
 const GLib: GLib = imports.gi.GLib;
 const { spawn } = imports.misc.util;
 
@@ -85,6 +87,10 @@ export function motif_hints(xid: string): Array<string> | null {
 }
 
 export function set_hint(xid: string, hint: string, value: string[]) {
+    if (utils.is_wayland()) {
+        return;
+    }
+
     spawn(['xprop', '-id', xid, '-f', hint, '32c', '-set', hint, value.join(', ')]);
 }
 
@@ -104,6 +110,10 @@ function parse_string(string: string): string | null {
 }
 
 function xprop_cmd(xid: string, args: string): string | null {
+    if (utils.is_wayland()) {
+        return null;
+    }
+
     let xprops = GLib.spawn_command_line_sync(lib.dbg(`xprop -id ${xid} ${args}`));
     if (!xprops[0]) return null;
 
