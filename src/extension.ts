@@ -358,18 +358,24 @@ export class Ext extends Ecs.System<ExtEvent> {
         });
     }
 
+    connect_size_signal(win: Window.ShellWindow, signal: string, func: () => void): number {
+        return this.connect_meta(win, signal, () => {
+            if (!this.contains_tag(win.entity, Tags.Blocked)) func();
+        });
+    }
+
     connect_window(win: Window.ShellWindow) {
         this.size_signals.insert(win.entity, [
-            this.connect_meta(win, 'size-changed', () => {
+            this.connect_size_signal(win, 'size-changed', () => {
                 this.register(Events.window_event(win, WindowEvent.Size));
             }),
-            this.connect_meta(win, 'position-changed', () => {
+            this.connect_size_signal(win, 'position-changed', () => {
                 this.register(Events.window_event(win, WindowEvent.Size));
             }),
-            this.connect_meta(win, 'workspace-changed', () => {
+            this.connect_size_signal(win, 'workspace-changed', () => {
                 this.register(Events.window_event(win, WindowEvent.Workspace));
             }),
-            this.connect_meta(win, 'notify::minimized', () => {
+            this.connect_size_signal(win, 'notify::minimized', () => {
                 this.register(Events.window_event(win, WindowEvent.Minimize));
             }),
         ]);
@@ -1103,23 +1109,11 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     size_signals_block(win: Window.ShellWindow) {
-        this.size_signals.with(win.entity, (signals) => {
-            for (const signal of signals) {
-                utils.block_signal(win.meta, signal);
-            }
-            this.add_tag(win.entity, Tags.Blocked);
-        });
+        this.add_tag(win.entity, Tags.Blocked);
     }
 
     size_signals_unblock(win: Window.ShellWindow) {
-        // if (!this.contains_tag(win.entity, Tags.Blocked)) return;
-
-        this.size_signals.with(win.entity, (signals) => {
-            for (const signal of signals) {
-                utils.unblock_signal(win.meta, signal);
-            };
-            this.delete_tag(win.entity, Tags.Blocked);
-        });
+        this.delete_tag(win.entity, Tags.Blocked);
     }
 
     // Snaps all windows to the window grid
