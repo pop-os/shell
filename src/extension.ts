@@ -1201,6 +1201,9 @@ export class Ext extends Ecs.System<ExtEvent> {
             return;
         }
 
+        // Ignore the update if there are no monitors to assign to
+        if (layoutManager.monitors.length === 0) return;
+
         let updated = new Map();
 
         // Fetch a new list of monitors
