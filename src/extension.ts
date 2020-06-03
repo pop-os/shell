@@ -1061,7 +1061,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         // Modes
 
-        if (this.settings.tile_by_default() && !this.auto_tiler) {
+        if (this.settings.tile_by_default() && !this.auto_tiler && !utils.is_wayland()) {
             Log.info(`tile by default enabled`);
 
             this.auto_tiler = new auto_tiler.AutoTiler(
@@ -1138,7 +1138,9 @@ export class Ext extends Ecs.System<ExtEvent> {
         }
     }
 
-    toggle_tiling() : any {
+    toggle_tiling() {
+        if (utils.is_wayland()) return;
+
         if (this.auto_tiler) {
             Log.info(`tile by default disabled!`);
             this.unregister_storage(this.auto_tiler.attached);
