@@ -195,7 +195,7 @@ export class ShellWindow {
                 });
 
                 ext.tween_signals.set(entity_string, [
-                    Tweener.on_tween_completion(actor, onComplete),
+                    Tweener.on_tween_completion(this.meta, onComplete),
                     onComplete
                 ]);
             } else {
