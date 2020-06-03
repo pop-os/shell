@@ -122,22 +122,23 @@ function shortcuts(menu: any): any {
         return label;
     }
 
-    let launcher = create_label(_('Launcher'));
-    launcher.get_clutter_text().set_margin_left(12);
-    let navigate_windows = create_label(_('Navigate Windows'));
-    navigate_windows.get_clutter_text().set_margin_left(12);
-
-    // Shortcut items
-    let launcher_shortcut = create_shortcut_label(_('Super + /'));
-    let navigate_windows_shortcut = create_shortcut_label(_('Super + Arrow Keys'));
-
     layout_manager.set_row_spacing(12);
     layout_manager.set_column_spacing(30);
     layout_manager.attach(create_label(_('Shortcuts')), 0, 0, 2, 1);
-    layout_manager.attach(launcher, 0, 1, 1, 1);
-    layout_manager.attach(launcher_shortcut, 1, 1, 1, 1);
-    layout_manager.attach(navigate_windows, 0, 2, 1, 1);
-    layout_manager.attach(navigate_windows_shortcut, 1, 2, 1, 1);
+
+    [
+        [_('Launcher'), _('Super + /')],
+        [_('Navigate Windows'), _('Super + Arrow Keys')],
+        [_('Toggle Tiling'), _('Super + Y')],
+    ].forEach((section, idx) => {
+        let key = create_label(section[0]);
+        key.get_clutter_text().set_margin_left(12);
+
+        let val = create_shortcut_label(section[1]);
+
+        layout_manager.attach(key, 0, idx + 1, 1, 1);
+        layout_manager.attach(val, 1, idx + 1, 1, 1);
+    });
 
     return item;
 }
