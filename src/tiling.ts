@@ -226,8 +226,7 @@ export class Tiler {
 
                 ext.auto_tiler.forest.arrange(ext, fork.workspace);
 
-                let actor = window.meta.get_compositor_private();
-                if (actor) Tweener.on_tween_completion(actor, () => {
+                Tweener.on_tween_completion(window.meta, () => {
                     ext.register_fn(() => ext.set_overlay(window.rect()));
                 });
             }
@@ -318,8 +317,7 @@ export class Tiler {
         }
 
         if (watching) {
-            let actor = watching.meta.get_compositor_private();
-            if (actor) Tweener.on_tween_completion(actor, () => {
+            Tweener.on_tween_completion(watching.meta, () => {
                 ext.register_fn(() => {
                     if (watching) {
                         ext.set_overlay(watching.rect());

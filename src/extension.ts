@@ -486,6 +486,13 @@ export class Ext extends Ecs.System<ExtEvent> {
             }
         }
 
+        const str = String(win);
+        let value = this.tween_signals.get(str);
+        if (value) {
+            utils.source_remove(value[0]);
+            this.tween_signals.delete(str);
+        }
+
         if (this.auto_tiler) this.auto_tiler.detach_window(this, win);
 
         this.windows.remove(win)
