@@ -8,8 +8,8 @@
    xmlns="http://www.w3.org/2000/svg"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   inkscape:version="1.0 (6e3e5246a0, 2020-05-07)"
-   sodipodi:docname="pop-shell-symbolic-copy.svg"
+   inkscape:version="0.92.5 (2060ec1f9f, 2020-04-08)"
+   sodipodi:docname="pop-shell-auto-on-symbolic.svg"
    width="16.031464"
    version="1.1"
    style="enable-background:new"
@@ -17,16 +17,16 @@
    height="16">
   <sodipodi:namedview
      inkscape:current-layer="svg7384"
-     inkscape:window-maximized="0"
-     inkscape:window-y="968"
-     inkscape:window-x="8"
-     inkscape:cy="11.809524"
-     inkscape:cx="-1.7072929"
+     inkscape:window-maximized="1"
+     inkscape:window-y="27"
+     inkscape:window-x="0"
+     inkscape:cy="7.1192758"
+     inkscape:cx="5.7482475"
      inkscape:zoom="51.17"
      showgrid="false"
      id="namedview26"
-     inkscape:window-height="915"
-     inkscape:window-width="1854"
+     inkscape:window-height="1016"
+     inkscape:window-width="1920"
      inkscape:pageshadow="2"
      inkscape:pageopacity="0"
      guidetolerance="10"
@@ -158,12 +158,4 @@
      transform="translate(-1124.0002,555)"
      style="display:inline"
      id="layer12" />
-  <rect
-     y="13.417928"
-     x="0.020581869"
-     width="16.020933"
-     style="fill:#4c5263;fill-opacity:0.988327;stroke:none;stroke-width:97.7335;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;enable-background:new"
-     ry="0.29679373"
-     id="rect3162-3"
-     height="1.8549608" />
 </svg>
