@@ -127,6 +127,7 @@ export class ShellWindow {
 
     ignore_decoration(): boolean {
         const name = this.meta.get_wm_class();
+        if (name === null) return true;
         return WM_TITLE_BLACKLIST.findIndex((n) => name.startsWith(n)) !== -1;
     }
 
@@ -142,13 +143,14 @@ export class ShellWindow {
     is_tilable(ext: Ext): boolean {
         return !ext.contains_tag(this.entity, Tags.Floating)
             && ext.tilable.get_or(this.entity, () => {
+                let wm_class = this.meta.get_wm_class();
                 return !this.meta.is_skip_taskbar()
                     // Only normal windows will be considered for tiling
                     && this.meta.window_type == Meta.WindowType.NORMAL
                     // Transient windows are most likely dialogs
                     && !this.is_transient()
                     // Blacklist any windows that happen to leak through our filter
-                    && !blacklisted(this.meta.get_wm_class(), this.meta.get_title());
+                    && (wm_class === null || !blacklisted(wm_class, this.meta.get_title()));
             });
     }
 

@@ -130,7 +130,7 @@ declare namespace Meta {
         get_stable_sequence(): number;
         get_title(): string;
         get_transient_for(): Window | null;
-        get_wm_class(): string;
+        get_wm_class(): string | null;
         get_workspace(): Workspace | null;
         is_client_decorated(): boolean;
         is_fullscreen(): boolean;
