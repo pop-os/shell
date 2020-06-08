@@ -159,6 +159,9 @@ export class Ext extends Ecs.System<ExtEvent> {
     /** Primary storage for the window entities, containing the actual window */
     windows: Ecs.Storage<Window.ShellWindow> = this.register_storage();
 
+    /** Signals which have been registered for each window */
+    window_signals: Ecs.Storage<Array<SignalID>> = this.register_storage();
+
     // Systems
 
     /** Manages automatic tiling behaviors in the shell */
@@ -353,9 +356,13 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     connect_meta(win: Window.ShellWindow, signal: string, callback: (...args: any[]) => void): number {
-        return win.meta.connect(signal, () => {
+        const id = win.meta.connect(signal, () => {
             if (win.actor_exists()) callback();
         });
+
+        this.window_signals.get_or(win.entity, () => new Array()).push(id);
+
+        return id;
     }
 
     connect_size_signal(win: Window.ShellWindow, signal: string, func: () => void): number {
@@ -474,6 +481,15 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     on_destroy(win: Entity) {
+        // Disconnect all signals on this window
+        this.window_signals.take_with(win, (signals) => {
+            this.windows.with(win, (window) => {
+                for (const signal of signals) {
+                    window.meta.disconnect(signal);
+                }
+            });
+        });
+
         if (this.last_focused == win) {
             this.active_hint?.untrack();
 

@@ -92,7 +92,7 @@ export class ActiveHint {
 
             this.untrack();
         }
-        
+
         if (window.meta.is_skip_taskbar()) return
 
         const actor = window.meta.get_compositor_private();
