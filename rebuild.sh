@@ -40,6 +40,10 @@ dconf write ${KEYS_GNOME_SHELL}/toggle-message-tray "@as ['<Super>v']"
 dconf write ${KEYS_GNOME_WM}/switch-to-workspace-left "@as []"
 # Switch to workspace right: disable <Super>Right
 dconf write ${KEYS_GNOME_WM}/switch-to-workspace-right "@as []"
+# Move to monitor up: disable <Super><Shift>Up
+dconf write ${KEYS_GNOME_WM}/move-to-monitor-up "@as []"
+# Move to monitor down: disable <Super><Shift>Down
+dconf write ${KEYS_GNOME_WM}/move-to-monitor-down "@as []"
 
 # Super + direction keys, move window left and right monitors, or up and down workspaces
 # Move window one monitor to the left
