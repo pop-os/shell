@@ -258,7 +258,8 @@ const BLACKLIST: string[] = [
     'Conky',
     'Com.github.donadigo.eddy',
     'Gnome-screenshot',
-    'Authy Desktop'
+    'Authy Desktop',
+    'jetbrains-toolbox'
 ];
 
 /// Activates a window, and moves the mouse point to the center of it.
