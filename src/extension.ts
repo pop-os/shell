@@ -1205,8 +1205,6 @@ export class Ext extends Ecs.System<ExtEvent> {
 
                         if (ws === null || ws.index() !== original) {
                             actor.hide()
-                        } else {
-                            actor.show();
                         }
                     }
                 }
