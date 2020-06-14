@@ -675,6 +675,11 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         this.size_signals_unblock(win);
 
+        if (win.meta && win.meta.minimized) {
+            this.on_minimize(win);
+            return;
+        }
+
         if (win.is_maximized()) {
             return;
         }
