@@ -1198,13 +1198,8 @@ export class Ext extends Ecs.System<ExtEvent> {
                 if (window.is_tilable(this)) {
                     let actor = window.meta.get_compositor_private();
                     if (actor) {
-                        let ws = window.meta.get_workspace();
                         if (!window.meta.minimized) {
                             tiler.auto_tile(this, window, false);
-                        }
-
-                        if (ws === null || ws.index() !== original) {
-                            actor.hide()
                         }
                     }
                 }
