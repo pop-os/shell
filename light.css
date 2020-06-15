@@ -26,3 +26,21 @@
     /* Seems to get the width just right to fit 3 digits */
     width: 75px;
 }
+
+.pop-shell-tab {
+    border: 1px solid #333;
+    color: #000;
+    padding: 0 1em;
+}
+
+.pop-shell-tab-active {
+    background: #FFAD00;
+}
+
+.pop-shell-tab-inactive {
+    background: #9B8E8A;
+}
+
+.pop-shell-tab-urgent {
+    background: #D00;
+}

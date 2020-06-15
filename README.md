@@ -18,7 +18,7 @@ Therefore, we see an opportunity here to advance the usability of the GNOME desk
 - The Solution:
   - [Shared Features](#shared-features): Behaviors shared between stacking and auto-tiling modes
   - [Stacking Mode](#stacking-mode): Behaviors specific to the stacking mode
-  - [Auto-Tile Mode](#auto-tile-mode): Behaviors specific to the auto-tiling mode
+  - [Tiling Mode](#tiling-mode): Behaviors specific to the auto-tiling mode
 - [Developers](#developers): Guide for getting started with development
 
 ---
@@ -166,7 +166,7 @@ An optional feature to improve your tiling experience is the ability to snap win
 
 ---
 
-## Auto-Tile Mode
+## Tiling Mode
 
 This provides the tiling window manager experience, where windows are automatically tiled across the screen as they are created. This feature is disabled by default, but can be enabled through the extension's popup menu in the panel. When enabled, windows that were launched before enabling it will not be associated with any tree. Dragging and dropping them will begin to tile them in a tree.
 
@@ -176,6 +176,11 @@ This provides the tiling window manager experience, where windows are automatica
   - Toggles the orientation of a fork's tiling orientation
 - `Super` + `G`
   - Toggles a window between floating and tiling
+- `Super` + `S`
+  - Toggles stacked tiling modes
+
+### Stacked Tiles
+
 
 ### Feature Overview
 

@@ -157,7 +157,7 @@ export class Launcher extends search.Search {
             if (id >= this.selections.length) return;
 
             const selected = this.selections[id];
-            if (selected instanceof window.ShellWindow) {
+            if (selected && selected instanceof window.ShellWindow) {
                 if (selected.workspace_id() == ext.active_workspace()) {
                     const rect = selected.rect();
                     ext.overlay.x = rect.x
@@ -210,7 +210,6 @@ export class Launcher extends search.Search {
                 for (const result of app_info.load_desktop_entries(path)) {
                     if (result.kind == OK) {
                         const value = result.value;
-                        log.info(value.display());
                         this.desktop_apps.push([where, value]);
                     } else {
                         const why = result.value;

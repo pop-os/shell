@@ -58,7 +58,7 @@ export class Rectangle {
         ]);
     }
 
-    contains(other: Rectangle): boolean {
+    contains(other: Rectangular): boolean {
         return (
             this.x <= other.x &&
             this.y <= other.y &&
@@ -67,7 +67,7 @@ export class Rectangle {
         );
     }
 
-    diff(other: Rectangle): Rectangle {
+    diff(other: Rectangular): Rectangle {
         return new Rectangle([
             other.x - this.x,
             other.y - this.y,

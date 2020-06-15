@@ -9,10 +9,7 @@ export function info(text: string) {
 }
 
 export function error(text: string) {
-    if (log_level > 1) {
-        log("[ERROR] " + text);
-        global.notify_error("Pop Shell Error", text);
-    };
+    if (log_level > 1) log("[ERROR] " + text);
 }
 
 export function warn(text: string) {

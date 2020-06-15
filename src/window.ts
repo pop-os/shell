@@ -36,6 +36,7 @@ interface X11Info {
 export class ShellWindow {
     entity: Entity;
     meta: Meta.Window;
+    stack: number | null = null;
 
     was_attached_to?: [Entity, boolean];
 
@@ -172,6 +173,9 @@ export class ShellWindow {
                 ext.register({ tag: 2, window: this, kind: { tag: 1, rect: clone } });
                 if (on_complete) ext.register_fn(on_complete);
                 ext.tween_signals.delete(entity_string);
+                if (ext.active_hint?.is_tracking(this.entity)) {
+                    ext.active_hint.show();
+                }
             };
 
             if (ext.animate_windows && !ext.init) {
@@ -185,19 +189,24 @@ export class ShellWindow {
                 if (slot !== undefined) {
                     const [signal, callback] = slot;
                     Tweener.remove(actor);
+
+                    if (ext.active_hint) for (const hint_actor of ext.active_hint.border) Tweener.remove(hint_actor);
+
                     utils.source_remove(signal);
                     callback();
                 }
 
-                Tweener.add(actor, {
-                    x: clone.x - dx,
-                    y: clone.y - dy,
-                    duration: 149,
-                    mode: null,
-                });
+                const x = clone.x - dx;
+                const y = clone.y - dy;
+
+                ext.active_hint?.animate_with(this, x, y);
+                Tweener.add(actor, { x, y, duration: 149, mode: null });
+                if (ext.active_hint?.is_tracking(this.entity)) {
+                    ext.active_hint.hide();
+                }
 
                 ext.tween_signals.set(entity_string, [
-                    Tweener.on_tween_completion(this.meta, onComplete),
+                    Tweener.on_window_tweened(this.meta, onComplete),
                     onComplete
                 ]);
             } else {

@@ -77,7 +77,6 @@ function menu_separator(text: any): any {
 }
 
 function settings_button(menu: any): any {
-
     let item = new PopupMenuItem(_('View All'));
     item.connect('activate', () => {
         let path: string | null = GLib.find_program_in_path('pop-shell-shortcuts');
