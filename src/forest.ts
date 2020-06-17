@@ -75,7 +75,11 @@ export class Forest extends Ecs.World {
             const window = ext.windows.get(entity);
             if (!window) continue;
 
-            window.meta.change_workspace_by_index(workspace, false);
+            
+            if (workspace) { 
+                // do nothing for now
+                // window.meta.change_workspace_by_index(workspace, false);
+            }
 
             move_window(ext, window, r.rect, () => { });
         }

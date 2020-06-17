@@ -10,3 +10,4 @@ debian/*
 !debian/copyright
 !debian/rules
 .confirm_shortcut_change
+.vscode
