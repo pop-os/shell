@@ -12,7 +12,7 @@ export class Keybindings {
     constructor(ext: Ext) {
         this.ext = ext;
         this.global = {
-            "search": () => {
+            "activate-launcher": () => {
                 ext.tiler.exit(ext);
                 ext.window_search.load_desktop_files();
                 ext.window_search.open(ext);
