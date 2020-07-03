@@ -15,7 +15,7 @@ import type { Ext } from './extension';
 import type { Rectangle } from './rectangle';
 
 // const GLib: GLib = imports.gi.GLib;
-const { Gdk, Meta, Shell, St } = imports.gi;
+const { Gdk, GdkX11, Meta, Shell, St } = imports.gi;
 
 const { OnceCell } = once_cell;
 
@@ -161,6 +161,9 @@ export class ShellWindow {
     move(ext: Ext, rect: Rectangular, on_complete?: () => void) {
         const clone = Rect.Rectangle.from_meta(rect);
         const actor = this.meta.get_compositor_private();
+
+        this.change_window_hints()
+
         if (actor) {
             this.meta.unmaximize(Meta.MaximizeFlags.HORIZONTAL);
             this.meta.unmaximize(Meta.MaximizeFlags.VERTICAL);
@@ -251,6 +254,25 @@ export class ShellWindow {
             if (utils.is_wayland()) return null;
             return xprop.get_xid(this.meta);
         })
+    }
+
+    gdk_window() {
+        const display = Gdk.DisplayManager.get().get_default_display();
+        return GdkX11.X11Window.foreign_new_for_display(display, this.xid())
+    }
+
+    change_window_hints() { 
+        let gdk_window = this.gdk_window()
+        let geo = new Gdk.Geometry()
+        geo.min_height = -1;
+        geo.min_width = -1;
+        gdk_window.set_geometry_hints(geo, Gdk.WindowHints.MIN_SIZE);
+    }
+
+    restore_window_hints() {
+        let gdk_window = this.gdk_window()
+        let geo = new Gdk.Geometry()
+        gdk_window.set_geometry_hints(geo, 0);
     }
 }
 
