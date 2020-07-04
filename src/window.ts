@@ -164,8 +164,6 @@ export class ShellWindow {
         const clone = Rect.Rectangle.from_meta(rect);
         const actor = this.meta.get_compositor_private();
 
-        this.change_window_hints()
-
         if (actor) {
             this.meta.unmaximize(Meta.MaximizeFlags.HORIZONTAL);
             this.meta.unmaximize(Meta.MaximizeFlags.VERTICAL);
