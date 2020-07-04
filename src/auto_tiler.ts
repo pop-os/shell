@@ -139,8 +139,6 @@ export class AutoTiler {
     detach_window(ext: Ext, win: Entity) {
         this.attached.take_with(win, (prev_fork: Entity) => {
             const reflow_fork = this.forest.detach(prev_fork, win);
-            const meta = ext.windows.get(win)
-            meta?.restore_window_hints()
             if (reflow_fork) {
                 const fork = reflow_fork[1];
                 this.tile(ext, fork, fork.area);
@@ -247,12 +245,18 @@ export class AutoTiler {
         if (ext.contains_tag(focused.entity, Tags.Floating)) {
             ext.delete_tag(focused.entity, Tags.Floating);
             this.auto_tile(ext, focused, false);
+
+            // Modify WM hints so we can demand sizes
+            focused.change_window_hints();
         } else {
             const fork_entity = this.attached.get(focused.entity);
             if (fork_entity) {
                 this.detach_window(ext, focused.entity);
                 ext.add_tag(focused.entity, Tags.Floating);
             }
+
+            // Restore WM hints before it was tiled
+            focused.restore_window_hints();
         }
     }
 

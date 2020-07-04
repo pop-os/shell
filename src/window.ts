@@ -21,6 +21,8 @@ const { OnceCell } = once_cell;
 
 export var window_tracker = Shell.WindowTracker.get_default();
 
+const GDK_DISPLAY = Gdk.DisplayManager.get().get_default_display();
+
 const WM_TITLE_BLACKLIST: Array<string> = [
     'Firefox',
     'Nightly', // Firefox Nightly
@@ -263,12 +265,11 @@ export class ShellWindow {
         })
     }
 
-    gdk_window() {
-        const display = Gdk.DisplayManager.get().get_default_display();
-        return GdkX11.X11Window.foreign_new_for_display(display, this.xid())
+    gdk_window(): any {
+        return GdkX11.X11Window.foreign_new_for_display(GDK_DISPLAY, this.xid())
     }
 
-    change_window_hints() { 
+    change_window_hints(): void {
         let gdk_window = this.gdk_window()
         let geo = new Gdk.Geometry()
         geo.min_height = -1;
@@ -276,7 +277,7 @@ export class ShellWindow {
         gdk_window.set_geometry_hints(geo, Gdk.WindowHints.MIN_SIZE);
     }
 
-    restore_window_hints() {
+    restore_window_hints(): void {
         let gdk_window = this.gdk_window()
         let geo = new Gdk.Geometry()
         gdk_window.set_geometry_hints(geo, 0);
