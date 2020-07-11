@@ -684,11 +684,12 @@ function move_window(ext: Ext, window: ShellWindow, rect: Rectangular, on_comple
     const actor = window.meta.get_compositor_private();
 
     if (!actor) {
-        Log.warn(`Window(${window.entity}) does not have an actor, and therefore cannot be moved`);
+        Log.warn(`Window(${window.meta.get_title()}) does not have an actor, and therefore cannot be moved`);
         return;
     }
 
     ext.size_signals_block(window);
+
     window.move(ext, rect, () => {
         on_complete();
         ext.size_signals_unblock(window);

@@ -126,7 +126,7 @@ export class AutoTiler {
      * - Then tries to tile onto a monitor
      */
     auto_tile(ext: Ext, win: ShellWindow, ignore_focus: boolean = false) {
-        win.change_window_hints();
+        // win.change_window_hints();
         const result = this.fetch_mode(ext, win, ignore_focus);
         this.detach_window(ext, win.entity);
         if (result.kind == ERR) {

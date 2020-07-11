@@ -2,9 +2,11 @@
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 import * as lib from 'lib';
+// import * as Log from 'log';
 
 const GLib: GLib = imports.gi.GLib;
 const { spawn } = imports.misc.util;
+
 
 export var MOTIF_HINTS: string = '_MOTIF_WM_HINTS';
 export var HIDE_FLAGS: string[] = ['0x2', '0x0', '0x2', '0x0', '0x0'];
@@ -29,40 +31,58 @@ export function get_hint(xid: string, hint: string): Array<string> | null {
 }
 
 function size_params(line: string): [number, number] | null {
-    let fields = line.split(' ');
-    let x = lib.dbg(lib.nth_rev(fields, 2));
-    let y = lib.dbg(lib.nth_rev(fields, 0));
+    if (line) {
+        let fields = line.split(' ');
+        let x = lib.dbg(lib.nth_rev(fields, 2));
+        let y = lib.dbg(lib.nth_rev(fields, 0));
 
-    if (!x || !y) return null;
+        if (!x || !y) return null;
 
-    let xn = parseInt(x, 10);
-    let yn = parseInt(y, 10);
-
-    return isNaN(xn) || isNaN(yn) ? null : [xn, yn];
+        let xn = parseInt(x, 10);
+        let yn = parseInt(y, 10);
+        return isNaN(xn) || isNaN(yn) ? null : [xn, yn];
+    }
+    return null
 }
 
 export function get_size_hints(xid: string): lib.SizeHint | null {
     let out = xprop_cmd(xid, 'WM_NORMAL_HINTS');
     if (out) {
-        let lines = out.split('\n')[Symbol.iterator]();
-        lines.next();
+        let lines = out.split('\n');
 
-        let minimum: string | undefined = lines.next().value;
-        let increment: string | undefined = lines.next().value;
-        let base: string | undefined = lines.next().value;
+        // the xprop WM_NORMAL_HINTS values are in a non-deterministic order
 
-        if (!minimum || !increment || !base) return null;
+        let minimum: string = "";
+        let increment: string = "";
+        let base: string = "";
+
+        lines.forEach(line => {
+            if (line.indexOf('minimum size') > 0) {
+                minimum = line;
+            }
+
+            if (line.indexOf('resize increment') > 0) {
+                increment = line;
+            }
+
+            if (line.indexOf('base size') > 0) {
+                base = line;
+            }
+        });
+
+        // Log.debug(`min: ${minimum}`);
+        // Log.debug(`increment: ${increment}`);
+        // Log.debug(`base: ${base}`);
+
 
         let min_values = size_params(minimum);
         let inc_values = size_params(increment);
         let base_values = size_params(base);
 
-        if (!min_values || !inc_values || !base_values) return null;
-
         return {
-            minimum: min_values,
-            increment: inc_values,
-            base: base_values,
+            minimum: min_values ? min_values : [0, 0],
+            increment: inc_values ? inc_values : [0, 0],
+            base: base_values ? base_values : [0, 0],
         };
     }
 

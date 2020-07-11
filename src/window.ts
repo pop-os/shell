@@ -48,11 +48,25 @@ export class ShellWindow {
         xid_: new OnceCell()
     };
 
+    // -1 indicate not overriden yet
+    private _orig_min_width: number = -1;
+    private _orig_min_height: number = -1;
+    private _orig_base_width: number = -1;
+    private _orig_base_height: number = -1;
+    private _orig_width_inc: number = -1;
+    private _orig_height_inc: number = -1;
+
+    // TODO - put in gsettings
+    private override_hints = true;
+
+    private ext: Ext;
+
     constructor(entity: Entity, window: Meta.Window, window_app: any, ext: Ext) {
         this.window_app = window_app;
 
         this.entity = entity;
         this.meta = window;
+        this.ext = ext;
 
         if (this.is_transient()) {
             log.info(`making above`);
@@ -165,6 +179,9 @@ export class ShellWindow {
         const actor = this.meta.get_compositor_private();
 
         if (actor) {
+            // apply here
+            this.change_window_hints();
+
             this.meta.unmaximize(Meta.MaximizeFlags.HORIZONTAL);
             this.meta.unmaximize(Meta.MaximizeFlags.VERTICAL);
             this.meta.unmaximize(Meta.MaximizeFlags.HORIZONTAL | Meta.MaximizeFlags.VERTICAL);
@@ -264,21 +281,143 @@ export class ShellWindow {
     }
 
     gdk_window(): any {
+        // TODO - is this compatible with Wayland? If pop-shell ever do support
         return GdkX11.X11Window.foreign_new_for_display(GDK_DISPLAY, this.xid())
     }
 
+    /**
+     * Change the WM_HINTS and store the window original WM_NORMAL_HINTS - so can be restored later.
+     * - program specified minimum W x H
+     * - program specified base W x H
+     * - program specified size increments W x H
+     * 
+     * Makes the ability to resize window during: 
+     * - window edits (Super + Enter)
+     * - drag-resize (on grab)
+     * 
+     * Scope: this method is applied on: 
+     * - enable extension
+     * - during move_window() - Gnome control center auto restores during child panel open - has to be re-applied during a resize event.
+     * - enable toggle (Super + Y or icon)
+     * - enable float - shell is also doing window edits for these.
+     * - re-applied during end of drag-resize (on grab end) - fixes Gnome Terminal glitch.
+     * 
+     * TODO/Issues:
+     * - Find a way to traverse, apply to an embedded window, e.g. Gnome terminal 2+ tabbed instances
+     * - After modifying the WM_HINTS and then restarting gnome-shell, some apps crash: Electron-based, PyGobject/PyGTK-based apps
+     *   - /var/log/syslog - says the window(s) are not in the tracked list, and seems no way to put them back even after restoration.
+     *   - xwininfo, xprop - compare?
+     * - Gnome settings when on the right-hand-size of a monitor, during child panel open, triggers re-arrange and moves to right-side monitor.
+     */
     change_window_hints(): void {
-        let gdk_window = this.gdk_window()
-        let geo = new Gdk.Geometry()
-        geo.min_height = -1;
-        geo.min_width = -1;
-        gdk_window.set_geometry_hints(geo, Gdk.WindowHints.MIN_SIZE);
+        if (this.override_hints) {
+            let gdk_window = this.gdk_window()
+            let geo = new Gdk.Geometry()
+
+            // store dimensions
+            if (this._orig_min_width < 0) {
+                let size_hint = this.size_hint();
+                let min = size_hint?.minimum;
+                this._orig_min_width = min ? min[0] : 0;
+            }
+
+            if (this._orig_min_height < 0) {
+                let size_hint = this.size_hint();
+                let min = size_hint?.minimum;
+                this._orig_min_height = min ? min[1] : 0;
+            }
+
+            // store base dimensions
+            if (this._orig_base_width < 0) {
+                let size_hint = this.size_hint();
+                let base = size_hint?.base;
+                this._orig_base_width = base ? base[0] : 0;
+            }
+
+            if (this._orig_base_height < 0) {
+                let size_hint = this.size_hint();
+                let base = size_hint?.base;
+                this._orig_base_height = base ? base[1] : 0;
+            }
+
+            // store increments
+            if (this._orig_width_inc < 0) {
+                let size_hint = this.size_hint();
+                let increment = size_hint?.increment;
+                this._orig_width_inc = increment ? increment[0] : 0;
+            }
+
+            if (this._orig_height_inc < 0) {
+                let size_hint = this.size_hint();
+                let increment = size_hint?.increment;
+                this._orig_height_inc = increment ? increment[1] : 0;
+            }
+
+            let hint_mask = Gdk.WindowHints.MIN_SIZE;
+
+            // TODO - need the active monitors, need revisit on different monitor configs
+            let rect = this.ext.monitor_work_area(this.ext.active_monitor());
+            
+            // TODO - we don't want zero, negative value, but check 4K. Currently 1080p
+            let least_denom = 8; // 1080p
+            // let least_denom = 16; //4k?
+
+            geo.min_width = rect.width / least_denom;
+            geo.min_height = rect.height / least_denom;
+                        
+            gdk_window.set_geometry_hints(geo, hint_mask);
+        }
     }
 
+    /**
+     * Restore the WM_NORMAL_HINTS.
+     * See - window.change_window_hints(), extension.restore_all_window_hints()
+     * 
+     * Scope:
+     * - disable extension
+     * - un-float windows
+     * - disable toggle
+     */
     restore_window_hints(): void {
-        let gdk_window = this.gdk_window()
-        let geo = new Gdk.Geometry()
-        gdk_window.set_geometry_hints(geo, 0);
+        if (this.override_hints) {
+            let gdk_window = this.gdk_window()
+            let geo = new Gdk.Geometry()
+
+            // restore dimensions
+            if (this._orig_min_width >= 0) {
+                geo.min_width = this._orig_min_width;
+                this._orig_min_width = -1;
+            }
+
+            if (this._orig_min_height >= 0) {
+                geo.min_height = this._orig_min_height;
+                this._orig_min_height = -1;
+            }
+
+            // restore base dimensions
+            if (this._orig_base_width >= 0) {
+                geo.base_width = this._orig_base_width;
+                this._orig_base_width = -1;
+            }
+
+            if (this._orig_base_height >= 0) {
+                geo.base_height = this._orig_base_height;
+                this._orig_base_height = -1;
+            }
+
+            // restore increments
+            if (this._orig_width_inc >= 0) {
+                geo.width_inc = this._orig_width_inc;
+                this._orig_width_inc = -1;
+            }
+
+            if (this._orig_height_inc >= 0) {
+                geo.height_inc = this._orig_height_inc;
+                this._orig_height_inc = -1;
+            }
+
+            gdk_window.set_geometry_hints(geo, Gdk.WindowHints.MIN_SIZE | Gdk.WindowHints.BASE_SIZE | Gdk.WindowHints.RESIZE_INC);
+        }
     }
 }
 

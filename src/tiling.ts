@@ -8,6 +8,7 @@ import * as Rect from 'rectangle';
 import * as window from 'window';
 import * as shell from 'shell';
 import * as Tweener from 'tweener';
+import * as Events from 'events';
 
 import type { Entity } from './ecs';
 import type { Rectangle } from './rectangle';
@@ -15,6 +16,7 @@ import type { Ext } from './extension';
 import { AutoTiler } from './auto_tiler';
 
 const { Meta } = imports.gi;
+const { WindowEvent } = Events;
 const Main = imports.ui.main;
 const { ShellWindow } = window;
 
@@ -211,6 +213,10 @@ export class Tiler {
 
                     (ext.auto_tiler as AutoTiler).forest.resize(ext, entity, fork, (this.window as Entity), grab_op.operation(crect), crect);
                     grab_op.rect = crect.clone();
+
+                    // send a resize event so that the window edit will work for some apps who resets back the WM_HINTS, 
+                    // e.g.Gnome Settings. Since the change hints is in the window.arrange()
+                    ext.register(Events.window_event(window, WindowEvent.Size));
                 };
 
                 resize(mov1, callback);
