@@ -34,6 +34,9 @@ export class Fork {
     orientation_changed: boolean = false;
     is_toplevel: boolean = false;
 
+    /** Tracks toggle count so that we may swap branches when toggled twice */
+    private n_toggled: number = 0;
+
     constructor(entity: Entity, left: Node, right: Node | null, area: Rectangle, workspace: number, orient: Lib.Orientation) {
         this.area = area;
         this.left = left;
@@ -222,5 +225,15 @@ export class Fork {
             : Lib.Orientation.HORIZONTAL;
 
         this.orientation_changed = true;
+        if (this.n_toggled === 1) {
+            if (this.right) {
+                const tmp = this.right;
+                this.right = this.left;
+                this.left = tmp;
+            }
+            this.n_toggled = 0;
+        } else {
+            this.n_toggled += 1;
+        }
     }
 }
