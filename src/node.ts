@@ -111,9 +111,9 @@ export function stack_move_right(ext: Ext, forest: Forest, node: NodeStack, enti
 }
 
 /** Removes a window from a stack */
-export function stack_remove(forest: Forest, node: NodeStack, entity: Entity): void {
+export function stack_remove(forest: Forest, node: NodeStack, entity: Entity): null | number {
     const stack = forest.stacks.get(node.idx);
-    if (!stack) return;
+    if (!stack) return null;
 
     let idx = 0;
 
@@ -122,10 +122,12 @@ export function stack_remove(forest: Forest, node: NodeStack, entity: Entity): v
             node.entities.splice(idx, 1);
             stack.buttons.remove(stack.components[idx].button)?.destroy();
             stack.components.splice(idx, 1);
-            return;
+            return idx;
         }
         idx += 1;
     }
+
+    return null;
 }
 
 export type NodeADT = NodeFork | NodeWindow | NodeStack;
