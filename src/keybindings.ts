@@ -46,7 +46,10 @@ export class Keybindings {
                     () => ext.activate_window(ext.focus_selector.right(ext, null))
                 );
             },
-            "tile-orientation": () => ext.auto_tiler?.toggle_orientation(ext),
+            "tile-orientation": () => {
+                const win = ext.focus_window();
+                if (win) ext.auto_tiler?.toggle_orientation(ext, win);
+            },
             "toggle-floating": () => ext.auto_tiler?.toggle_floating(ext),
             "toggle-tiling": () => ext.toggle_tiling(),
             "toggle-stacking-global": () => ext.auto_tiler?.toggle_stacking(ext),

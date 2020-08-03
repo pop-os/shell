@@ -82,7 +82,15 @@ export class Forest extends Ecs.World {
             const window = ext.windows.get(entity);
             if (!window) continue;
 
-            move_window(ext, window, r.rect, () => { });
+            let on_complete = () => { }
+            if (ext.tiler.window) {
+                if (Ecs.entity_eq(ext.tiler.window, entity)) {
+                    on_complete = () => {
+                        ext.set_overlay(window.rect());
+                    }
+                }
+            }
+            move_window(ext, window, r.rect, on_complete);
         }
 
         this.requested.clear();

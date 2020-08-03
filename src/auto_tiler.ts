@@ -292,8 +292,8 @@ export class AutoTiler {
         }
     }
 
-    toggle_orientation(ext: Ext) {
-        const result = this.toggle_orientation_(ext);
+    toggle_orientation(ext: Ext, window: ShellWindow) {
+        const result = this.toggle_orientation_(ext, window);
         if (result.kind == ERR) {
             log.warn(`toggle_orientation: ${result.value}`);
         }
@@ -435,12 +435,7 @@ export class AutoTiler {
         log.info('\n\n' + buf);
     }
 
-    private toggle_orientation_(ext: Ext): Result<void, string> {
-        const focused = ext.focus_window();
-        if (!focused) {
-            return Err('no focused window to toggle');
-        }
-
+    private toggle_orientation_(ext: Ext, focused: ShellWindow): Result<void, string> {
         if (focused.meta.get_maximized()) {
             return Err('cannot toggle maximized window');
         }

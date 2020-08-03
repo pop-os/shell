@@ -33,7 +33,8 @@ enum Direction {
 export class Tiler {
     private keybindings: Object;
 
-    private window: Entity | null = null;
+    window: Entity | null = null;
+
     private swap_window: Entity | null = null;
 
     constructor(ext: Ext) {
@@ -42,8 +43,7 @@ export class Tiler {
                 if (ext.auto_tiler && this.window) {
                     const window = ext.windows.get(this.window);
                     if (window) {
-                        ext.auto_tiler.toggle_orientation(ext);
-                        ext.set_overlay(window.rect());
+                        ext.auto_tiler.toggle_orientation(ext, window);
                     }
                 }
             },
