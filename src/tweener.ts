@@ -26,10 +26,20 @@ export function is_tweening(a: Clutter.Actor) {
         || a.get_transition('scale-x');
 }
 
-export function on_tween_completion(meta: Meta.Window, callback: () => void): SignalID {
-    return GLib.timeout_add(150, GLib.PRIORITY_DEFAULT, () => {
+export function on_window_tweened(meta: Meta.Window, callback: () => void): SignalID {
+    return GLib.timeout_add(GLib.PRIORITY_DEFAULT, 150, () => {
         const actor = meta.get_compositor_private();
         if (actor && is_tweening(actor)) return true;
+
+        callback();
+
+        return false;
+    });
+}
+
+export function on_actor_tweened(actor: Clutter.Actor, callback: () => void): SignalID {
+    return GLib.timeout_add(GLib.PRIORITY_DEFAULT, 150, () => {
+        if (is_tweening(actor)) return true;
 
         callback();
 

@@ -218,7 +218,7 @@ export class Tiler {
 
                 ext.auto_tiler.forest.arrange(ext, fork.workspace);
 
-                Tweener.on_tween_completion(window.meta, () => {
+                Tweener.on_window_tweened(window.meta, () => {
                     ext.register_fn(() => ext.set_overlay(window.rect()));
                 });
             }
@@ -309,7 +309,7 @@ export class Tiler {
         }
 
         if (watching) {
-            Tweener.on_tween_completion(watching.meta, () => {
+            Tweener.on_window_tweened(watching.meta, () => {
                 ext.register_fn(() => {
                     if (watching) {
                         ext.set_overlay(watching.rect());
