@@ -208,7 +208,7 @@ export class Forest extends Ecs.World {
         workspace: number
     ): [Entity, Fork.Fork] {
         const entity = this.create_entity();
-        let orient = area && area.width > area.height ? Lib.Orientation.HORIZONTAL : Lib.Orientation.VERTICAL;
+        let orient = area.width > area.height ? Lib.Orientation.HORIZONTAL : Lib.Orientation.VERTICAL;
         let fork = new Fork.Fork(entity, left, right, area, workspace, orient);
 
         this.forks.insert(entity, fork);
@@ -245,43 +245,48 @@ export class Forest extends Ecs.World {
 
     /** Detaches an entity from the a fork, re-arranging the fork's tree as necessary */
     detach(fork_entity: Entity, window: Entity): [Entity, Fork.Fork] | null {
-        let reflow_fork = null;
+        const fork = this.forks.get(fork_entity);
+        if (!fork) return null;
 
-        this.forks.with(fork_entity, (fork) => {
+        let reflow_fork: [Entity, Fork.Fork] | null = null;
 
-            const parent = this.parents.get(fork_entity);
-            if (fork.left.is_window(window)) {
-                if (parent && fork.right) {
-                    reflow_fork = [parent, this.reassign_child_to_parent(fork_entity, parent, fork.right)];
-                } else if (fork.right) {
-                    reflow_fork = [fork_entity, fork];
-                    if (fork.right.kind == Node.NodeKind.WINDOW) {
-                        const detached = fork.right;
-                        fork.left = detached;
-                        fork.right = null;
-                    } else {
-                        this.reassign_children_to_parent(fork_entity, fork.right.entity, fork);
-                    }
+        const parent = this.parents.get(fork_entity);
+        if (fork.left.is_window(window)) {
+            if (parent && fork.right) {
+                const pfork = this.reassign_child_to_parent(fork_entity, parent, fork.right);
+                if (!pfork) return null;
+                reflow_fork = [parent, pfork];
+            } else if (fork.right) {
+                reflow_fork = [fork_entity, fork];
+                if (fork.right.kind == Node.NodeKind.WINDOW) {
+                    const detached = fork.right;
+                    fork.left = detached;
+                    fork.right = null;
                 } else {
-                    this.delete_entity(fork_entity);
+                    this.reassign_children_to_parent(fork_entity, fork.right.entity, fork);
                 }
-            } else if (fork.right && fork.right.is_window(window)) {
-                // Same as the `fork.left` branch.
-                if (parent) {
-                    reflow_fork = [parent, this.reassign_child_to_parent(fork_entity, parent, fork.left)];
-                } else {
-                    reflow_fork = [fork_entity, fork];
+            } else {
+                this.delete_entity(fork_entity);
+            }
+        } else if (fork.right && fork.right.is_window(window)) {
+            // Same as the `fork.left` branch.
+            if (parent) {
+                const pfork = this.reassign_child_to_parent(fork_entity, parent, fork.left);
+                if (!pfork) return null;
+                reflow_fork = [parent, pfork];
+            } else {
+                reflow_fork = [fork_entity, fork];
 
-                    if (fork.left.kind == Node.NodeKind.FORK) {
-                        this.reassign_children_to_parent(fork_entity, fork.left.entity, fork);
-                    } else {
-                        fork.right = null;
-                    }
+                if (fork.left.kind == Node.NodeKind.FORK) {
+                    this.reassign_children_to_parent(fork_entity, fork.left.entity, fork);
+                } else {
+                    fork.right = null;
                 }
             }
-        });
+        }
 
         if (reflow_fork) {
+            reflow_fork[1].rebalance_orientation();
         }
 
         return reflow_fork;
