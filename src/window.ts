@@ -37,8 +37,11 @@ export class ShellWindow {
     entity: Entity;
     meta: Meta.Window;
     ext: Ext;
+    stack: number | null = null;
 
     was_attached_to?: [Entity, boolean];
+
+    border: St.Bin = new St.Bin({ style_class: 'pop-shell-active-hint' });
 
     private was_hidden: boolean = false;
 
@@ -50,9 +53,7 @@ export class ShellWindow {
         xid_: new OnceCell()
     };
 
-    private _border: St.Bin = new St.Bin({ style_class: 'pop-shell-active-hint' });
-
-    private _border_size = 0;
+    private border_size = 0;
 
     constructor(entity: Entity, window: Meta.Window, window_app: any, ext: Ext) {
         this.window_app = window_app;
@@ -75,25 +76,21 @@ export class ShellWindow {
             }
         }
 
-        this._bind_window_events();
+        this.bind_window_events();
 
-        this._border.connect('style-changed', () => {
-            this._on_style_changed();
+        this.border.connect('style-changed', () => {
+            this.on_style_changed();
         });
 
-        this._border.hide();
+        this.border.hide();
 
-        global.window_group.add_child(this._border);
+        global.window_group.add_child(this.border);
 
         this.restack();
 
         if (this.meta.get_compositor_private()?.get_stage()) {
-            this._on_style_changed();
+            this.on_style_changed();
         }
-    }
-
-    get border() {
-        return this._border;
     }
 
     activate(): void {
@@ -104,26 +101,39 @@ export class ShellWindow {
         return this.meta.get_compositor_private() !== null;
     }
 
+    private bind_window_events() {
+        this.ext.window_signals.get_or(this.entity, () => new Array())
+            .push(
+                this.meta.connect('size-changed', () => {
+                    this.window_changed();
+                }),
+                this.meta.connect('position-changed', () => {
+                    this.window_changed();
+                }),
+            );
+    }
+
+    cmdline(): string | null {
+        let pid = this.meta.get_pid(), out = null;
+        if (-1 === pid) return out;
+
+        const path = '/proc/' + pid + '/cmdline';
+        if (!utils.exists(path)) return out;
+
+        const result = utils.read_to_string(path);
+        if (result.kind == 1) {
+            out = result.value.trim();
+        } else {
+            log.error(`failed to fetch cmdline: ${result.value.format()}`);
+        }
+
+        return out;
+    }
+
     private decoration(_ext: Ext, callback: (xid: string) => void): void {
         if (this.may_decorate()) {
             const xid = this.xid();
             if (xid) callback(xid);
-        }
-    }
-
-    cmdline(): string | null {
-        let pid = this.meta.get_pid();
-        if (-1 === pid) return null;
-
-        const path = '/proc/' + pid + '/cmdline';
-        if (!utils.exists(path)) return null;
-
-        const result = utils.read_to_string(path);
-        if (result.kind == 1) {
-            return result.value.trim();
-        } else {
-            log.error(`failed to fetch cmdline: ${result.value.format()}`);
-            return null;
         }
     }
 
@@ -161,11 +171,6 @@ export class ShellWindow {
         return WM_TITLE_BLACKLIST.findIndex((n) => name.startsWith(n)) !== -1;
     }
 
-    may_decorate(): boolean {
-        const xid = this.xid();
-        return xid ? xprop.may_decorate(xid) : false;
-    }
-
     is_maximized(): boolean {
         return this.meta.get_maximized() !== 0;
     }
@@ -186,6 +191,15 @@ export class ShellWindow {
 
     is_transient(): boolean {
         return this.meta.get_transient_for() !== null;
+    }
+
+    hide_border() {
+        this.border.hide();
+    }
+
+    may_decorate(): boolean {
+        const xid = this.xid();
+        return xid ? xprop.may_decorate(xid) : false;
     }
 
     move(ext: Ext, rect: Rectangular, on_complete?: () => void) {
@@ -215,16 +229,15 @@ export class ShellWindow {
                 if (slot !== undefined) {
                     const [signal, callback] = slot;
                     Tweener.remove(actor);
+
                     utils.source_remove(signal);
                     callback();
                 }
 
-                Tweener.add(actor, {
-                    x: clone.x - dx,
-                    y: clone.y - dy,
-                    duration: 149,
-                    mode: null,
-                });
+                const x = clone.x - dx;
+                const y = clone.y - dy;
+
+                Tweener.add(actor, { x, y, duration: 149, mode: null });
 
                 ext.tween_signals.set(entity_string, [
                     Tweener.on_window_tweened(this.meta, onComplete),
@@ -240,8 +253,51 @@ export class ShellWindow {
         return ext.names.get_or(this.entity, () => "unknown");
     }
 
+    private on_style_changed() {
+        this.border_size = this.border.get_theme_node().get_border_width(St.Side.TOP);
+    }
+
     rect(): Rectangle {
         return Rect.Rectangle.from_meta(this.meta.get_frame_rect());
+    }
+
+    /**
+     * This current does not work properly on Workspace change when single window
+     * because GNOME Shell puts the Window Actor at the top of the border.
+     *
+     * The update_border_layout() adds a padding outside instead to compensate.
+     */
+    restack() {
+        let border = this.border;
+        let actor = this.meta.get_compositor_private();
+        let win_group = global.window_group;
+
+        if (actor && actor.get_parent() === border.get_parent()) {
+            win_group.set_child_above_sibling(border, actor);
+        } else {
+            win_group.set_child_above_sibling(border, null);
+        }
+        this.update_border_layout();
+    }
+
+    private same_workspace() {
+        const workspace = this.meta.get_workspace();
+        if (workspace) {
+            let workspace_id = workspace.index();
+            return workspace_id === global.workspace_manager.get_active_workspace_index()
+        }
+        return false;
+    }
+
+
+    show_border() {
+        if (this.ext.settings.active_hint()) {
+            let border = this.border;
+            if (!this.is_maximized() && !this.meta.minimized && this.same_workspace()) {
+                border.show();
+            }
+            this.restack();
+        }
     }
 
     size_hint(): lib.SizeHint | null {
@@ -257,6 +313,21 @@ export class ShellWindow {
 
         other.move(ext, ar);
         this.move(ext, br, () => place_pointer_on(this.meta));
+    }
+
+    private update_border_layout() {
+        let frameRect = this.meta.get_frame_rect();
+        let [frameX, frameY, frameWidth, frameHeight] = [frameRect.x, frameRect.y, frameRect.width, frameRect.height];
+
+        let border = this.border;
+        let borderSize = this.border_size;
+
+        border.set_position(frameX - borderSize, frameY - borderSize);
+        border.set_size(frameWidth + 2 * borderSize, frameHeight + 2 * borderSize);
+    }
+
+    private window_changed() {
+        this.ext.show_border_on_focused();
     }
 
     wm_role(): string | null {
@@ -281,84 +352,6 @@ export class ShellWindow {
             if (utils.is_wayland()) return null;
             return xprop.get_xid(this.meta);
         })
-    }
-
-    show_border() {
-        if (this.ext.settings.active_hint()) {
-            let border = this._border;
-            if (!this.is_maximized() && !this.meta.minimized && this.same_workspace()) {
-                border.show();
-            }
-            this.restack();
-        }
-    }
-
-    same_workspace() {
-        const workspace = this.meta.get_workspace();
-        if (workspace) {
-            let workspace_id = workspace.index();
-            return workspace_id === global.workspace_manager.get_active_workspace_index()
-        }
-        return false;
-    }
-
-    /**
-     * This current does not work properly on Workspace change when single window
-     * because GNOME Shell puts the Window Actor at the top of the border.
-     *
-     * The update_border_layout() adds a padding outside instead to compensate.
-     */
-    restack() {
-        let border = this._border;
-        let actor = this.meta.get_compositor_private();
-        let win_group = global.window_group;
-
-        if (actor && actor.get_parent() === border.get_parent()) {
-            win_group.set_child_above_sibling(border, actor);
-        } else {
-            win_group.set_child_above_sibling(border, null);
-        }
-        this._update_border_layout();
-    }
-
-    hide_border() {
-        let border = this._border;
-        border.hide();
-    }
-
-    private _update_border_layout() {
-        let frameRect = this.meta.get_frame_rect();
-        let [frameX, frameY, frameWidth, frameHeight] = [frameRect.x, frameRect.y, frameRect.width, frameRect.height];
-
-        let border = this._border;
-        let borderSize = this._border_size;
-
-        border.set_position(frameX - borderSize, frameY - borderSize);
-        border.set_size(frameWidth + 2 * borderSize, frameHeight + 2 * borderSize);
-    }
-
-    private _bind_window_events() {
-        let windowSignals = [
-            this.meta.connect('size-changed', () => {
-                this._window_changed();
-            }),
-            this.meta.connect('position-changed', () => {
-                this._window_changed();
-            }),
-        ];
-
-        let extWinSignals = this.ext.window_signals.get_or(this.entity, () => new Array());
-        Array.prototype.push.apply(extWinSignals, windowSignals);
-    }
-
-    private _window_changed() {
-        this.ext.show_border_on_focused();
-    }
-
-    private _on_style_changed() {
-        let border = this._border;
-        let borderNode = border.get_theme_node();
-        this._border_size = borderNode.get_border_width(St.Side.TOP);
     }
 }
 
