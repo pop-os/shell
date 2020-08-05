@@ -222,6 +222,8 @@ export class Ext extends Ecs.System<ExtEvent> {
                         return;
                     }
 
+                    actor.remove_all_transitions();
+
                     event.window.meta.move_resize_frame(
                         true,
                         event.kind.rect.x,
