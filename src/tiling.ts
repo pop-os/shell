@@ -184,8 +184,6 @@ export class Tiler {
                 let fix_diff = () => {
                     let diff = before.diff(crect);
 
-                    Log.debug(`R DIFF BEFORE: ${diff.fmt()}`);
-
                     diff.width -= diff.width % 64;
                     diff.height -= diff.height % 64;
 
@@ -201,8 +199,6 @@ export class Tiler {
                         diff.height = (diff.height + 64) * -1;
                     }
 
-                    Log.debug(`R DIFF CORRECTED: ${diff.fmt()}`);
-
                     let tmp = before.clone();
                     tmp.apply(diff);
                     crect = tmp;
@@ -217,11 +213,8 @@ export class Tiler {
                     grab_op.rect = crect.clone();
                 };
 
-                Log.debug(`R BEFORE: ${crect.fmt()}`);
                 resize(mov1, callback);
-                Log.debug(`R MID: ${crect.fmt()}`);
                 resize(mov2, callback);
-                Log.debug(`R AFTER: ${crect.fmt()}`);
 
                 ext.auto_tiler.forest.arrange(ext, fork.workspace);
 
@@ -454,7 +447,6 @@ export class Tiler {
 
             if (!ext.auto_tiler || ext.contains_tag(win.entity, Tags.Floating)) {
                 // Make sure overlay is valid
-                global.log(`make sure overlay is valid`);
                 this.rect_by_active_area(ext, (_monitor, rect) => {
                     this.change(ext.overlay, rect, 0, 0, 0, 0);
                 });
