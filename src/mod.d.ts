@@ -25,7 +25,7 @@ declare interface GLib {
 
     spawn_command_line_sync(cmd: string): ProcessResult;
 
-    timeout_add(ms: number, priority: any, callback: () => Boolean): number;
+    timeout_add(priority: any, ms: number, callback: () => Boolean): number;
 }
 
 declare namespace GObject {
