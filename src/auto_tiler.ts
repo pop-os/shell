@@ -34,19 +34,40 @@ export class AutoTiler {
      * Call this when a window has swapped positions with another, so that we
      * may update the associations in the auto-tiler world.
      */
-    attach_swap(a: Entity, b: Entity) {
+    attach_swap(ext: Ext, a: Entity, b: Entity) {
         const a_ent = this.attached.remove(a);
         const b_ent = this.attached.remove(b);
 
-        if (a_ent) {
-            this.forest.forks.with(a_ent, (fork) => fork.replace_window(a, b));
-            this.attached.insert(b, a_ent);
+        const a_win = ext.windows.get(a);
+        const b_win = ext.windows.get(b);
+
+        if (!a_ent || !b_ent || !a_win || !b_win) return;
+
+        const a_fork = this.forest.forks.get(a_ent);
+        const b_fork = this.forest.forks.get(b_ent);
+
+        if (!a_fork || !b_fork) return;
+
+        function stack_detach(ext: Ext, win: ShellWindow): null | number {
+            const win_stack = win.stack;
+            if (win.stack !== null) ext.auto_tiler
+                ?.forest.stacks.get(win.stack)
+                ?.deactivate(win);
+            return win_stack;
         }
 
-        if (b_ent) {
-            this.forest.forks.with(b_ent, (fork) => fork.replace_window(b, a));
-            this.attached.insert(a, b_ent);
-        }
+        const a_stack = stack_detach(ext, a_win);
+        const b_stack = stack_detach(ext, b_win);
+
+        a_fork.replace_window(ext, a_win, b_win);
+        this.attached.insert(b, a_ent);
+        a_win.stack = b_stack;
+        this.tile(ext, a_fork, a_fork.area);
+
+        b_fork.replace_window(ext, b_win, a_win);
+        this.attached.insert(a, b_ent);
+        b_win.stack = a_stack;
+        this.tile(ext, b_fork, b_fork.area);
     }
 
     update_toplevel(ext: Ext, fork: Fork, monitor: number) {

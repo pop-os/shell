@@ -49,10 +49,16 @@ function stack_detach(node: NodeStack, stack: Stack, idx: number) {
     stack.components.splice(idx, 1);
 }
 
-function stack_swap(node: NodeStack, from: number, to: number) {
-    const tmp = node.entities[from];
-    node.entities[from] = node.entities[to];
-    node.entities[to] = tmp;
+export function stack_find(node: NodeStack, entity: Entity): null | number {
+    let idx = 0;
+    while (idx < node.entities.length) {
+        if (Ecs.entity_eq(entity, node.entities[idx])) {
+            return idx;
+        }
+        idx += 1
+    }
+
+    return null;
 }
 
 /** Move the window in a stack to the left, and detach if it it as the end. */
@@ -110,6 +116,16 @@ export function stack_move_right(ext: Ext, forest: Forest, node: NodeStack, enti
     return moved;
 }
 
+export function stack_replace(ext: Ext, node: NodeStack, from: number, window: Entity) {
+    if (!ext.auto_tiler) return;
+
+    const stack = ext.auto_tiler.forest.stacks.get(node.idx);
+    if (!stack) return;
+
+    const win = ext.windows.get(window);
+    if (win) stack.replace(from, win)
+}
+
 /** Removes a window from a stack */
 export function stack_remove(forest: Forest, node: NodeStack, entity: Entity): null | number {
     const stack = forest.stacks.get(node.idx);
@@ -128,6 +144,12 @@ export function stack_remove(forest: Forest, node: NodeStack, entity: Entity): n
     }
 
     return null;
+}
+
+function stack_swap(node: NodeStack, from: number, to: number) {
+    const tmp = node.entities[from];
+    node.entities[from] = node.entities[to];
+    node.entities[to] = tmp;
 }
 
 export type NodeADT = NodeFork | NodeWindow | NodeStack;

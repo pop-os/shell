@@ -606,14 +606,15 @@ export class Tiler {
         if (this.window) {
             const meta = ext.windows.get(this.window);
             if (meta) {
+                ext.size_signals_block(meta);
+
                 if (this.swap_window) {
                     const meta_swap = ext.windows.get(this.swap_window);
                     if (meta_swap) {
                         if (ext.auto_tiler) {
-                            ext.auto_tiler.attach_swap(this.swap_window, this.window);
+                            ext.auto_tiler.attach_swap(ext, this.swap_window, this.window);
                         }
 
-                        ext.size_signals_block(meta);
                         ext.size_signals_block(meta_swap);
 
                         meta_swap.move(ext, meta.rect(), () => {
@@ -623,6 +624,7 @@ export class Tiler {
                 }
 
                 const meta_entity = this.window;
+
                 meta.move(ext, ext.overlay, () => {
                     ext.size_signals_unblock(meta);
                     ext.add_tag(meta_entity, Tags.Tiled);

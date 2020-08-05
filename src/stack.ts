@@ -78,6 +78,27 @@ export class Stack {
         this.widgets.tabs.connect('destroy', () => this.recreate_widgets());
     }
 
+    /** Adds a new window to the stack */
+    add(window: ShellWindow) {
+        if (!this.widgets) return;
+
+        const entity = window.entity;
+        const label = window.meta.get_title();
+
+        const button: St.Button = new St.Button({
+            label,
+            x_expand: true,
+            style_class: Ecs.entity_eq(entity, this.active) ? ACTIVE_TAB : INACTIVE_TAB
+        });
+
+        const id = this.buttons.insert(button);
+        this.components.push({ entity, signals: [], button: id, meta: window.meta });
+
+        this.watch_signals(this.components.length - 1, id, window);
+
+        this.widgets.tabs.add(button);
+    }
+
     /** Activates a tab based on the previously active entry */
     auto_activate(): null | Entity {
         if (this.components.length === 0) return null;
@@ -88,27 +109,6 @@ export class Stack {
 
         this.activate(c.entity);
         return c.entity;
-    }
-
-    /** Workaround for when GNOME Shell destroys our widgets when they're reparented
-     *  in an active workspace change. */
-    recreate_widgets() {
-        if (this.widgets !== null) {
-            this.widgets = stack_widgets_new();
-
-            global.window_group.add_child(this.widgets.tabs);
-
-            this.widgets.tabs.connect('destroy', () => this.recreate_widgets());
-
-            for (const c of this.components.splice(0)) {
-                for (const s of c.signals) c.meta.disconnect(s);
-                const window = this.ext.windows.get(c.entity);
-                if (window) this.add(window);
-            }
-
-            this.update_positions(this.rect);
-            this.restack();
-        }
     }
 
     /** Activates the tab of this entity */
@@ -162,6 +162,20 @@ export class Stack {
         }
     }
 
+    /** Deactivate the signals belonging to an entity */
+    deactivate(w: ShellWindow) {
+        for (const c of this.components) if (Ecs.entity_eq(c.entity, w.entity)) {
+            for (const s of c.signals) c.meta.disconnect(s);
+            c.meta.get_compositor_private()?.show();
+            c.signals = [];
+        }
+
+        if (this.active_signal && Ecs.entity_eq(this.active, w.entity)) {
+            this.active_meta?.disconnect(this.active_signal);
+            this.active_signal = null;
+        }
+    }
+
     /** Disconnects this stack's signal, and destroys its widgets */
     destroy() {
         global.display.disconnect(this.restacker);
@@ -181,6 +195,27 @@ export class Stack {
         }
     }
 
+    /** Workaround for when GNOME Shell destroys our widgets when they're reparented
+     *  in an active workspace change. */
+    recreate_widgets() {
+        if (this.widgets !== null) {
+            this.widgets = stack_widgets_new();
+
+            global.window_group.add_child(this.widgets.tabs);
+
+            this.widgets.tabs.connect('destroy', () => this.recreate_widgets());
+
+            for (const c of this.components.splice(0)) {
+                for (const s of c.signals) c.meta.disconnect(s);
+                const window = this.ext.windows.get(c.entity);
+                if (window) this.add(window);
+            }
+
+            this.update_positions(this.rect);
+            this.restack();
+        }
+    }
+
     /** Removes the tab associated with the entity */
     remove_tab(entity: Entity) {
         if (!this.widgets) return;
@@ -197,21 +232,28 @@ export class Stack {
         }
     }
 
-    /** Repositions the stack, and hides all but the active window in the stack */
-    restack() {
+    replace(idx: number, window: ShellWindow) {
         if (!this.widgets) return;
+        const c = this.components[idx];
+        if (c) {
+            for (const s of c.signals) c.meta.disconnect(s);
+            c.meta.get_compositor_private()?.show();
 
-        if (global.workspace_manager.get_active_workspace_index() !== this.workspace) {
-            this.widgets.tabs.visible = false;
-            for (const c of this.components) {
-                c.meta.get_compositor_private()?.hide();
-            }
-        } else if (this.widgets.tabs.visible) {
-            for (const c of this.components) {
-                c.meta.get_compositor_private()?.hide();
+            if (this.active_meta === c.meta) {
+                if (this.active_signal) this.active_meta.disconnect(this.active_signal);
+                this.active_meta = window.meta;
+                this.active_signal = window.meta.connect('size-changed', () => {
+                    this.update_positions(window.meta.get_frame_rect());
+                });
+                this.active = window.entity;
+                window.meta.get_compositor_private()?.show();
+            } else {
+                window.meta.get_compositor_private()?.hide();
             }
 
-            this.reposition();
+            c.meta = window.meta;
+            this.watch_signals(idx, c.button, window);
+            this.buttons.get(c.button)?.set_label(window.meta.get_title());
         }
     }
 
@@ -260,6 +302,24 @@ export class Stack {
         }
     }
 
+    /** Repositions the stack, and hides all but the active window in the stack */
+    restack() {
+        if (!this.widgets) return;
+
+        if (global.workspace_manager.get_active_workspace_index() !== this.workspace) {
+            this.widgets.tabs.visible = false;
+            for (const c of this.components) {
+                c.meta.get_compositor_private()?.hide();
+            }
+        } else if (this.widgets.tabs.visible) {
+            for (const c of this.components) {
+                c.meta.get_compositor_private()?.hide();
+            }
+
+            this.reposition();
+        }
+    }
+
     /** Changes visibility of the stack's actors */
     set_visible(visible: boolean) {
         if (!this.widgets) return;
@@ -294,21 +354,10 @@ export class Stack {
         this.widgets.tabs.width = rect.width;
     }
 
-    /** Adds a new window to the stack */
-    add(window: ShellWindow) {
-        if (!this.widgets) return;
-
+    watch_signals(comp: number, button: number, window: ShellWindow) {
         const entity = window.entity;
-        const label = window.meta.get_title();
-
-        const button: St.Button = new St.Button({
-            label,
-            x_expand: true,
-            style_class: Ecs.entity_eq(entity, this.active) ? ACTIVE_TAB : INACTIVE_TAB
-        });
-
-        // On click, raise the window to the top of the stack, and activate the window's tab
-        button.connect('clicked', () => {
+        const widget = this.buttons.get(button);
+        if (widget) widget.connect('clicked', () => {
             this.activate(entity);
             const window = this.ext.windows.get(entity);
             if (window) {
@@ -325,7 +374,7 @@ export class Stack {
                         this.buttons.get(comp.button)?.set_style_class_name(INACTIVE_TAB);
                     }
 
-                    button.set_style_class_name(ACTIVE_TAB);
+                    widget.set_style_class_name(ACTIVE_TAB);
                 } else {
                     this.remove_tab(entity);
                     window.stack = null;
@@ -333,22 +382,16 @@ export class Stack {
             }
         });
 
-        const id = this.buttons.insert(button);
-
-        // Watch for title changes and update the tab immediately.
-        const signals = [
+        this.components[comp].signals = [
             window.meta.connect('notify::title', () => {
-                this.buttons.get(id)?.set_label(window.meta.get_title());
+                this.buttons.get(button)?.set_label(window.meta.get_title());
             }),
 
             window.meta.connect('notify::urgent', () => {
                 if (!window.meta.has_focus()) {
-                    this.buttons.get(id)?.set_style_class_name(URGENT_TAB);
+                    this.buttons.get(button)?.set_style_class_name(URGENT_TAB);
                 }
             })
         ];
-
-        this.components.push({ entity, signals, button: id, meta: window.meta });
-        this.widgets.tabs.add(button);
     }
 }

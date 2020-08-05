@@ -11,6 +11,7 @@ import * as Ecs from 'ecs';
 import * as Lib from 'lib';
 import * as node from 'node';
 import * as Rect from 'rectangle';
+import { ShellWindow } from './window';
 
 const XPOS = 0;
 const YPOS = 1;
@@ -115,13 +116,36 @@ export class Fork {
     }
 
     /** Replaces the association of a window in a fork with another */
-    replace_window(a: Entity, b: Entity): boolean {
-        if (!this.right || this.right.inner.kind !== 2 || this.left.inner.kind !== 2) return false;
+    replace_window(ext: Ext, a: ShellWindow, b: ShellWindow): boolean {
+        if (!this.right) return false;
 
-        if (this.left.is_window(a)) {
-            this.left.inner.entity = b;
-        } else {
-            this.right.inner.entity = b;
+        switch (this.left.inner.kind) {
+            case 2:
+                if (Ecs.entity_eq(this.left.inner.entity, a.entity)) {
+                    this.left.inner.entity = b.entity;
+                } else if (this.right.inner.kind === 2) {
+                    this.right.inner.entity = b.entity;
+                } else if (this.right.inner.kind === 3) {
+                    const idx = node.stack_find(this.right.inner, a.entity);
+                    if (idx === null) return false;
+                    node.stack_replace(ext, this.right.inner, idx, b.entity);
+                    this.right.inner.entities[idx] = b.entity;
+                }
+
+                break
+            case 3:
+                let idx = node.stack_find(this.left.inner, a.entity);
+                if (idx !== null) {
+                    node.stack_replace(ext, this.left.inner, idx, b.entity);
+                    this.left.inner.entities[idx] = b.entity;
+                } else if (this.right.inner.kind === 2) {
+                    this.right.inner.entity = b.entity;
+                } else if (this.right.inner.kind === 3) {
+                    const idx = node.stack_find(this.right.inner, a.entity);
+                    if (idx === null) return false;
+                    node.stack_replace(ext, this.right.inner, idx, b.entity);
+                    this.right.inner.entities[idx] = b.entity;
+                }
         }
 
         return true;
