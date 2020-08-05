@@ -172,6 +172,9 @@ export class ShellWindow {
                 ext.register({ tag: 2, window: this, kind: { tag: 1, rect: clone } });
                 if (on_complete) ext.register_fn(on_complete);
                 ext.tween_signals.delete(entity_string);
+                if (ext.active_hint?.is_tracking(this.entity)) {
+                    ext.active_hint.show();
+                }
             };
 
             if (ext.animate_windows && !ext.init) {
@@ -195,6 +198,10 @@ export class ShellWindow {
                     duration: 149,
                     mode: null,
                 });
+
+                if (ext.active_hint?.is_tracking(this.entity)) {
+                    ext.active_hint.hide();
+                }
 
                 ext.tween_signals.set(entity_string, [
                     Tweener.on_tween_completion(this.meta, onComplete),

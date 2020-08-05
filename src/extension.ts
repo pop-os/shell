@@ -460,9 +460,9 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     on_active_workspace_changed() {
         const refocus_hint = () => {
-            if (!this.active_hint?.window) return
+            if (!this.active_hint?.tracked) return
 
-            let active = this.windows.get(this.active_hint.window.entity);
+            let active = this.windows.get(this.active_hint.tracked.entity);
             if (!active) return;
 
             let aws = this.workspace_id(active);
@@ -526,20 +526,15 @@ export class Ext extends Ecs.System<ExtEvent> {
     on_display_remove(id: number, display: Display) {
         if (!this.auto_tiler) return;
 
-        Log.info(`Display(${id}) removed`);
-
         let forest = this.auto_tiler.forest;
         let blocked = new Array();
 
         for (const [entity, [mon_id,]] of forest.toplevel.values()) {
-            Log.info(`Found TopLevel(${entity}, ${mon_id})`);
             if (mon_id === id) {
                 let fork = forest.forks.get(entity);
                 if (!fork) continue;
 
-                Log.info(`finding new workspace`);
                 const [new_work_id] = find_unused_workspace();
-                Log.info('finding monitor to retach');
                 const [new_mon_id, new_mon] = this.find_monitor_to_retach(display.area.width, display.area.height);
 
                 fork.workspace = new_work_id;
@@ -730,13 +725,17 @@ export class Ext extends Ecs.System<ExtEvent> {
             Log.error(`mismatch on grab op entity`);
         }
 
+        this.active_hint?.track(win);
+
         this.grab_op = null;
     }
 
     /** Triggered when a grab operation has been started */
     on_grab_start(meta: Meta.Window) {
         let win = this.get_window(meta);
-        if (win && win.is_tilable(this)) {
+        if (!win) return;
+
+        if (win.is_tilable(this)) {
             let entity = win.entity;
             let rect = win.rect();
 
@@ -746,6 +745,9 @@ export class Ext extends Ecs.System<ExtEvent> {
 
             this.size_signals_block(win);
         }
+
+
+        this.active_hint?.track(win);
     }
 
     on_gtk_shell_changed() {
@@ -852,12 +854,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     on_overview_hidden() {
-        if (this.active_hint && this.active_hint.window) {
-            let window = this.active_hint.window.meta;
-            if (!window.get_maximized()) {
-                this.active_hint.show();
-            }
-        }
+        this.active_hint?.restack_auto();
     }
 
     on_overview_shown() {
@@ -1009,6 +1006,8 @@ export class Ext extends Ecs.System<ExtEvent> {
                     this.register(Events.window_event(win, WindowEvent.Fullscreen));
                 }
             }
+
+            this.active_hint?.restack_auto();
         });
 
         this.connect(this.settings.ext, 'changed', (_s, key: string) => {

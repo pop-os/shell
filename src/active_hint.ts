@@ -8,43 +8,33 @@ import * as Ecs from 'ecs';
 
 const { GLib, St } = imports.gi;
 
-interface WindowDetails {
+interface Details {
+    sources: Array<number>;
+    workspace: number;
+}
+
+interface WindowDetails extends Details {
+    kind: 1;
     entity: Entity;
     meta: Meta.Window;
     parent: Clutter.Actor;
-    source1: number;
-    source2: number;
 }
 
 export class ActiveHint {
     dpi: number;
 
     private border: [Clutter.Actor, Clutter.Actor, Clutter.Actor, Clutter.Actor] = [
-        new St.BoxLayout({
-            reactive: false,
-            style_class: 'pop-shell-active-hint',
-            visible: false
-        }),
-        new St.BoxLayout({
-            reactive: false,
-            style_class: 'pop-shell-active-hint',
-            visible: false
-        }),
-        new St.BoxLayout({
-            reactive: false,
-            style_class: 'pop-shell-active-hint',
-            visible: false
-        }),
-        new St.BoxLayout({
-            reactive: false,
-            style_class: 'pop-shell-active-hint',
-            visible: false
-        })
+        new St.BoxLayout({ style_class: 'pop-shell-active-hint' }),
+        new St.BoxLayout({ style_class: 'pop-shell-active-hint' }),
+        new St.BoxLayout({ style_class: 'pop-shell-active-hint' }),
+        new St.BoxLayout({ style_class: 'pop-shell-active-hint' })
     ];
 
     private tracking: number | null = null;
 
-    window: WindowDetails | null = null;
+    tracked: WindowDetails | null = null;
+
+    restacker: SignalID = (global.display as GObject.Object).connect('restacked', () => this.restack_auto());
 
     constructor(dpi: number) {
         this.dpi = dpi;
@@ -63,7 +53,7 @@ export class ActiveHint {
     }
 
     is_tracking(entity: Entity): boolean {
-        return this.window ? Ecs.entity_eq(entity, this.window.entity) : false;
+        return this.tracked ? Ecs.entity_eq(entity, this.tracked.entity) : false;
     }
 
     position_changed(window: ShellWindow): void {
@@ -71,8 +61,38 @@ export class ActiveHint {
             this.hide();
         } else {
             this.show();
-            this.update_overlay();
+            this.update_overlay(window.rect());
         }
+    }
+
+    restack(actor: Clutter.Actor) {
+        if (this.tracked) {
+            if (this.tracked.workspace === global.workspace_manager.get_active_workspace_index()) {
+                // Avoid restacking if the window is maximized / fullscreen
+                if (this.tracked.kind === 1) {
+                    if (this.tracked.meta.get_maximized() !== 0 || this.tracked.meta.is_fullscreen()) return;
+                }
+
+                this.show();
+
+                for (const box of this.border) {
+                    global.window_group.set_child_above_sibling(box, actor);
+                }
+            } else {
+                this.hide();
+            }
+        }
+    }
+
+    restack_auto() {
+        if (!this.tracked) return;
+        let actor: null | Clutter.Actor = null;
+
+        if (this.tracked.kind === 1) {
+            actor = this.tracked.meta.get_compositor_private();
+        }
+
+        if (actor) this.restack(actor);
     }
 
     show() {
@@ -85,8 +105,8 @@ export class ActiveHint {
     track(window: ShellWindow) {
         this.disconnect_signals();
 
-        if (this.window) {
-            if (Ecs.entity_eq(this.window.entity, window.entity)) {
+        if (this.tracked) {
+            if (Ecs.entity_eq(this.tracked.entity, window.entity)) {
                 return;
             }
 
@@ -101,23 +121,29 @@ export class ActiveHint {
         const parent = actor.get_parent();
 
         if (parent) {
-            this.window = {
+            this.tracked = {
+                kind: 1,
                 entity: window.entity,
                 meta: window.meta,
                 parent: parent,
-                source1: window.meta.connect('size-changed', () => this.position_changed(window)),
-                source2: window.meta.connect('position-changed', () => this.position_changed(window)),
+                workspace: window.workspace_id(),
+                sources: [
+                    window.meta.connect('size-changed', () => this.position_changed(window)),
+                    window.meta.connect('position-changed', () => this.position_changed(window))
+                ],
             };
 
             this.tracking = GLib.idle_add(GLib.PRIORITY_LOW, () => {
                 this.tracking = null;
-                this.update_overlay();
+                this.update_overlay(window.rect());
 
                 this.show();
 
                 return false;
             });
         }
+
+        this.restack(actor);
     }
 
     untrack() {
@@ -125,48 +151,45 @@ export class ActiveHint {
 
         this.hide();
 
-        if (this.window) {
-            const actor = this.window.meta.get_compositor_private();
+        if (this.tracked) {
+            const actor = this.tracked.meta.get_compositor_private();
             if (actor) {
-                this.window.meta.disconnect(this.window.source1);
-                this.window.meta.disconnect(this.window.source2);
+                for (const s of this.tracked.sources.splice(0)) this.tracked.meta.disconnect(s);
             }
 
-            this.window = null;
+            this.tracked = null;
         }
     }
 
-    update_overlay() {
-        if (this.window) {
-            const rect = this.window.meta.get_frame_rect();
+    update_overlay(rect: Rectangular) {
+        const width = 3 * this.dpi;
 
-            const width = 3 * this.dpi;
+        const [w, n, e, s] = this.border;
 
-            const [left, top, right, bottom] = this.border;
+        w.x = rect.x - width;
+        w.y = rect.y;
+        w.width = width;
+        w.height = rect.height;
 
-            left.x = rect.x - width;
-            left.y = rect.y;
-            left.width = width;
-            left.height = rect.height;
+        e.x = rect.x + rect.width;
+        e.y = rect.y;
+        e.width = width;
+        e.height = rect.height;
 
-            right.x = rect.x + rect.width;
-            right.y = rect.y;
-            right.width = width;
-            right.height = rect.height;
+        n.x = rect.x - width;
+        n.y = rect.y - width;
+        n.width = (2 * width) + rect.width;
+        n.height = width;
 
-            top.x = rect.x - width;
-            top.y = rect.y - width;
-            top.width = (2 * width) + rect.width;
-            top.height = width;
-
-            bottom.x = rect.x - width;
-            bottom.y = rect.y + rect.height;
-            bottom.width = (2 * width) + rect.width;
-            bottom.height = width;
-        }
+        s.x = rect.x - width;
+        s.y = rect.y + rect.height;
+        s.width = (2 * width) + rect.width;
+        s.height = width;
     }
 
     destroy() {
+        global.display.disconnect(this.restacker);
+
         this.untrack();
 
         for (const box of this.border) {
