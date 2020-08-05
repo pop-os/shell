@@ -3,7 +3,6 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 import * as Lib from 'lib';
 import * as Tags from 'tags';
-import * as Log from 'log';
 import * as GrabOp from 'grab_op';
 import * as Rect from 'rectangle';
 import * as window from 'window';
