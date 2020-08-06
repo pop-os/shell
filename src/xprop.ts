@@ -104,8 +104,8 @@ function parse_string(string: string): string | null {
 }
 
 function xprop_cmd(xid: string, args: string): string | null {
-    let xprops = GLib.spawn_command_line_sync(lib.dbg(`xprop -id ${xid} ${args}`));
+    let xprops = GLib.spawn_command_line_sync(`xprop -id ${xid} ${args}`);
     if (!xprops[0]) return null;
 
-    return lib.dbg(imports.byteArray.toString(xprops[1]));
+    return imports.byteArray.toString(xprops[1]);
 }
