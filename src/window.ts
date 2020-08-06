@@ -60,10 +60,8 @@ export class ShellWindow {
         if (this.may_decorate()) {
             if (!window.is_client_decorated()) {
                 if (ext.settings.show_title()) {
-                    log.info(`showing decorations`);
                     this.decoration_show(ext);
                 } else {
-                    log.info(`hiding decorations`);
                     this.decoration_hide(ext);
                 }
             }
@@ -150,7 +148,7 @@ export class ShellWindow {
                     // Transient windows are most likely dialogs
                     && !this.is_transient()
                     // Blacklist any windows that happen to leak through our filter
-                    && (wm_class === null || !blacklisted(wm_class, this.meta.get_title()));
+                    && (wm_class === null || !ext.conf.window_shall_float(wm_class, this.meta.get_title()));
             });
     }
 
@@ -261,27 +259,12 @@ export class ShellWindow {
     }
 }
 
-const BLACKLIST: string[] = [
-    'Conky',
-    'Com.github.donadigo.eddy',
-    'Gnome-screenshot',
-    'Authy Desktop',
-    'jetbrains-toolbox'
-];
-
 /// Activates a window, and moves the mouse point to the center of it.
 export function activate(win: Meta.Window) {
     win.raise();
     win.unminimize();
     win.activate(global.get_current_time());
     place_pointer_on(win)
-}
-
-export function blacklisted(window_class: string, title: string): boolean {
-    return BLACKLIST.indexOf(window_class) > -1
-        || (window_class === "Steam" && title !== "Steam")
-        || (window_class === "TelegramDesktop" && title === "Media viewer")
-        || (window_class === "KotatogramDesktop" && title === "Media viewer");
 }
 
 export function place_pointer_on(win: Meta.Window) {

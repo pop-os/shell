@@ -1,5 +1,6 @@
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
+import * as Config from 'config';
 import * as Forest from 'forest';
 import * as Ecs from 'ecs';
 import * as Events from 'events';
@@ -43,10 +44,6 @@ interface Display {
     ws: Rectangle;
 }
 
-function display_fmt(display: Display): string {
-    return `Display { area: ${display.area.fmt()}, ws: ${display.ws.fmt()} }`;
-}
-
 interface Monitor extends Rectangular {
     index: number;
 }
@@ -79,6 +76,10 @@ export class Ext extends Ecs.System<ExtEvent> {
     button: any = null;
     button_gio_icon_auto_on: any = null;
     button_gio_icon_auto_off: any = null;
+
+    conf: Config.Config = new Config.Config();
+
+    conf_watch: null | [any, SignalID] = null;
 
     /** Column sizes in snap-to-grid */
     column_size: number = 32;
@@ -179,6 +180,8 @@ export class Ext extends Ecs.System<ExtEvent> {
         this.load_settings();
 
         this.register_fn(() => load_theme(this.current_style));
+
+        this.conf.reload();
 
         if (this.settings.int) {
             this.settings.int.connect('changed::gtk-theme', () => {
@@ -592,6 +595,23 @@ export class Ext extends Ecs.System<ExtEvent> {
                 }
             }
         }
+
+        if (this.conf.log_on_focus) {
+            let msg = `focused Window(${win.entity}) {\n`
+                + `  name: ${win.name(this)},\n`
+                + `  rect: ${win.rect().fmt()},\n`
+                + `  wm_class: "${win.meta.get_wm_class()}",\n`
+                + `  monitor: ${win.meta.get_monitor()},\n`
+                + `  workspace: ${win.workspace_id()},\n`
+                + `  cmdline: ${win.cmdline()},\n`
+                + `  xid: ${win.xid()},\n`;
+
+            if (this.auto_tiler) {
+                msg += `  fork: (${this.auto_tiler.attached.get(win.entity)}),\n`;
+            }
+
+            Log.debug(msg + '}');
+        }
     }
 
     on_gap_inner() {
@@ -971,6 +991,13 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     /** Begin listening for signals from windows, and add any pre-existing windows. */
     signals_attach() {
+        const monitor = this.conf_watch = Gio.File.new_for_path(Config.CONF_FILE)
+            .monitor(Gio.FileMonitorFlags.NONE, null);
+
+        const signal = monitor.connect('changed', () => this.conf.reload());
+
+        this.conf_watch = [monitor, signal];
+
         const workspace_manager = global.display.get_workspace_manager();
 
         let idx = 0;
@@ -1135,6 +1162,11 @@ export class Ext extends Ecs.System<ExtEvent> {
             }
         }
 
+        if (this.conf_watch) {
+            this.conf_watch[0].disconnect(this.conf_watch[1]);
+            this.conf_watch = null;
+        }
+
         this.signals.clear();
     }
 
@@ -1266,10 +1298,6 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         // Remember our new list
         this.displays = updated;
-
-        for (const [id, display] of this.displays) {
-            Log.info(`Display(${id}): ${display_fmt(display)}`);
-        }
 
         // Update every tree on each display with the new dimensions
         for (const [entity, [mon_id,]] of this.auto_tiler.forest.toplevel.values()) {
