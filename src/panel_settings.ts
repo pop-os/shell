@@ -22,15 +22,15 @@ export class Indicator {
         ext.button_gio_icon_auto_off = Gio.icon_new_for_string(`${Me.path}/icons/pop-shell-auto-off-symbolic.svg`);
 
         let button_icon_auto_on = new St.Icon({
-            gicon: ext.button_gio_icon_auto_on ,
+            gicon: ext.button_gio_icon_auto_on,
             style_class: "system-status-icon",
         });
         let button_icon_auto_off = new St.Icon({
-            gicon:  ext.button_gio_icon_auto_off,
+            gicon: ext.button_gio_icon_auto_off,
             style_class: "system-status-icon",
         });
 
-        if (ext.settings.tile_by_default()){
+        if (ext.settings.tile_by_default()) {
             this.button.icon = button_icon_auto_on;
         } else {
             this.button.icon = button_icon_auto_off;

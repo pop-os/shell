@@ -48,16 +48,14 @@ export class ShellWindow {
         xid_: new OnceCell()
     };
 
-    // -1 indicate not overriden yet
-    private _orig_min_width: number = -1;
-    private _orig_min_height: number = -1;
-    private _orig_base_width: number = -1;
-    private _orig_base_height: number = -1;
-    private _orig_width_inc: number = -1;
-    private _orig_height_inc: number = -1;
-
-    // TODO - put in gsettings
-    private override_hints = true;
+    private default_win_settings = {
+        min_height: 0,
+        min_width: 0,
+        base_height: 0,
+        base_width: 0,
+        height_inc: 5,
+        width_inc: 5
+    }
 
     private ext: Ext;
 
@@ -310,62 +308,62 @@ export class ShellWindow {
      * - Gnome settings when on the right-hand-size of a monitor, during child panel open, triggers re-arrange and moves to right-side monitor.
      */
     change_window_hints(): void {
-        if (this.override_hints) {
-            let gdk_window = this.gdk_window()
-            let geo = new Gdk.Geometry()
+        if (this.ext.settings.override_wm_hints()) {
+            let gdk_window = this.gdk_window();
+            let geo = new Gdk.Geometry();
 
-            // store dimensions
-            if (this._orig_min_width < 0) {
-                let size_hint = this.size_hint();
-                let min = size_hint?.minimum;
-                this._orig_min_width = min ? min[0] : 0;
-            }
-
-            if (this._orig_min_height < 0) {
-                let size_hint = this.size_hint();
-                let min = size_hint?.minimum;
-                this._orig_min_height = min ? min[1] : 0;
-            }
-
-            // store base dimensions
-            if (this._orig_base_width < 0) {
-                let size_hint = this.size_hint();
-                let base = size_hint?.base;
-                this._orig_base_width = base ? base[0] : 0;
-            }
-
-            if (this._orig_base_height < 0) {
-                let size_hint = this.size_hint();
-                let base = size_hint?.base;
-                this._orig_base_height = base ? base[1] : 0;
-            }
-
-            // store increments
-            if (this._orig_width_inc < 0) {
-                let size_hint = this.size_hint();
-                let increment = size_hint?.increment;
-                this._orig_width_inc = increment ? increment[0] : 0;
-            }
-
-            if (this._orig_height_inc < 0) {
-                let size_hint = this.size_hint();
-                let increment = size_hint?.increment;
-                this._orig_height_inc = increment ? increment[1] : 0;
-            }
+            this.store_default_hints()
 
             let hint_mask = Gdk.WindowHints.MIN_SIZE;
 
             // TODO - need the active monitors, need revisit on different monitor configs
             let rect = this.ext.monitor_work_area(this.ext.active_monitor());
-            
+
             // TODO - we don't want zero, negative value, but check 4K. Currently 1080p
             let least_denom = 8; // 1080p
             // let least_denom = 16; //4k?
 
             geo.min_width = rect.width / least_denom;
             geo.min_height = rect.height / least_denom;
-                        
+
             gdk_window.set_geometry_hints(geo, hint_mask);
+        }
+    }
+
+    store_default_hints() {
+        let def_win_set = this.default_win_settings;
+        let size_hint = this.size_hint();
+        let min = size_hint?.minimum;
+        let base = size_hint?.base;
+        let increment = size_hint?.increment;
+
+        const WIDTH = 0, HEIGHT = 1, DEFAULT = 0;
+
+        // store dimensions
+        if (def_win_set.min_width === DEFAULT) {
+            def_win_set.min_width = min ? min[WIDTH] : DEFAULT;
+        }
+
+        if (def_win_set.min_height === DEFAULT) {
+            def_win_set.min_height = min ? min[HEIGHT] : DEFAULT;
+        }
+
+        // store base dimensions
+        if (def_win_set.base_width === DEFAULT) {
+            def_win_set.base_width = base ? base[WIDTH] : DEFAULT;
+        }
+
+        if (def_win_set.base_height === DEFAULT) {
+            def_win_set.base_height = base ? base[HEIGHT] : DEFAULT;
+        }
+
+        // store size increments
+        if (def_win_set.width_inc === DEFAULT) {
+            def_win_set.width_inc = increment ? increment[WIDTH] : DEFAULT;
+        }
+
+        if (def_win_set.height_inc === DEFAULT) {
+            def_win_set.height_inc = increment ? increment[HEIGHT] : DEFAULT;
         }
     }
 
@@ -379,42 +377,26 @@ export class ShellWindow {
      * - disable toggle
      */
     restore_window_hints(): void {
-        if (this.override_hints) {
+        if (this.ext.settings.override_wm_hints()) {
             let gdk_window = this.gdk_window()
             let geo = new Gdk.Geometry()
+            let def_win_set = this.default_win_settings;
+            const DEFAULT = 0, DEFAULT_INC = 5;
 
-            // restore dimensions
-            if (this._orig_min_width >= 0) {
-                geo.min_width = this._orig_min_width;
-                this._orig_min_width = -1;
-            }
+            // restore dimensions if there is a stored original hints values
+            geo.min_width = !!(def_win_set.min_width > DEFAULT) ? def_win_set.min_width : undefined;
+            geo.min_height = !!(def_win_set.min_height > DEFAULT) ? def_win_set.min_height : undefined;
+            geo.base_width = !!(def_win_set.base_width > DEFAULT) ? def_win_set.base_width : undefined;
+            geo.base_height = !!(def_win_set.base_height > DEFAULT) ? def_win_set.base_height : undefined;
+            geo.width_inc = !!(def_win_set.width_inc > DEFAULT_INC) ? def_win_set.width_inc : undefined;
+            geo.height_inc = !!(def_win_set.height_inc > DEFAULT_INC) ? def_win_set.height_inc : undefined;
 
-            if (this._orig_min_height >= 0) {
-                geo.min_height = this._orig_min_height;
-                this._orig_min_height = -1;
-            }
-
-            // restore base dimensions
-            if (this._orig_base_width >= 0) {
-                geo.base_width = this._orig_base_width;
-                this._orig_base_width = -1;
-            }
-
-            if (this._orig_base_height >= 0) {
-                geo.base_height = this._orig_base_height;
-                this._orig_base_height = -1;
-            }
-
-            // restore increments
-            if (this._orig_width_inc >= 0) {
-                geo.width_inc = this._orig_width_inc;
-                this._orig_width_inc = -1;
-            }
-
-            if (this._orig_height_inc >= 0) {
-                geo.height_inc = this._orig_height_inc;
-                this._orig_height_inc = -1;
-            }
+            def_win_set.min_width = DEFAULT;
+            def_win_set.min_height = DEFAULT;
+            def_win_set.base_height = DEFAULT;
+            def_win_set.base_width = DEFAULT;
+            def_win_set.height_inc = DEFAULT_INC;
+            def_win_set.width_inc = DEFAULT_INC;
 
             gdk_window.set_geometry_hints(geo, Gdk.WindowHints.MIN_SIZE | Gdk.WindowHints.BASE_SIZE | Gdk.WindowHints.RESIZE_INC);
         }

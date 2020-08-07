@@ -14,30 +14,31 @@ interface AppWidgets {
     snap_to_grid: any,
     outer_gap: any,
     inner_gap: any,
+    override_wm_hints: any
 }
 
 // @ts-ignore
 function init() { }
 
 function settings_dialog_new(): Gtk.Container {
-    let [app, grid] = settings_dialog_view();
+    let [widgets, grid] = settings_dialog_view();
 
     let ext = new settings.ExtensionSettings();
 
-    app.window_titles.set_active(ext.show_title());
-    app.window_titles.connect('state-set', (_widget: any, state: boolean) => {
+    widgets.window_titles.set_active(ext.show_title());
+    widgets.window_titles.connect('state-set', (_widget: any, state: boolean) => {
         ext.set_show_title(state);
         Settings.sync();
     });
 
-    app.snap_to_grid.set_active(ext.snap_to_grid());
-    app.snap_to_grid.connect('state-set', (_widget: any, state: boolean) => {
+    widgets.snap_to_grid.set_active(ext.snap_to_grid());
+    widgets.snap_to_grid.connect('state-set', (_widget: any, state: boolean) => {
         ext.set_snap_to_grid(state);
         Settings.sync();
     });
 
-    app.outer_gap.set_text(String(ext.gap_outer()));
-    app.outer_gap.connect('activate', (widget: any) => {
+    widgets.outer_gap.set_text(String(ext.gap_outer()));
+    widgets.outer_gap.connect('activate', (widget: any) => {
         let parsed = parseInt((widget.get_text() as string).trim());
         if (!isNaN(parsed)) {
             ext.set_gap_outer(parsed);
@@ -45,13 +46,31 @@ function settings_dialog_new(): Gtk.Container {
         };
     });
 
-    app.inner_gap.set_text(String(ext.gap_inner()));
-    app.inner_gap.connect('activate', (widget: any) => {
+    widgets.inner_gap.set_text(String(ext.gap_inner()));
+    widgets.inner_gap.connect('activate', (widget: any) => {
         let parsed = parseInt((widget.get_text() as string).trim());
         if (!isNaN(parsed)) {
             ext.set_gap_inner(parsed);
             Settings.sync();
         }
+    });
+
+    widgets.override_wm_hints.set_active(ext.override_wm_hints());
+    widgets.override_wm_hints.connect('state-set', (_widget: any, state: boolean) => {
+        ext.set_override_wm_hints(state);
+        // TODO: prefs.js does not seem to see the Extension instance, commenting for now
+        // if (state === false) {
+        //     // it will try to restore all window hints
+        //     Me.restore_all_window_hints();
+        // }
+        // if (Me.settings.tile_by_default()) {
+        //     // flip two times to enable the hint
+        //     Me.toggle_tiling();
+        //     Me.toggle_tiling();
+        // } else {
+        //     Me.toggle_tiling();
+        // }
+        Settings.sync();
     });
 
     return grid;
@@ -78,17 +97,27 @@ function settings_dialog_view(): [AppWidgets, Gtk.Container] {
 
     let snap_to_grid = new Gtk.Switch({ halign: Gtk.Align.START });
 
+    let override_wm_hints_label = new Gtk.Label({
+        label: "Override WM Hints - Applications can crash. Restart Popshell to take effect.",
+        xalign: 0.0
+    });
+
+    let override_wm_hints = new Gtk.Switch({ halign: Gtk.Align.START });
+
     grid.attach(win_label, 0, 0, 1, 1);
     grid.attach(window_titles, 1, 0, 1, 1);
 
     grid.attach(snap_label, 0, 1, 1, 1);
     grid.attach(snap_to_grid, 1, 1, 1, 1);
 
-    let [inner_gap, outer_gap] = gaps_section(grid, 2);
+    grid.attach(override_wm_hints_label, 0, 2, 1, 1)
+    grid.attach(override_wm_hints, 1, 2, 1, 1)
 
-    let settings = { inner_gap, outer_gap, snap_to_grid, window_titles };
+    let [inner_gap, outer_gap] = gaps_section(grid, 3);
 
-    return [settings, grid];
+    let widgets = { inner_gap, outer_gap, snap_to_grid, window_titles, override_wm_hints };
+
+    return [widgets, grid];
 }
 
 function gaps_section(grid: any, top: number): [any, any] {

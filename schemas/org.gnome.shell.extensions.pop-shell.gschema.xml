@@ -169,5 +169,10 @@
             <default><![CDATA[['<Primary>Right','<Primary>l']]]></default>
             <summary>Swap window right</summary>
         </key>
+
+        <key type="b" name="override-wm-hints">
+            <default>false</default>
+            <summary>Experimental: Override the Window Hints for better sizing calculations</summary>
+        </key>
     </schema>
 </schemalist>

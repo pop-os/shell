@@ -739,7 +739,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         if (!win) return;
 
         if (win.is_tilable(this)) {
-            win.restore_window_hints();
+            // win.restore_window_hints();
 
             let entity = win.entity;
             let rect = win.rect();
