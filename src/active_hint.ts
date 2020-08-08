@@ -57,7 +57,7 @@ export class ActiveHint {
     }
 
     position_changed(window: ShellWindow): void {
-        if (window.is_maximized()) {
+        if (window.is_maximized() || window.meta.minimized) {
             this.hide();
         } else {
             this.show();
@@ -73,7 +73,12 @@ export class ActiveHint {
                     if (this.tracked.meta.get_maximized() !== 0 || this.tracked.meta.is_fullscreen()) return;
                 }
 
-                this.show();
+                // Do not show the boxes when the window being tracked is minimized
+                if (!this.tracked.meta.minimized) {
+                    this.show();
+                } else {
+                    this.hide();
+                }
 
                 for (const box of this.border) {
                     global.window_group.set_child_above_sibling(box, actor);
@@ -105,14 +110,6 @@ export class ActiveHint {
     track(window: ShellWindow) {
         this.disconnect_signals();
 
-        if (this.tracked) {
-            if (Ecs.entity_eq(this.tracked.entity, window.entity)) {
-                return;
-            }
-
-            this.untrack();
-        }
-
         if (window.meta.is_skip_taskbar()) return
 
         const actor = window.meta.get_compositor_private();
@@ -135,10 +132,8 @@ export class ActiveHint {
 
             this.tracking = GLib.idle_add(GLib.PRIORITY_LOW, () => {
                 this.tracking = null;
+                // do not show here, restack below will figure it out.
                 this.update_overlay(window.rect());
-
-                this.show();
-
                 return false;
             });
         }
