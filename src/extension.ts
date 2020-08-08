@@ -271,7 +271,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                                     }
 
                                     if (this.active_hint?.is_tracking(win.entity)) {
-                                        this.active_hint.show();
+                                        this.active_hint.track(win);
                                     }
                                 } else if (win.is_maximized()) {
                                     this.size_changed_block();
@@ -462,8 +462,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     on_active_workspace_changed() {
         const refocus_hint = () => {
-            if (!this.active_hint?.tracked) return
-
+            if (!this.active_hint?.tracked) return;
             let active = this.windows.get(this.active_hint.tracked.entity);
             if (!active) return;
 
@@ -471,9 +470,9 @@ export class Ext extends Ecs.System<ExtEvent> {
             let cws = this.workspace_id(null);
 
             if (aws[0] === cws[0] && aws[1] === cws[1]) {
-                this.active_hint.show();
+                this.active_hint.track(active);
             } else {
-                this.active_hint.hide();
+                this.active_hint.untrack();
             }
         };
 
@@ -593,21 +592,6 @@ export class Ext extends Ecs.System<ExtEvent> {
                 }
             }
         }
-
-        // let msg = `focused Window(${win.entity}) {\n`
-        //     + `  name: ${win.name(this)},\n`
-        //     + `  rect: ${win.rect().fmt()},\n`
-        //     + `  wm_class: "${win.meta.get_wm_class()}",\n`
-        //     + `  monitor: ${win.meta.get_monitor()},\n`
-        //     + `  workspace: ${win.workspace_id()},\n`
-        //     + `  cmdline: ${win.cmdline()},\n`
-        //     + `  xid: ${win.xid()},\n`;
-
-        // if (this.auto_tiler) {
-        //     msg += `  fork: (${this.auto_tiler.attached.get(win.entity)}),\n`;
-        // }
-
-        // Log.info(msg + '}');
     }
 
     on_gap_inner() {
@@ -734,6 +718,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     /** Triggered when a grab operation has been started */
     on_grab_start(meta: Meta.Window) {
+        this.active_hint?.untrack();
         let win = this.get_window(meta);
         if (!win) return;
 
@@ -796,7 +781,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             }
 
             if (this.active_hint?.is_tracking(win.entity)) {
-                this.active_hint.show();
+                this.active_hint.track(win);
             }
         }
     }
@@ -1048,6 +1033,10 @@ export class Ext extends Ecs.System<ExtEvent> {
         });
 
         this.connect(overview, 'hiding', () => {
+            const window = this.focus_window();
+            if (window) {
+                this.on_focused(window);
+            }
             this.register(Events.global(GlobalEvent.OverviewHidden));
         });
 
@@ -1090,6 +1079,12 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         this.connect(workspace_manager, 'workspace-added', (_, number) => {
             this.on_workspace_added(number);
+        });
+
+        // Bind show desktop and remove the active hint
+        this.connect(workspace_manager, 'showing-desktop-changed', () => {
+            this.active_hint?.untrack()
+            this.last_focused = null
         });
 
         // Modes
