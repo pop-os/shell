@@ -745,18 +745,6 @@ export class Ext extends Ecs.System<ExtEvent> {
         load_theme(this.settings.is_dark_shell() ? Style.Dark : Style.Light);
     }
 
-    on_show_window_titles() {
-        for (const window of this.windows.values()) {
-            if (window.meta.is_client_decorated()) continue;
-
-            if (this.settings.show_title()) {
-                window.decoration_show(this);
-            } else {
-                window.decoration_hide(this);
-            }
-        }
-    }
-
     /** Handle window maximization notifications */
     on_maximize(win: Window.ShellWindow) {
         if (win.is_maximized()) {
@@ -851,6 +839,30 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         this.exit_modes();
         this.unset_grab_op();
+    }
+
+    on_show_window_titles() {
+        for (const window of this.windows.values()) {
+            if (window.meta.is_client_decorated()) continue;
+
+            if (this.settings.show_title()) {
+                window.decoration_show(this);
+            } else {
+                window.decoration_hide(this);
+            }
+        }
+    }
+
+    on_smart_gap() {
+        if (this.auto_tiler) {
+            const smart_gaps = this.settings.smart_gaps();
+            for (const [entity, [mon,]] of this.auto_tiler.forest.toplevel.values()) {
+                const node = this.auto_tiler.forest.forks.get(entity);
+                if (node?.right === null) {
+                    this.auto_tiler.update_toplevel(this, node, mon, smart_gaps);
+                }
+            }
+        }
     }
 
     on_window_create(window: Meta.Window, actor: Clutter.Actor) {
@@ -1011,6 +1023,8 @@ export class Ext extends Ecs.System<ExtEvent> {
                 case 'show-title':
                     this.on_show_window_titles();
                     break;
+                case 'smart-gaps':
+                    this.on_smart_gap();
             }
         });
 
@@ -1263,7 +1277,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             let display = this.displays.get(mon_id);
 
             if (fork && display) {
-                this.auto_tiler.update_toplevel(this, fork, mon_id);
+                this.auto_tiler.update_toplevel(this, fork, mon_id, this.settings.smart_gaps());
             }
         }
     }
