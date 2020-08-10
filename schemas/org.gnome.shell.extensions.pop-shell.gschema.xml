@@ -33,6 +33,11 @@
             <summary>Size of a row in the display grid</summary>
         </key>
 
+        <key type="b" name="smart-gaps">
+            <default>false</default>
+            <summary>Hide the outer gap when a tree contains only one window</summary>
+        </key>
+
         <key type="b" name="snap-to-grid">
             <default>false</default>
             <summary>Snaps windows to the tiling grid on drop</summary>

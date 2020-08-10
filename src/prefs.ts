@@ -10,10 +10,11 @@ const { Settings } = imports.gi.Gio;
 import * as settings from 'settings';
 
 interface AppWidgets {
-    window_titles: any,
-    snap_to_grid: any,
-    outer_gap: any,
     inner_gap: any,
+    outer_gap: any,
+    smart_gaps: any,
+    snap_to_grid: any,
+    window_titles: any,
 }
 
 // @ts-ignore
@@ -35,6 +36,12 @@ function settings_dialog_new(): Gtk.Container {
         ext.set_snap_to_grid(state);
         Settings.sync();
     });
+
+    app.smart_gaps.set_active(ext.smart_gaps());
+    app.smart_gaps.connect('state-set', (_widget: any, state: boolean) => {
+        ext.set_smart_gaps(state);
+        Settings.sync();
+    })
 
     app.outer_gap.set_text(String(ext.gap_outer()));
     app.outer_gap.connect('activate', (widget: any) => {
@@ -69,14 +76,22 @@ function settings_dialog_view(): [AppWidgets, Gtk.Container] {
         xalign: 0.0,
         hexpand: true
     });
-    let window_titles = new Gtk.Switch({ halign: Gtk.Align.START });
 
     let snap_label = new Gtk.Label({
         label: "Snap to Grid (Floating Mode)",
         xalign: 0.0
     });
 
+    let smart_label = new Gtk.Label({
+        label: "Smart Gaps",
+        xalign: 0.0
+    });
+
+    let window_titles = new Gtk.Switch({ halign: Gtk.Align.START });
+
     let snap_to_grid = new Gtk.Switch({ halign: Gtk.Align.START });
+
+    let smart_gaps = new Gtk.Switch({ halign: Gtk.Align.START });
 
     grid.attach(win_label, 0, 0, 1, 1);
     grid.attach(window_titles, 1, 0, 1, 1);
@@ -84,9 +99,12 @@ function settings_dialog_view(): [AppWidgets, Gtk.Container] {
     grid.attach(snap_label, 0, 1, 1, 1);
     grid.attach(snap_to_grid, 1, 1, 1, 1);
 
-    let [inner_gap, outer_gap] = gaps_section(grid, 2);
+    grid.attach(smart_label, 0, 2, 1, 1);
+    grid.attach(smart_gaps, 1, 2, 1, 1);
 
-    let settings = { inner_gap, outer_gap, snap_to_grid, window_titles };
+    let [inner_gap, outer_gap] = gaps_section(grid, 3);
+
+    let settings = { inner_gap, outer_gap, smart_gaps, snap_to_grid, window_titles };
 
     return [settings, grid];
 }
