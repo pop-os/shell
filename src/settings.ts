@@ -50,6 +50,7 @@ const GAP_INNER = 'gap-inner';
 const GAP_OUTER = 'gap-outer';
 const ROW_SIZE = 'row-size';
 const SHOW_TITLE = 'show-title';
+const SMART_GAPS = 'smart-gaps';
 const SNAP_TO_GRID = 'snap-to-grid';
 const TILE_BY_DEFAULT = 'tile-by-default';
 
@@ -102,6 +103,10 @@ export class ExtensionSettings {
         return this.ext.get_boolean(SHOW_TITLE);
     }
 
+    smart_gaps(): boolean {
+        return this.ext.get_boolean(SMART_GAPS);
+    }
+
     snap_to_grid(): boolean {
         return this.ext.get_boolean(SNAP_TO_GRID);
     }
@@ -140,6 +145,10 @@ export class ExtensionSettings {
 
     set_show_title(set: boolean) {
         this.ext.set_boolean(SHOW_TITLE, set);
+    }
+
+    set_smart_gaps(set: boolean) {
+        this.ext.set_boolean(SMART_GAPS, set);
     }
 
     set_snap_to_grid(set: boolean) {

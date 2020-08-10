@@ -303,7 +303,7 @@ export class Tiler {
                 }
             } else {
                 ext.auto_tiler.detach_window(ext, focused.entity);
-                ext.auto_tiler.attach_to_monitor(ext, focused, [move_to, ext.active_workspace()]);
+                ext.auto_tiler.attach_to_monitor(ext, focused, [move_to, ext.active_workspace()], ext.settings.smart_gaps());
                 watching = focused;
             }
         }

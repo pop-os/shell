@@ -73,7 +73,12 @@ export class Config {
     }
 
     static from_json(json: string): Config {
-        return JSON.parse(json);
+        try {
+            return JSON.parse(json);
+        } catch (error) {
+            Log.error(`failed to parse config: ${error}`);
+            return new Config();
+        }
     }
 
     private static from_config(): Result<Config, Error> {
