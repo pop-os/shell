@@ -180,6 +180,16 @@ export class Launcher extends search.Search {
                     const result = selected[1].launch();
                     if (result instanceof error.Error) {
                         log.error(result.format());
+                    } else {
+                        let exec_name = selected[1].app_info.get_executable();
+                        if (exec_name === "gnome-control-center") {
+                            for (const window of ext.tab_list(Meta.TabList.NORMAL, null)) {
+                                if (window.meta.get_title() === "Settings") {
+                                    window.meta.activate(global.get_current_time());
+                                    break;
+                                }
+                            }
+                        }
                     }
                 }
 
