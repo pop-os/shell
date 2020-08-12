@@ -50,11 +50,21 @@ export class AutoTiler {
     update_toplevel(ext: Ext, fork: Fork, monitor: number, smart_gaps: boolean) {
         let rect = ext.monitor_work_area(monitor);
 
-        if (!(smart_gaps && fork.right === null)) {
-            rect.x += ext.gap_outer;
-            rect.y += ext.gap_outer;
-            rect.width -= ext.gap_outer * 2;
-            rect.height -= ext.gap_outer * 2;
+        if (!fork.right) {
+            if (smart_gaps) {
+                if ((ext.active_hint && fork.left.kind === 1 && ext.active_hint.is_tracking(fork.left.entity))) {
+                    ext.active_hint.hide();
+                }
+            } else {
+                rect.x += ext.gap_outer;
+                rect.y += ext.gap_outer;
+                rect.width -= ext.gap_outer * 2;
+                rect.height -= ext.gap_outer * 2;
+
+                if (ext.active_hint && fork.left.kind === 1 && ext.active_hint.is_tracking(fork.left.entity)) {
+                    ext.active_hint.show();
+                }
+            }
         }
 
         fork.smart_gaps = smart_gaps;
