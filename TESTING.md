@@ -79,6 +79,7 @@ Tasks for a tester to verify when approving a patch. Use complex window layouts 
 
 ### Window Titles
 
+- [ ] Disabling window titles using global (Pop Shell) option works for Shell Shortcuts, LibreOffice, etc.
 - [ ] Disabling window titles in Firefox works (Check debian and flatpak packages)
 
 ## With Tiling Disabled
