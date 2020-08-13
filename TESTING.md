@@ -50,7 +50,6 @@ Tasks for a tester to verify when approving a patch. Use complex window layouts 
 - [ ] Windows can be moved to another workspace with the keyboard
 - [ ] Windows can be moved to another workspace with the mouse
 - [ ] Windows can be moved to workspaces between existing workspaces
-  - Works except when moving to a new workspace at the very beginning of the stack. 
 - [ ] Moving windows to another workspace re-tiled the previous and new workspace
 - [ ] Active hint is present on the new workspace and once the window is returned to its previous workspace
 - [ ] Floating windows move across workspaces
