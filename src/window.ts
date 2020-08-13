@@ -39,6 +39,8 @@ export class ShellWindow {
 
     was_attached_to?: [Entity, boolean];
 
+    private was_hidden: boolean = false;
+
     private window_app: any;
     private extra: X11Info = {
         normal_hints: new OnceCell(),
@@ -53,7 +55,6 @@ export class ShellWindow {
         this.meta = window;
 
         if (this.is_transient()) {
-            log.info(`making above`);
             window.make_above();
         }
 
@@ -101,11 +102,15 @@ export class ShellWindow {
 
     decoration_hide(ext: Ext): void {
         if (this.ignore_decoration()) return;
+
+        this.was_hidden = true;
+
         this.decoration(ext, (xid) => xprop.set_hint(xid, xprop.MOTIF_HINTS, xprop.HIDE_FLAGS));
     }
 
     decoration_show(ext: Ext): void {
-        if (this.ignore_decoration()) return;
+        if (!this.was_hidden) return;
+
         this.decoration(ext, (xid) => xprop.set_hint(xid, xprop.MOTIF_HINTS, xprop.SHOW_FLAGS));
     }
 

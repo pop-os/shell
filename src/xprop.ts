@@ -81,7 +81,7 @@ export function may_decorate(xid: string): boolean {
 }
 
 export function motif_hints(xid: string): Array<string> | null {
-    return get_hint(xid, '_MOTIF_WM_HINTS');
+    return get_hint(xid, MOTIF_HINTS);
 }
 
 export function set_hint(xid: string, hint: string, value: string[]) {
