@@ -66,6 +66,7 @@ export class ActiveHint {
     }
 
     restack(actor: Clutter.Actor) {
+        this.hide();
         if (this.tracked) {
             if (this.tracked.workspace === global.workspace_manager.get_active_workspace_index()) {
                 // Avoid restacking if the window is maximized / fullscreen
@@ -76,15 +77,11 @@ export class ActiveHint {
                 // Do not show the boxes when the window being tracked is minimized
                 if (!this.tracked.meta.minimized) {
                     this.show();
-                } else {
-                    this.hide();
                 }
 
                 for (const box of this.border) {
                     global.window_group.set_child_above_sibling(box, actor);
                 }
-            } else {
-                this.hide();
             }
         }
     }
