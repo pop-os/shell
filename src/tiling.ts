@@ -63,8 +63,8 @@ export class Tiler {
     rect(ext: Ext, monitor: Rectangle): Rectangle | null {
         if (!ext.overlay.visible) return null;
 
-        const columns = monitor.width / ext.column_size;
-        const rows = monitor.height / ext.row_size;
+        const columns = Math.floor(monitor.width / ext.column_size);
+        const rows = Math.floor(monitor.height / ext.row_size);
 
         return monitor_rect(monitor, columns, rows);
     }
@@ -507,8 +507,8 @@ export class Tiler {
         let mon_geom = ext.monitor_work_area(win.meta.get_monitor());
         if (mon_geom) {
             let rect = win.rect();
-            const columns = mon_geom.width / ext.column_size;
-            const rows = mon_geom.height / ext.row_size;
+            const columns = Math.floor(mon_geom.width / ext.column_size);
+            const rows = Math.floor(mon_geom.height / ext.row_size);
             this.change(
                 rect,
                 monitor_rect(mon_geom, columns, rows),
