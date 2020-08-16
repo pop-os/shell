@@ -68,10 +68,16 @@ declare namespace Clutter {
         END = 3
     }
 
+    enum AnimationMode {
+        EASE_IN_QUAD = 2,
+        EASE_OUT_QUAD = 3,
+    }
+
     interface Actor extends Rectangular, GObject.Object {
         visible: boolean;
         x_align: ActorAlign;
         y_align: ActorAlign;
+        opacity: number;
 
         add(child: Actor): void;
         destroy(): void;
@@ -90,6 +96,8 @@ declare namespace Clutter {
         set_easing_duration(msecs: number | null): void;
         set_opacity(value: number): void;
         set_y_align(align: ActorAlign): void;
+        set_position(x: number, y: number): void;
+        set_size(width: number, height: number): void;
         show(): void;
     }
 
@@ -181,6 +189,10 @@ declare namespace St {
 
         show(): void;
         show_all(): void;
+    }
+
+    interface Bin extends Clutter.Actor {
+
     }
 
     interface Entry extends Widget {

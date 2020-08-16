@@ -36,23 +36,28 @@ interface X11Info {
 export class ShellWindow {
     entity: Entity;
     meta: Meta.Window;
+    ext: Ext;
 
     was_attached_to?: [Entity, boolean];
 
     private was_hidden: boolean = false;
 
     private window_app: any;
+
     private extra: X11Info = {
         normal_hints: new OnceCell(),
         wm_role_: new OnceCell(),
         xid_: new OnceCell()
     };
 
+    private _border: St.Bin = new St.Bin({ style_class: 'window-clone-border' });
+
     constructor(entity: Entity, window: Meta.Window, window_app: any, ext: Ext) {
         this.window_app = window_app;
 
         this.entity = entity;
         this.meta = window;
+        this.ext = ext;
 
         if (this.is_transient()) {
             window.make_above();
@@ -67,6 +72,19 @@ export class ShellWindow {
                 }
             }
         }
+
+        this.bind_window_events();
+
+        this._border.hide();
+
+        global.window_group.add_child(this._border);
+        global.window_group.set_child_above_sibling(this._border, null);
+
+        this.update_border_layout();
+    }
+
+    get border() {
+        return this._border;
     }
 
     activate(): void {
@@ -175,9 +193,6 @@ export class ShellWindow {
                 ext.register({ tag: 2, window: this, kind: { tag: 1, rect: clone } });
                 if (on_complete) ext.register_fn(on_complete);
                 ext.tween_signals.delete(entity_string);
-                if (ext.active_hint?.is_tracking(this.entity)) {
-                    ext.active_hint.track(this);
-                }
             };
 
             if (ext.animate_windows && !ext.init) {
@@ -201,10 +216,6 @@ export class ShellWindow {
                     duration: 149,
                     mode: null,
                 });
-
-                if (ext.active_hint?.is_tracking(this.entity)) {
-                    ext.active_hint.hide();
-                }
 
                 ext.tween_signals.set(entity_string, [
                     Tweener.on_window_tweened(this.meta, onComplete),
@@ -261,6 +272,52 @@ export class ShellWindow {
             if (utils.is_wayland()) return null;
             return xprop.get_xid(this.meta);
         })
+    }
+
+    show_border() {
+        if (this.ext.settings.active_hint()) {
+            let border = this._border;
+            if (!this.is_maximized()) {
+                border.show();
+            }
+        }
+    }
+
+    hide_border() {
+        let border = this._border;
+        border.hide();
+    }
+
+    update_border_layout() {
+        let frameRect = this.meta.get_frame_rect();
+        let [frameX, frameY, frameWidth, frameHeight] = [frameRect.x, frameRect.y, frameRect.width, frameRect.height];
+
+        let border = this._border;
+
+        border.set_position(frameX, frameY);
+        border.set_size(frameWidth, frameHeight);
+    }
+
+    bind_window_events() {
+        let windowSignals = [
+            this.meta.connect('size-changed', () => {
+                this.window_changed();
+            }),
+            this.meta.connect('position-changed', () => {
+                this.window_changed();
+            }),
+        ];
+
+        let extWinSignals = this.ext.window_signals.get_or(this.entity, () => new Array());
+        Array.prototype.push.apply(extWinSignals, windowSignals);
+    }
+
+    window_changed() {
+        this.ext.show_border_on_focused();
+        if (this.is_maximized() || this.meta.minimized) {
+            this.hide_border();
+        }
+        this.update_border_layout();
     }
 }
 
