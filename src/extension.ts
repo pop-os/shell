@@ -15,7 +15,6 @@ import * as Settings from 'settings';
 import * as Tiling from 'tiling';
 import * as Window from 'window';
 import * as launcher from 'launcher';
-import * as active_hint from 'active_hint';
 import * as auto_tiler from 'auto_tiler';
 import * as node from 'node';
 import * as utils from 'utils';
@@ -56,10 +55,6 @@ export class Ext extends Ecs.System<ExtEvent> {
     settings: Settings.ExtensionSettings = new Settings.ExtensionSettings();
 
     // Widgets
-
-
-    /** Displays a border hint around active windows */
-    active_hint: active_hint.ActiveHint | null = null;
 
     /** An overlay which shows a preview of where a window will be moved */
     overlay: Clutter.Actor = new St.BoxLayout({ style_class: "tile-preview", visible: false });
@@ -256,7 +251,6 @@ export class Ext extends Ecs.System<ExtEvent> {
                         if (this.auto_tiler && !win.is_maximized() && !win.meta.is_fullscreen()) {
                             this.auto_tiler.reflow(this, win.entity);
                         }
-
                         break
 
                     case WindowEvent.Workspace:
@@ -271,10 +265,6 @@ export class Ext extends Ecs.System<ExtEvent> {
                                     let fork = this.auto_tiler.forest.forks.get(win.entity);
                                     if (fork) {
                                         this.auto_tiler.reflow(this, win.entity);
-                                    }
-
-                                    if (this.active_hint?.is_tracking(win.entity)) {
-                                        this.active_hint.track(win);
                                     }
                                 } else if (win.is_maximized()) {
                                     this.size_changed_block();
@@ -434,10 +424,6 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         this.column_size = this.settings.column_size() * this.dpi;
         this.row_size = this.settings.row_size() * this.dpi;
-
-        if (this.settings.active_hint() && !this.active_hint) {
-            this.active_hint = new active_hint.ActiveHint(this.dpi);
-        }
     }
 
 
@@ -449,37 +435,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         return Rect.Rectangle.from_meta(meta);
     }
 
-    on_active_hint() {
-        if (this.settings.active_hint()) {
-            this.active_hint = new active_hint.ActiveHint(this.dpi);
-
-            const focused = this.focus_window();
-            if (focused) {
-                this.active_hint.track(focused);
-            }
-        } else if (this.active_hint) {
-            this.active_hint.destroy();
-            this.active_hint = null;
-        }
-    }
-
     on_active_workspace_changed() {
-        const refocus_hint = () => {
-            if (!this.active_hint?.tracked) return;
-            let active = this.windows.get(this.active_hint.tracked.entity);
-            if (!active) return;
-
-            let aws = this.workspace_id(active);
-            let cws = this.workspace_id(null);
-
-            if (aws[0] === cws[0] && aws[1] === cws[1]) {
-                this.active_hint.track(active);
-            } else {
-                this.active_hint.untrack();
-            }
-        };
-
-        refocus_hint();
         this.exit_modes();
         this.last_focused = null;
     }
@@ -489,14 +445,13 @@ export class Ext extends Ecs.System<ExtEvent> {
         this.window_signals.take_with(win, (signals) => {
             this.windows.with(win, (window) => {
                 for (const signal of signals) {
+                    window.border.destroy();
                     window.meta.disconnect(signal);
                 }
             });
         });
 
         if (this.last_focused == win) {
-            this.active_hint?.untrack();
-
             this.last_focused = null;
 
             if (this.auto_tiler) {
@@ -568,14 +523,13 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     /** Triggered when a window has been focused */
     on_focused(win: Window.ShellWindow) {
+
         this.exit_modes();
 
         this.size_signals_unblock(win);
 
         this.prev_focused = this.last_focused;
         this.last_focused = win.entity;
-
-        this.active_hint?.track(win);
 
         if (this.auto_tiler) {
             win.meta.raise();
@@ -596,6 +550,8 @@ export class Ext extends Ecs.System<ExtEvent> {
             }
         }
 
+        this.show_border_on_focused();
+
         if (this.conf.log_on_focus) {
             let msg = `focused Window(${win.entity}) {\n`
                 + `  class: "${win.meta.get_wm_class()}",\n`
@@ -611,6 +567,26 @@ export class Ext extends Ecs.System<ExtEvent> {
             }
 
             Log.debug(msg + '}');
+        }
+    }
+
+    show_border_on_focused() {
+        this.hide_all_borders();
+        let focusWindow = global.display.focus_window;
+
+        if (focusWindow) {
+            let focusWindowActor = this.get_window(focusWindow);
+            if (focusWindowActor) {
+                let focusExtWindow = this.windows.get(focusWindowActor.entity);
+                if (focusExtWindow)
+                    focusExtWindow.show_border();
+            }
+        }
+    }
+
+    hide_all_borders() {
+        for (const extWindow of this.windows.values()) {
+            extWindow.hide_border();
         }
     }
 
@@ -731,14 +707,11 @@ export class Ext extends Ecs.System<ExtEvent> {
             Log.error(`mismatch on grab op entity`);
         }
 
-        this.active_hint?.track(win);
-
         this.grab_op = null;
     }
 
     /** Triggered when a grab operation has been started */
     on_grab_start(meta: Meta.Window) {
-        this.active_hint?.untrack();
         let win = this.get_window(meta);
         if (!win) return;
 
@@ -752,9 +725,6 @@ export class Ext extends Ecs.System<ExtEvent> {
 
             this.size_signals_block(win);
         }
-
-
-        this.active_hint?.track(win);
     }
 
     on_gtk_shell_changed() {
@@ -787,10 +757,6 @@ export class Ext extends Ecs.System<ExtEvent> {
                 let fork = this.auto_tiler.forest.forks.get(fork_ent);
                 if (fork) this.auto_tiler.tile(this, fork, fork.area);
             }
-
-            if (this.active_hint?.is_tracking(win.entity)) {
-                this.active_hint.track(win);
-            }
         }
     }
 
@@ -798,10 +764,6 @@ export class Ext extends Ecs.System<ExtEvent> {
     on_minimize(win: Window.ShellWindow) {
         if (this.auto_tiler) {
             if (win.meta.minimized) {
-                if (this.active_hint && this.active_hint.is_tracking(win.entity)) {
-                    this.active_hint.untrack();
-                }
-
                 const attached = this.auto_tiler.attached.get(win.entity)
                 if (!attached) return;
 
@@ -849,14 +811,10 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     on_overview_hidden() {
-        this.active_hint?.restack_auto();
+        
     }
 
     on_overview_shown() {
-        if (this.active_hint) {
-            this.active_hint.hide();
-        }
-
         this.exit_modes();
         this.unset_grab_op();
     }
@@ -1032,14 +990,12 @@ export class Ext extends Ecs.System<ExtEvent> {
                     this.register(Events.window_event(win, WindowEvent.Fullscreen));
                 }
             }
-
-            this.active_hint?.restack_auto();
         });
 
         this.connect(this.settings.ext, 'changed', (_s, key: string) => {
             switch (key) {
                 case 'active-hint':
-                    this.on_active_hint();
+                    this.show_border_on_focused();
                     break;
                 case 'gap-inner':
                     this.on_gap_inner();
@@ -1124,7 +1080,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         // Bind show desktop and remove the active hint
         this.connect(workspace_manager, 'showing-desktop-changed', () => {
-            this.active_hint?.untrack()
+            this.hide_all_borders();
             this.last_focused = null
         });
 
@@ -1425,8 +1381,6 @@ function enable() {
         ext.register_fn(() => {
             if (ext?.auto_tiler) ext.snap_windows();
         });
-
-        ext.on_active_hint();
     }
 
     ext.signals_attach();
@@ -1450,9 +1404,7 @@ function disable() {
         ext.signals_remove();
         ext.exit_modes();
 
-        if (ext.settings.active_hint()) {
-            ext.active_hint?.untrack();
-        }
+        ext.hide_all_borders();
 
         layoutManager.removeChrome(ext.overlay);
 
