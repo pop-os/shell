@@ -39,6 +39,8 @@ export class ShellWindow {
 
     was_attached_to?: [Entity, boolean];
 
+    private was_hidden: boolean = false;
+
     private window_app: any;
     private extra: X11Info = {
         normal_hints: new OnceCell(),
@@ -53,17 +55,14 @@ export class ShellWindow {
         this.meta = window;
 
         if (this.is_transient()) {
-            log.info(`making above`);
             window.make_above();
         }
 
         if (this.may_decorate()) {
             if (!window.is_client_decorated()) {
                 if (ext.settings.show_title()) {
-                    log.info(`showing decorations`);
                     this.decoration_show(ext);
                 } else {
-                    log.info(`hiding decorations`);
                     this.decoration_hide(ext);
                 }
             }
@@ -103,11 +102,15 @@ export class ShellWindow {
 
     decoration_hide(ext: Ext): void {
         if (this.ignore_decoration()) return;
+
+        this.was_hidden = true;
+
         this.decoration(ext, (xid) => xprop.set_hint(xid, xprop.MOTIF_HINTS, xprop.HIDE_FLAGS));
     }
 
     decoration_show(ext: Ext): void {
-        if (this.ignore_decoration()) return;
+        if (!this.was_hidden) return;
+
         this.decoration(ext, (xid) => xprop.set_hint(xid, xprop.MOTIF_HINTS, xprop.SHOW_FLAGS));
     }
 
@@ -150,7 +153,7 @@ export class ShellWindow {
                     // Transient windows are most likely dialogs
                     && !this.is_transient()
                     // Blacklist any windows that happen to leak through our filter
-                    && (wm_class === null || !blacklisted(wm_class, this.meta.get_title()));
+                    && (wm_class === null || !ext.conf.window_shall_float(wm_class, this.meta.get_title()));
             });
     }
 
@@ -261,27 +264,12 @@ export class ShellWindow {
     }
 }
 
-const BLACKLIST: string[] = [
-    'Conky',
-    'Com.github.donadigo.eddy',
-    'Gnome-screenshot',
-    'Authy Desktop',
-    'jetbrains-toolbox'
-];
-
 /// Activates a window, and moves the mouse point to the center of it.
 export function activate(win: Meta.Window) {
     win.raise();
     win.unminimize();
     win.activate(global.get_current_time());
     place_pointer_on(win)
-}
-
-export function blacklisted(window_class: string, title: string): boolean {
-    return BLACKLIST.indexOf(window_class) > -1
-        || (window_class === "Steam" && title !== "Steam")
-        || (window_class === "TelegramDesktop" && title === "Media viewer")
-        || (window_class === "KotatogramDesktop" && title === "Media viewer");
 }
 
 export function place_pointer_on(win: Meta.Window) {
