@@ -436,6 +436,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     on_active_workspace_changed() {
+        this.show_border_on_focused();
         this.exit_modes();
         this.last_focused = null;
     }
@@ -572,15 +573,10 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     show_border_on_focused() {
         this.hide_all_borders();
-        let focusWindow = global.display.focus_window;
-
-        if (focusWindow) {
-            let focusWindowActor = this.get_window(focusWindow);
-            if (focusWindowActor) {
-                let focusExtWindow = this.windows.get(focusWindowActor.entity);
-                if (focusExtWindow)
-                    focusExtWindow.show_border();
-            }
+        
+        let focusedWindow = this.focus_window();
+        if (focusedWindow) {
+            focusedWindow.show_border();
         }
     }
 
