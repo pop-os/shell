@@ -282,11 +282,15 @@ export class ShellWindow {
     show_border() {
         if (this.ext.settings.active_hint()) {
             let border = this._border;
-            if (!this.is_maximized() && !this.meta.minimized) {
+            if (!this.is_maximized() && !this.meta.minimized && this.same_workspace()) {
                 border.show();
-                this.restack();
             }
+            this.restack();
         }
+    }
+
+    same_workspace() {
+        return this.workspace_id() === global.workspace_manager.get_active_workspace_index()
     }
 
     /**
@@ -330,6 +334,9 @@ export class ShellWindow {
                 this._window_changed();
             }),
             this.meta.connect('position-changed', () => {
+                this._window_changed();
+            }),
+            this.meta.connect('workspace-changed', () => {
                 this._window_changed();
             }),
             this._border.connect('style-changed', () => {
