@@ -80,12 +80,14 @@ declare namespace Clutter {
         opacity: number;
 
         add(child: Actor): void;
+        add_child(child: Actor): void;
         destroy(): void;
         ease(params: Object): void;
         hide(): void;
         get_child_at_index(nth: number): Clutter.Actor | null;
         get_n_children(): number;
         get_parent(): Clutter.Actor | null;
+        get_stage(): Clutter.Actor | null;
         get_transition(param: string): any | null;
         is_visible(): boolean;
         queue_redraw(): void;
@@ -178,6 +180,7 @@ declare namespace Shell {
 
 declare namespace St {
     interface Widget extends Clutter.Actor {
+        get_theme_node(): any
         hide(): void;
         set_style_class_name(name: string): void;
         add_style_class_name(name: string): void
@@ -191,8 +194,8 @@ declare namespace St {
         show_all(): void;
     }
 
-    interface Bin extends Clutter.Actor {
-
+    interface Bin extends St.Widget {
+         
     }
 
     interface Entry extends Widget {

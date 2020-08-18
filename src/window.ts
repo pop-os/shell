@@ -52,6 +52,8 @@ export class ShellWindow {
 
     private _border: St.Bin = new St.Bin({ style_class: 'window-clone-border' });
 
+    private _border_size = 0;
+
     constructor(entity: Entity, window: Meta.Window, window_app: any, ext: Ext) {
         this.window_app = window_app;
 
@@ -79,8 +81,11 @@ export class ShellWindow {
 
         global.window_group.add_child(this._border);
 
-        this._restack();
-        this._update_border_layout();
+        this.restack();
+
+        if (this.meta.get_compositor_private()?.get_stage()) {
+            this._on_style_changed();
+        }
     }
 
     get border() {
@@ -279,16 +284,28 @@ export class ShellWindow {
             let border = this._border;
             if (!this.is_maximized() && !this.meta.minimized) {
                 border.show();
+                this.restack();
             }
         }
     }
 
-    private _restack() {
+    /**
+     * This current does not work properly on Workspace change when single window
+     * because GNOME Shell puts the Window Actor at the top of the border.
+     *
+     * The update_border_layout() adds a padding outside instead to compensate.
+     */
+    restack() {
         let border = this._border;
         let actor = this.meta.get_compositor_private();
+        let win_group = global.window_group;
+
         if (actor && actor.get_parent() === border.get_parent()) {
-            global.window_group.set_child_above_sibling(border, actor);
+            win_group.set_child_above_sibling(border, actor);
+        } else {
+            win_group.set_child_above_sibling(border, null);
         }
+        this._update_border_layout();
     }
 
     hide_border() {
@@ -301,9 +318,10 @@ export class ShellWindow {
         let [frameX, frameY, frameWidth, frameHeight] = [frameRect.x, frameRect.y, frameRect.width, frameRect.height];
 
         let border = this._border;
+        let borderSize = this._border_size;
 
-        border.set_position(frameX, frameY);
-        border.set_size(frameWidth, frameHeight);
+        border.set_position(frameX - borderSize, frameY - borderSize);
+        border.set_size(frameWidth + 2 * borderSize, frameHeight + 2 * borderSize);
     }
 
     private _bind_window_events() {
@@ -314,6 +332,9 @@ export class ShellWindow {
             this.meta.connect('position-changed', () => {
                 this._window_changed();
             }),
+            this._border.connect('style-changed', () => {
+                this._on_style_changed();
+            }),
         ];
 
         let extWinSignals = this.ext.window_signals.get_or(this.entity, () => new Array());
@@ -321,9 +342,14 @@ export class ShellWindow {
     }
 
     private _window_changed() {
-        this._update_border_layout();
-        this._restack();
+        this.restack();
         this.ext.show_border_on_focused();
+    }
+
+    private _on_style_changed() {
+        let border = this._border;
+        let borderNode = border.get_theme_node();
+        this._border_size = borderNode.get_border_width(St.Side.TOP);
     }
 }
 
