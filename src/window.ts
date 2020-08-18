@@ -290,7 +290,12 @@ export class ShellWindow {
     }
 
     same_workspace() {
-        return this.workspace_id() === global.workspace_manager.get_active_workspace_index()
+        const workspace = this.meta.get_workspace();
+        if (workspace) {
+            let workspace_id = workspace.index();
+            return workspace_id === global.workspace_manager.get_active_workspace_index()
+        }
+        return false;
     }
 
     /**
