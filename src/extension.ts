@@ -446,7 +446,6 @@ export class Ext extends Ecs.System<ExtEvent> {
         this.window_signals.take_with(win, (signals) => {
             this.windows.with(win, (window) => {
                 for (const signal of signals) {
-                    window.border.destroy();
                     window.meta.disconnect(signal);
                 }
             });
@@ -536,6 +535,8 @@ export class Ext extends Ecs.System<ExtEvent> {
             win.meta.raise();
         }
 
+        this.show_border_on_focused();
+
         if (this.auto_tiler && this.prev_focused !== null && win.is_tilable(this)) {
             let prev = this.windows.get(this.prev_focused);
             let is_attached = this.auto_tiler.attached.contains(this.prev_focused);
@@ -550,8 +551,6 @@ export class Ext extends Ecs.System<ExtEvent> {
                 }
             }
         }
-
-        this.show_border_on_focused();
 
         if (this.conf.log_on_focus) {
             let msg = `focused Window(${win.entity}) {\n`
@@ -844,6 +843,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         if (win) {
             const entity = win.entity;
             actor.connect('destroy', () => {
+                win?.border.destroy();
                 this.on_destroy(entity);
                 return false;
             });
