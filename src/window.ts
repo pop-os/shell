@@ -78,8 +78,8 @@ export class ShellWindow {
         this._border.hide();
 
         global.window_group.add_child(this._border);
-        global.window_group.set_child_above_sibling(this._border, null);
 
+        this.restack();
         this.update_border_layout();
     }
 
@@ -277,9 +277,17 @@ export class ShellWindow {
     show_border() {
         if (this.ext.settings.active_hint()) {
             let border = this._border;
-            if (!this.is_maximized()) {
+            if (!this.is_maximized() && !this.meta.minimized) {
                 border.show();
             }
+        }
+    }
+
+    restack() {
+        let border = this._border;
+        let actor = this.meta.get_compositor_private();
+        if (actor && actor.get_parent() === border.get_parent()) {
+            global.window_group.set_child_above_sibling(border, actor);
         }
     }
 
@@ -313,11 +321,9 @@ export class ShellWindow {
     }
 
     window_changed() {
-        this.ext.show_border_on_focused();
-        if (this.is_maximized() || this.meta.minimized) {
-            this.hide_border();
-        }
         this.update_border_layout();
+        this.restack();
+        this.ext.show_border_on_focused();
     }
 }
 
