@@ -1063,6 +1063,10 @@ export class Ext extends Ecs.System<ExtEvent> {
             this.register_fn(() => this.on_grab_end(win, op));
         });
 
+        this.connect(global.window_manager, 'switch-workspace', () => {
+            this.show_border_on_focused();
+        });
+
         this.connect(workspace_manager, 'active-workspace-changed', () => {
             this.on_active_workspace_changed();
         });
