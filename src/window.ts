@@ -73,14 +73,14 @@ export class ShellWindow {
             }
         }
 
-        this.bind_window_events();
+        this._bind_window_events();
 
         this._border.hide();
 
         global.window_group.add_child(this._border);
 
-        this.restack();
-        this.update_border_layout();
+        this._restack();
+        this._update_border_layout();
     }
 
     get border() {
@@ -283,7 +283,7 @@ export class ShellWindow {
         }
     }
 
-    restack() {
+    private _restack() {
         let border = this._border;
         let actor = this.meta.get_compositor_private();
         if (actor && actor.get_parent() === border.get_parent()) {
@@ -296,7 +296,7 @@ export class ShellWindow {
         border.hide();
     }
 
-    update_border_layout() {
+    private _update_border_layout() {
         let frameRect = this.meta.get_frame_rect();
         let [frameX, frameY, frameWidth, frameHeight] = [frameRect.x, frameRect.y, frameRect.width, frameRect.height];
 
@@ -306,13 +306,13 @@ export class ShellWindow {
         border.set_size(frameWidth, frameHeight);
     }
 
-    bind_window_events() {
+    private _bind_window_events() {
         let windowSignals = [
             this.meta.connect('size-changed', () => {
-                this.window_changed();
+                this._window_changed();
             }),
             this.meta.connect('position-changed', () => {
-                this.window_changed();
+                this._window_changed();
             }),
         ];
 
@@ -320,9 +320,9 @@ export class ShellWindow {
         Array.prototype.push.apply(extWinSignals, windowSignals);
     }
 
-    window_changed() {
-        this.update_border_layout();
-        this.restack();
+    private _window_changed() {
+        this._update_border_layout();
+        this._restack();
         this.ext.show_border_on_focused();
     }
 }
