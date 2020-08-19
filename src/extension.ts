@@ -19,6 +19,7 @@ import * as auto_tiler from 'auto_tiler';
 import * as node from 'node';
 import * as utils from 'utils';
 import * as Executor from 'executor';
+import * as movement from 'movement';
 
 import type { Entity } from 'ecs';
 import type { ExtEvent } from 'events';
@@ -26,6 +27,7 @@ import type { Rectangle } from 'rectangle';
 import type { Indicator } from 'panel_settings';
 import type { Launcher } from './launcher';
 import { Fork } from './fork';
+const Movement = movement.Movement;
 
 const { Gio, Meta, St } = imports.gi;
 const { GlobalEvent, WindowEvent } = Events;
@@ -572,7 +574,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     show_border_on_focused() {
         this.hide_all_borders();
-        
+
         let focusedWindow = this.focus_window();
         if (focusedWindow) {
             focusedWindow.show_border();
@@ -591,7 +593,6 @@ export class Ext extends Ecs.System<ExtEvent> {
         let prev_gap = this.gap_inner_prev / 4 / this.dpi;
 
         if (current != prev_gap) {
-            Log.info(`inner gap changed to ${current}`);
             if (this.auto_tiler) {
                 for (const [entity,] of this.auto_tiler.forest.toplevel.values()) {
                     const fork = this.auto_tiler.forest.forks.get(entity);
@@ -677,17 +678,22 @@ export class Ext extends Ecs.System<ExtEvent> {
                 } else {
                     const fork = this.auto_tiler.attached.get(win.entity);
                     if (fork) {
-                        const component = this.auto_tiler.forest.forks.get(fork);
-                        if (component) {
-                            let top_level = this.auto_tiler.forest.find_toplevel(this.workspace_id());
+                        const forest = this.auto_tiler.forest;
+                        const node = forest.forks.get(fork);
+                        if (node) {
+                            let top_level = forest.find_toplevel(this.workspace_id());
                             if (top_level) {
-                                crect.clamp((this.auto_tiler.forest.forks.get(top_level) as Fork).area);
+                                crect.clamp((forest.forks.get(top_level) as Fork).area);
                             }
 
                             const movement = this.grab_op.operation(crect);
 
-                            this.auto_tiler.forest.resize(this, fork, component, win.entity, movement, crect);
-                            this.auto_tiler.forest.arrange(this, component.workspace);
+                            if (this.movement_is_valid(win, movement)) {
+                                forest.resize(this, fork, node, win.entity, movement, crect);
+                                forest.arrange(this, node.workspace);
+                            } else {
+                                forest.tile(this, node, node.area);
+                            }
                         } else {
                             Log.error(`no fork component found`);
                         }
@@ -703,6 +709,34 @@ export class Ext extends Ecs.System<ExtEvent> {
         }
 
         this.grab_op = null;
+    }
+
+    movement_is_valid(win: Window.ShellWindow, movement: movement.Movement) {
+        if ((movement & Movement.SHRINK) !== 0) {
+            if ((movement & Movement.DOWN) !== 0) {
+                const w = this.focus_selector.up(this, win);
+                if (!w) return false;
+                const r = w.rect();
+                if (r.y + r.height > win.rect().y) return false;
+            } else if ((movement & Movement.UP) !== 0) {
+                const w = this.focus_selector.down(this, win);
+                if (!w) return false;
+                const r = w.rect();
+                if (r.y + r.height < win.rect().y) return false;
+            } else if ((movement & Movement.LEFT) !== 0) {
+                const w = this.focus_selector.right(this, win);
+                if (!w) return false;
+                const r = w.rect();
+                if (r.x + r.width < win.rect().x) return false;
+            } else if ((movement & Movement.RIGHT) !== 0) {
+                const w = this.focus_selector.left(this, win);
+                if (!w) return false;
+                const r = w.rect();
+                if (r.x + r.width > win.rect().x) return false;
+            }
+        }
+
+        return true;
     }
 
     /** Triggered when a grab operation has been started */
@@ -896,8 +930,6 @@ export class Ext extends Ecs.System<ExtEvent> {
         if (this.auto_tiler) {
             for (const [entity, monitor] of this.auto_tiler.forest.toplevel.values()) {
                 if (condition(monitor[1])) {
-                    Log.info(`moving tree from Fork(${entity})`);
-
                     const value = modify(monitor[1]);
                     monitor[1] = value;
                     let fork = this.auto_tiler.forest.forks.get(entity);
@@ -919,7 +951,6 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     on_workspace_removed(number: number) {
-        Log.info(`workspace ${number} was removed`);
         this.on_workspace_modify(
             (current) => current > number,
             (prev) => prev - 1
@@ -1088,8 +1119,6 @@ export class Ext extends Ecs.System<ExtEvent> {
         // Modes
 
         if (this.settings.tile_by_default() && !this.auto_tiler) {
-            Log.info(`tile by default enabled`);
-
             this.auto_tiler = new auto_tiler.AutoTiler(
                 new Forest.Forest()
                     .connect_on_attach((entity: Entity, window: Entity) => {
@@ -1171,15 +1200,12 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     toggle_tiling() {
         if (this.auto_tiler) {
-            Log.info(`tile by default disabled!`);
             this.unregister_storage(this.auto_tiler.attached);
             this.auto_tiler = null;
             this.settings.set_tile_by_default(false);
             this.tiling_toggle_switch.setToggleState(false);
             this.button.icon.gicon = this.button_gio_icon_auto_off; // type: Gio.Icon
         } else {
-            Log.info(`tile by default enabled!`);
-
             const original = this.active_workspace();
 
             let tiler = new auto_tiler.AutoTiler(
