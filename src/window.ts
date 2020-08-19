@@ -50,7 +50,7 @@ export class ShellWindow {
         xid_: new OnceCell()
     };
 
-    private _border: St.Bin = new St.Bin({ style_class: 'window-clone-border' });
+    private _border: St.Bin = new St.Bin({ style_class: 'pop-shell-active-hint' });
 
     private _border_size = 0;
 
