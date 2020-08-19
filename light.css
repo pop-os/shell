@@ -1,5 +1,9 @@
 .pop-shell-active-hint {
-    background: rgba(255, 173, 0, 1);
+    border-width: 5px;
+    border-style: solid;
+    border-color: #FFAD00;
+    border-radius: 5px;
+    box-shadow: inset 0 0 0 1px rgba(200, 200, 200, 0);
 }
 
 .pop-shell-search-element:select{
