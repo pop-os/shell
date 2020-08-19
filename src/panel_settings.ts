@@ -2,6 +2,7 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 // import * as auto_tiler from 'auto_tiler';
 import * as Log from 'log';
+import * as Utils from 'utils';
 
 //import type { Entity } from './ecs';
 import type { Ext } from './extension';
@@ -39,7 +40,11 @@ export class Indicator {
         this.button.add_actor(this.button.icon);
 
         this.button.menu.addMenuItem(tiled(ext));
-        this.button.menu.addMenuItem(show_title(ext));
+
+        if (!Utils.is_wayland()) {
+            this.button.menu.addMenuItem(show_title(ext));
+        }
+
         this.button.menu.addMenuItem(menu_separator(''));
 
         this.button.menu.addMenuItem(shortcuts(this.button.menu));
