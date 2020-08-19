@@ -51,15 +51,17 @@ export class Indicator {
         this.button.menu.addMenuItem(settings_button(this.button.menu));
         this.button.menu.addMenuItem(menu_separator(''));
 
-        this.button.menu.addMenuItem(
-            toggle(
-                _("Show Active Hint"),
-                ext.settings.active_hint(),
-                (toggle) => {
-                    ext.settings.set_active_hint(toggle.state);
-                }
-            )
-        );
+        if (!Utils.is_wayland()) {
+            this.button.menu.addMenuItem(
+                toggle(
+                    _("Show Active Hint"),
+                    ext.settings.active_hint(),
+                    (toggle) => {
+                        ext.settings.set_active_hint(toggle.state);
+                    }
+                )
+            );
+        }
 
         this.button.menu.addMenuItem(
             number_entry(

@@ -435,7 +435,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         this.column_size = this.settings.column_size() * this.dpi;
         this.row_size = this.settings.row_size() * this.dpi;
 
-        if (this.settings.active_hint() && !this.active_hint) {
+        if (this.settings.active_hint() && !this.active_hint && !utils.is_wayland()) {
             this.active_hint = new active_hint.ActiveHint(this.dpi);
         }
     }
@@ -450,6 +450,8 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     on_active_hint() {
+        if (utils.is_wayland()) return;
+
         if (this.settings.active_hint()) {
             this.active_hint = new active_hint.ActiveHint(this.dpi);
 
