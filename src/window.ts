@@ -341,9 +341,6 @@ export class ShellWindow {
             this.meta.connect('position-changed', () => {
                 this._window_changed();
             }),
-            this.meta.connect('workspace-changed', () => {
-                this._window_changed();
-            }),
             this._border.connect('style-changed', () => {
                 this._on_style_changed();
             }),
@@ -354,7 +351,6 @@ export class ShellWindow {
     }
 
     private _window_changed() {
-        this.restack();
         this.ext.show_border_on_focused();
     }
 
