@@ -77,6 +77,10 @@ export class ShellWindow {
 
         this._bind_window_events();
 
+        this._border.connect('style-changed', () => {
+            this._on_style_changed();
+        });
+
         this._border.hide();
 
         global.window_group.add_child(this._border);
@@ -340,9 +344,6 @@ export class ShellWindow {
             }),
             this.meta.connect('position-changed', () => {
                 this._window_changed();
-            }),
-            this._border.connect('style-changed', () => {
-                this._on_style_changed();
             }),
         ];
 
