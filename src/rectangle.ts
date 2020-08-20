@@ -25,11 +25,12 @@ export class Rectangle {
 
     set height(height: number) { this.array[3] = height; }
 
-    apply(other: Rectangle) {
+    apply(other: Rectangle): this {
         this.x += other.x;
         this.y += other.y;
         this.width += other.width;
         this.height += other.height;
+        return this;
     }
 
     clamp(other: Rectangular) {
