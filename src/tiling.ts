@@ -180,34 +180,8 @@ export class Tiler {
 
                 let crect = grab_op.rect.clone();
 
-                // TODO: This is a hack. Find a better solution.
-                let fix_diff = () => {
-                    let diff = before.diff(crect);
-
-                    diff.width -= diff.width % 64;
-                    diff.height -= diff.height % 64;
-
-                    if (diff.width > 64) {
-                        diff.width = (diff.width - 64) * -1;
-                    } else if (diff.width < -64) {
-                        diff.width = (diff.width + 64) * -1;
-                    }
-
-                    if (diff.height > 64) {
-                        diff.height = (diff.height - 64) * -1;
-                    } else if (diff.height < -64) {
-                        diff.height = (diff.height + 64) * -1;
-                    }
-
-                    let tmp = before.clone();
-                    tmp.apply(diff);
-                    crect = tmp;
-                };
-
                 let resize = (mov: Rectangle, func: (m: Rectangle, a: Rectangle, mov: Rectangle) => boolean) => {
                     if (func(toparea, crect, mov) || crect.eq(grab_op.rect)) return;
-
-                    fix_diff();
 
                     (ext.auto_tiler as AutoTiler).forest.resize(ext, entity, fork, (this.window as Entity), grab_op.operation(crect), crect);
                     grab_op.rect = crect.clone();
@@ -240,37 +214,39 @@ export class Tiler {
     }
 
     resize_auto(ext: Ext, direction: Direction) {
-        let mov1: Rectangle, mov2: Rectangle;
+        let mov1: [number, number, number, number], mov2: [number, number, number, number];
 
         const hrow = 64;
         const hcolumn = 64;
 
         switch (direction) {
             case Direction.Left:
-                mov1 = new Rect.Rectangle([hrow, 0, -hrow, 0]);
-                mov2 = new Rect.Rectangle([0, 0, -hrow, 0]);
+                mov1 = [hrow, 0, -hrow, 0];
+                mov2 = [0, 0, -hrow, 0];
                 break;
             case Direction.Right:
-                mov1 = new Rect.Rectangle([0, 0, hrow, 0]);
-                mov2 = new Rect.Rectangle([-hrow, 0, hrow, 0]);
+                mov1 = [0, 0, hrow, 0];
+                mov2 = [-hrow, 0, hrow, 0];
                 break;
             case Direction.Up:
-                mov1 = new Rect.Rectangle([0, hcolumn, 0, -hcolumn]);
-                mov2 = new Rect.Rectangle([0, 0, 0, -hcolumn]);
+                mov1 = [0, hcolumn, 0, -hcolumn];
+                mov2 = [0, 0, 0, -hcolumn];
                 break;
             default:
-                mov1 = new Rect.Rectangle([0, 0, 0, hcolumn]);
-                mov2 = new Rect.Rectangle([0, -hcolumn, 0, hcolumn]);
+                mov1 = [0, 0, 0, hcolumn];
+                mov2 = [0, -hcolumn, 0, hcolumn];
         }
 
         this.move_auto_(
             ext,
-            mov1,
-            mov2,
+            new Rect.Rectangle(mov1),
+            new Rect.Rectangle(mov2),
             (work_area, crect, mov) => {
                 crect.apply(mov);
+                let before = crect.clone();
                 crect.clamp(work_area);
-
+                const diff = before.diff(crect);
+                crect.apply(new Rect.Rectangle([0, 0, -diff.x, -diff.y]));
                 return false;
             },
         );
