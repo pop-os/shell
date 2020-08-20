@@ -39,6 +39,7 @@ export class Indicator {
         this.button.add_actor(this.button.icon);
 
         this.button.menu.addMenuItem(tiled(ext));
+        this.button.menu.addMenuItem(show_title(ext));
         this.button.menu.addMenuItem(menu_separator(''));
 
         this.button.menu.addMenuItem(shortcuts(this.button.menu));
@@ -233,6 +234,14 @@ function parse_number(text: string): number {
     }
 
     return number;
+}
+
+function show_title(ext: Ext): any {
+    const t = toggle(_("Show Window Titles"), ext.settings.show_title(), (toggle: any) => {
+        ext.settings.set_show_title(toggle.state);
+    });
+
+    return t;
 }
 
 function toggle(desc: string, active: boolean, connect: (toggle: any) => void): any {
