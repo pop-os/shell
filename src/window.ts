@@ -93,7 +93,7 @@ export class ShellWindow {
 
         if (this.meta.get_compositor_private()?.get_stage())
             this._on_style_changed();
-        
+
         this._update_border_layout();
     }
 
@@ -296,7 +296,10 @@ export class ShellWindow {
     show_border() {
         if (this.ext.settings.active_hint()) {
             let border = this._border;
-            if (!this.is_maximized() && !this.meta.minimized && this.same_workspace()) {
+            if (!this.is_maximized() &&
+                !this.meta.minimized &&
+                !this.meta.is_fullscreen() &&
+                this.same_workspace()) {
                 border.show();
             }
             this.restack();
@@ -333,7 +336,7 @@ export class ShellWindow {
             let border = this._border;
             let actor = this.meta.get_compositor_private();
             let win_group = global.window_group;
-    
+
             if (actor && border && win_group) {
                 // move the border above the window group first
                 win_group.set_child_above_sibling(border, null);
@@ -384,7 +387,7 @@ export class ShellWindow {
 
         border.set_position(frameX - borderSize, frameY - borderSize);
         border.set_size(frameWidth + 2 * borderSize, frameHeight + 2 * borderSize);
-        
+
         this.restack();
     }
 
