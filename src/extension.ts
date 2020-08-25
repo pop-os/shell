@@ -438,7 +438,6 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     on_active_workspace_changed() {
-        this.show_border_on_focused();
         this.exit_modes();
         this.last_focused = null;
     }
@@ -1095,7 +1094,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         });
 
         this.connect(global.window_manager, 'switch-workspace', () => {
-            this.show_border_on_focused();
+            this.hide_all_borders();
         });
 
         this.connect(workspace_manager, 'active-workspace-changed', () => {
