@@ -165,19 +165,12 @@ export class Stack {
         if (!this.active_meta) return;
         const window = this.active_meta;
 
+        const on_window_changed = () => this.on_grab(() => this.window_changed());
+
         this.active_signals = [
-            window.connect('size-changed', () => {
-                if (this.ext.grab_op !== null) return;
-                this.update_positions(window.get_frame_rect());
-            }),
-            window.connect('size-changed', () => {
-                if (this.ext.grab_op !== null) return;
-                this.window_changed();
-            }),
-            window.connect('position-changed', () => {
-                if (this.ext.grab_op !== null) return;
-                this.window_changed();
-            }),
+            window.connect('size-changed', () => this.on_grab(() => this.update_positions(window.get_frame_rect()))),
+            window.connect('size-changed', on_window_changed),
+            window.connect('position-changed', on_window_changed)
         ]
     }
 
@@ -232,6 +225,24 @@ export class Stack {
 
     hide_border() {
         this.border.hide();
+    }
+
+    private on_grab(or: () => void) {
+        if (this.ext.grab_op !== null) {
+            if (Ecs.entity_eq(this.ext.grab_op.entity, this.active)) {
+                if (this.widgets) {
+                    const parent = this.widgets.tabs.get_parent();
+                    const actor = this.active_meta?.get_compositor_private();
+                    if (actor && parent) {
+                        parent.set_child_below_sibling(this.widgets.tabs, actor);
+                    }
+                }
+
+                return;
+            }
+        }
+
+        or();
     }
 
     private on_style_changed() {
@@ -348,25 +359,26 @@ export class Stack {
 
     /** Repositions the stack, and hides all but the active window in the stack */
     restack() {
-        if (!this.widgets) return;
-        if (this.ext.grab_op !== null) return;
+        this.on_grab(() => {
+            if (!this.widgets) return;
 
-        if (global.workspace_manager.get_active_workspace_index() !== this.workspace) {
-            this.widgets.tabs.visible = false;
-            for (const c of this.components) {
-                c.meta.get_compositor_private()?.hide();
+            if (global.workspace_manager.get_active_workspace_index() !== this.workspace) {
+                this.widgets.tabs.visible = false;
+                for (const c of this.components) {
+                    c.meta.get_compositor_private()?.hide();
+                }
+                this.hide_border();
+
+            } else if (this.widgets.tabs.visible) {
+                for (const c of this.components) {
+                    c.meta.get_compositor_private()?.hide();
+                }
+
+                this.reposition();
             }
-            this.hide_border();
 
-        } else if (this.widgets.tabs.visible) {
-            for (const c of this.components) {
-                c.meta.get_compositor_private()?.hide();
-            }
-
-            this.reposition();
-        }
-
-        this.update_border_layout();
+            this.update_border_layout();
+        })
     }
 
     show_border() {
