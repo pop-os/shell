@@ -344,7 +344,9 @@ export class Forest extends Ecs.World {
                     ext,
                     fork.right.inner as Node.NodeStack,
                     window,
-                    () => fork.right = null,
+                    () => {
+                        if (fork.right?.is_fork) fork.right = null;
+                    },
                 );
             }
         }
@@ -599,6 +601,10 @@ export class Forest extends Ecs.World {
         if (stack.entities.length === 1) {
             this.stacks.remove(stack.idx)?.destroy();
             on_last();
+            const shell_window = ext.windows.get(window);
+            if (shell_window) {
+                shell_window.stack = null;
+            }
         } else {
             const idx = Node.stack_remove(this, stack, window);
 
@@ -609,11 +615,6 @@ export class Forest extends Ecs.World {
                     ext.windows.get(stack.entities[idx - 1])?.activate();
                 }
             }
-        }
-
-        const shell_window = ext.windows.get(window);
-        if (shell_window) {
-            shell_window.stack = null;
         }
     }
 
