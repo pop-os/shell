@@ -624,6 +624,8 @@ export class Ext extends Ecs.System<ExtEvent> {
                 const stack = ext?.auto_tiler?.forest.stacks.get(focus.stack);
                 if (stack) {
                     stack.show_border();
+                } else {
+                    focus.show_border();
                 }
             } else {
                 focus.show_border();
