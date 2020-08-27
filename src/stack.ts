@@ -349,7 +349,7 @@ export class Stack {
             }
         }
 
-        if (!window.meta.is_fullscreen() && !window.is_maximized()) {
+        if (!window.meta.is_fullscreen() && !window.is_maximized() && !this.ext.maximized_on_active_display()) {
             parent.set_child_above_sibling(this.widgets.tabs, actor);
             parent.set_child_above_sibling(this.border, this.widgets.tabs);
         } else {

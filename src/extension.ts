@@ -643,6 +643,18 @@ export class Ext extends Ecs.System<ExtEvent> {
         }
     }
 
+    maximized_on_active_display(): boolean {
+        const aws = this.workspace_id();
+        for (const window of this.windows.values()) {
+            const wws = this.workspace_id(window);
+            if (aws[0] === wws[0] && aws[1] === wws[1]) {
+                if (window.is_maximized()) return true
+            }
+        }
+
+        return false;
+    }
+
     on_gap_inner() {
         let current = this.settings.gap_inner();
         this.set_gap_inner(current);
