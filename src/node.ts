@@ -67,26 +67,26 @@ export function stack_move_left(ext: Ext, forest: Forest, node: NodeStack, entit
     const stack = forest.stacks.get(node.idx);
     if (!stack) return false;
 
-    let moved = false;
     let idx = 0;
     for (const cmp of node.entities) {
         if (Ecs.entity_eq(cmp, entity)) {
             if (idx === 0) {
+                // Remove the window from the stack
                 stack_detach(node, stack, 0);
-                moved = false;
+                return false;
             } else {
+                // Swap tabs in the stack
                 stack_swap(node, idx - 1, idx)
                 stack.active_id -= 1;
                 ext.auto_tiler?.update_stack(ext, node);
-                moved = true;
+                return true;
             }
-            break
         }
 
         idx += 1;
     }
 
-    return moved;
+    return false;
 }
 
 /** Move the window in a stack to the right, and detach if it is at the end. */

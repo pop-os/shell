@@ -171,9 +171,10 @@ export class Forest extends Ecs.World {
                     const area = fork.area_of_left(ext);
                     const [fork_entity, new_fork] = this.create_fork(fork.left, right_node, area, fork.workspace);
 
-                    const inner_left = new_fork.is_horizontal()
-                        ? new Rect.Rectangle([new_fork.area.x, new_fork.area.y, new_fork.area.width / 2, new_fork.area.height])
-                        : new Rect.Rectangle([new_fork.area.x, new_fork.area.y, new_fork.area.width, new_fork.area.height / 2]);
+                    const inner_left = new Rect.Rectangle(new_fork.is_horizontal()
+                        ? [new_fork.area.x, new_fork.area.y, new_fork.area.width / 2, new_fork.area.height]
+                        : [new_fork.area.x, new_fork.area.y, new_fork.area.width, new_fork.area.height / 2]
+                    );
 
                     if (inner_left.contains(cursor)) {
                         const temp = new_fork.left;
@@ -197,9 +198,10 @@ export class Forest extends Ecs.World {
                     const area = fork.area_of_right(ext);
                     const [fork_entity, new_fork] = this.create_fork(fork.right, right_node, area, fork.workspace);
 
-                    const inner_left = new_fork.is_horizontal()
-                        ? new Rect.Rectangle([new_fork.area.x, new_fork.area.y, new_fork.area.width / 2, new_fork.area.height])
-                        : new Rect.Rectangle([new_fork.area.x, new_fork.area.y, new_fork.area.width, new_fork.area.height / 2]);
+                    const inner_left = new Rect.Rectangle(new_fork.is_horizontal()
+                        ? [new_fork.area.x, new_fork.area.y, new_fork.area.width / 2, new_fork.area.height]
+                        : [new_fork.area.x, new_fork.area.y, new_fork.area.width, new_fork.area.height / 2]
+                    );
 
                     if (inner_left.contains(cursor)) {
                         const temp = new_fork.left;
@@ -280,7 +282,10 @@ export class Forest extends Ecs.World {
         const fork = this.forks.get(fork_entity);
         if (!fork) return null;
 
-        let reflow_fork: [Entity, Fork.Fork] | null = null;
+        // The fork which has been modified, and requires rebalancing
+        let reflow_fork: [Entity, Fork.Fork] | null = null,
+            // Stack detachments, however, need not rebalance the fork
+            stack_detach = false;
 
         const parent = this.parents.get(fork_entity);
         if (fork.left.is_window(window)) {
@@ -304,6 +309,7 @@ export class Forest extends Ecs.World {
             }
         } else if (fork.left.is_in_stack(window)) {
             reflow_fork = [fork_entity, fork];
+            stack_detach = true;
 
             this.remove_from_stack(
                 ext,
@@ -339,6 +345,7 @@ export class Forest extends Ecs.World {
                 }
             } else if (fork.right.is_in_stack(window)) {
                 reflow_fork = [fork_entity, fork];
+                stack_detach = true;
 
                 this.remove_from_stack(
                     ext,
@@ -351,7 +358,7 @@ export class Forest extends Ecs.World {
             }
         }
 
-        if (reflow_fork) {
+        if (reflow_fork && !stack_detach) {
             reflow_fork[1].rebalance_orientation();
         }
 
