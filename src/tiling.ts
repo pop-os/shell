@@ -167,6 +167,9 @@ export class Tiler {
             fork.right = Node.Node.fork(new_fork[0]);
         }
 
+        // Associate the new fork with its parent
+        ext.auto_tiler.forest.parents.insert(new_fork[0], fork.entity);
+
         // Update parent assignments
         forest.on_attach(new_fork[0], focused.entity);
         for (const e of stack.entities) {

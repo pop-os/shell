@@ -135,7 +135,6 @@ export class AutoTiler {
         fork.smart_gaps = smart_gaps;
 
         this.tile(ext, fork, rect);
-        this.log_tree_nodes(ext);
     }
 
     /** Tiles a window into another */
@@ -158,14 +157,11 @@ export class AutoTiler {
                 }
 
                 this.tile(ext, fork, fork.area.clone());
-                this.log_tree_nodes(ext);
                 return true;
             } else {
                 log.error(`missing monitor association for Window(${attachee.entity})`);
             }
         }
-
-        this.log_tree_nodes(ext);
     }
 
     /** Tile a window onto a workspace */
@@ -226,8 +222,6 @@ export class AutoTiler {
 
                 this.tile(ext, fork, fork.area);
             }
-
-            this.log_tree_nodes(ext);
         });
     }
 
@@ -405,7 +399,25 @@ export class AutoTiler {
                     fork.measure(this.forest, ext, fork.area, this.forest.on_record());
                 } else if (fork.left.is_in_stack(focused.entity)) {
                     const node = stack_toggle(fork, fork.left);
-                    if (node) fork.left = node;
+                    if (node) {
+                        fork.left = node
+
+                        if (!fork.right) {
+                            const p = this.forest.parents.get(fork.entity);
+                            if (p) {
+                                const p_fork = this.forest.forks.get(p);
+                                if (p_fork) {
+                                    if (p_fork.left.is_window(focused.entity)) {
+                                        p_fork.left = node;
+                                    } else {
+                                        p_fork.right = node;
+                                    }
+                                }
+                            }
+
+                            this.forest.delete_entity(fork.entity);
+                        }
+                    };
                 } else if (fork.right?.is_window(focused.entity)) {
                     // Assign right window as stack
                     focused.stack = this.forest.stacks.insert(new Stack(ext, focused.entity, fork.workspace));
@@ -492,11 +504,6 @@ export class AutoTiler {
         return onto.meta.get_monitor() == win.meta.get_monitor() && onto.workspace_id() == win.workspace_id()
             ? Ok(onto)
             : Err('window is not on the same monitor or workspace');
-    }
-
-    private log_tree_nodes(ext: Ext) {
-        let buf = this.forest.fmt(ext);
-        log.info('\n\n' + buf);
     }
 
     private toggle_orientation_(ext: Ext, focused: ShellWindow): Result<void, string> {
