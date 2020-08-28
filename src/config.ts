@@ -4,7 +4,7 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 const { Gio, GLib } = imports.gi;
 
 import * as error from 'error';
-import * as Log from 'log';
+import * as log from 'log';
 import * as result from 'result';
 
 import type { Result } from 'result';
@@ -62,7 +62,7 @@ export class Config {
         const conf = Config.from_config();
 
         if (conf.kind === 2) {
-            Log.error(`failed to open pop-shell config: ${conf.value.format()}`);
+            log.error(`failed to open pop-shell config: ${conf.value.format()}`);
             return;
         }
 
@@ -78,7 +78,7 @@ export class Config {
         try {
             return JSON.parse(json);
         } catch (error) {
-            Log.error(`failed to parse config: ${error}`);
+            log.error(`failed to parse config: ${error}`);
             return new Config();
         }
     }
@@ -140,7 +140,7 @@ export class Config {
     sync_to_disk() {
         const result = Config.write(this.to_json());
         if (result.kind === 2) {
-            Log.error(`failed to sync disk to config: ${result.value.format()}`);
+            log.error(`failed to sync disk to config: ${result.value.format()}`);
         }
     }
 }

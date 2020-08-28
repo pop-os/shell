@@ -1,13 +1,15 @@
 export { }
 
+const ExtensionUtils = imports.misc.extensionUtils;
 // @ts-ignore
-const Me = imports.misc.extensionUtils.getCurrentExtension();
+const Me = ExtensionUtils.getCurrentExtension();
 
 const { Gtk } = imports.gi;
 
 const { Settings } = imports.gi.Gio;
 
 import * as settings from 'settings';
+import * as log from 'log';
 
 interface AppWidgets {
     inner_gap: any,
@@ -102,7 +104,9 @@ function settings_dialog_view(): [AppWidgets, Gtk.Container] {
     grid.attach(smart_label, 0, 2, 1, 1);
     grid.attach(smart_gaps, 1, 2, 1, 1);
 
-    let [inner_gap, outer_gap] = gaps_section(grid, 3);
+    logging_combo(grid, 3);
+
+    let [inner_gap, outer_gap] = gaps_section(grid, 4);
 
     let settings = { inner_gap, outer_gap, smart_gaps, snap_to_grid, window_titles };
 
@@ -142,6 +146,37 @@ function gaps_section(grid: any, top: number): [any, any] {
 
 function number_entry(): Gtk.Widget {
     return new Gtk.Entry({ input_purpose: Gtk.InputPurpose.NUMBER });
+}
+
+function logging_combo(grid: any, top_index: number) {
+    let log_label = new Gtk.Label({
+        label: `Log Level`,
+        halign: Gtk.Align.START
+    });
+
+    grid.attach(log_label, 0, top_index, 1, 1);
+
+    let log_combo = new Gtk.ComboBoxText();
+
+    for (const key in log.LOG_LEVELS) {
+        // since log level loop will contain key and level,
+        // then cherry-pick the number, key will be the text value
+        if (typeof log.LOG_LEVELS[key] === 'number') {
+            log_combo.append(`${log.LOG_LEVELS[key]}`, key);
+        }
+    }
+
+    let current_log_level = log.log_level();
+
+    log_combo.set_active_id(`${current_log_level}`);
+    log_combo.connect("changed", () => {
+        let activeId = log_combo.get_active_id();
+        
+        let settings = ExtensionUtils.getSettings();
+        settings.set_uint('log-level', activeId);
+    });
+
+    grid.attach(log_combo, 1, top_index, 1, 1);
 }
 
 // @ts-ignore

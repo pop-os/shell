@@ -12,7 +12,10 @@ interface Settings extends GObject.Object {
     set_uint(key: string, value: number): void;
 
     get_string(key: string): string;
-    set_string(key: string, value: string): void;}
+    set_string(key: string, value: string): void;
+
+    bind(key: string, object: GObject.Object, property: string, flags: any): void
+}
 
 function settings_new_id(schema_id: string): Settings | null {
     try {
@@ -55,6 +58,7 @@ const SNAP_TO_GRID = 'snap-to-grid';
 const TILE_BY_DEFAULT = 'tile-by-default';
 const HINT_COLOR_RGBA = 'hint-color-rgba';
 const DEFAULT_RGBA_COLOR = 'rgba(251, 184, 108, 1)'; //pop-orange
+const LOG_LEVEL = 'log-level';
 
 export class ExtensionSettings {
     ext: Settings = settings_new_schema(extension.metadata['settings-schema']);
@@ -134,6 +138,10 @@ export class ExtensionSettings {
             : false;
     }
 
+    log_level(): number {
+        return this.ext.get_uint(LOG_LEVEL);
+    }
+
     // Setters
 
     set_active_hint(set: boolean) {
@@ -180,5 +188,9 @@ export class ExtensionSettings {
 
     set_tile_by_default(set: boolean) {
         this.ext.set_boolean(TILE_BY_DEFAULT, set);
+    }
+
+    set_log_level(set: number) {
+        this.ext.set_uint(LOG_LEVEL, set);
     }
 }

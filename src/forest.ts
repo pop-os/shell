@@ -4,7 +4,7 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 import * as arena from 'arena';
 import * as Ecs from 'ecs';
 import * as Lib from 'lib';
-import * as Log from 'log';
+import * as log from 'log';
 import * as movement from 'movement';
 import * as Rect from 'rectangle';
 import * as Node from 'node';
@@ -608,7 +608,7 @@ export class Forest extends Ecs.World {
 
             this.delete_entity(child_entity);
         } else {
-            Log.error(`Fork(${child_entity}) does not exist`);
+            log.error(`Fork(${child_entity}) does not exist`);
         }
     }
 
@@ -833,14 +833,14 @@ export class Forest extends Ecs.World {
 
 function move_window(ext: Ext, window: ShellWindow, rect: Rectangular, on_complete: () => void) {
     if (!(window.meta instanceof Meta.Window)) {
-        Log.error(`attempting to a window entity in a tree which lacks a Meta.Window`);
+        log.error(`attempting to a window entity in a tree which lacks a Meta.Window`);
         return;
     }
 
     const actor = window.meta.get_compositor_private();
 
     if (!actor) {
-        Log.warn(`Window(${window.entity}) does not have an actor, and therefore cannot be moved`);
+        log.warn(`Window(${window.entity}) does not have an actor, and therefore cannot be moved`);
         return;
     }
 
