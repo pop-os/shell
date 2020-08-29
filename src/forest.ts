@@ -360,7 +360,9 @@ export class Forest extends Ecs.World {
                     window,
                     () => {
                         fork.right = null;
-                        this.reassign_to_parent(fork, fork.left, (fork.left.inner as any).entity)
+                        let entity = (fork.left.inner as any).entity;
+                        if (entity)
+                            this.reassign_to_parent(fork, fork.left, entity)
                     },
                 );
             }

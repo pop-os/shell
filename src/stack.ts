@@ -350,10 +350,13 @@ export class Stack {
         }
 
         if (!window.meta.is_fullscreen() && !window.is_maximized() && !this.ext.maximized_on_active_display()) {
-            parent.set_child_above_sibling(this.widgets.tabs, actor);
-            parent.set_child_above_sibling(this.border, this.widgets.tabs);
+            if (parent === this.widgets.tabs.get_parent() && parent === this.border.get_parent()) {
+                parent.set_child_above_sibling(this.widgets.tabs, actor);
+                parent.set_child_above_sibling(this.border, this.widgets.tabs);
+            }
         } else {
-            parent.set_child_below_sibling(this.widgets.tabs, actor);
+            if (parent === this.widgets.tabs.get_parent())
+                parent.set_child_below_sibling(this.widgets.tabs, actor);
         }
     }
 
