@@ -245,6 +245,7 @@ export class Tiler {
 
             (change_orient ?? fork).set_orientation(orient);
 
+            ext.auto_tiler.forest.on_attach(fork.entity, focused.entity);
             ext.auto_tiler.tile(ext, fork, fork.area);
             this.overlay_watch(ext, focused);
         }

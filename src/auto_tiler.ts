@@ -403,19 +403,7 @@ export class AutoTiler {
                         fork.left = node
 
                         if (!fork.right) {
-                            const p = this.forest.parents.get(fork.entity);
-                            if (p) {
-                                const p_fork = this.forest.forks.get(p);
-                                if (p_fork) {
-                                    if (p_fork.left.is_window(focused.entity)) {
-                                        p_fork.left = node;
-                                    } else {
-                                        p_fork.right = node;
-                                    }
-                                }
-                            }
-
-                            this.forest.delete_entity(fork.entity);
+                            this.forest.reassign_to_parent(fork, node, focused.entity)
                         }
                     };
                 } else if (fork.right?.is_window(focused.entity)) {

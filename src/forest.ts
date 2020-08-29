@@ -112,7 +112,10 @@ export class Forest extends Ecs.World {
             if (fork.right) {
                 const new_fork = this.create_fork(fork.left, fork.right, fork.area_of_right(ext), fork.workspace)[0];
                 fork.right = Node.Node.fork(new_fork);
+                this.parents.insert(new_fork, fork.entity);
+                this.on_attach(new_fork, window);
             } else {
+                this.on_attach(fork.entity, window);
                 fork.right = fork.left;
             }
 
@@ -121,6 +124,10 @@ export class Forest extends Ecs.World {
             if (fork.right) {
                 const new_fork = this.create_fork(fork.left, fork.right, fork.area_of_left(ext), fork.workspace)[0];
                 fork.left = Node.Node.fork(new_fork);
+                this.parents.insert(new_fork, fork.entity);
+                this.on_attach(new_fork, window);
+            } else {
+                this.on_attach(fork.entity, window)
             }
 
             fork.right = node;
@@ -352,7 +359,8 @@ export class Forest extends Ecs.World {
                     fork.right.inner as Node.NodeStack,
                     window,
                     () => {
-                        if (fork.right?.is_fork) fork.right = null;
+                        fork.right = null;
+                        this.reassign_to_parent(fork, fork.left, (fork.left.inner as any).entity)
                     },
                 );
             }
@@ -535,6 +543,24 @@ export class Forest extends Ecs.World {
         return parent
     }
 
+    reassign_to_parent(child: Fork.Fork, reassign: Node.Node, src: Entity) {
+        const p = this.parents.get(child.entity);
+        if (p) {
+            const p_fork = this.forks.get(p);
+            if (p_fork) {
+                if (p_fork.left.is_fork(child.entity)) {
+                    p_fork.left = reassign;
+                } else {
+                    p_fork.right = reassign;
+                }
+
+                this.on_attach(p, src);
+            }
+        }
+
+        this.delete_entity(child.entity);
+    }
+
     /**
      * Reassigns a sibling based on whether it is a fork or a window.
      *
@@ -544,7 +570,7 @@ export class Forest extends Ecs.World {
     private reassign_sibling(sibling: Node.Node, parent: Entity) {
         switch (sibling.inner.kind) {
             case 1:
-                this.reassign_parent(parent, sibling.inner.entity);
+                this.parents.insert(sibling.inner.entity, parent);
                 break;
             case 2:
                 this.on_attach(parent, sibling.inner.entity);
@@ -575,11 +601,6 @@ export class Forest extends Ecs.World {
         } else {
             Log.error(`Fork(${child_entity}) does not exist`);
         }
-    }
-
-    /** Reassigns a child to the given parent */
-    private reassign_parent(parent: Entity, child: Entity) {
-        this.parents.insert(child, parent);
     }
 
     /** Readjusts the division of space between the left and right siblings of a fork */
@@ -771,7 +792,7 @@ export class Forest extends Ecs.World {
                 return fork ? this.display_fork(ext, branch.inner.entity, fork, scope + 1) : "Missing Fork";
             case 2:
                 const window = ext.windows.get(branch.inner.entity);
-                return `Window(${branch.inner.entity}) (${window ? window.rect().fmt() : "unknown area"})`;
+                return `Window(${branch.inner.entity}) (${window ? window.rect().fmt() : "unknown area"}; parent: ${ext.auto_tiler?.attached.get(branch.inner.entity)})`;
             case 3:
                 let fmt = 'Stack(';
 
@@ -788,7 +809,8 @@ export class Forest extends Ecs.World {
         let fmt = `Fork(${entity}) [${fork.area ? fork.area.array : "unknown"}]: {\n`;
 
         fmt += ' '.repeat((1 + scope) * 2) + `workspace: (${fork.workspace}),\n`;
-        fmt += ' '.repeat((1 + scope) * 2) + 'left:  ' + this.display_branch(ext, fork.left, scope) + ',\n';
+        fmt += ' '.repeat((1 + scope) * 2) + 'left: ' + this.display_branch(ext, fork.left, scope) + ',\n';
+        fmt += ' '.repeat((1 + scope) * 2) + 'parent: ' + this.parents.get(fork.entity) + ',\n';
 
         if (fork.right) {
             fmt += ' '.repeat((1 + scope) * 2) + 'right: ' + this.display_branch(ext, fork.right, scope) + ',\n';

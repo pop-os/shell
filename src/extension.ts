@@ -612,6 +612,8 @@ export class Ext extends Ecs.System<ExtEvent> {
 
             Log.debug(msg + '}');
         }
+
+        // Log.debug(`Window(${win.entity}): parent: ${this.auto_tiler?.attached.get(win.entity)}`)
     }
 
     show_border_on_focused() {
