@@ -198,10 +198,15 @@ export class ShellWindow {
 
             const entity_string = String(this.entity);
 
+            this.hide_border();
+
             const onComplete = () => {
                 ext.register({ tag: 2, window: this, kind: { tag: 1, rect: clone } });
                 if (on_complete) ext.register_fn(on_complete);
                 ext.tween_signals.delete(entity_string);
+                if (this.meta.appears_focused) {
+                    this.show_border();
+                }
             };
 
             if (ext.animate_windows && !ext.init) {
