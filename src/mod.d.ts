@@ -124,6 +124,7 @@ declare namespace Meta {
     }
 
     interface Window extends Clutter.Actor {
+        appears_focused: Readonly<boolean>;
         minimized: Readonly<boolean>;
         window_type: Readonly<any>;
 
@@ -195,7 +196,7 @@ declare namespace St {
     }
 
     interface Bin extends St.Widget {
-         
+
     }
 
     interface Entry extends Widget {
