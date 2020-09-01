@@ -69,9 +69,7 @@ export class Launcher extends search.Search {
             if (this.mode !== -1) {
                 const launcher = MODES[this.mode].init(ext, this);
                 const results = launcher.search_results?.(pattern.slice(launcher.prefix.length).trim()) ?? null;
-                results?.forEach(result => {
-                    this.active.push(result);
-                });
+                results?.forEach(button => this.active.push(button));
 
                 return this.active;
             }
@@ -131,7 +129,7 @@ export class Launcher extends search.Search {
                     const [where, app] = selection;
                     const generic = app.generic_name();
 
-                    data = new widgets.ApplicationBox(
+                    data = widgets.application_button(
                         generic ? `${generic} (${app.name()}) [${where}]` : `${app.name()} [${where}]`,
                         new St.Icon({
                             icon_name: 'application-default-symbolic',
@@ -142,7 +140,7 @@ export class Launcher extends search.Search {
                             gicon: app.icon(),
                             icon_size: this.icon_size(),
                         })
-                    ).container;
+                    );
                 }
 
                 this.active.push(data);
@@ -268,12 +266,12 @@ function window_selection(ext: Ext, window: ShellWindow, icon_size: number): St.
         name += ': ' + title;
     }
 
-    return new widgets.ApplicationBox(
+    return widgets.application_button(
         name,
         new St.Icon({
             icon_name: 'focus-windows-symbolic',
             icon_size: icon_size / 2,
             style_class: "pop-shell-search-cat"
         }),
-        window.icon(ext, icon_size)).container;
+        window.icon(ext, icon_size));
 }

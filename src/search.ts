@@ -16,6 +16,8 @@ export class Search {
     private text: Clutter.Text;
     private widgets: Array<St.Widget>;
 
+    private apply_cb: (text: string, index: number) => boolean;
+    private cancel_cb: () => void;
     private select_cb: (id: number) => void;
 
     constructor(
@@ -26,6 +28,8 @@ export class Search {
         apply: (text: string, index: number) => boolean,
         mode: (id: number) => void,
     ) {
+        this.apply_cb = apply;
+        this.cancel_cb = cancel;
         this.select_cb = select;
         this.dialog = new ModalDialog({
             styleClass: "pop-shell-search modal-dialog",
@@ -47,16 +51,7 @@ export class Search {
         this.text = this.entry.get_clutter_text();
         this.dialog.setInitialKeyFocus(this.text);
 
-        this.text.connect("activate", () => {
-            const text: string = this.text.get_text();
-            const cont = apply(text, this.active_id);
-
-            if (!cont) {
-                this.reset();
-                this.close();
-                cancel();
-            }
-        });
+        this.text.connect("activate", () => this.activate_option(this.active_id));
 
         this.text.connect("text-changed", (entry: any) => {
             this.clear();
@@ -91,26 +86,18 @@ export class Search {
             if (c == 65362 || (s == Clutter.ModifierType.CONTROL_MASK && c == 107) || (s == Clutter.ModifierType.CONTROL_MASK && c == 112)) {
                 // Up arrow was pressed
                 if (0 < this.active_id) {
-                    this.unselect();
-                    this.active_id -= 1;
-                    this.select();
+                    this.select_id(this.active_id - 1)
                 }
                 else if (this.active_id == 0) {
-                	this.unselect();
-                	this.active_id = this.widgets.length - 1;
-                	this.select();
+                    this.select_id(this.widgets.length - 1)
                 }
             } else if (c == 65364 || (s == Clutter.ModifierType.CONTROL_MASK && c == 106) || (s == Clutter.ModifierType.CONTROL_MASK && c == 110)) {
                 // Down arrow was pressed
                 if (this.active_id + 1 < this.widgets.length) {
-                    this.unselect();
-                    this.active_id += 1;
-                    this.select();
+                    this.select_id(this.active_id + 1)
                 }
                 else if (this.active_id + 1 == this.widgets.length) {
-                	this.unselect();
-                	this.active_id = 0;
-                	this.select();
+                    this.select_id(0)
                 }
             }
 
@@ -129,6 +116,16 @@ export class Search {
         this.dialog.contentLayout.width = Math.max(Lib.current_monitor().width / 4, 640);
     }
 
+    activate_option(id: number) {
+        const cont = this.apply_cb(this.get_text(), id);
+
+        if (!cont) {
+            this.reset();
+            this.close();
+            this.cancel_cb();
+        }
+    }
+
     clear() {
         this.list.remove_all_children();
         this.list.hide();
@@ -138,6 +135,10 @@ export class Search {
 
     close() {
         this.dialog.close(global.get_current_time());
+    }
+
+    get_text(): string {
+        return this.text.get_text();
     }
 
     icon_size() {
@@ -165,6 +166,12 @@ export class Search {
         );
     }
 
+    select_id(id: number) {
+        this.unselect();
+        this.active_id = id;
+        this.select();
+    }
+
     unselect() {
         this.widgets[this.active_id].remove_style_pseudo_class(
             "select"
@@ -174,9 +181,18 @@ export class Search {
     update_search_list(list: Array<St.Widget>) {
         Lib.join(
             list.values(),
-            (element: St.Widget) => {
-                this.widgets.push(element);
-                this.list.add(element);
+            (button: St.Widget) => {
+                const id = this.widgets.length;
+
+                button.connect('clicked', () => this.activate_option(id))
+                button.connect('notify::hover', () => {
+                    this.select_id(id)
+                    this.select_cb(id)
+                })
+
+                this.widgets.push(button);
+                this.list.add(button);
+
             },
             () => this.list.add(Lib.separator())
         );
