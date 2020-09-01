@@ -114,4 +114,4 @@ Tasks for a tester to verify when approving a patch. Use complex window layouts 
 
 Enhancement test don't have to pass for release. Once an enhancement test passes, move up to the standard required-pass test for release.
 
-- [ ] Plus an additional display into a laptop - windows and workspaces don't change
+- [ ] Plug an additional display into a laptop - windows and workspaces don't change
