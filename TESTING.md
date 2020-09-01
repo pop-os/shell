@@ -99,6 +99,10 @@ Tasks for a tester to verify when approving a patch. Use complex window layouts 
 - [ ] Windows move across displays in adjustment mode with directions keys
 - [ ] Windows move across displays with the mouse
 
+## Miscellaneous
+
+- [ ] Close all windows-- no icons should be active in the GNOME launcher.
+
 ## Enhancement Tests
 
 Enhancement test don't have to pass for release. Once an enhancement test passes, move up to the standard required-pass test for release.
