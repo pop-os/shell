@@ -43,11 +43,7 @@ export interface NodeStack {
 
 function stack_detach(node: NodeStack, stack: Stack, idx: number) {
     node.entities.splice(idx, 1);
-    const c = stack.components[idx];
-    for (const s of c.signals) c.meta.disconnect(s);
-    stack.buttons.remove(c.button)?.destroy();
-    c.meta.get_compositor_private()?.show();
-    stack.components.splice(idx, 1);
+    stack.remove_by_pos(idx);
 }
 
 export function stack_find(node: NodeStack, entity: Entity): null | number {
@@ -130,20 +126,9 @@ export function stack_replace(ext: Ext, node: NodeStack, window: ShellWindow) {
 export function stack_remove(forest: Forest, node: NodeStack, entity: Entity): null | number {
     const stack = forest.stacks.get(node.idx);
     if (!stack) return null;
-
-    let idx = 0;
-
-    for (const cmp of node.entities) {
-        if (Ecs.entity_eq(cmp, entity)) {
-            node.entities.splice(idx, 1);
-            stack.buttons.remove(stack.components[idx].button)?.destroy();
-            stack.components.splice(idx, 1);
-            return idx;
-        }
-        idx += 1;
-    }
-
-    return null;
+    const idx = stack.remove_tab(entity);
+    if (idx !== null) node.entities.splice(idx, 1);
+    return idx;
 }
 
 function stack_swap(node: NodeStack, from: number, to: number) {

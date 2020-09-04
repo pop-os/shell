@@ -31,7 +31,7 @@ export class Keybindings {
             "focus-left": () => {
                 this.stack_select(
                     ext,
-                    (id, stack) => id === 0 ? null : stack.components[id - 1].entity,
+                    (id, stack) => id === 0 ? null : stack.tabs[id - 1].entity,
                     () => ext.activate_window(ext.focus_selector.left(ext, null))
                 );
             },
@@ -42,7 +42,7 @@ export class Keybindings {
             "focus-right": () => {
                 this.stack_select(
                     ext,
-                    (id, stack) => stack.components.length > id + 1 ? stack.components[id + 1].entity : null,
+                    (id, stack) => stack.tabs.length > id + 1 ? stack.tabs[id + 1].entity : null,
                     () => ext.activate_window(ext.focus_selector.right(ext, null))
                 );
             },

@@ -455,13 +455,14 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     on_destroy(win: Entity) {
+        const window = this.windows.get(win);
+        if (!window) return;
+
         // Disconnect all signals on this window
         this.window_signals.take_with(win, (signals) => {
-            this.windows.with(win, (window) => {
-                for (const signal of signals) {
-                    window.meta.disconnect(signal);
-                }
-            });
+            for (const signal of signals) {
+                window.meta.disconnect(signal);
+            }
         });
 
         if (this.last_focused == win) {
@@ -648,6 +649,8 @@ export class Ext extends Ecs.System<ExtEvent> {
     maximized_on_active_display(): boolean {
         const aws = this.workspace_id();
         for (const window of this.windows.values()) {
+            if (!window.actor_exists()) continue;
+
             const wws = this.workspace_id(window);
             if (aws[0] === wws[0] && aws[1] === wws[1]) {
                 if (window.is_maximized()) return true

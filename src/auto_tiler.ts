@@ -372,11 +372,10 @@ export class AutoTiler {
             this.auto_tile(ext, focused, false);
         }
 
-        let stack = null, fork = null;
         const fork_entity = this.attached.get(focused.entity);
 
         if (fork_entity) {
-            fork = this.forest.forks.get(fork_entity);
+            const fork = this.forest.forks.get(fork_entity);
             if (fork) {
                 const stack_toggle = (fork: Fork, branch: node.Node) => {
                     // If the stack contains 1 item, unstack it
@@ -395,7 +394,6 @@ export class AutoTiler {
                     // Assign left window as stack.
                     focused.stack = this.forest.stacks.insert(new Stack(ext, focused.entity, fork.workspace));
                     fork.left = node.Node.stacked(focused.entity, focused.stack);
-                    stack = fork.left.inner as node.NodeStack;
                     fork.measure(this.forest, ext, fork.area, this.forest.on_record());
                 } else if (fork.left.is_in_stack(focused.entity)) {
                     const node = stack_toggle(fork, fork.left);
@@ -410,18 +408,15 @@ export class AutoTiler {
                     // Assign right window as stack
                     focused.stack = this.forest.stacks.insert(new Stack(ext, focused.entity, fork.workspace));
                     fork.right = node.Node.stacked(focused.entity, focused.stack);
-                    stack = fork.right.inner as node.NodeStack;
                     fork.measure(this.forest, ext, fork.area, this.forest.on_record());
                 } else if (fork.right?.is_in_stack(focused.entity)) {
                     const node = stack_toggle(fork, fork.right);
                     if (node) fork.right = node;
                 }
+
+                this.tile(ext, fork, fork.area);
             }
         }
-
-        if (stack) this.update_stack(ext, stack);
-
-        if (fork) this.tile(ext, fork, fork.area);
     }
 
     update_stack(ext: Ext, stack: node.NodeStack) {
