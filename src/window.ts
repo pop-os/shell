@@ -27,10 +27,16 @@ const WM_TITLE_BLACKLIST: Array<string> = [
     'Tor Browser'
 ];
 
-export enum RESTACK_STATE {
+enum RESTACK_STATE {
     RAISED,
     WORKSPACE_CHANGED,
     NORMAL
+}
+
+enum RESTACK_SPEED {
+    RAISED = 430,
+    WORKSPACE_CHANGED = 300,
+    NORMAL = 200
 }
 
 interface X11Info {
@@ -56,7 +62,7 @@ export class ShellWindow {
         xid_: new OnceCell()
     };
 
-    private _border: St.Bin = new St.Bin({ style_class: 'window-clone-border' });
+    private _border: St.Bin = new St.Bin({ style_class: 'pop-shell-active-hint' });
 
     private _border_size = 0;
 
@@ -316,20 +322,23 @@ export class ShellWindow {
     }
 
     /**
-     * This current does not work properly on Workspace change when single window
-     * because GNOME Shell puts the Window Actor at the top of the border.
-     *
-     * The update_border_layout() adds a padding outside instead to compensate.
+     * Sort the window group/always top group with each window border
+     * @param updateState NORMAL, RAISED, WORKSPACE_CHANGED
      */
     restack(updateState: RESTACK_STATE = RESTACK_STATE.NORMAL) {
 
-        const WORKSPACE_SPEED = 250;
-        const NORMAL_SPEED = 100;
+        let restackSpeed = RESTACK_SPEED.NORMAL;
 
-        let restackSpeed = NORMAL_SPEED;
-
-        if (updateState === RESTACK_STATE.RAISED || updateState === RESTACK_STATE.WORKSPACE_CHANGED) {
-            restackSpeed = WORKSPACE_SPEED;
+        switch (updateState) {
+            case RESTACK_STATE.NORMAL:
+                restackSpeed = RESTACK_SPEED.NORMAL
+                break;
+            case RESTACK_STATE.RAISED:
+                restackSpeed = RESTACK_SPEED.RAISED
+                break;
+            case RESTACK_STATE.WORKSPACE_CHANGED:
+                restackSpeed = RESTACK_SPEED.WORKSPACE_CHANGED
+                break;
         }
 
         GLib.timeout_add(GLib.PRIORITY_LOW, restackSpeed, () => {
