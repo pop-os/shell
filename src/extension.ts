@@ -626,6 +626,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             if (!ignore_stack && focus.stack !== null) {
                 const stack = ext?.auto_tiler?.forest.stacks.get(focus.stack);
                 if (stack) {
+                    focus.hide_border();
                     stack.show_border();
                 } else {
                     focus.show_border();

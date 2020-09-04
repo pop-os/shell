@@ -460,8 +460,11 @@ export class Stack {
 
     show_border() {
         if (this.ext.settings.active_hint()) {
-            this.border.show();
-            this.restack();
+            const window = this.ext.windows.get(this.active);
+            if (window && !window.is_maximized() && !window.meta.is_fullscreen()) {
+                this.border.show();
+                this.restack();
+            }
         }
     }
 
