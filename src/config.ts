@@ -17,6 +17,8 @@ export var CONF_FILE: string = CONF_DIR + "/config.json"
 
 const DEFAULT_RULES: Array<FloatRule> =[
     { class: "Authy Desktop", },
+    { class: "Enpass", title: "Enpass Assistant"},
+    { class: "Zotero", title: "Quick Format Citation"},
     { class: "Com.github.donadigo.eddy", },
     { class: "Conky", },
     { class: "Gnome-screenshot", },
