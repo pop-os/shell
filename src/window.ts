@@ -15,7 +15,7 @@ import type { Ext } from './extension';
 import type { Rectangle } from './rectangle';
 
 // const GLib: GLib = imports.gi.GLib;
-const { Gdk, Meta, Shell, St } = imports.gi;
+const { Gdk, Meta, Shell, St, GLib } = imports.gi;
 
 const { OnceCell } = once_cell;
 
@@ -26,6 +26,18 @@ const WM_TITLE_BLACKLIST: Array<string> = [
     'Nightly', // Firefox Nightly
     'Tor Browser'
 ];
+
+enum RESTACK_STATE {
+    RAISED,
+    WORKSPACE_CHANGED,
+    NORMAL
+}
+
+enum RESTACK_SPEED {
+    RAISED = 430,
+    WORKSPACE_CHANGED = 300,
+    NORMAL = 200
+}
 
 interface X11Info {
     normal_hints: once_cell.OnceCell<lib.SizeHint | null>;
@@ -85,11 +97,10 @@ export class ShellWindow {
 
         global.window_group.add_child(this._border);
 
-        this.restack();
-
-        if (this.meta.get_compositor_private()?.get_stage()) {
+        if (this.meta.get_compositor_private()?.get_stage())
             this._on_style_changed();
-        }
+
+        this._update_border_layout();
     }
 
     get border() {
@@ -291,7 +302,10 @@ export class ShellWindow {
     show_border() {
         if (this.ext.settings.active_hint()) {
             let border = this._border;
-            if (!this.is_maximized() && !this.meta.minimized && this.same_workspace()) {
+            if (!this.is_maximized() &&
+                !this.meta.minimized &&
+                !this.meta.is_fullscreen() &&
+                this.same_workspace()) {
                 border.show();
             }
             this.restack();
@@ -308,22 +322,64 @@ export class ShellWindow {
     }
 
     /**
-     * This current does not work properly on Workspace change when single window
-     * because GNOME Shell puts the Window Actor at the top of the border.
-     *
-     * The update_border_layout() adds a padding outside instead to compensate.
+     * Sort the window group/always top group with each window border
+     * @param updateState NORMAL, RAISED, WORKSPACE_CHANGED
      */
-    restack() {
-        let border = this._border;
-        let actor = this.meta.get_compositor_private();
-        let win_group = global.window_group;
+    restack(updateState: RESTACK_STATE = RESTACK_STATE.NORMAL) {
 
-        if (actor && actor.get_parent() === border.get_parent()) {
-            win_group.set_child_above_sibling(border, actor);
-        } else {
-            win_group.set_child_above_sibling(border, null);
+        let restackSpeed = RESTACK_SPEED.NORMAL;
+
+        switch (updateState) {
+            case RESTACK_STATE.NORMAL:
+                restackSpeed = RESTACK_SPEED.NORMAL
+                break;
+            case RESTACK_STATE.RAISED:
+                restackSpeed = RESTACK_SPEED.RAISED
+                break;
+            case RESTACK_STATE.WORKSPACE_CHANGED:
+                restackSpeed = RESTACK_SPEED.WORKSPACE_CHANGED
+                break;
         }
-        this._update_border_layout();
+
+        GLib.timeout_add(GLib.PRIORITY_LOW, restackSpeed, () => {
+            let border = this._border;
+            let actor = this.meta.get_compositor_private();
+            let win_group = global.window_group;
+
+            if (actor && border && win_group) {
+                // move the border above the window group first
+                win_group.set_child_above_sibling(border, null);
+
+                if (this.always_top_windows.length > 0) {
+                    // honor the always-top windows
+                    for (const above_actor of this.always_top_windows) {
+                        if (actor != above_actor) {
+                            if (border.get_parent() === above_actor.get_parent()) {
+                                win_group.set_child_below_sibling(border, above_actor);
+                            }
+                        }
+                    }
+
+                    // finally, move the border above the current window actor
+                    if (border.get_parent() === actor.get_parent()) {
+                        win_group.set_child_above_sibling(border, actor);
+                    }
+                }
+            }
+
+            return false; // make sure it runs once
+        });
+    }
+
+    get always_top_windows(): Clutter.Actor[] {
+        let above_windows: Clutter.Actor[] = new Array();
+
+        for (const actor of global.get_window_actors()) {
+            if (actor && actor.get_meta_window() && actor.get_meta_window().is_above())
+                above_windows.push(actor);
+        }
+
+        return above_windows;
     }
 
     hide_border() {
@@ -340,16 +396,16 @@ export class ShellWindow {
 
         border.set_position(frameX - borderSize, frameY - borderSize);
         border.set_size(frameWidth + 2 * borderSize, frameHeight + 2 * borderSize);
+
+        this.restack();
     }
 
     private _bind_window_events() {
         let windowSignals = [
-            this.meta.connect('size-changed', () => {
-                this._window_changed();
-            }),
-            this.meta.connect('position-changed', () => {
-                this._window_changed();
-            }),
+            this.meta.connect('size-changed', () => { this._window_changed() }),
+            this.meta.connect('position-changed', () => { this._window_changed() }),
+            this.meta.connect('workspace-changed', () => { this._workspace_changed() }),
+            this.meta.connect('raised', () => { this._window_raised() }),
         ];
 
         let extWinSignals = this.ext.window_signals.get_or(this.entity, () => new Array());
@@ -358,6 +414,16 @@ export class ShellWindow {
 
     private _window_changed() {
         this.ext.show_border_on_focused();
+        this._update_border_layout();
+    }
+
+    private _window_raised() {
+        this.restack(RESTACK_STATE.RAISED);
+        this.show_border();
+    }
+
+    private _workspace_changed() {
+        this.restack(RESTACK_STATE.WORKSPACE_CHANGED);
     }
 
     private _on_style_changed() {
