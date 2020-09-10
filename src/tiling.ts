@@ -664,8 +664,8 @@ export class Tiler {
     }
 };
 
-function locate_monitor(ext: Ext, direction: Meta.DisplayDirection): number | null {
-    return shell.monitor_neighbor_index(ext.active_monitor(), direction);
+export function locate_monitor(from: number, direction: Meta.DisplayDirection): number | null {
+    return shell.monitor_neighbor_index(from, direction);
 }
 
 function monitor_rect(monitor: Rectangle, columns: number, rows: number): Rectangle {
@@ -685,11 +685,15 @@ function monitor_rect(monitor: Rectangle, columns: number, rows: number): Rectan
     return new Rect.Rectangle([monitor.x, monitor.y, tile_width, tile_height]);
 }
 
-function move_window_or_monitor(ext: Ext, method: any, direction: Meta.DisplayDirection): () => window.ShellWindow | number | null {
+function move_window_or_monitor(
+    ext: Ext,
+    method: (ext: Ext, window: window.ShellWindow | null) => window.ShellWindow | null,
+    direction: Meta.DisplayDirection
+): () => window.ShellWindow | number | null {
     return () => {
         const window = method.call(ext.focus_selector, ext, null);
 
-        return window ?? locate_monitor(ext, direction);
+        return window ?? locate_monitor(ext.active_monitor(), direction);
     };
 }
 

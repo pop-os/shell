@@ -184,5 +184,37 @@
             <default><![CDATA[['<Primary>Right','<Primary>l']]]></default>
             <summary>Swap window right</summary>
         </key>
+
+        <!-- Workspace Management -->
+
+        <key type="as" name="pop-workspace-down">
+            <default><![CDATA[['<Super><Shift>Down','<Super><Shift>j']]]></default>
+            <summary>Move window to the lower workspace</summary>
+        </key>
+
+        <key type="as" name="pop-workspace-up">
+            <default><![CDATA[['<Super><Shift>Up','<Super><Shift>k']]]></default>
+            <summary>Move window to the upper workspace</summary>
+        </key>
+
+        <key type="as" name="pop-monitor-down">
+            <default><![CDATA[['<Super><Shift><Primary>Down','<Super><Shift><Primary>j']]]></default>
+            <summary>Move window to the lower monitor</summary>
+        </key>
+
+        <key type="as" name="pop-monitor-up">
+            <default><![CDATA[['<Super><Shift><Primary>Up','<Super><Shift><Primary>k']]]></default>
+            <summary>Move window to the upper monitor</summary>
+        </key>
+
+        <key type="as" name="pop-monitor-left">
+            <default><![CDATA[['<Super><Shift>Left','<Super><Shift>h']]]></default>
+            <summary>Move window to the leftward monitor</summary>
+        </key>
+
+        <key type="as" name="pop-monitor-right">
+            <default><![CDATA[['<Super><Shift>Right','<Super><Shift>l']]]></default>
+            <summary>Move window to the rightward monitor</summary>
+        </key>
     </schema>
 </schemalist>
