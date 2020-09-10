@@ -1,6 +1,22 @@
-declare const global: any,
+declare const global: Global,
     imports: any,
     _: (arg: string) => string;
+
+interface Global {
+    get_current_time(): number;
+    get_pointer(): [number, number];
+    get_window_actors(): Array<Meta.WindowActor>;
+    get_work_area_for_monitor(i: number): null | Rectangular;
+    log(msg: string): void;
+
+    display: Meta.Display;
+    run_at_leisure(func: () => void): void;
+    session_mode: string;
+    stage: Clutter.Actor;
+    window_group: Clutter.Actor;
+    window_manager: Meta.WindowManager;
+    workspace_manager: Meta.WorkspaceManager;
+}
 
 interface Rectangular {
     x: number;
@@ -131,6 +147,25 @@ declare namespace Meta {
         BOTH
     }
 
+    enum MotionDirection {
+        UP,
+        DOWN,
+        LEFT,
+        RIGHT
+    }
+
+    interface Display extends GObject.Object {
+        get_current_monitor(): number;
+        get_focus_window(): null | Meta.Window;
+        get_monitor_index_for_rect(rect: Rectangular): number;
+        get_monitor_geometry(monitor: number): null | Rectangular;
+        get_monitor_neighbor_index(monitor: number, direction: DisplayDirection): number;
+        get_n_monitors(): number;
+        get_primary_monitor(): number;
+        get_tab_list(list: number, workspace: Meta.Workspace | null): Array<Meta.Window>;
+        get_workspace_manager(): WorkspaceManager;
+    }
+
     interface Window extends Clutter.Actor {
         appears_focused: Readonly<boolean>;
         minimized: Readonly<boolean>;
@@ -150,8 +185,10 @@ declare namespace Meta {
         get_title(): string;
         get_transient_for(): Window | null;
         get_wm_class(): string | null;
-        get_workspace(): Workspace | null;
+        get_work_area_for_monitor(monitor: number): null | Rectangular;
+        get_workspace(): Workspace;
         has_focus(): boolean;
+        is_above(): boolean;
         is_client_decorated(): boolean;
         is_fullscreen(): boolean;
         is_skip_taskbar(): boolean;
@@ -165,9 +202,32 @@ declare namespace Meta {
         unminimize(): void;
     }
 
-    interface Workspace {
+    interface WindowActor extends Clutter.Actor {
+        get_meta_window(): Meta.Window;
+    }
+
+    interface WindowManager extends GObject.Object {
+
+    }
+
+    interface Workspace extends GObject.Object {
+        n_windows: number;
+
         activate(time: number): boolean;
+        activate_with_focus(window: Meta.Window, timestamp: number): void;
+        get_neighbor(direction: Meta.MotionDirection): null | Workspace;
+        get_work_area_for_monitor(monitor: number): null | Rectangular;
         index(): number;
+    }
+
+    interface WorkspaceManager extends GObject.Object {
+        append_new_workspace(activate: boolean, timestamp: number): Workspace;
+        get_active_workspace(): Workspace;
+        get_active_workspace_index(): number;
+        get_n_workspaces(): number;
+        get_workspace_by_index(index: number): null | Workspace;
+        remove_workspace(workspace: Workspace, timestamp: number): void;
+        reorder_workspace(workspace: Workspace, new_index: number): void;
     }
 }
 
@@ -194,19 +254,17 @@ declare namespace St {
     }
 
     interface Widget extends Clutter.Actor {
-        get_theme_node(): any
-        add(child: St.Widget): void;
-        hide(): void;
-        set_style_class_name(name: string): void;
         add_style_class_name(name: string): void
-        remove_style_class_name(name: string) : void;
-
-        set_style_pseudo_class(name: string): void;
         add_style_pseudo_class(name: string): void;
+        add(child: St.Widget): void;
+        get_theme_node(): any
+        hide(): void;
+        remove_style_class_name(name: string): void;
         remove_style_pseudo_class(name: string): void
-
-        show(): void;
+        set_style_class_name(name: string): void;
+        set_style_pseudo_class(name: string): void;
         show_all(): void;
+        show(): void;
     }
 
     interface Bin extends St.Widget {
