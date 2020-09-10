@@ -66,7 +66,7 @@ export class Stack {
 
     private rect: Rectangular = { width: 0, height: 0, x: 0, y: 0 };
 
-    private restacker: SignalID = (global.display as GObject.Object).connect('restacked', () => this.restack());
+    private restacker: SignalID = global.display.connect('restacked', () => this.restack());
 
     private tabs_destroy: SignalID;
 

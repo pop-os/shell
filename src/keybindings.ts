@@ -37,6 +37,7 @@ export class Keybindings {
             },
 
             "focus-down": () => ext.activate_window(ext.focus_selector.down(ext, null)),
+
             "focus-up": () => ext.activate_window(ext.focus_selector.up(ext, null)),
 
             "focus-right": () => {
@@ -46,13 +47,29 @@ export class Keybindings {
                     () => ext.activate_window(ext.focus_selector.right(ext, null))
                 );
             },
+
             "tile-orientation": () => {
                 const win = ext.focus_window();
                 if (win) ext.auto_tiler?.toggle_orientation(ext, win);
             },
+
             "toggle-floating": () => ext.auto_tiler?.toggle_floating(ext),
+
             "toggle-tiling": () => ext.toggle_tiling(),
+
             "toggle-stacking-global": () => ext.auto_tiler?.toggle_stacking(ext),
+
+            "pop-monitor-left": () => ext.move_monitor(Meta.DisplayDirection.LEFT),
+
+            "pop-monitor-right": () => ext.move_monitor(Meta.DisplayDirection.RIGHT),
+
+            "pop-monitor-up": () => ext.move_monitor(Meta.DisplayDirection.UP),
+
+            "pop-monitor-down": () => ext.move_monitor(Meta.DisplayDirection.DOWN),
+
+            "pop-workspace-up": () => ext.move_workspace(Meta.DisplayDirection.UP),
+
+            "pop-workspace-down": () => ext.move_workspace(Meta.DisplayDirection.DOWN)
         };
     }
 
