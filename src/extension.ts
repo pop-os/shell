@@ -592,18 +592,21 @@ export class Ext extends Ecs.System<ExtEvent> {
         let prev_gap = this.gap_inner_prev / 4 / this.dpi;
 
         if (current != prev_gap) {
-            if (this.auto_tiler) {
-                for (const [entity,] of this.auto_tiler.forest.toplevel.values()) {
-                    const fork = this.auto_tiler.forest.forks.get(entity);
-                    if (fork) {
-                        this.auto_tiler.tile(this, fork, fork.area);
-                    }
-                }
-            } else {
-                this.update_snapped();
-            }
-
+            this.update_inner_gap()
             Gio.Settings.sync();
+        }
+    }
+
+    update_inner_gap() {
+        if (this.auto_tiler) {
+            for (const [entity,] of this.auto_tiler.forest.toplevel.values()) {
+                const fork = this.auto_tiler.forest.forks.get(entity);
+                if (fork) {
+                    this.auto_tiler.tile(this, fork, fork.area);
+                }
+            }
+        } else {
+            this.update_snapped();
         }
     }
 
@@ -616,24 +619,28 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         if (diff != 0) {
             this.set_gap_outer(current);
-            if (this.auto_tiler) {
-                for (const [entity,] of this.auto_tiler.forest.toplevel.values()) {
-                    const fork = this.auto_tiler.forest.forks.get(entity);
-
-                    if (fork) {
-                        fork.area.array[0] += diff * 4;
-                        fork.area.array[1] += diff * 4;
-                        fork.area.array[2] -= diff * 8;
-                        fork.area.array[3] -= diff * 8;
-
-                        this.auto_tiler.tile(this, fork, fork.area);
-                    }
-                }
-            } else {
-                this.update_snapped();
-            }
+            this.update_outer_gap(diff);
 
             Gio.Settings.sync();
+        }
+    }
+
+    update_outer_gap(diff: number) {
+        if (this.auto_tiler) {
+            for (const [entity,] of this.auto_tiler.forest.toplevel.values()) {
+                const fork = this.auto_tiler.forest.forks.get(entity);
+
+                if (fork) {
+                    fork.area.array[0] += diff * 4;
+                    fork.area.array[1] += diff * 4;
+                    fork.area.array[2] -= diff * 8;
+                    fork.area.array[3] -= diff * 8;
+
+                    this.auto_tiler.tile(this, fork, fork.area);
+                }
+            }
+        } else {
+            this.update_snapped();
         }
     }
 
@@ -1115,6 +1122,9 @@ export class Ext extends Ecs.System<ExtEvent> {
             this.last_focused = null
         });
 
+        St.ThemeContext.get_for_stage(global.stage)
+            .connect('notify::scale-factor', () => this.update_scale());
+
         // Modes
 
         if (this.settings.tile_by_default() && !this.auto_tiler) {
@@ -1288,6 +1298,24 @@ export class Ext extends Ecs.System<ExtEvent> {
                 this.auto_tiler.update_toplevel(this, fork, mon_id, this.settings.smart_gaps());
             }
         }
+    }
+
+    update_scale() {
+        const new_dpi = St.ThemeContext.get_for_stage(global.stage).scale_factor;
+        const diff = new_dpi / this.dpi;
+        this.dpi = new_dpi;
+
+        this.column_size *= diff;
+        this.row_size *= diff;
+
+        this.gap_inner_prev *= diff;
+        this.gap_inner *= diff;
+        this.gap_inner_half *= diff;
+        this.gap_outer_prev *= diff;
+        this.gap_outer *= diff;
+
+        this.update_inner_gap();
+        this.update_outer_gap(diff);
     }
 
     update_snapped() {
