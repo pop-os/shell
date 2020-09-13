@@ -62,7 +62,7 @@ export class ShellWindow {
         xid_: new OnceCell()
     };
 
-    private _border: St.Bin = new St.Bin({ style_class: 'pop-shell-active-hint' });
+    private _border: St.Bin = new St.Bin({ style_class: 'pop-shell-active-hint pop-shell-border-normal' });
 
     private _border_size = 0;
 
@@ -179,6 +179,14 @@ export class ShellWindow {
 
     is_maximized(): boolean {
         return this.meta.get_maximized() !== 0;
+    }
+
+    /**
+     * Window is maximized, 0 gapped or smart gapped
+     */
+    is_max_screen(): boolean {
+        //FIXME - add the smart gap state
+        return this.is_maximized() || this.ext.settings.gap_inner() === 0;
     }
 
     is_tilable(ext: Ext): boolean {
@@ -302,9 +310,7 @@ export class ShellWindow {
     show_border() {
         if (this.ext.settings.active_hint()) {
             let border = this._border;
-            if (!this.is_maximized() &&
-                !this.meta.minimized &&
-                !this.meta.is_fullscreen() &&
+            if (!this.meta.is_fullscreen() &&
                 this.same_workspace()) {
                 border.show();
             }
@@ -394,8 +400,15 @@ export class ShellWindow {
         let border = this._border;
         let borderSize = this._border_size;
 
+        if (!this.is_max_screen()) {
+            border.remove_style_class_name('pop-shell-border-maximize');
+        } else {
+            borderSize = 0;
+            border.add_style_class_name('pop-shell-border-maximize');
+        }
+
         border.set_position(frameX - borderSize, frameY - borderSize);
-        border.set_size(frameWidth + 2 * borderSize, frameHeight + 2 * borderSize);
+        border.set_size(frameWidth + (2 * borderSize), frameHeight + (2 * borderSize));
 
         this.restack();
     }
