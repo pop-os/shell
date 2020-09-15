@@ -986,12 +986,17 @@ export class Ext extends Ecs.System<ExtEvent> {
                     this.auto_tiler?.detach_window(this, win.entity);
                 }
             });
-        } else if (this.auto_tiler) {
-            let fork_ent = this.auto_tiler.attached.get(win.entity);
-            if (fork_ent) {
-                let fork = this.auto_tiler.forest.forks.get(fork_ent);
-                if (fork) this.auto_tiler.tile(this, fork, fork.area);
-            }
+        } else {
+            // Retile on unmaximize after waiting for other events to complete, such as animations
+            this.register_fn(() => {
+                if (this.auto_tiler) {
+                    let fork_ent = this.auto_tiler.attached.get(win.entity);
+                    if (fork_ent) {
+                        let fork = this.auto_tiler.forest.forks.get(fork_ent);
+                        if (fork) this.auto_tiler.tile(this, fork, fork.area);
+                    }
+                }
+            })
         }
     }
 
