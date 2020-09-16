@@ -837,13 +837,18 @@ export class Ext extends Ecs.System<ExtEvent> {
         return true;
     }
 
-    workspace_window_move(win: Window.ShellWindow, monitor: number) {
-        const work_area = win.meta.get_work_area_for_monitor(monitor);
-        if (work_area) {
+    workspace_window_move(win: Window.ShellWindow, prev_monitor: number, next_monitor: number) {
+        const prev_area = win.meta.get_work_area_for_monitor(prev_monitor);
+        const next_area = win.meta.get_work_area_for_monitor(next_monitor);
+
+        if (prev_area && next_area) {
             let rect = win.rect();
-            rect.x = work_area.x;
-            rect.y = work_area.y;
-            rect.clamp(work_area);
+
+            rect.x = next_area.x + rect.x - prev_area.x;
+            rect.y = next_area.y + rect.y - prev_area.y;
+
+            rect.clamp(next_area);
+
             this.register(Events.window_move(win, rect));
         }
     }
@@ -852,38 +857,38 @@ export class Ext extends Ecs.System<ExtEvent> {
         const win = this.focus_window();
         if (!win) return;
 
-        const win_mon = win.meta.get_monitor();
-        let monitor_id = Tiling.locate_monitor(win_mon, direction);
+        const prev_monitor = win.meta.get_monitor();
+        let next_monitor = Tiling.locate_monitor(prev_monitor, direction);
 
-        if (monitor_id === null) {
+        if (next_monitor === null) {
             // There's a chance that GNOME Shell is simply wrong. Correct it.
-            const ref = win.meta.get_work_area_for_monitor(win_mon) as any;
+            const ref = win.meta.get_work_area_for_monitor(prev_monitor) as any;
             const n_monitors = display.get_n_monitors();
             for (let mon = 0; mon < n_monitors; mon += 1) {
-                if (mon === win_mon) continue;
+                if (mon === prev_monitor) continue;
                 const work_area = win.meta.get_work_area_for_monitor(mon);
                 if (!work_area) continue;
 
                 if (direction === Meta.DisplayDirection.UP) {
                     if (work_area.y < ref.y) {
-                        monitor_id = mon;
+                        next_monitor = mon;
                         break
                     }
                 } else if (direction === Meta.DisplayDirection.DOWN) {
                     if (work_area.y > ref.y) {
-                        monitor_id = mon;
+                        next_monitor = mon;
                         break
                     }
                 }
             }
         }
 
-        if (monitor_id !== null) {
+        if (next_monitor !== null) {
             if (this.auto_tiler) {
                 this.auto_tiler.detach_window(this, win.entity);
-                this.auto_tiler.attach_to_workspace(this, win, [monitor_id, win.workspace_id()]);
+                this.auto_tiler.attach_to_workspace(this, win, [next_monitor, win.workspace_id()]);
             } else {
-                this.workspace_window_move(win, monitor_id);
+                this.workspace_window_move(win, prev_monitor, next_monitor);
             }
         }
     }
@@ -916,7 +921,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                         this.size_signals_unblock(win);
                     }
                 } else {
-                    this.workspace_window_move(win, monitor);
+                    this.workspace_window_move(win, monitor, monitor);
                 }
             } else if (direction === Meta.MotionDirection.DOWN && !last_window()) {
                 neighbor = wom.append_new_workspace(false, global.get_current_time());
