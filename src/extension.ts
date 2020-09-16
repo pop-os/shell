@@ -909,7 +909,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                 return last;
             }
 
-            if (neighbor && neighbor.index() !== ws.index()) {
+            const move_to_neighbor = (neighbor: Meta.Workspace) => {
                 const monitor = win.meta.get_monitor();
                 if (this.auto_tiler && !this.contains_tag(win.entity, Tags.Floating)) {
                     this.auto_tiler.detach_window(this, win.entity);
@@ -923,10 +923,30 @@ export class Ext extends Ecs.System<ExtEvent> {
                 } else {
                     this.workspace_window_move(win, monitor, monitor);
                 }
+            }
+
+            if (neighbor && neighbor.index() !== ws.index()) {
+                move_to_neighbor(neighbor);
             } else if (direction === Meta.MotionDirection.DOWN && !last_window()) {
                 neighbor = wom.append_new_workspace(false, global.get_current_time());
+            } else if (direction === Meta.MotionDirection.UP && ws.index() === 0) {
+                // Add a new workspace, to push everyone to free up the first one
+                wom.append_new_workspace(false, global.get_current_time());
+
+                // Move everything one workspace down
+                this.on_workspace_modify(
+                    () => true,
+                    (current) => current + 1,
+                    true
+                );
+
+                neighbor = wom.get_workspace_by_index(0);
+
+                if (!neighbor) return;
+
+                move_to_neighbor(neighbor);
             } else {
-                return;
+                return
             }
 
             this.size_signals_block(win)
