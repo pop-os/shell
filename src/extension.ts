@@ -939,6 +939,12 @@ export class Ext extends Ecs.System<ExtEvent> {
                 workspace_move(Meta.MotionDirection.UP)
                 break;
         }
+
+        if (this.auto_tiler) {
+            for (const stack of this.auto_tiler.forest.stacks.values()) {
+                stack.restack();
+            }
+        }
     }
 
     /** Triggered when a grab operation has been started */
