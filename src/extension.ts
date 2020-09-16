@@ -884,7 +884,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         }
 
         if (next_monitor !== null) {
-            if (this.auto_tiler) {
+            if (this.auto_tiler && !this.contains_tag(win.entity, Tags.Floating)) {
                 this.auto_tiler.detach_window(this, win.entity);
                 this.auto_tiler.attach_to_workspace(this, win, [next_monitor, win.workspace_id()]);
             } else {
