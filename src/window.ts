@@ -185,8 +185,28 @@ export class ShellWindow {
      * Window is maximized, 0 gapped or smart gapped
      */
     is_max_screen(): boolean {
-        //FIXME - add the smart gap state
         return this.is_maximized() || this.ext.settings.gap_inner() === 0;
+    }
+
+    // TODO - smart gap is buggy, not being updated properly on auto-tile, windows had to be moved to work.
+    is_smart_gapped(): boolean {
+        let ext = this.ext;
+        if (ext && ext.auto_tiler) {
+            const smart_gaps = ext.settings.smart_gaps();
+            if (smart_gaps) {
+                for (const [entity, _] of ext.auto_tiler.forest.toplevel.values()) {
+                    let win_id = ext.auto_tiler.forest.string_reps.get(this.entity);
+                    let top_win_id = ext.auto_tiler.forest.string_reps.get(entity);
+                    if (win_id === top_win_id) {
+                        const fork = ext.auto_tiler.forest.forks.get(entity);
+                        if (fork && fork.smart_gaps) {
+                            return fork.smart_gaps;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     is_tilable(ext: Ext): boolean {
@@ -390,7 +410,8 @@ export class ShellWindow {
 
     hide_border() {
         let border = this._border;
-        border.hide();
+        if (border)
+            border.hide();
     }
 
     private _update_border_layout() {
@@ -401,8 +422,10 @@ export class ShellWindow {
         let borderSize = this._border_size;
 
         if (!this.is_max_screen()) {
+            log.debug(`not max screen`);
             border.remove_style_class_name('pop-shell-border-maximize');
         } else {
+            log.debug(`is max screen`);
             borderSize = 0;
             border.add_style_class_name('pop-shell-border-maximize');
         }
@@ -426,6 +449,7 @@ export class ShellWindow {
     }
 
     private _window_changed() {
+        log.debug(`window changed`);
         this.ext.show_border_on_focused();
         this._update_border_layout();
     }
