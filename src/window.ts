@@ -188,6 +188,8 @@ export class ShellWindow {
      * Window is maximized, 0 gapped or smart gapped
      */
     is_max_screen(): boolean {
+        // log.debug(`title: ${this.meta.get_title()}`);
+        // log.debug(`max: ${this.is_maximized()}, 0-gap: ${this.ext.settings.gap_inner() === 0}, smart: ${this.smart_gapped}`);
         return this.is_maximized() || this.ext.settings.gap_inner() === 0 || this.smart_gapped;
     }
 
@@ -313,6 +315,7 @@ export class ShellWindow {
         if (this.ext.settings.active_hint()) {
             let border = this._border;
             if (!this.meta.is_fullscreen() &&
+                !this.meta.minimized &&
                 this.same_workspace()) {
                 border.show();
             }
