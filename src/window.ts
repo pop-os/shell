@@ -73,6 +73,7 @@ export class ShellWindow {
     private border_size = 0;
 
     constructor(entity: Entity, window: Meta.Window, window_app: any, ext: Ext) {
+        this.border.hide();
         this.window_app = window_app;
 
         this.entity = entity;
@@ -101,8 +102,6 @@ export class ShellWindow {
             this.on_style_changed();
         });
 
-        this.hide_border()
-
         global.window_group.add_child(this.border);
 
         this.restack();
@@ -110,7 +109,6 @@ export class ShellWindow {
         if (this.meta.get_compositor_private()?.get_stage())
             this.on_style_changed();
 
-        this.update_border_layout();
     }
 
     activate(): void {
@@ -241,6 +239,12 @@ export class ShellWindow {
                 ext.register({ tag: 2, window: this, kind: { tag: 1, rect: clone } });
                 if (on_complete) ext.register_fn(on_complete);
                 ext.tween_signals.delete(entity_string);
+
+                if (ext.animate_windows) {
+                    actor.opacity = 255;
+                    actor.show();
+                }
+
                 if (this.meta.appears_focused) {
                     this.show_border();
                 }
