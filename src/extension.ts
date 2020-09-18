@@ -968,7 +968,9 @@ export class Ext extends Ecs.System<ExtEvent> {
         }
 
         if (this.auto_tiler) {
+            const workspace = this.active_workspace();
             for (const stack of this.auto_tiler.forest.stacks.values()) {
+                stack.set_visible(stack.workspace === workspace)
                 stack.restack();
             }
         }
