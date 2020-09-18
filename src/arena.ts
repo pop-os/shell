@@ -27,6 +27,7 @@ export class Arena<T> {
     }
 
     remove(n: number): null | T {
+        if (this.slots[n] === null) return null;
         const v = this.slots[n];
         this.slots[n] = null;
         this.unused.push(n);
