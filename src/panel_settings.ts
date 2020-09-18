@@ -61,6 +61,9 @@ export class Indicator {
             )
         );
 
+        // CSS Selector
+        this.button.menu.addMenuItem(color_selector());
+
         this.button.menu.addMenuItem(
             number_entry(
                 _("Gaps"),
@@ -265,4 +268,10 @@ function tiled(ext: Ext): any {
     let t = toggle(_("Tile Windows"), null != ext.auto_tiler, () => ext.toggle_tiling());
     ext.tiling_toggle_switch = t;  // property _switch is the actual UI element
     return t;
+}
+
+function color_selector() {
+    let color_selector_button = new PopupMenuItem('Active Hint Color');
+
+    return color_selector_button;
 }
