@@ -422,10 +422,8 @@ export class ShellWindow {
         let borderSize = this._border_size;
 
         if (!this.is_max_screen()) {
-            log.debug(`not max screen`);
             border.remove_style_class_name('pop-shell-border-maximize');
         } else {
-            log.debug(`is max screen`);
             borderSize = 0;
             border.add_style_class_name('pop-shell-border-maximize');
         }
@@ -449,7 +447,6 @@ export class ShellWindow {
     }
 
     private _window_changed() {
-        log.debug(`window changed`);
         this.ext.show_border_on_focused();
         this._update_border_layout();
     }
