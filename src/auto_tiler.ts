@@ -6,16 +6,16 @@ import * as log from 'log';
 import * as node from 'node';
 import * as result from 'result';
 
-import type {Entity} from 'ecs';
-import type {Ext} from 'extension';
-import type {Forest} from 'forest';
-import type {Fork} from 'fork';
-import type {Rectangle} from 'rectangle';
-import type {Result} from 'result';
-import type {ShellWindow} from 'window';
+import type { Entity } from 'ecs';
+import type { Ext } from 'extension';
+import type { Forest } from 'forest';
+import type { Fork } from 'fork';
+import type { Rectangle } from 'rectangle';
+import type { Result } from 'result';
+import type { ShellWindow } from 'window';
 
-const {Ok, Err, ERR} = result;
-const {NodeKind} = node;
+const { Ok, Err, ERR } = result;
+const { NodeKind } = node;
 const Tags = Me.imports.tags;
 
 export class AutoTiler {
@@ -57,6 +57,13 @@ export class AutoTiler {
             rect.height -= ext.gap_outer * 2;
         }
 
+        if (fork.left.kind === NodeKind.WINDOW) {
+            const win = ext.windows.get(fork.left.entity);
+            if (win) {
+                win.smart_gapped = smart_gaps && fork.right === null;
+            }
+        }
+
         fork.smart_gaps = smart_gaps;
 
         let ratio;
@@ -87,6 +94,7 @@ export class AutoTiler {
         const [entity, fork] = this.forest.create_toplevel(win.entity, rect.clone(), workspace_id)
         this.attached.insert(win.entity, entity);
         fork.smart_gaps = smart_gaps;
+        win.smart_gapped = smart_gaps;
 
         this.tile(ext, fork, rect);
         this.log_tree_nodes(ext);

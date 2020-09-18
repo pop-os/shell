@@ -52,6 +52,9 @@ export class ShellWindow {
 
     was_attached_to?: [Entity, boolean];
 
+    // True if this window is currently smart-gapped
+    smart_gapped: boolean = false;
+
     private was_hidden: boolean = false;
 
     private window_app: any;
@@ -185,28 +188,7 @@ export class ShellWindow {
      * Window is maximized, 0 gapped or smart gapped
      */
     is_max_screen(): boolean {
-        return this.is_maximized() || this.ext.settings.gap_inner() === 0;
-    }
-
-    // TODO - smart gap is buggy, not being updated properly on auto-tile, windows had to be moved to work.
-    is_smart_gapped(): boolean {
-        let ext = this.ext;
-        if (ext && ext.auto_tiler) {
-            const smart_gaps = ext.settings.smart_gaps();
-            if (smart_gaps) {
-                for (const [entity, _] of ext.auto_tiler.forest.toplevel.values()) {
-                    let win_id = ext.auto_tiler.forest.string_reps.get(this.entity);
-                    let top_win_id = ext.auto_tiler.forest.string_reps.get(entity);
-                    if (win_id === top_win_id) {
-                        const fork = ext.auto_tiler.forest.forks.get(entity);
-                        if (fork && fork.smart_gaps) {
-                            return fork.smart_gaps;
-                        }
-                    }
-                }
-            }
-        }
-        return false;
+        return this.is_maximized() || this.ext.settings.gap_inner() === 0 || this.smart_gapped;
     }
 
     is_tilable(ext: Ext): boolean {
