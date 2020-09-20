@@ -216,5 +216,10 @@
             <default><![CDATA[['<Super><Shift>Right','<Super><Shift>l']]]></default>
             <summary>Move window to the rightward monitor</summary>
         </key>
+
+        <key type="s" name="hint-color-rgba">
+            <default>'rgba(251, 184, 108, 1)'</default>
+            <summary>The current active-hint-color in RGBA</summary>
+        </key>
     </schema>
 </schemalist>

@@ -102,6 +102,21 @@ export class ShellWindow {
         });
 
         this.hide_border()
+        
+        let settings = ext.settings.ext;
+        let selected_color = settings.get_string("hint-color-rgba");
+    
+        this.border.set_style(`border-color: ${selected_color}`);
+        let change_id = settings.connect('changed', (_, key) => {
+            if (this.border) {
+                if (key === 'hint-color-rgba') {
+                    let color_value = settings.get_string("hint-color-rgba");
+                    this.border.set_style(`border-color: ${color_value}`);
+                }
+                this.border.connect('destroy', () => { settings.disconnect(change_id) });
+            }
+            return false;
+        });
 
         global.window_group.add_child(this.border);
 

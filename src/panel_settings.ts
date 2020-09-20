@@ -62,7 +62,7 @@ export class Indicator {
         );
 
         // CSS Selector
-        this.button.menu.addMenuItem(color_selector());
+        this.button.menu.addMenuItem(color_selector(ext, this.button.menu), );
 
         this.button.menu.addMenuItem(
             number_entry(
@@ -270,8 +270,46 @@ function tiled(ext: Ext): any {
     return t;
 }
 
-function color_selector() {
-    let color_selector_button = new PopupMenuItem('Active Hint Color');
+// @ts-ignore
+function color_selector(ext: Ext, menu: any) {
+    let color_selector_item = new PopupMenuItem('Active Hint Color');
+    let color_button = new St.Button();
+    let settings = ext.settings.ext;
+    let selected_color = settings.get_string("hint-color-rgba");
+    
+    // TODO, find a way to expand the button text, :)
+    color_button.label = "           "; // blank for now
+    
+    color_button.set_style(`background-color: ${selected_color}; border: 2px solid lightgray; border-radius: 2px`);
 
-    return color_selector_button;
+    settings.connect('changed', (_, key) => {
+        if (key === 'hint-color-rgba') {
+            let color_value = settings.get_string("hint-color-rgba");
+            color_button.set_style(`background-color: ${color_value}; border: 2px solid lightgray; border-radius: 2px`);
+        }
+    });
+
+    color_button.set_x_align(Clutter.ActorAlign.END);
+    color_button.set_x_expand(false);
+
+    color_selector_item.label.get_clutter_text().set_x_expand(true);
+    color_selector_item.label.set_y_align(Clutter.ActorAlign.CENTER);
+
+    color_selector_item.add_child(color_button);
+    color_button.connect('button-press-event', () => {
+        // spawn an async process - so gnome-shell will not lock up
+        let color_dialog_response = GLib.spawn_command_line_async(`gjs ${Me.dir.get_path() + "/color-dialog.js"}`);
+        if (!color_dialog_response) {
+            return null;
+        }
+
+        // clean up and focus on the color dialog
+        GLib.timeout_add(GLib.PRIORITY_LOW, 300, () => {
+            menu.close();
+            return false;
+        });
+        
+    });
+
+    return color_selector_item;
 }

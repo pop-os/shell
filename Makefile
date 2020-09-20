@@ -25,7 +25,7 @@ transpile: $(sources)
 compile: convert metadata.json schemas
 	rm -rf _build
 	mkdir -p _build
-	cp -r metadata.json icons schemas target/*.js imports/*.js *.css _build
+	cp -r metadata.json icons schemas target/*.js imports/*.js *.css src/gtk/*.js _build
 
 convert: transpile
 	for file in target/*.js; do \
@@ -81,6 +81,7 @@ schemas: schemas/gschemas.compiled
 	touch $@
 
 schemas/gschemas.compiled: schemas/*.gschema.xml
+	sudo cp schemas/*.xml /usr/share/glib-2.0/schemas && sudo glib-compile-schemas /usr/share/glib-2.0/schemas
 	glib-compile-schemas schemas
 
 zip-file: all
