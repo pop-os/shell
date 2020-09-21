@@ -52,6 +52,9 @@ export class ShellWindow {
 
     was_attached_to?: [Entity, boolean];
 
+    // True if this window is currently smart-gapped
+    smart_gapped: boolean = false;
+
     private was_hidden: boolean = false;
 
     private window_app: any;
@@ -62,7 +65,7 @@ export class ShellWindow {
         xid_: new OnceCell()
     };
 
-    private _border: St.Bin = new St.Bin({ style_class: 'pop-shell-active-hint' });
+    private _border: St.Bin = new St.Bin({ style_class: 'pop-shell-active-hint pop-shell-border-normal' });
 
     private _border_size = 0;
 
@@ -179,6 +182,15 @@ export class ShellWindow {
 
     is_maximized(): boolean {
         return this.meta.get_maximized() !== 0;
+    }
+
+    /**
+     * Window is maximized, 0 gapped or smart gapped
+     */
+    is_max_screen(): boolean {
+        // log.debug(`title: ${this.meta.get_title()}`);
+        // log.debug(`max: ${this.is_maximized()}, 0-gap: ${this.ext.settings.gap_inner() === 0}, smart: ${this.smart_gapped}`);
+        return this.is_maximized() || this.ext.settings.gap_inner() === 0 || this.smart_gapped;
     }
 
     is_tilable(ext: Ext): boolean {
@@ -302,9 +314,8 @@ export class ShellWindow {
     show_border() {
         if (this.ext.settings.active_hint()) {
             let border = this._border;
-            if (!this.is_maximized() &&
+            if (!this.meta.is_fullscreen() &&
                 !this.meta.minimized &&
-                !this.meta.is_fullscreen() &&
                 this.same_workspace()) {
                 border.show();
             }
@@ -384,7 +395,8 @@ export class ShellWindow {
 
     hide_border() {
         let border = this._border;
-        border.hide();
+        if (border)
+            border.hide();
     }
 
     private _update_border_layout() {
@@ -394,8 +406,15 @@ export class ShellWindow {
         let border = this._border;
         let borderSize = this._border_size;
 
+        if (!this.is_max_screen()) {
+            border.remove_style_class_name('pop-shell-border-maximize');
+        } else {
+            borderSize = 0;
+            border.add_style_class_name('pop-shell-border-maximize');
+        }
+
         border.set_position(frameX - borderSize, frameY - borderSize);
-        border.set_size(frameWidth + 2 * borderSize, frameHeight + 2 * borderSize);
+        border.set_size(frameWidth + (2 * borderSize), frameHeight + (2 * borderSize));
 
         this.restack();
     }

@@ -1042,6 +1042,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                     break;
                 case 'smart-gaps':
                     this.on_smart_gap();
+                    this.show_border_on_focused();
             }
         });
 
