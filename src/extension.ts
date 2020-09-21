@@ -1138,8 +1138,6 @@ export class Ext extends Ecs.System<ExtEvent> {
         let win = this.get_window(window);
         if (win) {
             const entity = win.entity;
-            if (actor)
-                actor.hide();
             if (win && win.border)
                 win.border.hide();
             
@@ -1422,7 +1420,6 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         if (this.init) {
             for (const window of this.tab_list(Meta.TabList.NORMAL, null)) {
-                // window.meta.get_compositor_private()?.hide();
                 this.register({ tag: 3, window: window.meta });
             }
 

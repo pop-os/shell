@@ -240,11 +240,6 @@ export class ShellWindow {
                 if (on_complete) ext.register_fn(on_complete);
                 ext.tween_signals.delete(entity_string);
 
-                if (ext.animate_windows) {
-                    actor.opacity = 255;
-                    actor.show();
-                }
-
                 if (this.meta.appears_focused) {
                     this.show_border();
                 }
