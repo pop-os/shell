@@ -18,6 +18,13 @@ interface Global {
     workspace_manager: Meta.WorkspaceManager;
 }
 
+interface DialogButton {
+    label: string
+    action: () => void,
+    key?: number,
+    default?: boolean,
+}
+
 interface Rectangular {
     x: number;
     y: number;
@@ -243,6 +250,8 @@ declare namespace Shell {
         contentLayout: St.Widget;
         dialogLayout: Dialog;
 
+        addButton(button: DialogButton): void;
+
         close(timestamp: number): void;
         open(timestamp: number, on_primary: boolean): void;
 
@@ -264,6 +273,9 @@ declare namespace St {
         remove_style_class_name(name: string): void;
         remove_style_pseudo_class(name: string): void
         set_style_class_name(name: string): void;
+        add_style_class_name(name: string): void
+        remove_style_class_name(name: string): void;
+
         set_style_pseudo_class(name: string): void;
         show_all(): void;
         show(): void;
@@ -271,6 +283,10 @@ declare namespace St {
 
     interface Bin extends St.Widget {
         set_style(inlinecss: string): boolean;
+    }
+
+    interface BoxLayout extends Widget {
+
     }
 
     interface Entry extends Widget {

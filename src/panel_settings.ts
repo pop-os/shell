@@ -1,12 +1,12 @@
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
-// import * as auto_tiler from 'auto_tiler';
 import * as log from 'log';
 import * as Utils from 'utils';
+import * as fd from 'float_dialog';
 
-//import type { Entity } from './ecs';
 import type { Ext } from './extension';
 
+const { FloatDialog } = fd;
 const { Clutter, Gio, St } = imports.gi;
 const { PopupBaseMenuItem, PopupMenuItem, PopupSwitchMenuItem, PopupSeparatorMenuItem } = imports.ui.popupMenu;
 const { Button } = imports.ui.panelMenu;
@@ -23,15 +23,16 @@ export class Indicator {
         ext.button_gio_icon_auto_off = Gio.icon_new_for_string(`${Me.path}/icons/pop-shell-auto-off-symbolic.svg`);
 
         let button_icon_auto_on = new St.Icon({
-            gicon: ext.button_gio_icon_auto_on ,
-            style_class: "system-status-icon",
-        });
-        let button_icon_auto_off = new St.Icon({
-            gicon:  ext.button_gio_icon_auto_off,
+            gicon: ext.button_gio_icon_auto_on,
             style_class: "system-status-icon",
         });
 
-        if (ext.settings.tile_by_default()){
+        let button_icon_auto_off = new St.Icon({
+            gicon: ext.button_gio_icon_auto_off,
+            style_class: "system-status-icon",
+        });
+
+        if (ext.settings.tile_by_default()) {
             this.button.icon = button_icon_auto_on;
         } else {
             this.button.icon = button_icon_auto_off;
@@ -62,7 +63,7 @@ export class Indicator {
         );
 
         // CSS Selector
-        this.button.menu.addMenuItem(color_selector(ext, this.button.menu), );
+        this.button.menu.addMenuItem(color_selector(ext, this.button.menu),);
 
         this.button.menu.addMenuItem(
             number_entry(
@@ -74,6 +75,8 @@ export class Indicator {
                 }
             )
         )
+
+        this.button.menu.addMenuItem(float_dialog(ext));
     }
 
     destroy() {
@@ -81,7 +84,15 @@ export class Indicator {
     }
 }
 
-function menu_separator(text: any): any {
+function float_dialog(ext: Ext): GObject.Object {
+    let container = new PopupBaseMenuItem();
+    container.connect('activate', () => new FloatDialog(ext.conf).open());
+    container.add_child(new St.Label({ text: "Floating Rules" }))
+
+    return container;
+}
+
+function menu_separator(text: string): any {
     return new PopupSeparatorMenuItem(text);
 }
 
@@ -118,6 +129,7 @@ function shortcuts(menu: any): any {
 
         menu.close();
     })
+
     item.add_child(widget);
 
     function create_label(text: string): any {
@@ -276,7 +288,7 @@ function color_selector(ext: Ext, menu: any) {
     let color_button = new St.Button();
     let settings = ext.settings;
     let selected_color = settings.hint_color_rgba();
-    
+
     // TODO, find a way to expand the button text, :)
     color_button.label = "           "; // blank for now
     color_button.set_style(`background-color: ${selected_color}; border: 2px solid lightgray; border-radius: 2px`);
@@ -307,7 +319,7 @@ function color_selector(ext: Ext, menu: any) {
             menu.close();
             return false;
         });
-        
+
     });
 
     return color_selector_item;

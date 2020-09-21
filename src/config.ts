@@ -15,10 +15,10 @@ const { Err, Ok } = result;
 const CONF_DIR: string = GLib.get_home_dir() + "/.config/pop-shell"
 export var CONF_FILE: string = CONF_DIR + "/config.json"
 
-const DEFAULT_RULES: Array<FloatRule> =[
+export const DEFAULT_RULES: Array<FloatRule> = [
     { class: "Authy Desktop", },
-    { class: "Enpass", title: "Enpass Assistant"},
-    { class: "Zotero", title: "Quick Format Citation"},
+    { class: "Enpass", title: "Enpass Assistant" },
+    { class: "Zotero", title: "Quick Format Citation" },
     { class: "Com.github.donadigo.eddy", },
     { class: "Conky", },
     { class: "Gnome-screenshot", },
@@ -40,8 +40,12 @@ export class Config {
     /** Logs window details on focus of window */
     log_on_focus: boolean = false;
 
+    floating(): Array<FloatRule> {
+        return DEFAULT_RULES.concat(this.float)
+    }
+
     window_shall_float(wclass: string, title: string): boolean {
-        return this.float.find((rule) => {
+        return this.floating().find((rule) => {
             if (rule.class) {
                 if (!new RegExp(rule.class).test(wclass)) {
                     return false;
@@ -66,7 +70,7 @@ export class Config {
             return;
         }
 
-        this.float = DEFAULT_RULES.concat(conf.value.float);
+        this.float = conf.value.float;
         this.log_on_focus = conf.value.log_on_focus;
     }
 
@@ -131,7 +135,7 @@ export class Config {
 
             file.value.replace_contents(data, null, false, Gio.FileCreateFlags.NONE, null)
 
-            return Ok(void(0));
+            return Ok(void (0));
         } catch (why) {
             return Err(new error.Error(`failed to write to config: ${why}`));
         }
