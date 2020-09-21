@@ -175,7 +175,8 @@ This provides the tiling window manager experience, where windows are automatica
 - `Super` + `O`
   - Toggles the orientation of a fork's tiling orientation
 - `Super` + `G`
-  - Toggles a window between floating and tiling
+  - Toggles a window between floating and tiling. 
+  - See [#customizing the window float list](#customizing-the-floating-window-list)
 
 ### Feature Overview
 
@@ -188,6 +189,18 @@ This provides the tiling window manager experience, where windows are automatica
   - Window resizes can be carried out with the mouse
   - Tiling mode may also be used to adjust sizes with the keyboard
 - Ultra-wide displays are treated as two separate displays by default (**Unimplemented**)
+
+### Customizing the Floating Window List
+There is file `$HOME/.config/pop-shell/config.json` where you can add the following structure:
+```
+{
+  class: "<WM_CLASS String from xprop>",
+  title: "<Optional Window Title>"
+}
+```
+For example, doing `xprop` on GNOME Settings (or GNOME Control Center), the WM_CLASS values are `gnome-control-center` and `Gnome-control-center`. Use the second value (Gnome-control-center), which pop-shell will read. `title` is optional.
+
+After applying changes in the `config.json`, you can reload the tiling if it doesnt work the first time.
 
 ### How It Works
 
