@@ -14,9 +14,10 @@ function getExtensionPath(uuid) {
     let ext_path = null;
 
     for (let i = 0; i < EXT_PATH_DEFAULTS.length; i++) {
-        let path = EXT_PATH_DEFAULTS[0];
+        let path = EXT_PATH_DEFAULTS[i];
         let file = Gio.File.new_for_path(path + uuid);
-        if (file != null) {
+        log(file.get_path())
+        if (file.query_exists(null)) {
             ext_path = file;
             break;
         }
@@ -27,19 +28,23 @@ function getExtensionPath(uuid) {
 
 function getSettings(schema) {
     let extensionPath = getExtensionPath("pop-shell@system76.com");
-
     if (!extensionPath)
         throw new Error('getSettings() can only be called when extension is available');
 
-    // For some reason, this does not seem to be recognized by GJS as a valid schemaDir
-    // let schemaDir = extensionPath.get_child('schemas');
-    // return Gio.Settings.new_with_path(schema, schemaDir.get_path() + "/");
-    // However, `gsettings --schemaDir /home/path/to/extension/schemas/ list-keys uuid` command works. Really confused.
+    // The following will load a custom path for a user defined gsettings/schemas folder
+    const GioSSS = Gio.SettingsSchemaSource;
+    const schemaDir = extensionPath.get_child('schemas');
 
-    // Had to install the gschema.xml into /usr/share/glib2.0/schemas and recompile.
+    let schemaSource = schemaDir.query_exists(null) ?
+        GioSSS.new_from_directory(schemaDir.get_path(), GioSSS.get_default(), false) :
+        GioSSS.get_default();
 
-    // use this one for now, it uses the installed schema in `/usr/share/glib2.0/schemas`
-    return new Gio.Settings({ schema_id: schema });
+    const schemaObj = schemaSource.lookup(schema, true);
+
+    if (!schemaObj) {
+        throw new Error("Schema " + schema + " could not be found for extension ");
+    }
+    return new Gio.Settings({ settings_schema: schemaObj });
 }
 /**
  * Launch a Gtk.ColorChooserDialog. And then save the color RGBA/alpha values in GSettings of Pop-Shell.
