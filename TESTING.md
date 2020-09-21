@@ -28,12 +28,12 @@ Tasks for a tester to verify when approving a patch. Use complex window layouts 
 - [ ] Windows can be resized with the mouse
 - [ ] Minimizing a window detaches it from the tree and re-tiles remaining windows
 - [ ] Unminimizing a window re-tiles the window
-- [ ] Maximizing with the keyboard (`Super` `M`) removes the active hint and covers tiled windows
-- [ ] Unmaximizing with keyboard (`Super` `M`) adds active hint and re-tiles into place
-- [ ] Maximizing with the mouse removes the active hint and covers tiled windows
-- [ ] Unmaximizing with mouse adds active hint and re-tiles into place
-- [ ] Full-screening removes the hint and full-screens on one display 
-- [ ] Unfull-screening adds active hint and re-tiles into place
+- [ ] Maximizing with the keyboard (`Super` `M`) covers tiled windows
+- [ ] Unmaximizing with keyboard (`Super` `M`) re-tiles into place
+- [ ] Maximizing with the mouse covers tiled windows
+- [ ] Unmaximizing with mouse re-tiles into place
+- [ ] Full-screening removes the active hint and full-screens on one display 
+- [ ] Unfull-screening adds the active hint and re-tiles into place
 - [ ] Maximizing a YouTube video fills the screen and unmaximizing retiles the browser in place
 - [ ] VIM shortcuts work as direction keys
 - [ ] `Super` `O` changes window orientation
