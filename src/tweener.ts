@@ -11,6 +11,7 @@ export interface TweenParams {
 
 export function add(a: Clutter.Actor, p: TweenParams) {
     if (!p.mode) p.mode = Clutter.AnimationMode.LINEAR;
+    remove(a);
     a.ease(p);
 }
 

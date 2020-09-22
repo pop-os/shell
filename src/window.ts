@@ -239,10 +239,10 @@ export class ShellWindow {
                 ext.register({ tag: 2, window: this, kind: { tag: 1, rect: clone } });
                 if (on_complete) ext.register_fn(on_complete);
                 ext.tween_signals.delete(entity_string);
-
                 if (this.meta.appears_focused) {
                     this.show_border();
                 }
+
             };
 
             if (ext.animate_windows && !ext.init) {
@@ -261,10 +261,12 @@ export class ShellWindow {
                     callback();
                 }
 
-                const x = clone.x - dx;
-                const y = clone.y - dy;
-
-                Tweener.add(actor, { x, y, duration: 149, mode: null });
+                Tweener.add(actor, {
+                    x: clone.x - dx,
+                    y: clone.y - dy,
+                    duration: 275,
+                    mode: null,
+                });
 
                 ext.tween_signals.set(entity_string, [
                     Tweener.on_window_tweened(this.meta, onComplete),
