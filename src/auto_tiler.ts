@@ -96,7 +96,9 @@ export class AutoTiler {
     update_toplevel(ext: Ext, fork: Fork, monitor: number, smart_gaps: boolean) {
         let rect = ext.monitor_work_area(monitor);
 
-        if (!(smart_gaps && fork.right === null)) {
+        fork.smart_gapped = smart_gaps && fork.right === null;
+
+        if (!fork.smart_gapped) {
             rect.x += ext.gap_outer;
             rect.y += ext.gap_outer;
             rect.width -= ext.gap_outer * 2;
@@ -106,11 +108,9 @@ export class AutoTiler {
         if (fork.left.inner.kind === 2) {
             const win = ext.windows.get(fork.left.inner.entity);
             if (win) {
-                win.smart_gapped = smart_gaps && fork.right === null;
+                win.smart_gapped = fork.smart_gapped;
             }
         }
-
-        fork.smart_gaps = smart_gaps;
 
         let ratio;
 
@@ -139,7 +139,7 @@ export class AutoTiler {
 
         const [entity, fork] = this.forest.create_toplevel(win.entity, rect.clone(), workspace_id)
         this.attached.insert(win.entity, entity);
-        fork.smart_gaps = smart_gaps;
+        fork.smart_gapped = smart_gaps;
         win.smart_gapped = smart_gaps;
 
         this.tile(ext, fork, rect);
@@ -153,8 +153,9 @@ export class AutoTiler {
             const [, fork] = attached;
             const monitor = ext.monitors.get(attachee.entity);
             if (monitor) {
-                if (fork.is_toplevel && fork.smart_gaps) {
-                    let rect = ext.monitor_work_area(monitor[0]);
+                if (fork.is_toplevel && fork.smart_gapped) {
+                    fork.smart_gapped = false;
+                    let rect = ext.monitor_work_area(fork.monitor);
 
                     rect.x += ext.gap_outer;
                     rect.y += ext.gap_outer;
@@ -219,13 +220,10 @@ export class AutoTiler {
 
             if (reflow_fork) {
                 const fork = reflow_fork[1];
-                if (fork.is_toplevel && fork.smart_gaps && fork.right === null) {
-                    const monitor = ext.monitors.get(win);
-                    if (monitor) {
-                        let rect = ext.monitor_work_area(monitor[0]);
-                        fork.set_area(rect);
-                    }
-
+                if (fork.is_toplevel && ext.settings.smart_gaps() && fork.right === null) {
+                    let rect = ext.monitor_work_area(fork.monitor);
+                    fork.set_area(rect);
+                    fork.smart_gapped = true;
                 }
 
                 this.tile(ext, fork, fork.area);

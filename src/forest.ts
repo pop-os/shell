@@ -110,7 +110,7 @@ export class Forest extends Ecs.World {
 
         if (is_left) {
             if (fork.right) {
-                const new_fork = this.create_fork(fork.left, fork.right, fork.area_of_right(ext), fork.workspace)[0];
+                const new_fork = this.create_fork(fork.left, fork.right, fork.area_of_right(ext), fork.workspace, fork.monitor)[0];
                 fork.right = Node.Node.fork(new_fork);
                 this.parents.insert(new_fork, fork.entity);
                 this.on_attach(new_fork, window);
@@ -122,7 +122,7 @@ export class Forest extends Ecs.World {
             fork.left = node;
         } else {
             if (fork.right) {
-                const new_fork = this.create_fork(fork.left, fork.right, fork.area_of_left(ext), fork.workspace)[0];
+                const new_fork = this.create_fork(fork.left, fork.right, fork.area_of_left(ext), fork.workspace, fork.monitor)[0];
                 fork.left = Node.Node.fork(new_fork);
                 this.parents.insert(new_fork, fork.entity);
                 this.on_attach(new_fork, window);
@@ -176,7 +176,7 @@ export class Forest extends Ecs.World {
             if (fork.left.is_window(onto_entity)) {
                 if (fork.right) {
                     const area = fork.area_of_left(ext);
-                    const [fork_entity, new_fork] = this.create_fork(fork.left, right_node, area, fork.workspace);
+                    const [fork_entity, new_fork] = this.create_fork(fork.left, right_node, area, fork.workspace, fork.monitor);
 
                     const inner_left = new Rect.Rectangle(new_fork.is_horizontal()
                         ? [new_fork.area.x, new_fork.area.y, new_fork.area.width / 2, new_fork.area.height]
@@ -203,7 +203,7 @@ export class Forest extends Ecs.World {
             } else if (fork.right) {
                 if (fork.right.is_window(onto_entity)) {
                     const area = fork.area_of_right(ext);
-                    const [fork_entity, new_fork] = this.create_fork(fork.right, right_node, area, fork.workspace);
+                    const [fork_entity, new_fork] = this.create_fork(fork.right, right_node, area, fork.workspace, fork.monitor);
 
                     const inner_left = new Rect.Rectangle(new_fork.is_horizontal()
                         ? [new_fork.area.x, new_fork.area.y, new_fork.area.width / 2, new_fork.area.height]
@@ -247,11 +247,12 @@ export class Forest extends Ecs.World {
         left: Node.Node,
         right: Node.Node | null,
         area: Rectangle,
-        workspace: number
+        workspace: WorkspaceID,
+        monitor: MonitorID,
     ): [Entity, Fork.Fork] {
         const entity = this.create_entity();
         let orient = area.width > area.height ? Lib.Orientation.HORIZONTAL : Lib.Orientation.VERTICAL;
-        let fork = new Fork.Fork(entity, left, right, area, workspace, orient);
+        let fork = new Fork.Fork(entity, left, right, area, workspace, monitor, orient);
         this.forks.insert(entity, fork);
         return [entity, fork];
     }
@@ -260,10 +261,10 @@ export class Forest extends Ecs.World {
     create_toplevel(
         window: Entity,
         area: Rectangle,
-        id: [number, number]
+        id: [MonitorID, WorkspaceID]
     ): [Entity, Fork.Fork] {
         const [entity, fork] = this.create_fork(
-            Node.Node.window(window), null, area, id[1]
+            Node.Node.window(window), null, area, id[1], id[0]
         );
 
         this.string_reps.with(entity, (sid) => {

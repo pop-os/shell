@@ -526,6 +526,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                 const [new_mon_id, new_mon] = this.find_monitor_to_retach(display.area.width, display.area.height);
 
                 fork.workspace = new_work_id;
+                fork.monitor = new_mon_id;
 
                 for (const child of forest.iter(entity)) {
                     switch (child.inner.kind) {
@@ -533,6 +534,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                             const cfork = forest.forks.get(child.inner.entity);
                             if (!cfork) continue;
                             cfork.workspace = new_work_id;
+                            cfork.monitor = new_mon_id;
                             break
                         case 2:
                             let window = this.windows.get(child.inner.entity);
@@ -1545,6 +1547,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             let display = this.displays.get(mon_id);
 
             if (fork && display) {
+                fork.monitor = mon_id;
                 this.auto_tiler.update_toplevel(this, fork, mon_id, this.settings.smart_gaps());
             }
         }

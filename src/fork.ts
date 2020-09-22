@@ -30,18 +30,19 @@ export class Fork {
     workspace: number;
     length_left: number;
     prev_length_left: number;
+    monitor: number;
     minimum_ratio: number = 0.1;
     orientation: Lib.Orientation = Lib.Orientation.HORIZONTAL;
 
     orientation_changed: boolean = false;
     is_toplevel: boolean = false;
 
-    smart_gaps: boolean = false;
+    smart_gapped: boolean = false;
 
     /** Tracks toggle count so that we may swap branches when toggled twice */
     private n_toggled: number = 0;
 
-    constructor(entity: Entity, left: Node, right: Node | null, area: Rectangle, workspace: number, orient: Lib.Orientation) {
+    constructor(entity: Entity, left: Node, right: Node | null, area: Rectangle, workspace: WorkspaceID, monitor: MonitorID, orient: Lib.Orientation) {
         this.area = area;
         this.left = left;
         this.right = right;
@@ -52,6 +53,7 @@ export class Fork {
         this.prev_length_left = this.length_left;
         this.entity = entity;
         this.orientation = orient;
+        this.monitor = monitor;
     }
 
     /** The calculated left area of this fork */
