@@ -56,7 +56,7 @@ export class Stack {
 
     stack_rect: Rectangular = { width: 0, height: 0, x: 0, y: 0 };
 
-    private border: St.Bin = new St.Bin({ style_class: 'pop-shell-active-hint' });
+    private border: St.Bin = new St.Bin({ style_class: 'pop-shell-active-hint pop-shell-border-normal' });
 
     private border_signal: SignalID;
 
