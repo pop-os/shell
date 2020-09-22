@@ -158,7 +158,8 @@ export class Tiler {
             left,
             right,
             fork.area,
-            fork.workspace
+            fork.workspace,
+            fork.monitor
         );
 
         if (is_left) {
