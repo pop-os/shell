@@ -632,31 +632,16 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     show_border_on_focused() {
         this.hide_all_borders();
-        const ignore_stack = this.grab_op !== null;
 
         const focus = this.focus_window();
         if (focus) {
-            if (!ignore_stack && focus.stack !== null) {
-                const stack = ext?.auto_tiler?.forest.stacks.get(focus.stack);
-                if (stack) {
-                    focus.hide_border();
-                    stack.show_border();
-                } else {
-                    focus.show_border();
-                }
-            } else {
-                focus.show_border();
-            }
+            focus.show_border();
         }
     }
 
     hide_all_borders() {
         for (const win of this.windows.values()) {
             win.hide_border();
-        }
-
-        if (this.auto_tiler) for (const stack of this.auto_tiler.forest.stacks.values()) {
-            stack.hide_border();
         }
     }
 
@@ -739,6 +724,8 @@ export class Ext extends Ecs.System<ExtEvent> {
         if (null == win || !win.is_tilable(this)) {
             return;
         }
+
+        win.grab = false;
 
         this.size_signals_unblock(win);
 
@@ -980,6 +967,8 @@ export class Ext extends Ecs.System<ExtEvent> {
     on_grab_start(meta: Meta.Window) {
         let win = this.get_window(meta);
         if (win) {
+            win.grab = true;
+
             if (win.is_tilable(this)) {
                 let entity = win.entity;
                 let rect = win.rect();

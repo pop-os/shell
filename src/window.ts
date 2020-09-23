@@ -51,6 +51,7 @@ export class ShellWindow {
     ext: Ext;
     stack: number | null = null;
     known_workspace: number;
+    grab: boolean = false;
 
     was_attached_to?: [Entity, boolean];
 
@@ -329,7 +330,7 @@ export class ShellWindow {
     }
 
     show_border() {
-        if (this.stack === null && this.ext.settings.active_hint()) {
+        if (this.ext.settings.active_hint()) {
             let border = this.border;
             if (!this.meta.is_fullscreen() &&
                 !this.meta.minimized &&
@@ -429,8 +430,24 @@ export class ShellWindow {
             border.add_style_class_name('pop-shell-border-maximize');
         }
 
-        border.set_position(frameX - borderSize, frameY - borderSize);
-        border.set_size(frameWidth + (2 * borderSize), frameHeight + (2 * borderSize));
+        let stack_number = this.stack;
+
+        if (stack_number !== null) {
+            const stack = this.ext.auto_tiler?.forest.stacks.get(stack_number);
+            if (stack) {
+                let stack_tab_height = stack.tabs_height;
+
+                if (borderSize === 0 || this.grab) { // not in max screen state
+                    stack_tab_height = 0;
+                }
+
+                border.set_position(frameX - borderSize, frameY - stack_tab_height - borderSize);
+                border.set_size(frameWidth + 2 * borderSize, frameHeight + stack_tab_height + 2 * borderSize);
+            }
+        } else {
+            border.set_position(frameX - borderSize, frameY - borderSize);
+            border.set_size(frameWidth + (2 * borderSize), frameHeight + (2 * borderSize));
+        }
 
         this.restack();
     }
