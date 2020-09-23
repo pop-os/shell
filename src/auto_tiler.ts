@@ -207,8 +207,12 @@ export class AutoTiler {
     }
 
     /** Destroy all widgets owned by this object. Call before dropping. */
-    destroy() {
+    destroy(ext: Ext) {
         for (const stack of this.forest.stacks.values()) stack.destroy();
+
+        for (const window of ext.windows.values()) {
+            window.stack = null;
+        }
 
         this.forest.stacks.truncate(0);
     }
