@@ -1463,7 +1463,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     toggle_tiling() {
         if (this.auto_tiler) {
             this.unregister_storage(this.auto_tiler.attached);
-            this.auto_tiler.destroy();
+            this.auto_tiler.destroy(this);
             this.auto_tiler = null;
             this.settings.set_tile_by_default(false);
             this.tiling_toggle_switch.setToggleState(false);
@@ -1717,6 +1717,11 @@ function disable() {
 
         ext.keybindings.disable(ext.keybindings.global)
             .disable(ext.keybindings.window_focus)
+
+        if (ext.auto_tiler) {
+            ext.auto_tiler.destroy(ext);
+            ext.auto_tiler = null;
+        }
     }
 
     if (indicator) {
