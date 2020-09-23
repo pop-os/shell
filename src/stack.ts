@@ -54,13 +54,9 @@ export class Stack {
 
     buttons: a.Arena<St.Button> = new Arena();
 
+    tabs_height: number = TAB_HEIGHT;
+
     stack_rect: Rectangular = { width: 0, height: 0, x: 0, y: 0 };
-
-    private border: St.Bin = new St.Bin({ style_class: 'pop-shell-active-hint pop-shell-border-normal' });
-
-    private border_signal: SignalID;
-
-    private border_size: number = 0;
 
     private active_signals: [SignalID, SignalID] | null = null;
 
@@ -74,19 +70,13 @@ export class Stack {
         this.ext = ext;
         this.active = active;
         this.workspace = workspace;
+        this.tabs_height = TAB_HEIGHT * this.ext.dpi;
 
         this.widgets = stack_widgets_new();
 
         global.window_group.add_child(this.widgets.tabs);
-        global.window_group.add_child(this.border);
 
         this.reposition();
-
-        this.border_signal = this.border.connect('style-changed', () => {
-            this.on_style_changed();
-        });
-
-        this.border.hide();
 
         this.tabs_destroy = this.widgets.tabs.connect('destroy', () => this.recreate_widgets());
     }
@@ -94,10 +84,6 @@ export class Stack {
     /** Adds a new window to the stack */
     add(window: ShellWindow) {
         if (!this.widgets) return;
-
-        if (this.border_size === 0 && window.meta.get_compositor_private()?.get_stage()) {
-            this.on_style_changed();
-        }
 
         const entity = window.entity;
         const label = window.meta.get_title();
@@ -252,8 +238,6 @@ export class Stack {
     /** Disconnects this stack's signal, and destroys its widgets */
     destroy() {
         global.display.disconnect(this.restacker);
-        this.border.disconnect(this.border_signal);
-        this.border.destroy();
         this.active_disconnect();
 
         // Disconnect stack signals from each window, and unhide them.
@@ -269,10 +253,6 @@ export class Stack {
             this.widgets = null;
             tabs.destroy();
         }
-    }
-
-    hide_border() {
-        this.border.hide();
     }
 
     private on_grab(or: () => void) {
@@ -291,10 +271,6 @@ export class Stack {
         }
 
         or();
-    }
-
-    private on_style_changed() {
-        this.border_size = this.border.get_theme_node().get_border_width(St.Side.TOP);
     }
 
     /** Workaround for when GNOME Shell destroys our widgets when they're reparented
@@ -425,7 +401,6 @@ export class Stack {
         // Reposition actors on the screen, being careful about not displaying over maximized windows
         if (!window.meta.is_fullscreen() && !window.is_maximized() && !this.ext.maximized_on_active_display()) {
             parent.set_child_above_sibling(this.widgets.tabs, actor);
-            parent.set_child_above_sibling(this.border, this.widgets.tabs);
         } else {
             parent.set_child_below_sibling(this.widgets.tabs, actor);
         }
@@ -444,7 +419,6 @@ export class Stack {
                     this.actor_exec(idx, c.entity, (actor) => actor.hide());
                     idx += 1;
                 }
-                this.hide_border();
             } else if (this.widgets.tabs.visible) {
                 for (const c of this.tabs) {
                     this.actor_exec(idx, c.entity, (actor) => actor.hide());
@@ -453,19 +427,7 @@ export class Stack {
 
                 this.reposition();
             }
-
-            this.update_border_layout();
         })
-    }
-
-    show_border() {
-        if (this.ext.settings.active_hint()) {
-            const window = this.ext.windows.get(this.active);
-            if (window && !window.is_maximized() && !window.meta.is_fullscreen()) {
-                this.border.show();
-                this.restack();
-            }
-        }
     }
 
     /** Changes visibility of the stack's actors */
@@ -481,36 +443,24 @@ export class Stack {
         }
     }
 
-    private update_border_layout() {
-        const meta = this.active_meta();
-        if (!meta) return;
-
-        const rect = meta.get_frame_rect(),
-            size = this.border_size,
-            border = this.border;
-
-        border.set_position(rect.x - size, rect.y - TAB_HEIGHT - size);
-        border.set_size(rect.width + 2 * size, rect.height + TAB_HEIGHT + 2 * size);
-    }
-
     /** Updates the dimensions and positions of the stack's actors */
     update_positions(rect: Rectangular) {
         if (!this.widgets) return;
 
         this.rect = rect;
 
-        const tabs_height = TAB_HEIGHT * this.ext.dpi;
+        this.tabs_height = TAB_HEIGHT * this.ext.dpi;
 
         this.stack_rect = {
             x: rect.x,
-            y: rect.y - tabs_height,
+            y: rect.y - this.tabs_height,
             width: rect.width,
-            height: tabs_height + rect.height,
+            height: this.tabs_height + rect.height,
         };
 
         this.widgets.tabs.x = rect.x;
         this.widgets.tabs.y = this.stack_rect.y;
-        this.widgets.tabs.height = tabs_height;
+        this.widgets.tabs.height = this.tabs_height;
         this.widgets.tabs.width = rect.width;
     }
 
