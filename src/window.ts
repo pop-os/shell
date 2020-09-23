@@ -331,8 +331,7 @@ export class ShellWindow {
     show_border() {
         if (this.stack === null && this.ext.settings.active_hint()) {
             let border = this.border;
-            if (!this.is_maximized() &&
-                !this.meta.is_fullscreen() &&
+            if (!this.meta.is_fullscreen() &&
                 !this.meta.minimized &&
                 this.same_workspace()) {
                 border.show();
