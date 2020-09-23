@@ -1172,8 +1172,19 @@ export class Ext extends Ecs.System<ExtEvent> {
     on_workspace_modify(
         condition: (current: number) => boolean,
         modify: (current: number) => number,
-        change_workspace: boolean = false
+        change_workspace: boolean = false,
     ) {
+        function window_move(ext: Ext, entity: Entity, ws: WorkspaceID) {
+            if (change_workspace) {
+                const window = ext.windows.get(entity);
+                if (!window || !window.actor_exists()) return;
+
+                ext.size_signals_block(window);
+                window.meta.change_workspace_by_index(ws, false);
+                ext.size_signals_unblock(window);
+            }
+        }
+
         if (this.auto_tiler) {
             for (const [entity, monitor] of this.auto_tiler.forest.toplevel.values()) {
                 if (condition(monitor[1])) {
@@ -1187,17 +1198,18 @@ export class Ext extends Ecs.System<ExtEvent> {
                                 fork = this.auto_tiler.forest.forks.get(child.inner.entity);
                                 if (fork) fork.workspace = value;
                             } else if (child.inner.kind === 2) {
-                                if (change_workspace) {
-                                    const window = this.windows.get(child.inner.entity);
-                                    if (!window || !window.actor_exists()) continue;
-
-                                    this.size_signals_block(window);
-                                    window.meta.change_workspace_by_index(value, true);
-                                    this.size_signals_unblock(window);
-                                }
+                                window_move(this, child.inner.entity, value);
                             } else if (child.inner.kind === 3) {
                                 let stack = this.auto_tiler.forest.stacks.get(child.inner.idx);
-                                if (stack) stack.workspace = value;
+                                if (stack) {
+                                    stack.workspace = value;
+
+                                    for (const entity of child.inner.entities) {
+                                        window_move(this, entity, value);
+                                    }
+
+                                    stack.restack();
+                                }
                             }
                         }
                     }
