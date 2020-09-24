@@ -371,7 +371,6 @@ export class ShellWindow {
         }
 
         GLib.timeout_add(GLib.PRIORITY_LOW, restackSpeed, () => {
-            this.update_border_layout();
             let border = this.border;
             let actor = this.meta.get_compositor_private();
             let win_group = global.window_group;
@@ -395,6 +394,7 @@ export class ShellWindow {
                         win_group.set_child_above_sibling(border, actor);
                     }
                 }
+                this.update_border_layout();
             }
 
             return false; // make sure it runs once
@@ -449,8 +449,6 @@ export class ShellWindow {
             border.set_position(frameX - borderSize, frameY - borderSize);
             border.set_size(frameWidth + (2 * borderSize), frameHeight + (2 * borderSize));
         }
-
-        this.restack();
     }
 
     private window_changed() {
