@@ -371,6 +371,7 @@ export class ShellWindow {
         }
 
         GLib.timeout_add(GLib.PRIORITY_LOW, restackSpeed, () => {
+            this.update_border_layout();
             let border = this.border;
             let actor = this.meta.get_compositor_private();
             let win_group = global.window_group;

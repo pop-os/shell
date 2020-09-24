@@ -1504,6 +1504,10 @@ export class Ext extends Ecs.System<ExtEvent> {
             this.settings.set_tile_by_default(false);
             this.tiling_toggle_switch.setToggleState(false);
             this.button.icon.gicon = this.button_gio_icon_auto_off; // type: Gio.Icon
+
+            if (this.settings.active_hint()) {
+                this.show_border_on_focused();
+            }
         }
     }
 
