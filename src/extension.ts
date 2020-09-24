@@ -269,7 +269,22 @@ export class Ext extends Ecs.System<ExtEvent> {
                                     if (fork) {
                                         this.auto_tiler.reflow(this, win.entity);
                                     }
-                                } else if (win.is_maximized()) {
+                                    if (win.stack !== null) {
+                                        let stack = this.auto_tiler.forest.stacks.get(win.stack);
+                                        if (stack) {
+                                            stack.set_visible(true);
+                                        }
+                                    }
+                                } else { // not full screened
+                                    if (win.stack !== null) {
+                                        let stack = this.auto_tiler.forest.stacks.get(win.stack);
+                                        if (stack) {
+                                            stack.set_visible(false);
+                                        }
+                                    }
+                                }
+                                
+                                if (win.is_maximized()) {
                                     this.size_changed_block();
                                     win.meta.unmaximize(Meta.MaximizeFlags.BOTH);
                                     win.meta.make_fullscreen();
