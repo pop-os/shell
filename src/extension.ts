@@ -35,6 +35,8 @@ const wom = global.workspace_manager;
 
 const Movement = movement.Movement;
 
+const GLib: GLib = imports.gi.GLib;
+
 const { Gio, Meta, St } = imports.gi;
 const { GlobalEvent, WindowEvent } = Events;
 const { cursor_rect, is_move_op } = Lib;
@@ -136,6 +138,8 @@ export class Ext extends Ecs.System<ExtEvent> {
     /** Record of misc. global objects and their attached signals */
     private signals: Map<GObject.Object, Array<SignalID>> = new Map();
 
+    /** Used to debounce on_focus triggers */
+    private focus_trigger: null | SignalID = null;
 
     // Entity-component associations
 
@@ -283,7 +287,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                                         }
                                     }
                                 }
-                                
+
                                 if (win.is_maximized()) {
                                     this.size_changed_block();
                                     win.meta.unmaximize(Meta.MaximizeFlags.BOTH);
@@ -584,8 +588,16 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         this.size_signals_unblock(win);
 
-        this.prev_focused = this.last_focused;
-        this.last_focused = win.entity;
+        // Keep the last-focused window from being shifted too quickly. 300ms debounce
+        if (this.focus_trigger === null) {
+            this.focus_trigger = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 300, () => {
+                this.focus_trigger = null;
+                return false;
+            });
+
+            this.prev_focused = this.last_focused;
+            this.last_focused = win.entity;
+        }
 
         function activate_in_stack(ext: Ext, stack: node.NodeStack, win: Window.ShellWindow) {
             ext.auto_tiler?.forest.stacks.get(stack.idx)?.activate(win.entity);
@@ -1496,35 +1508,35 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     auto_tile_on() {
-            const original = this.active_workspace();
+        const original = this.active_workspace();
 
-            let tiler = new auto_tiler.AutoTiler(
-                new Forest.Forest()
-                    .connect_on_attach((entity: Entity, window: Entity) => {
-                        tiler.attached.insert(window, entity);
-                    }),
-                this.register_storage()
-            );
+        let tiler = new auto_tiler.AutoTiler(
+            new Forest.Forest()
+                .connect_on_attach((entity: Entity, window: Entity) => {
+                    tiler.attached.insert(window, entity);
+                }),
+            this.register_storage()
+        );
 
-            this.auto_tiler = tiler;
+        this.auto_tiler = tiler;
 
-            this.settings.set_tile_by_default(true);
-            this.tiling_toggle_switch.setToggleState(true);
-            this.button.icon.gicon = this.button_gio_icon_auto_on; // type: Gio.Icon
+        this.settings.set_tile_by_default(true);
+        this.tiling_toggle_switch.setToggleState(true);
+        this.button.icon.gicon = this.button_gio_icon_auto_on; // type: Gio.Icon
 
-            for (const window of this.windows.values()) {
-                if (window.is_tilable(this)) {
-                    let actor = window.meta.get_compositor_private();
-                    if (actor) {
-                        if (!window.meta.minimized) {
-                            tiler.auto_tile(this, window, false);
-                        }
+        for (const window of this.windows.values()) {
+            if (window.is_tilable(this)) {
+                let actor = window.meta.get_compositor_private();
+                if (actor) {
+                    if (!window.meta.minimized) {
+                        tiler.auto_tile(this, window, false);
                     }
                 }
             }
-
-            this.register_fn(() => this.switch_to_workspace(original));
         }
+
+        this.register_fn(() => this.switch_to_workspace(original));
+    }
 
     unset_grab_op() {
         if (this.grab_op !== null) {
