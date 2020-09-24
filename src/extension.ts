@@ -1462,6 +1462,14 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     toggle_tiling() {
+        if (this.settings.tile_by_default()) {
+            this.auto_tile_off();
+        } else {
+            this.auto_tile_on();
+        }
+    }
+
+    auto_tile_off() {
         if (this.auto_tiler) {
             this.unregister_storage(this.auto_tiler.attached);
             this.auto_tiler.destroy(this);
@@ -1469,7 +1477,10 @@ export class Ext extends Ecs.System<ExtEvent> {
             this.settings.set_tile_by_default(false);
             this.tiling_toggle_switch.setToggleState(false);
             this.button.icon.gicon = this.button_gio_icon_auto_off; // type: Gio.Icon
-        } else {
+        }
+    }
+
+    auto_tile_on() {
             const original = this.active_workspace();
 
             let tiler = new auto_tiler.AutoTiler(
@@ -1499,7 +1510,6 @@ export class Ext extends Ecs.System<ExtEvent> {
 
             this.register_fn(() => this.switch_to_workspace(original));
         }
-    }
 
     unset_grab_op() {
         if (this.grab_op !== null) {
@@ -1702,6 +1712,10 @@ function enable() {
 
     ext.keybindings.enable(ext.keybindings.global)
         .enable(ext.keybindings.window_focus);
+
+    if (ext.settings.tile_by_default()) {
+        ext.auto_tile_on();
+    }
 }
 
 // @ts-ignore
