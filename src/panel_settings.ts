@@ -274,17 +274,16 @@ function tiled(ext: Ext): any {
 function color_selector(ext: Ext, menu: any) {
     let color_selector_item = new PopupMenuItem('Active Hint Color');
     let color_button = new St.Button();
-    let settings = ext.settings.ext;
-    let selected_color = settings.get_string("hint-color-rgba");
+    let settings = ext.settings;
+    let selected_color = settings.hint_color_rgba();
     
     // TODO, find a way to expand the button text, :)
     color_button.label = "           "; // blank for now
-    
     color_button.set_style(`background-color: ${selected_color}; border: 2px solid lightgray; border-radius: 2px`);
 
-    settings.connect('changed', (_, key) => {
+    settings.ext.connect('changed', (_, key) => {
         if (key === 'hint-color-rgba') {
-            let color_value = settings.get_string("hint-color-rgba");
+            let color_value = settings.hint_color_rgba();
             color_button.set_style(`background-color: ${color_value}; border: 2px solid lightgray; border-radius: 2px`);
         }
     });
