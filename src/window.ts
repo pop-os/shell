@@ -114,10 +114,11 @@ export class ShellWindow {
                     let color_value = settings.hint_color_rgba();
                     this.border.set_style(`border-color: ${color_value}`);
                 }
-                this.border.connect('destroy', () => { settings.ext.disconnect(change_id) });
             }
             return false;
         });
+        
+        this.border.connect('destroy', () => { settings.ext.disconnect(change_id) });
 
         global.window_group.add_child(this.border);
 
