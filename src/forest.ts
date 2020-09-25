@@ -159,10 +159,10 @@ export class Forest extends Ecs.World {
 
                 return [fork.entity, fork];
             } else {
-                Log.warn('attempted to attach window to stack that does not exist');
+                log.warn('attempted to attach window to stack that does not exist');
             }
         } else {
-            Log.warn('attempted to attach to stack that does not exist');
+            log.warn('attempted to attach to stack that does not exist');
         }
 
         return null;
