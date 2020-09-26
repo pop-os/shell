@@ -5,6 +5,7 @@ import * as lib from 'lib';
 import * as log from 'log';
 import * as node from 'node';
 import * as result from 'result';
+import * as stack from 'stack';
 
 import type { Entity } from 'ecs';
 import type { Ext } from 'extension';
@@ -14,6 +15,7 @@ import type { Rectangle } from 'rectangle';
 import type { Result } from 'result';
 import type { ShellWindow } from 'window';
 
+const { Stack } = stack;
 const { Ok, Err, ERR } = result;
 const { NodeKind } = node;
 const Tags = Me.imports.tags;
@@ -32,39 +34,83 @@ export class AutoTiler {
      * Call this when a window has swapped positions with another, so that we
      * may update the associations in the auto-tiler world.
      */
-    attach_swap(a: Entity, b: Entity) {
-        const a_ent = this.attached.remove(a);
-        const b_ent = this.attached.remove(b);
+    attach_swap(ext: Ext, a: Entity, b: Entity) {
+        const a_ent = this.attached.get(a),
+            b_ent = this.attached.get(b);
 
-        if (a_ent) {
-            this.forest.forks.with(a_ent, (fork) => fork.replace_window(a, b));
-            this.attached.insert(b, a_ent);
+        let a_win = ext.windows.get(a),
+            b_win = ext.windows.get(b);
+
+        if (!a_ent || !b_ent || !a_win || !b_win) return;
+
+        const a_fork = this.forest.forks.get(a_ent),
+            b_fork = this.forest.forks.get(b_ent);
+
+        if (!a_fork || !b_fork) return;
+
+        const a_stack = a_win.stack, b_stack = b_win.stack;
+
+        if (ext.auto_tiler) {
+            if (a_win.stack !== null) {
+                const stack = ext.auto_tiler.forest.stacks.get(a_win.stack);
+                if (stack) {
+                    a = stack.active;
+                    a_win = ext.windows.get(a);
+                    if (!a_win) return;
+
+                    stack.deactivate(a_win);
+                }
+            }
+
+            if (b_win.stack !== null) {
+                const stack = ext.auto_tiler.forest.stacks.get(b_win.stack);
+                if (stack) {
+                    b = stack.active;
+                    b_win = ext.windows.get(b);
+                    if (!b_win) return;
+
+                    stack.deactivate(b_win);
+                }
+            }
         }
 
-        if (b_ent) {
-            this.forest.forks.with(b_ent, (fork) => fork.replace_window(b, a));
-            this.attached.insert(a, b_ent);
-        }
+        const a_fn = a_fork.replace_window(ext, a_win, b_win);
+        this.attached.insert(b, a_ent);
+
+        const b_fn = b_fork.replace_window(ext, b_win, a_win);
+        this.attached.insert(a, b_ent);
+
+        if (a_fn) a_fn();
+        if (b_fn) b_fn();
+
+        a_win.stack = b_stack;
+        b_win.stack = a_stack;
+
+        a_win.meta.get_compositor_private()?.show();
+        b_win.meta.get_compositor_private()?.show();
+
+        this.tile(ext, a_fork, a_fork.area);
+        this.tile(ext, b_fork, b_fork.area);
     }
 
     update_toplevel(ext: Ext, fork: Fork, monitor: number, smart_gaps: boolean) {
         let rect = ext.monitor_work_area(monitor);
 
-        if (!(smart_gaps && fork.right === null)) {
+        fork.smart_gapped = smart_gaps && fork.right === null;
+
+        if (!fork.smart_gapped) {
             rect.x += ext.gap_outer;
             rect.y += ext.gap_outer;
             rect.width -= ext.gap_outer * 2;
             rect.height -= ext.gap_outer * 2;
         }
 
-        if (fork.left.kind === NodeKind.WINDOW) {
-            const win = ext.windows.get(fork.left.entity);
+        if (fork.left.inner.kind === 2) {
+            const win = ext.windows.get(fork.left.inner.entity);
             if (win) {
-                win.smart_gapped = smart_gaps && fork.right === null;
+                win.smart_gapped = fork.smart_gapped;
             }
         }
-
-        fork.smart_gaps = smart_gaps;
 
         let ratio;
 
@@ -93,23 +139,23 @@ export class AutoTiler {
 
         const [entity, fork] = this.forest.create_toplevel(win.entity, rect.clone(), workspace_id)
         this.attached.insert(win.entity, entity);
-        fork.smart_gaps = smart_gaps;
+        fork.smart_gapped = smart_gaps;
         win.smart_gapped = smart_gaps;
 
         this.tile(ext, fork, rect);
-        this.log_tree_nodes(ext);
     }
 
     /** Tiles a window into another */
-    attach_to_window(ext: Ext, attachee: ShellWindow, attacher: ShellWindow, cursor: Rectangle) {
-        let attached = this.forest.attach_window(ext, attachee.entity, attacher.entity, cursor);
+    attach_to_window(ext: Ext, attachee: ShellWindow, attacher: ShellWindow, cursor: Rectangle, stack_from_left: boolean = true) {
+        let attached = this.forest.attach_window(ext, attachee.entity, attacher.entity, cursor, stack_from_left);
 
         if (attached) {
             const [, fork] = attached;
             const monitor = ext.monitors.get(attachee.entity);
             if (monitor) {
-                if (fork.is_toplevel && fork.smart_gaps) {
-                    let rect = ext.monitor_work_area(monitor[0]);
+                if (fork.is_toplevel && fork.smart_gapped) {
+                    fork.smart_gapped = false;
+                    let rect = ext.monitor_work_area(fork.monitor);
 
                     rect.x += ext.gap_outer;
                     rect.y += ext.gap_outer;
@@ -120,14 +166,11 @@ export class AutoTiler {
                 }
 
                 this.tile(ext, fork, fork.area.clone());
-                this.log_tree_nodes(ext);
                 return true;
             } else {
                 log.error(`missing monitor association for Window(${attachee.entity})`);
             }
         }
-
-        this.log_tree_nodes(ext);
     }
 
     /** Tile a window onto a workspace */
@@ -163,26 +206,33 @@ export class AutoTiler {
         }
     }
 
+    /** Destroy all widgets owned by this object. Call before dropping. */
+    destroy(ext: Ext) {
+        for (const stack of this.forest.stacks.values()) stack.destroy();
+
+        for (const window of ext.windows.values()) {
+            window.stack = null;
+        }
+
+        this.forest.stacks.truncate(0);
+        ext.show_border_on_focused();
+    }
+
     /** Detaches the window from a tiling branch, if it is attached to one. */
     detach_window(ext: Ext, win: Entity) {
         this.attached.take_with(win, (prev_fork: Entity) => {
-            const reflow_fork = this.forest.detach(prev_fork, win);
+            const reflow_fork = this.forest.detach(ext, prev_fork, win);
 
             if (reflow_fork) {
                 const fork = reflow_fork[1];
-                if (fork.is_toplevel && fork.smart_gaps && fork.right === null) {
-                    const monitor = ext.monitors.get(win);
-                    if (monitor) {
-                        let rect = ext.monitor_work_area(monitor[0]);
-                        fork.set_area(rect);
-                    }
-
+                if (fork.is_toplevel && ext.settings.smart_gaps() && fork.right === null) {
+                    let rect = ext.monitor_work_area(fork.monitor);
+                    fork.set_area(rect);
+                    fork.smart_gapped = true;
                 }
 
                 this.tile(ext, fork, fork.area);
             }
-
-            this.log_tree_nodes(ext);
         });
     }
 
@@ -195,21 +245,21 @@ export class AutoTiler {
             const fork = this.forest.forks.get(fork_entity);
 
             if (fork) {
-                if (fork.left.kind == NodeKind.WINDOW && fork.right && fork.right.kind == NodeKind.WINDOW) {
+                if (fork.left.inner.kind === 2 && fork.right && fork.right.inner.kind === 2) {
                     if (fork.left.is_window(win)) {
-                        const sibling = ext.windows.get(fork.right.entity);
+                        const sibling = ext.windows.get(fork.right.inner.entity);
                         if (sibling && sibling.rect().contains(cursor)) {
-                            fork.left.entity = fork.right.entity;
-                            fork.right.entity = win;
+                            fork.left.inner.entity = fork.right.inner.entity;
+                            fork.right.inner.entity = win;
 
                             this.tile(ext, fork, fork.area);
                             return true;
                         }
                     } else if (fork.right.is_window(win)) {
-                        const sibling = ext.windows.get(fork.left.entity);
+                        const sibling = ext.windows.get(fork.left.inner.entity);
                         if (sibling && sibling.rect().contains(cursor)) {
-                            fork.right.entity = fork.left.entity;
-                            fork.left.entity = win;
+                            fork.right.inner.entity = fork.left.inner.entity;
+                            fork.left.inner.entity = win;
 
                             this.tile(ext, fork, fork.area);
                             return true;
@@ -220,6 +270,30 @@ export class AutoTiler {
         }
 
         return false;
+    }
+
+    find_stack(entity: Entity): null | [Fork, node.Node, boolean] {
+        const att = this.attached.get(entity);
+        if (att) {
+            const fork = this.forest.forks.get(att);
+            if (fork) {
+                if (fork.left.is_in_stack(entity)) {
+                    return [fork, fork.left, true];
+                } else if (fork.right?.is_in_stack(entity)) {
+                    return [fork, fork.right, false];
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /** Find the fork that belongs to a window */
+    get_parent_fork(window: Entity): null | Fork {
+        const entity = this.attached.get(window);
+        if (!entity) return null;
+
+        return this.forest.forks.get(entity);
     }
 
     /** Performed when a window that has been dropped is destined to be tiled
@@ -296,8 +370,86 @@ export class AutoTiler {
         const result = this.toggle_orientation_(ext, window);
         if (result.kind == ERR) {
             log.warn(`toggle_orientation: ${result.value}`);
+        }
+    }
+
+    toggle_stacking(ext: Ext) {
+        const focused = ext.focus_window();
+        if (!focused) return;
+
+        // Disable floating if floating is enabled
+        if (ext.contains_tag(focused.entity, Tags.Floating)) {
+            ext.delete_tag(focused.entity, Tags.Floating);
+            this.auto_tile(ext, focused, false);
+        }
+
+        const fork_entity = this.attached.get(focused.entity);
+
+        if (fork_entity) {
+            const fork = this.forest.forks.get(fork_entity);
+            if (fork) {
+                const stack_toggle = (fork: Fork, branch: node.Node) => {
+                    // If the stack contains 1 item, unstack it
+                    const stack = branch.inner as node.NodeStack;
+                    if (stack.entities.length === 1) {
+                        focused.stack = null;
+                        this.forest.stacks.remove(stack.idx)?.destroy();
+                        fork.measure(this.forest, ext, fork.area, this.forest.on_record());
+                        return node.Node.window(focused.entity);
+                    }
+
+                    return null;
+                };
+
+                if (fork.left.is_window(focused.entity)) {
+                    // Assign left window as stack.
+                    focused.stack = this.forest.stacks.insert(new Stack(ext, focused.entity, fork.workspace));
+                    fork.left = node.Node.stacked(focused.entity, focused.stack);
+                    fork.measure(this.forest, ext, fork.area, this.forest.on_record());
+                } else if (fork.left.is_in_stack(focused.entity)) {
+                    const node = stack_toggle(fork, fork.left);
+                    if (node) {
+                        fork.left = node
+
+                        if (!fork.right) {
+                            this.forest.reassign_to_parent(fork, node)
+                        }
+                    };
+                } else if (fork.right?.is_window(focused.entity)) {
+                    // Assign right window as stack
+                    focused.stack = this.forest.stacks.insert(new Stack(ext, focused.entity, fork.workspace));
+                    fork.right = node.Node.stacked(focused.entity, focused.stack);
+                    fork.measure(this.forest, ext, fork.area, this.forest.on_record());
+                } else if (fork.right?.is_in_stack(focused.entity)) {
+                    const node = stack_toggle(fork, fork.right);
+                    if (node) fork.right = node;
+                }
+
+                this.tile(ext, fork, fork.area);
+            }
+        }
+    }
+
+    update_stack(ext: Ext, stack: node.NodeStack) {
+        if (stack.rect) {
+            const container = this.forest.stacks.get(stack.idx);
+            if (container) {
+                container.clear();
+
+                // Collect names of each entity in the stack
+                for (const entity of stack.entities) {
+                    const window = ext.windows.get(entity);
+                    if (window) {
+                        window.stack = stack.idx;
+                        container.add(window);
+                    }
+                }
+
+                container.update_positions(stack.rect);
+                container.auto_activate();
+            }
         } else {
-            log.info('toggled orientation');
+            log.warn('stack rect was null');
         }
     }
 
@@ -348,11 +500,6 @@ export class AutoTiler {
             : Err('window is not on the same monitor or workspace');
     }
 
-    private log_tree_nodes(ext: Ext) {
-        let buf = this.forest.fmt(ext);
-        log.info('\n\n' + buf);
-    }
-
     private toggle_orientation_(ext: Ext, focused: ShellWindow): Result<void, string> {
         if (focused.meta.get_maximized()) {
             return Err('cannot toggle maximized window');
@@ -374,7 +521,7 @@ export class AutoTiler {
         this.forest.measure(ext, fork, fork.area);
 
         for (const child of this.forest.iter(fork_entity, NodeKind.FORK)) {
-            const child_fork = this.forest.forks.get(child.entity);
+            const child_fork = this.forest.forks.get((child.inner as node.NodeFork).entity);
             if (child_fork) {
                 child_fork.rebalance_orientation();
                 this.forest.measure(ext, child_fork, child_fork.area);
