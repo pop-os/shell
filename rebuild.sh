@@ -13,6 +13,20 @@ else
     echo "Shortcut change already confirmed"
 fi
 
+# Ensure TypeScript is new enough, offer to install with npm if not
+export PATH="./node_modules/.bin:$PATH"
+REQ_TSC_VER="3.8"
+CUR_TSC_VER=$(tsc --version 2>/dev/null || echo 0)
+CUR_TSC_VER=${CUR_TSC_VER##* }
+if [ "$(/bin/echo -e "${REQ_TSC_VER}\n${CUR_TSC_VER}" | sort -V | head -n1)" != "$REQ_TSC_VER" ]; then
+    read -p "TypeScript is not installed or is too old. Install locally using npm? (y/n) " CONT
+    if [ "$CONT" = "y" ]; then
+        npm install typescript
+    else
+        echo "OK. Attempting to continue, but except that the build will fail."
+    fi
+fi
+
 set -xe
 
 # Build and install extension

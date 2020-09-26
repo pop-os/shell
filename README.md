@@ -66,7 +66,7 @@ There are additionally those who do want the traditional stacking window managem
 To install this GNOME Shell extension, you MUST have the following:
 
 - GNOME Shell 3.36
-- TypeScript 3.8
+- TypeScript 3.8 (or `npm`, which `rebuild.sh` will use to install TypeScript if necessary)
 - GNU Make
 
 Proper functionality of the shell requires modifying GNOME's default keyboard shortcuts. Those developing and testing the extension must run the `rebuild.sh` script to install it locally (do not use sudo): `sh rebuild.sh`.
