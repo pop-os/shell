@@ -74,10 +74,6 @@ export class Indicator {
                 }
             )
         )
-
-        // determine logging
-        this.button.menu.addMenuItem(menu_separator(''));
-        this.button.menu.addMenuItem(log_level_item(ext));
     }
 
     destroy() {
@@ -87,23 +83,6 @@ export class Indicator {
 
 function menu_separator(text: any): any {
     return new PopupSeparatorMenuItem(text);
-}
-
-function log_level_item(ext: Ext) {
-    // initial value
-    let log_level_txt = log.LOG_LEVELS[ext.settings.log_level()];
-    let item = new PopupMenuItem(`Log Level: ${log_level_txt}`);
-
-    ext.settings.ext.connect('changed', (_, key) => {
-        if (key === 'log-level') {
-            let log_val = log.LOG_LEVELS[ext.settings.log_level()];
-            item.label.set_text(`Log Level: ${log_val}`);
-        }
-    });
-    
-    item.label.get_clutter_text().set_x_expand(true);
-    item.label.set_y_align(Clutter.ActorAlign.CENTER);
-    return item;
 }
 
 function settings_button(menu: any): any {
