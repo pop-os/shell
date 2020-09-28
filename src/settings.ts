@@ -1,6 +1,6 @@
 const ExtensionUtils = imports.misc.extensionUtils;
 const extension = ExtensionUtils.getCurrentExtension();
-const Gio = imports.gi.Gio;
+const { Gio, Gdk } = imports.gi;
 
 const DARK = ['dark', 'adapta', 'plata', 'dracula']
 
@@ -12,7 +12,7 @@ interface Settings extends GObject.Object {
     set_uint(key: string, value: number): void;
 
     get_string(key: string): string;
-}
+    set_string(key: string, value: string): void;}
 
 function settings_new_id(schema_id: string): Settings | null {
     try {
@@ -53,6 +53,8 @@ const SHOW_TITLE = 'show-title';
 const SMART_GAPS = 'smart-gaps';
 const SNAP_TO_GRID = 'snap-to-grid';
 const TILE_BY_DEFAULT = 'tile-by-default';
+const HINT_COLOR_RGBA = 'hint-color-rgba';
+const DEFAULT_RGBA_COLOR = 'rgba(251, 184, 108, 1)'; //pop-orange
 
 export class ExtensionSettings {
     ext: Settings = settings_new_schema(extension.metadata['settings-schema']);
@@ -76,6 +78,17 @@ export class ExtensionSettings {
 
     gap_outer(): number {
         return this.ext.get_uint(GAP_OUTER);
+    }
+
+    hint_color_rgba() {
+        let rgba = this.ext.get_string(HINT_COLOR_RGBA);
+        let valid_color = new Gdk.RGBA().parse(rgba);
+
+        if (!valid_color) {
+            return DEFAULT_RGBA_COLOR;
+        }
+
+        return rgba;
     }
 
     is_dark(): boolean {
@@ -137,6 +150,16 @@ export class ExtensionSettings {
 
     set_gap_outer(gap: number) {
         this.ext.set_uint(GAP_OUTER, gap);
+    }
+
+    set_hint_color_rgba(rgba: string) {
+        let valid_color = new Gdk.RGBA().parse(rgba);
+
+        if (valid_color) {
+            this.ext.set_string(HINT_COLOR_RGBA, rgba);
+        } else {
+            this.ext.set_string(HINT_COLOR_RGBA, DEFAULT_RGBA_COLOR);
+        }
     }
 
     set_row_size(size: number) {
