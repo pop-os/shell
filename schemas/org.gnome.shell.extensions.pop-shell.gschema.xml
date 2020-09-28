@@ -221,5 +221,17 @@
             <default>'rgba(251, 184, 108, 1)'</default>
             <summary>The current active-hint-color in RGBA</summary>
         </key>
+        <key type="u" name="log-level">
+            <default>0</default>
+            <summary>
+                Derive some log4j level/order
+                0 - OFF
+                1 - ERROR
+                2 - WARN
+                3 - INFO
+                4 - DEBUG
+            </summary>
+        </key>
+
     </schema>
 </schemalist>

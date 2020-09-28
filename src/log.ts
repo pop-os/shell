@@ -1,21 +1,47 @@
-var log_level = 4;
+const ExtensionUtils = imports.misc.extensionUtils;
+
+// simplified log4j levels
+export enum LOG_LEVELS {
+    OFF,
+    ERROR,
+    WARN,
+    INFO,
+    DEBUG
+}
+
+/**
+ * parse level at runtime so we don't have to restart popshell
+ */
+export function log_level() {
+    // log.js is at the level of prefs.js where the popshell Ext instance 
+    // is not yet available or visible, so we have to use the built in 
+    // ExtensionUtils to get the current settings
+    let settings = ExtensionUtils.getSettings();
+    let log_level = settings.get_uint('log-level');
+
+    return log_level;
+}
 
 export function log(text: string) {
     global.log("pop-shell: " + text);
 }
 
-export function info(text: string) {
-    if (log_level > 0) log(" [INFO] " + text);
-}
-
 export function error(text: string) {
-    if (log_level > 1) log("[ERROR] " + text);
+    if (log_level() > LOG_LEVELS.OFF)
+        log("[ERROR] " + text);
 }
 
 export function warn(text: string) {
-    if (log_level > 2) log(" [WARN] " + text);
+    if (log_level() > LOG_LEVELS.ERROR)
+        log(" [WARN] " + text);
+}
+
+export function info(text: string) {
+    if (log_level() > LOG_LEVELS.WARN)
+        log(" [INFO] " + text);
 }
 
 export function debug(text: string) {
-    if (log_level > 3) log("[DEBUG] " + text);
+    if (log_level() > LOG_LEVELS.INFO)
+        log("[DEBUG] " + text);
 }

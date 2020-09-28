@@ -8,7 +8,7 @@ import * as Focus from 'focus';
 import * as GrabOp from 'grab_op';
 import * as Keybindings from 'keybindings';
 import * as Lib from 'lib';
-import * as Log from 'log';
+import * as log from 'log';
 import * as PanelSettings from 'panel_settings';
 import * as Rect from 'rectangle';
 import * as Settings from 'settings';
@@ -651,7 +651,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                 msg += `  fork: (${this.auto_tiler.attached.get(win.entity)}),\n`;
             }
 
-            Log.debug(msg + '}');
+            log.debug(msg + '}');
         }
 
         // Log.debug(`Window(${win.entity}): parent: ${this.auto_tiler?.attached.get(win.entity)}`)
@@ -809,17 +809,17 @@ export class Ext extends Ecs.System<ExtEvent> {
                                 forest.tile(this, fork, fork.area);
                             }
                         } else {
-                            Log.error(`no fork component found`);
+                            log.error(`no fork component found`);
                         }
                     } else {
-                        Log.error(`no fork entity found`);
+                        log.error(`no fork entity found`);
                     }
                 }
             } else if (this.settings.snap_to_grid()) {
                 this.tiler.snap(this, win);
             }
         } else {
-            Log.error(`mismatch on grab op entity`);
+            log.error(`mismatch on grab op entity`);
         }
 
         this.grab_op = null;
@@ -1717,12 +1717,12 @@ let indicator: Indicator | null = null;
 
 // @ts-ignore
 function init() {
-    Log.info("init");
+    log.info("init");
 }
 
 // @ts-ignore
 function enable() {
-    Log.info("enable");
+    log.info("enable");
 
     if (!ext) {
         ext = new Ext();
@@ -1751,7 +1751,7 @@ function enable() {
 
 // @ts-ignore
 function disable() {
-    Log.info("disable");
+    log.info("disable");
 
     if (ext) {
         ext.signals_remove();
@@ -1834,7 +1834,7 @@ function load_theme(style: Style): string | any {
 
         return pop_stylesheet_path;
     } catch (e) {
-        Log.error("failed to load stylesheet: " + e);
+        log.error("failed to load stylesheet: " + e);
         return null;
     }
 }

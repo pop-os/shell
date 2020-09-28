@@ -2,7 +2,7 @@
 // @ts-ignore
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
-import * as Log from 'log';
+import * as log from 'log';
 import * as rectangle from 'rectangle';
 
 import type { Rectangle } from 'rectangle';
@@ -41,7 +41,7 @@ export function bench<T>(name: string, callback: () => T): T {
     const value = callback();
     const end = new Date().getMilliseconds();
 
-    Log.info(`bench ${name}: ${end - start} ms elapsed`);
+    log.info(`bench ${name}: ${end - start} ms elapsed`);
 
     return value;
 }
@@ -59,7 +59,7 @@ export function cursor_rect(): Rectangle {
 }
 
 export function dbg<T>(value: T): T {
-    Log.debug(String(value));
+    log.debug(String(value));
     return value;
 }
 

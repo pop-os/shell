@@ -1,7 +1,7 @@
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 // import * as auto_tiler from 'auto_tiler';
-import * as Log from 'log';
+import * as log from 'log';
 import * as Utils from 'utils';
 
 //import type { Entity } from './ecs';
@@ -92,7 +92,7 @@ function settings_button(menu: any): any {
         if (path) {
             imports.misc.util.spawn([path]);
         } else {
-            Log.error(`You must install \`pop-shell-shortcuts\``)
+            log.error(`You must install \`pop-shell-shortcuts\``)
         }
 
         menu.close();
@@ -113,7 +113,7 @@ function shortcuts(menu: any): any {
         if (path) {
             imports.misc.util.spawn([path]);
         } else {
-            Log.error(`You must install \`pop-shell-shortcuts\``)
+            log.error(`You must install \`pop-shell-shortcuts\``)
         }
 
         menu.close();
