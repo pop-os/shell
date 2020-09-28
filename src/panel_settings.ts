@@ -61,6 +61,9 @@ export class Indicator {
             )
         );
 
+        // CSS Selector
+        this.button.menu.addMenuItem(color_selector(ext, this.button.menu), );
+
         this.button.menu.addMenuItem(
             number_entry(
                 _("Gaps"),
@@ -265,4 +268,47 @@ function tiled(ext: Ext): any {
     let t = toggle(_("Tile Windows"), null != ext.auto_tiler, () => ext.toggle_tiling());
     ext.tiling_toggle_switch = t;  // property _switch is the actual UI element
     return t;
+}
+
+// @ts-ignore
+function color_selector(ext: Ext, menu: any) {
+    let color_selector_item = new PopupMenuItem('Active Hint Color');
+    let color_button = new St.Button();
+    let settings = ext.settings;
+    let selected_color = settings.hint_color_rgba();
+    
+    // TODO, find a way to expand the button text, :)
+    color_button.label = "           "; // blank for now
+    color_button.set_style(`background-color: ${selected_color}; border: 2px solid lightgray; border-radius: 2px`);
+
+    settings.ext.connect('changed', (_, key) => {
+        if (key === 'hint-color-rgba') {
+            let color_value = settings.hint_color_rgba();
+            color_button.set_style(`background-color: ${color_value}; border: 2px solid lightgray; border-radius: 2px`);
+        }
+    });
+
+    color_button.set_x_align(Clutter.ActorAlign.END);
+    color_button.set_x_expand(false);
+
+    color_selector_item.label.get_clutter_text().set_x_expand(true);
+    color_selector_item.label.set_y_align(Clutter.ActorAlign.CENTER);
+
+    color_selector_item.add_child(color_button);
+    color_button.connect('button-press-event', () => {
+        // spawn an async process - so gnome-shell will not lock up
+        let color_dialog_response = GLib.spawn_command_line_async(`gjs ${Me.dir.get_path() + "/color-dialog.js"}`);
+        if (!color_dialog_response) {
+            return null;
+        }
+
+        // clean up and focus on the color dialog
+        GLib.timeout_add(GLib.PRIORITY_LOW, 300, () => {
+            menu.close();
+            return false;
+        });
+        
+    });
+
+    return color_selector_item;
 }
