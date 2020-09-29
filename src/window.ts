@@ -53,6 +53,7 @@ export class ShellWindow {
     known_workspace: number;
     grab: boolean = false;
     activate_after_move: boolean = false;
+    ignore_detach: boolean = false;
 
     was_attached_to?: [Entity, boolean];
 
@@ -60,6 +61,8 @@ export class ShellWindow {
     smart_gapped: boolean = false;
 
     border: St.Bin = new St.Bin({ style_class: 'pop-shell-active-hint pop-shell-border-normal' });
+
+    prev_rect: null | Rectangular = null;
 
     private was_hidden: boolean = false;
 

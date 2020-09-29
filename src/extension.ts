@@ -664,6 +664,29 @@ export class Ext extends Ecs.System<ExtEvent> {
         // Log.debug(`Window(${win.entity}): parent: ${this.auto_tiler?.attached.get(win.entity)}`)
     }
 
+    on_tile_attach(entity: Entity, window: Entity) {
+        if (this.auto_tiler) {
+            if (!this.auto_tiler.attached.contains(window)) {
+                this.windows.with(window, (w) => {
+                    if (w.prev_rect === null) {
+                        w.prev_rect = w.meta.get_frame_rect();
+                    }
+                })
+            }
+
+            this.auto_tiler.attached.insert(window, entity);
+        }
+    }
+
+    on_tile_detach(win: Entity) {
+        this.windows.with(win, (window) => {
+            if (window.prev_rect && !window.ignore_detach) {
+                this.register(Events.window_move(window, window.prev_rect));
+                window.prev_rect = null;
+            }
+        })
+    }
+
     show_border_on_focused() {
         this.hide_all_borders();
 
@@ -908,6 +931,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         if (next_monitor !== null) {
             if (this.auto_tiler && !this.contains_tag(win.entity, Tags.Floating)) {
+                win.ignore_detach = true;
                 this.auto_tiler.detach_window(this, win.entity);
                 this.auto_tiler.attach_to_workspace(this, win, [next_monitor, win.workspace_id()]);
             } else {
@@ -937,6 +961,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             const move_to_neighbor = (neighbor: Meta.Workspace) => {
                 const monitor = win.meta.get_monitor();
                 if (this.auto_tiler && !this.contains_tag(win.entity, Tags.Floating)) {
+                    win.ignore_detach = true;
                     this.auto_tiler.detach_window(this, win.entity);
                     this.auto_tiler.attach_to_workspace(this, win, [monitor, neighbor.index()]);
 
@@ -1053,6 +1078,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
             this.on_monitor_changed(win, (_cfrom, cto, workspace) => {
                 if (win) {
+                    win.ignore_detach = true;
                     this.monitors.insert(win.entity, [cto, workspace]);
                     this.auto_tiler?.detach_window(this, win.entity);
                 }
@@ -1185,6 +1211,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             const id = this.workspace_id(win);
             const prev_id = this.monitors.get(win.entity);
             if (!prev_id || id[0] != prev_id[0] || id[1] != prev_id[1]) {
+                win.ignore_detach = true;
                 this.monitors.insert(win.entity, id);
                 this.auto_tiler.detach_window(this, win.entity);
                 this.auto_tiler.attach_to_workspace(this, win, id);
@@ -1424,11 +1451,8 @@ export class Ext extends Ecs.System<ExtEvent> {
         if (this.settings.tile_by_default() && !this.auto_tiler) {
             this.auto_tiler = new auto_tiler.AutoTiler(
                 new Forest.Forest()
-                    .connect_on_attach((entity: Entity, window: Entity) => {
-                        if (this.auto_tiler) {
-                            this.auto_tiler.attached.insert(window, entity);
-                        }
-                    }),
+                    .connect_on_attach(this.on_tile_attach.bind(this))
+                    .connect_on_detach(this.on_tile_detach.bind(this)),
                 this.register_storage<Entity>(),
             )
         }
@@ -1536,9 +1560,8 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         let tiler = new auto_tiler.AutoTiler(
             new Forest.Forest()
-                .connect_on_attach((entity: Entity, window: Entity) => {
-                    tiler.attached.insert(window, entity);
-                }),
+                .connect_on_attach(this.on_tile_attach.bind(this))
+                .connect_on_detach(this.on_tile_detach.bind(this)),
             this.register_storage()
         );
 

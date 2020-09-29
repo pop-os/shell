@@ -2,7 +2,6 @@
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 import * as Window from 'window';
-import { Rectangle } from './rectangle';
 
 /** Type representing all possible events handled by the extension's system. */
 export type ExtEvent = GenericCallback
@@ -45,7 +44,7 @@ export enum GlobalEvent {
 
 export interface Movement {
     tag: 1;
-    rect: Rectangle;
+    rect: Rectangular;
 }
 
 export interface Basic {
@@ -66,7 +65,7 @@ export function global(event: GlobalEvent): GlobalEventTag {
     return { tag: 4, event };
 }
 
-export function window_move(window: Window.ShellWindow, rect: Rectangle): ManagedWindow {
+export function window_move(window: Window.ShellWindow, rect: Rectangular): ManagedWindow {
     return { tag: 2, window, kind: { tag: 1, rect } };
 }
 
