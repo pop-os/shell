@@ -135,6 +135,8 @@ export class Ext extends Ecs.System<ExtEvent> {
     /** Initially set to true when the extension is initializing */
     init: boolean = true;
 
+    was_locked: boolean = false;
+
     /** Record of misc. global objects and their attached signals */
     private signals: Map<GObject.Object, Array<SignalID>> = new Map();
 
@@ -1553,6 +1555,8 @@ export class Ext extends Ecs.System<ExtEvent> {
     update_display_configuration(workareas_only: boolean) {
         if (!this.auto_tiler) return;
 
+        if (sessionMode.isLocked) return;
+
         if (this.ignore_display_update) {
             this.ignore_display_update = false;
             return;
@@ -1732,6 +1736,11 @@ function enable() {
         });
     }
 
+    if (ext.was_locked) {
+        ext.was_locked = false;
+        return;
+    }
+
     ext.signals_attach();
 
     layoutManager.addChrome(ext.overlay);
@@ -1754,6 +1763,11 @@ function disable() {
     log.info("disable");
 
     if (ext) {
+        if (sessionMode.isLocked) {
+            ext.was_locked = true;
+            return;
+        }
+
         ext.signals_remove();
         ext.exit_modes();
 
