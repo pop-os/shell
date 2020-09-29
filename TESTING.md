@@ -51,6 +51,7 @@ Tasks for a tester to verify when approving a patch. Use complex window layouts 
 - [ ] Moving the last window out of a stack works as expected.
 - [ ] Stacks can be resized with the keyboard.
 - [ ] Stacks can be resized with the mouse.
+- [ ] Lock and unlock the screen-- stacks should still exist and windows should not have moved.
 
 ### Workspaces
 
