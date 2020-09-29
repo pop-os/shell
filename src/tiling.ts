@@ -403,6 +403,7 @@ export class Tiler {
                     const [stack_fork, branch,] = stack_info;
                     const stack = branch.inner as NodeStack;
 
+                    focused.ignore_detach = true;
                     ext.auto_tiler.detach_window(ext, focused.entity);
 
                     ext.auto_tiler.forest.on_attach(stack_fork.entity, focused.entity);
@@ -410,6 +411,7 @@ export class Tiler {
 
                     ext.auto_tiler.tile(ext, stack_fork, stack_fork.area);
 
+                    focused.ignore_detach = true;
                     ext.auto_tiler.detach_window(ext, focused.entity);
                     ext.auto_tiler.attach_to_window(ext, move_to, focused, Lib.cursor_rect(), stack_from_left);
                     watching = focused;
@@ -439,12 +441,14 @@ export class Tiler {
                     }
 
                     if (!watching) {
+                        focused.ignore_detach = true;
                         ext.auto_tiler.detach_window(ext, focused.entity);
                         ext.auto_tiler.attach_to_window(ext, move_to, focused, Lib.cursor_rect(), false);
                         watching = focused;
                     }
                 }
             } else {
+                focused.ignore_detach = true;
                 ext.auto_tiler.detach_window(ext, focused.entity);
                 ext.auto_tiler.attach_to_workspace(ext, focused, [move_to, ext.active_workspace()]);
                 watching = focused;

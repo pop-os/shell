@@ -75,10 +75,10 @@ export class AutoTiler {
         }
 
         const a_fn = a_fork.replace_window(ext, a_win, b_win);
-        this.attached.insert(b, a_ent);
+        this.forest.on_attach(a_ent, b);
 
         const b_fn = b_fork.replace_window(ext, b_win, a_win);
-        this.attached.insert(a, b_ent);
+        this.forest.on_attach(b_ent, a);
 
         if (a_fn) a_fn();
         if (b_fn) b_fn();
@@ -138,7 +138,7 @@ export class AutoTiler {
         }
 
         const [entity, fork] = this.forest.create_toplevel(win.entity, rect.clone(), workspace_id)
-        this.attached.insert(win.entity, entity);
+        this.forest.on_attach(entity, win.entity);
         fork.smart_gapped = smart_gaps;
         win.smart_gapped = smart_gaps;
 
@@ -208,6 +208,12 @@ export class AutoTiler {
 
     /** Destroy all widgets owned by this object. Call before dropping. */
     destroy(ext: Ext) {
+        for (const [, [fent,]] of this.forest.toplevel) {
+            for (const window of this.forest.iter(fent, NodeKind.WINDOW)) {
+                this.forest.on_detach((window.inner as node.NodeWindow).entity)
+            }
+        }
+
         for (const stack of this.forest.stacks.values()) stack.destroy();
 
         for (const window of ext.windows.values()) {
@@ -233,6 +239,8 @@ export class AutoTiler {
 
                 this.tile(ext, fork, fork.area);
             }
+
+            ext.windows.with(win, (info) => info.ignore_detach = false);
         });
     }
 
