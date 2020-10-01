@@ -946,8 +946,11 @@ export class Ext extends Ecs.System<ExtEvent> {
                         this.size_signals_unblock(win);
                     }
                 } else {
+
                     this.workspace_window_move(win, monitor, monitor);
                 }
+
+                win.activate_after_move = true;
             }
 
             if (neighbor && neighbor.index() !== ws.index()) {
