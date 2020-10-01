@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # Check if user confirmed overriding shortcuts
 if [ ! -f "./.confirm_shortcut_change" ]; then
     read -p "Pop shell will override your default shortcuts. Are you sure? (y/n) " CONT
