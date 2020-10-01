@@ -235,14 +235,19 @@ export class Ext extends Ecs.System<ExtEvent> {
                     }
 
                     actor.remove_all_transitions();
-                    const r = event.kind.rect;
+                    const { x, y, width, height } = event.kind.rect;
 
-                    event.window.meta.move_resize_frame(true, r.x, r.y, r.width, r.height);
+                    event.window.meta.move_resize_frame(true, x, y, width, height);
 
                     this.monitors.insert(event.window.entity, [
                         win.meta.get_monitor(),
                         win.workspace_id()
                     ]);
+
+                    if (win.activate_after_move) {
+                        win.activate_after_move = false;
+                        win.activate();
+                    }
 
                     return;
                 }
@@ -909,6 +914,8 @@ export class Ext extends Ecs.System<ExtEvent> {
                 this.workspace_window_move(win, prev_monitor, next_monitor);
             }
         }
+
+        win.activate_after_move = true;
     }
 
     /** Moves the focused window across workspaces and displays */
