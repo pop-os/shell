@@ -11,3 +11,4 @@ debian/*
 !debian/rules
 .confirm_shortcut_change
 .vscode
+node_modules
