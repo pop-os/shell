@@ -9,6 +9,8 @@ const { ModalDialog } = imports.ui.modalDialog;
 export class Search {
     dialog: Shell.ModalDialog;
 
+    private session_id: number = Date.now();
+
     private active_id: number;
     private mode_prefixes: Array<string>;
     private entry: St.Entry;
@@ -116,6 +118,10 @@ export class Search {
         this.dialog.contentLayout.width = Math.max(Lib.current_monitor().width / 4, 640);
     }
 
+    get_session_id(): number {
+        return this.session_id;
+    }
+
     activate_option(id: number) {
         const cont = this.apply_cb(this.get_text(), id);
 
@@ -134,6 +140,7 @@ export class Search {
     }
 
     close() {
+        this.session_id = Date.now();
         this.dialog.close(global.get_current_time());
     }
 
