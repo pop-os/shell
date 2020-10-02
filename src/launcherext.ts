@@ -2,7 +2,7 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 const { evaluate } = Me.imports.math.math;
 const { spawnCommandLine } = imports.misc.util;
-
+const { ByteArray } = imports.byteArray;
 const { GLib, Gtk, St } = imports.gi;
 
 import * as log from 'log';
@@ -256,38 +256,36 @@ export class ExternalLauncher implements LauncherExtension {
         return false;
     }
 
-    items(cmd: any): Array<RecentItem> {
+    items(cmd: any): Array<RecentItem> | undefined {
         if (this.cache?.tag == cmd.tag && this.cache?.action == cmd.action) {
             return this.cache?.items;
         }
 
-        log.debug('ExternalLauncher: Fetching items...');
-        const items = new Array<RecentItem>();
+        let items = undefined;
 
-        let [result, stdout, stderr] = GLib.spawn_command_line_sync(`${cmd.action} ${cmd.tag} list`);
+        // This started out, as an async method, but I couldn't figure out howto make search_results async.        
+        let [result, stdout, stderr, exit] = GLib.spawn_command_line_sync(`${cmd.action} ${cmd.tag} list`);
 
         if (result) {
             if (stderr && stderr.length > 0) {
-                log.error('ExternalLauncher: stderr: ' + stderr);
+                const str: string = new ByteArray(stderr).toString();
+                log.error(`ExternalLauncher: error, exitcode ${exit}, message ${str}`);
             } else if (stdout && stdout.length > 0) {
-                const stdout_str = stdout.toString();
+                const str: string = new ByteArray(stdout).toString();
 
-                stdout_str.split(/\r?\n/)
-                .forEach((line: string) => {
-                    if (line) {
-                        const arr = line.split(/\t/);
-                        items.push({
-                            display_name: arr[1],
-                            icon: arr.length > 2 ? arr[2] : 'applications-internet',
-                            uri: arr[0]
-                        });
-                    }
+                items = str.trim().split(/\r?\n/).map((line: string): RecentItem => {
+                    const arr = line.split(/\t/);
+                    return {
+                        display_name: arr[1],
+                        icon: arr.length > 2 ? arr[2] : 'applications-internet',
+                        uri: arr[0]
+                    };
                 });
             } else {
-                log.error('ExternalLauncher: undefined error, result: ' + result);
+                log.error(`ExternalLauncher: undefined error, exitcode ${exit}`);
             }
         } else {
-            log.error('ExternalLauncher: spawn_command_line_sync result undefined');
+            log.error('ExternalLauncher: unexpected error, spawn_command_line_sync failed');
         }
 
         this.cache.tag = cmd.tag;
@@ -307,6 +305,7 @@ export class ExternalLauncher implements LauncherExtension {
         if (!cmd) { return null; }
 
         const items = this.items(cmd);
+        if (!items) { return null; }
 
         const normalized_query = cmd.query.toLowerCase();
         this.results = items.filter(item => item.display_name.toLowerCase().includes(normalized_query) || item.uri.toLowerCase().includes(normalized_query)).slice(0, this.search.list_max()).sort((a, b) => a.display_name.localeCompare(b.display_name));
