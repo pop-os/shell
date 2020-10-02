@@ -64,6 +64,9 @@ export class ShellWindow {
 
     prev_rect: null | Rectangular = null;
 
+    /** Stores a queued window movement */
+    movement: null | Rectangular = null;
+
     private was_hidden: boolean = false;
 
     private window_app: any;
@@ -258,8 +261,12 @@ export class ShellWindow {
 
             this.hide_border();
 
+            if (!this.movement) ext.windows_moving += 1;
+
+            this.movement = clone;
+
             const onComplete = () => {
-                ext.register({ tag: 2, window: this, kind: { tag: 1, rect: clone } });
+                ext.register({ tag: 2, window: this, kind: { tag: 1 } });
                 if (on_complete) ext.register_fn(on_complete);
                 ext.tween_signals.delete(entity_string);
                 if (this.meta.appears_focused) {

@@ -3,6 +3,8 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 import * as Window from 'window';
 
+import type { Ext } from 'extension';
+
 /** Type representing all possible events handled by the extension's system. */
 export type ExtEvent = GenericCallback
     | ManagedWindow
@@ -44,7 +46,6 @@ export enum GlobalEvent {
 
 export interface Movement {
     tag: 1;
-    rect: Rectangular;
 }
 
 export interface Basic {
@@ -65,8 +66,10 @@ export function global(event: GlobalEvent): GlobalEventTag {
     return { tag: 4, event };
 }
 
-export function window_move(window: Window.ShellWindow, rect: Rectangular): ManagedWindow {
-    return { tag: 2, window, kind: { tag: 1, rect } };
+export function window_move(ext: Ext, window: Window.ShellWindow, rect: Rectangular): ManagedWindow {
+    if (!window.movement) ext.windows_moving += 1;
+    window.movement = rect;
+    return { tag: 2, window, kind: { tag: 1 } };
 }
 
 /** Utility function for creating the an ExtEvent */
