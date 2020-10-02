@@ -137,6 +137,9 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     was_locked: boolean = false;
 
+    /** Tracks the number of windows that are currently queued for moving */
+    windows_moving: number = 0;
+
     /** Record of misc. global objects and their attached signals */
     private signals: Map<GObject.Object, Array<SignalID>> = new Map();
 
@@ -228,6 +231,8 @@ export class Ext extends Ecs.System<ExtEvent> {
                 if (!win.actor_exists()) return;
 
                 if (event.kind.tag === 1) {
+                    if (!event.window.movement) return;
+
                     let actor = event.window.meta.get_compositor_private();
                     if (!actor) {
                         this.auto_tiler?.detach_window(this, event.window.entity);
@@ -235,9 +240,12 @@ export class Ext extends Ecs.System<ExtEvent> {
                     }
 
                     actor.remove_all_transitions();
-                    const { x, y, width, height } = event.kind.rect;
+                    const { x, y, width, height } = event.window.movement;
 
                     event.window.meta.move_resize_frame(true, x, y, width, height);
+
+                    event.window.movement = null;
+                    this.windows_moving -= 1;
 
                     this.monitors.insert(event.window.entity, [
                         win.meta.get_monitor(),
@@ -529,6 +537,11 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         if (this.auto_tiler) this.auto_tiler.detach_window(this, win);
 
+        if (window.movement) {
+            this.windows_moving -= 1;
+            window.movement = null;
+        }
+
         this.windows.remove(win)
         this.delete_entity(win);
     }
@@ -681,7 +694,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     on_tile_detach(win: Entity) {
         this.windows.with(win, (window) => {
             if (window.prev_rect && !window.ignore_detach) {
-                this.register(Events.window_move(window, window.prev_rect));
+                this.register(Events.window_move(this, window, window.prev_rect));
                 window.prev_rect = null;
             }
         })
@@ -895,7 +908,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
             rect.clamp(next_area);
 
-            this.register(Events.window_move(win, rect));
+            this.register(Events.window_move(this, win, rect));
         }
     }
 
@@ -1541,6 +1554,15 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     auto_tile_off() {
+        if (this.windows_moving) {
+            GLib.timeout_add(GLib.PRIORITY_DEFAULT, 200, () => {
+                this.auto_tile_off()
+                return false
+            })
+
+            return
+        }
+
         if (this.auto_tiler) {
             this.unregister_storage(this.auto_tiler.attached);
             this.auto_tiler.destroy(this);
@@ -1556,6 +1578,15 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     auto_tile_on() {
+        if (this.windows_moving) {
+            GLib.timeout_add(GLib.PRIORITY_DEFAULT, 200, () => {
+                this.auto_tile_on()
+                return false
+            })
+
+            return
+        }
+
         const original = this.active_workspace();
 
         let tiler = new auto_tiler.AutoTiler(
