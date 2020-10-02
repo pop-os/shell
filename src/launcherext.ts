@@ -251,7 +251,7 @@ export class ExternalLauncher implements LauncherExtension {
         const uri = this.results[index].uri;
         const display_name = this.results[index].display_name;
 
-        GLib.spawn_command_line_sync(`${cmd.action} ${cmd.tag} apply ${uri} "${display_name}"`);
+        spawnCommandLine(`${cmd.action} ${cmd.tag} apply ${uri} "${display_name}"`);
 
         return false;
     }
