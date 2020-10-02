@@ -41,6 +41,7 @@ const MODES: launchers.LauncherExtension[] = [
     new launchers.CommandLauncher(),
     new launchers.CalcLauncher(),
     new launchers.RecentDocumentLauncher(),
+    new launchers.ExternalLauncher()
 ];
 
 export class Launcher extends search.Search {

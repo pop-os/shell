@@ -6,6 +6,7 @@ const { spawnCommandLine } = imports.misc.util;
 const { GLib, Gtk, St } = imports.gi;
 
 import * as log from 'log';
+import * as utils from 'utils';
 import * as once_cell from 'once_cell';
 import * as widgets from 'widgets';
 
@@ -15,6 +16,8 @@ import type { Search } from 'search';
 const DEFAULT_ICON_SIZE = 34;
 
 const TERMINAL = new once_cell.OnceCell<[string, string]>();
+
+const HOME_DIR: string = GLib.get_home_dir();
 
 export type LauncherExtension = {
     // Mode Prefix for launcher
@@ -192,5 +195,129 @@ export class TerminalLauncher implements LauncherExtension {
 
         spawnCommandLine(`${terminal} ${splitter} sh -c '${cmd}; echo "Press to exit"; read t'`);
         return false;
+    }
+}
+
+export class ExternalLauncher implements LauncherExtension {    
+    prefix = '.';
+    name = 'launch external';
+
+    ext?: Ext;
+    search?: Search;
+    results?: Array<RecentItem>;
+    cache?: any = null;
+
+    get_sesid(): number {
+        if (this.search)
+            return this.search.get_session_id();
+
+        return 0;
+    }
+
+    get_cmd(query: string): any {
+        if (!query) { return null; }
+
+        const arr: Array<String> = query.split(/\s+/);
+        if (arr.length < 1) { return null; }
+
+        const action_str = HOME_DIR + '/.pop-shell-launchers/' + arr[0];
+
+        if (!utils.exists(action_str)) {
+            return false;
+        }
+
+        const query_str: string = query.substring(arr[0].length + 1);
+
+        return {action: action_str, query: query_str, tag: this.get_sesid()}
+    }
+
+    init(ext: Ext, search: Search): this {
+        this.ext = ext;
+        this.search = search;
+
+        if (!this.cache) {
+            this.cache = {tag: 0, action: "", items: new Array<RecentItem>()};
+        }
+
+        return this;
+    }
+
+    apply(query: string, index: number): boolean {
+        if (!this.results) { return false; }
+
+        const cmd = this.get_cmd(query);
+        if (!cmd) { return false; }
+
+        const uri = this.results[index].uri;
+        const display_name = this.results[index].display_name;
+
+        GLib.spawn_command_line_sync(`${cmd.action} ${cmd.tag} apply ${uri} "${display_name}"`);
+
+        return false;
+    }
+
+    items(cmd: any): Array<RecentItem> {
+        if (this.cache?.tag == cmd.tag && this.cache?.action == cmd.action) {
+            return this.cache?.items;
+        }
+
+        log.debug('ExternalLauncher: Fetching items...');
+        const items = new Array<RecentItem>();
+
+        let [result, stdout, stderr] = GLib.spawn_command_line_sync(`${cmd.action} ${cmd.tag} list`);
+
+        if (result) {
+            if (stderr && stderr.length > 0) {
+                log.error('ExternalLauncher: stderr: ' + stderr);
+            } else if (stdout && stdout.length > 0) {
+                const stdout_str = stdout.toString();
+
+                stdout_str.split(/\r?\n/)
+                .forEach((line: string) => {
+                    if (line) {
+                        const arr = line.split(/\t/);
+                        items.push({
+                            display_name: arr[1],
+                            icon: arr.length > 2 ? arr[2] : 'applications-internet',
+                            uri: arr[0]
+                        });
+                    }
+                });
+            } else {
+                log.error('ExternalLauncher: undefined error, result: ' + result);
+            }
+        } else {
+            log.error('ExternalLauncher: spawn_command_line_sync result undefined');
+        }
+
+        this.cache.tag = cmd.tag;
+        this.cache.action = cmd.action;
+        this.cache.items = items;
+        
+        return items;
+    }
+
+    search_results(query: string): Array<St.Widget> | null {
+        if (!this.search) {
+            log.error('ExternalLauncher: init not called before performing search');
+            return null;
+        }
+
+        const cmd = this.get_cmd(query);
+        if (!cmd) { return null; }
+
+        const items = this.items(cmd);
+
+        const normalized_query = cmd.query.toLowerCase();
+        this.results = items.filter(item => item.display_name.toLowerCase().includes(normalized_query) || item.uri.toLowerCase().includes(normalized_query)).slice(0, this.search.list_max()).sort((a, b) => a.display_name.localeCompare(b.display_name));
+        return this.results.map((item): St.Widget => widgets.application_button(`${item.display_name}: ${decodeURI(item.uri)}`,
+            new St.Icon({
+                icon_name: 'focus-windows-symbolic',
+                icon_size: (this.search?.icon_size() ?? DEFAULT_ICON_SIZE) / 2,
+                style_class: "pop-shell-search-cat"
+            }), new St.Icon({
+                icon_name: item.icon,
+                icon_size: (this.search?.icon_size() ?? DEFAULT_ICON_SIZE) / 2,
+            })));
     }
 }
