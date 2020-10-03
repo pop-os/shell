@@ -17,9 +17,9 @@ sources = src/*.ts *.css
 all: depcheck compile
 
 clean:
-	rm -rf _build schemas/gschemas.compiled
+	rm -rf _build schemas/gschemas.compiled target
 
-transpile: $(sources)
+transpile: $(sources) clean
 	tsc
 
 compile: convert metadata.json schemas
