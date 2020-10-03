@@ -20,7 +20,8 @@ Therefore, we see an opportunity here to advance the usability of the GNOME desk
   - [Stacking Mode](#stacking-mode): Behaviors specific to the stacking mode
   - [Auto-Tile Mode](#auto-tile-mode): Behaviors specific to the auto-tiling mode
 - [Developers](#developers): Guide for getting started with development
-
+  - [Rebuild.sh](#rebuild.sh): _Developers_ only!
+  - [Install.sh](#install.sh): _User install_ script
 ---
 
 ## The Proposal
@@ -254,8 +255,31 @@ Also of note is that we have implemented this extension around an entity-compone
 
 Due to the risky nature of plain JavaScript, this GNOME Shell extension is written in [TypeScript](https://www.typescriptlang.org/). In addition to supplying static type-checking and self-documenting classes and interfaces, it allows us to write modern JavaScript syntax whilst supporting generation of code for older targets.
 
-When iterating on the codebase, run `sh rebuild.sh` to `make`, `make install`, configure keyboard shortcuts, begin following gnome-shell logs, and restart GNOME Shell. Note that any logged errors will be referencing the generated JavaScript files located in the `_build/` directory.
+Please install the following as dependencies when developing:
 
+- [`Node.js`](https://nodejs.org/en/) LTS+ (v12+)
+- Latest `npm` (comes with NodeJS)
+- `npm install typescript@latest`
+
+### `rebuild.sh`
+
+This convenience script runs the following and is intended for _development_: 
+- `make all`, `make install`
+- configure some keyboard shortcuts
+- WARNING: _restarts_ GNOME Shell
+- starts `make listen` to automatically follow logs
+
+Note that any logged errors will be referencing the generated JavaScript files located in the `_build/` directory.
+
+### `install.sh`
+
+This convenience script runs similar to `rebuild.sh` and is intended for users who downloaded the source from git.
+
+- `make all`, `make install`
+- configure some keyboard shortcuts
+- WARNING: _restarts_ GNOME Shell
+
+## GNOME JS
 GNOME JS is a little different from standard JS, so the included `Makefile` runs `sed` on the transpiled JavaScript to convert the small number of differences between JS and GJS. Notably, GJS only partially supports ES2015, and has its own module system which works differently from what ES2015 expects. The sed scripts will replace `import` and `export` statements with the expected GNOME variants.
 
 ```js
