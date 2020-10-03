@@ -17,5 +17,7 @@ enable_other_extensions
 make enable
 make restart-shell
 
-# Listen to journal logs
-make listen
+set +x
+
+echo ""
+echo "Done installation. Enjoy Pop Shell!"
