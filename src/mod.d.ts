@@ -263,6 +263,7 @@ declare namespace St {
         hide(): void;
         remove_style_class_name(name: string): void;
         remove_style_pseudo_class(name: string): void
+        set_style(inlinecss: string): boolean;
         set_style_class_name(name: string): void;
         set_style_pseudo_class(name: string): void;
         show_all(): void;
@@ -270,7 +271,7 @@ declare namespace St {
     }
 
     interface Bin extends St.Widget {
-        set_style(inlinecss: string): boolean;
+        // empty for now
     }
 
     interface Entry extends Widget {

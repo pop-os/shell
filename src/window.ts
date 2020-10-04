@@ -97,38 +97,17 @@ export class ShellWindow {
         }
 
         this.bind_window_events();
-
-        this.border.connect('style-changed', () => {
-            this.on_style_changed();
-        });
-
-        this.hide_border()
-
-        let settings = ext.settings;
-        let selected_color = settings.hint_color_rgba();
-
-        this.border.set_style(`border-color: ${selected_color}`);
-
-        let change_id = settings.ext.connect('changed', (_, key) => {
-            if (this.border) {
-                if (key === 'hint-color-rgba') {
-                    let color_value = settings.hint_color_rgba();
-                    this.border.set_style(`border-color: ${color_value}`);
-                }
-            }
-            return false;
-        });
-
-        this.border.connect('destroy', () => { settings.ext.disconnect(change_id) });
+        this.bind_hint_events();
 
         global.window_group.add_child(this.border);
 
+        this.hide_border();
         this.restack();
+        this.update_border_layout();
 
         if (this.meta.get_compositor_private()?.get_stage())
             this.on_style_changed();
 
-        this.update_border_layout();
     }
 
     activate(): void {
@@ -147,6 +126,27 @@ export class ShellWindow {
                 this.meta.connect('workspace-changed', () => { this.workspace_changed() }),
                 this.meta.connect('raised', () => { this.window_raised() }),
             );
+    }
+
+    private bind_hint_events() {
+        let settings = this.ext.settings;
+        let change_id = settings.ext.connect('changed', (_, key) => {
+            if (this.border) {
+                if (key === 'hint-color-rgba') {
+                    let color_value = settings.hint_color_rgba();
+                    this.border.set_style(`border-color: ${color_value}`);
+                }
+            }
+            return false;
+        });
+        
+        this.border.connect('destroy', () => { settings.ext.disconnect(change_id) });
+        this.border.connect('style-changed', () => {
+            this.on_style_changed();
+        });
+
+        let selected_color = settings.hint_color_rgba();
+        this.border.set_style(`border-color: ${selected_color}`);
     }
 
     cmdline(): string | null {

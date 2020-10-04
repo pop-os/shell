@@ -14,10 +14,12 @@ const { St } = imports.gi;
 const ACTIVE_TAB = 'pop-shell-tab pop-shell-tab-active';
 const INACTIVE_TAB = 'pop-shell-tab pop-shell-tab-inactive';
 const URGENT_TAB = 'pop-shell-tab pop-shell-tab-urgent';
+const INACTIVE_TAB_STYLE = '#9B8E8A';
 
 export var TAB_HEIGHT: number = 24
 
 interface Tab {
+    active: boolean;
     entity: Entity;
     button: number;
     button_signal: SignalID | null;
@@ -87,18 +89,20 @@ export class Stack {
 
         const entity = window.entity;
         const label = window.meta.get_title();
+        const active = Ecs.entity_eq(entity, this.active);
 
         const button: St.Button = new St.Button({
             label,
             x_expand: true,
-            style_class: Ecs.entity_eq(entity, this.active) ? ACTIVE_TAB : INACTIVE_TAB
+            style_class: active ? ACTIVE_TAB : INACTIVE_TAB
         });
 
         const id = this.buttons.insert(button);
-        this.tabs.push({ entity, signals: [], button: id, button_signal: null });
-
+        
+        let tab: Tab = {active, entity, signals: [], button: id, button_signal: null };
+        this.bind_hint_events(tab);
+        this.tabs.push(tab);
         this.watch_signals(this.tabs.length - 1, id, window);
-
         this.widgets.tabs.add(button);
     }
 
@@ -137,14 +141,26 @@ export class Stack {
 
                 if (Ecs.entity_eq(entity, component.entity)) {
                     this.active_id = id;
+                    component.active = true;
                     name = ACTIVE_TAB;
                     if (actor) actor.show()
                 } else {
+                    component.active = false;
                     name = INACTIVE_TAB;
                     if (actor) actor.hide();
                 }
 
-                this.buttons.get(component.button)?.set_style_class_name(name);
+                let button = this.buttons.get(component.button);
+                if (button) {
+                    button.set_style_class_name(name);
+                    if (component.active) {
+                        let settings = this.ext.settings;
+                        let color_value = settings.hint_color_rgba();
+                        button.set_style(`background: ${color_value}`);
+                    } else {
+                        button.set_style(`background: ${INACTIVE_TAB_STYLE}`);
+                    }
+                }
             })
 
             id += 1;
@@ -195,6 +211,34 @@ export class Stack {
 
     private active_meta(): Meta.Window | undefined {
         return this.ext.windows.get(this.active)?.meta;
+    }
+
+    private bind_hint_events(tab: Tab) {
+        let settings = this.ext.settings;
+        let button = this.buttons.get(tab.button);
+        if (button) {
+            let change_id = settings.ext.connect('changed', (_, key) => {
+                if (key === 'hint-color-rgba') {
+                    this.change_tab_color(tab);
+                }
+                return false;
+            });
+            button.connect('destroy', () => { settings.ext.disconnect(change_id) });
+        }
+        this.change_tab_color(tab);
+    }
+
+    private change_tab_color(tab: Tab) {
+        let settings = this.ext.settings;
+        let button = this.buttons.get(tab.button);
+        if (button) {
+            if (Ecs.entity_eq(tab.entity, this.active)) {
+                let color_value = settings.hint_color_rgba();
+                button.set_style(`background: ${color_value}`);
+            } else {
+                button.set_style(`background: ${INACTIVE_TAB_STYLE}`);
+            }
+        }
     }
 
     /** Clears watched tabs and removes all tabs */
