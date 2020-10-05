@@ -35,7 +35,7 @@ convert: transpile
 	sh scripts/transpile.sh
 
 # Rebuild, install, reconfigure local settings, restart shell, and listen to journalctl logs
-debug: install configure enable restart-shell listen
+debug: depcheck compile install configure enable restart-shell listen
 
 depcheck:
 	@echo depcheck
@@ -54,7 +54,7 @@ disable:
 listen:
 	journalctl -o cat -n 0 -f "$$(which gnome-shell)" | grep -v warning
 
-local-install: install configure enable restart-shell
+local-install: depcheck compile install configure enable restart-shell
 
 install:
 	rm -rf $(INSTALLBASE)/$(INSTALLNAME)
