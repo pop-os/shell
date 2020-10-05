@@ -1,29 +1,29 @@
-#!/usr/bin/env bash
+#!/bin/sh
 
-set -eu
+set -eux
 
-confirm_shortcut() {
+shortcut_applied() {
     # Check if user confirmed overriding shortcuts
-    if [ ! -f "./.confirm_shortcut_change" ]; then
-        read -p "Pop shell will override your default shortcuts. Are you sure? (y/n) " CONT
-        if [ "$CONT" = "y" ]
-        then
-            touch "./.confirm_shortcut_change"
-        else
-            echo "Cancelled"
-            exit 1
-        fi
-    else
+    if test -f "./.confirm_shortcut_change"; then
         echo "Shortcut change already confirmed"
+        return 0
+    fi
+
+    read -p "Pop shell will override your default shortcuts. Are you sure? (y/n) " CONT
+    if test "$CONT" = "y"; then
+        touch "./.confirm_shortcut_change"
+        return 1
+    else
+        echo "Cancelled"
+        return 0
     fi
 }
 
-enable_other_extensions() {
-    # Use a window placement behavior which works better for tiling
-    gnome-extensions enable native-window-placement
-}
-
 set_keybindings() {
+    if shortcut_applied; then
+        return 0
+    fi
+
     left="h"
     down="j"
     up="k"
@@ -89,3 +89,11 @@ set_keybindings() {
     # Close Window
     dconf write ${KEYS_GNOME_WM}/close "['<Super>q']"
 }
+
+set_keybindings
+
+# Use a window placement behavior which works better for tiling
+gnome-extensions enable native-window-placement
+
+# Workspaces spanning displays works better with Pop Shell
+dconf write /org/gnome/mutter/workspaces-only-on-primary false
