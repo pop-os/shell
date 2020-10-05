@@ -20,8 +20,6 @@ Therefore, we see an opportunity here to advance the usability of the GNOME desk
   - [Stacking Mode](#stacking-mode): Behaviors specific to the stacking mode
   - [Auto-Tile Mode](#auto-tile-mode): Behaviors specific to the auto-tiling mode
 - [Developers](#developers): Guide for getting started with development
-  - [Rebuild.sh](#rebuild.sh): _Developers_ only!
-  - [Install.sh](#install.sh): _User install_ script
 ---
 
 ## The Proposal
@@ -70,11 +68,11 @@ To install this GNOME Shell extension, you MUST have the following:
 - TypeScript 3.8
 - GNU Make
 
-Proper functionality of the shell requires modifying GNOME's default keyboard shortcuts. Those developing and testing the extension must run the `rebuild.sh` script to install it locally (do not use sudo): `sh rebuild.sh`.
-
-This will call `make` to transpile the TypeScript source code into GJS-compatible JavaScript sources, followed by `make install` to install it locally into `~/.local/share/gnome-shell/extensions`, and modifying the default keyboard shortcuts in GNOME.
+Proper functionality of the shell requires modifying GNOME's default keyboard shortcuts. For a local installation, run `make local-install`.
 
 If you want to uninstall the extension, you may invoke `make uninstall`, and then open the "Keyboard Shortcuts" panel in GNOME Settings to select the "Reset All.." button in the header bar.
+
+> Note that if you are packaging for your Linux distribution, many features in Pop Shell will not work out of the box because they require changes to GNOME's default keyboard shortcuts. A local install is necessary if you aren't packaging your own GNOME session with these default keyboard shortcuts unset or changed.
 
 ---
 
@@ -261,23 +259,7 @@ Please install the following as dependencies when developing:
 - Latest `npm` (comes with NodeJS)
 - `npm install typescript@latest`
 
-### `rebuild.sh`
-
-This convenience script runs the following and is intended for _development_: 
-- `make all`, `make install`
-- configure some keyboard shortcuts
-- WARNING: _restarts_ GNOME Shell
-- starts `make listen` to automatically follow logs
-
-Note that any logged errors will be referencing the generated JavaScript files located in the `_build/` directory.
-
-### `install.sh`
-
-This convenience script runs similar to `rebuild.sh` and is intended for users who downloaded the source from git.
-
-- `make all`, `make install`
-- configure some keyboard shortcuts
-- WARNING: _restarts_ GNOME Shell
+While working on the shell, you can recompile, reconfigure, reinstall, and restart GNOME Shell with logging with `make debug`. Note that this only works reliably in X11 sessions, since Wayland will exit to the login screen on restarting the shell.
 
 ## GNOME JS
 GNOME JS is a little different from standard JS, so the included `Makefile` runs `sed` on the transpiled JavaScript to convert the small number of differences between JS and GJS. Notably, GJS only partially supports ES2015, and has its own module system which works differently from what ES2015 expects. The sed scripts will replace `import` and `export` statements with the expected GNOME variants.

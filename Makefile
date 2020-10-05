@@ -22,22 +22,20 @@ clean:
 transpile: $(sources) clean
 	tsc
 
+# Configure local settings on system
+configure:
+	sh scripts/configure.sh
+
 compile: convert metadata.json schemas
 	rm -rf _build
 	mkdir -p _build
 	cp -r metadata.json icons schemas target/*.js imports/*.js *.css src/gtk/*.js _build
 
 convert: transpile
-	for file in target/*.js; do \
-		sed -i \
-			-e 's#export function#function#g' \
-			-e 's#export var#var#g' \
-			-e 's#export const#var#g' \
-			-e 's#Object.defineProperty(exports, "__esModule", { value: true });#var exports = {};#g' \
-			"$${file}"; \
-		sed -i -E 's/export class (\w+)/var \1 = class \1/g' "$${file}"; \
-		sed -i -E "s/import \* as (\w+) from '(\w+)'/const \1 = Me.imports.\2/g" "$${file}"; \
-	done
+	sh scripts/transpile.sh
+
+# Rebuild, install, reconfigure local settings, restart shell, and listen to journalctl logs
+debug: install configure enable restart-shell listen
 
 depcheck:
 	@echo depcheck
@@ -55,6 +53,8 @@ disable:
 
 listen:
 	journalctl -o cat -n 0 -f "$$(which gnome-shell)" | grep -v warning
+
+local-install: install configure enable restart-shell
 
 install:
 	rm -rf $(INSTALLBASE)/$(INSTALLNAME)
