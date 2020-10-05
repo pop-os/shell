@@ -7,6 +7,7 @@ import type { ShellWindow } from './window';
 
 import * as Ecs from 'ecs';
 import * as a from 'arena';
+import * as utils from 'utils';
 
 const Arena = a.Arena;
 const { St } = imports.gi;
@@ -153,13 +154,16 @@ export class Stack {
                 let button = this.buttons.get(component.button);
                 if (button) {
                     button.set_style_class_name(name);
+                    let tab_color = '';
                     if (component.active) {
                         let settings = this.ext.settings;
                         let color_value = settings.hint_color_rgba();
-                        button.set_style(`background: ${color_value}`);
+                        tab_color = `background: ${color_value}; color: ${utils.is_dark(color_value) ? 'white' : 'black'}`;
+                        
                     } else {
-                        button.set_style(`background: ${INACTIVE_TAB_STYLE}`);
+                        tab_color = `background: ${INACTIVE_TAB_STYLE}`;
                     }
+                    button.set_style(tab_color);
                 }
             })
 
@@ -232,12 +236,14 @@ export class Stack {
         let settings = this.ext.settings;
         let button = this.buttons.get(tab.button);
         if (button) {
+            let tab_color = '';
             if (Ecs.entity_eq(tab.entity, this.active)) {
                 let color_value = settings.hint_color_rgba();
-                button.set_style(`background: ${color_value}`);
+                tab_color = `background: ${color_value}; color: ${utils.is_dark(color_value) ? 'white' : 'black'}`;
             } else {
-                button.set_style(`background: ${INACTIVE_TAB_STYLE}`);
+                tab_color = `background: ${INACTIVE_TAB_STYLE}`;
             }
+            button.set_style(tab_color);
         }
     }
 

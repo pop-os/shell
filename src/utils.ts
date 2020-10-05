@@ -3,6 +3,7 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 import * as result from 'result';
 import * as error from 'error';
+// import * as log from 'log';
 
 const { Gio, GLib, GObject, Meta } = imports.gi;
 const { Ok, Err } = result;
@@ -43,4 +44,45 @@ export function source_remove(id: SignalID): boolean {
 
 export function exists(path: string): boolean {
     return Gio.File.new_for_path(path).query_exists(null);
+}
+
+/**
+ * Parse the current background color's darkness 
+ * https://stackoverflow.com/a/41491220 - the advanced solution
+ * @param color - the RGBA or hex string value
+ */
+export function is_dark(color: string): boolean {
+    // 'rgba(251, 184, 108, 1)' - pop orange!
+    let color_val = "";
+    let r = 255;
+    let g = 255;
+    let b = 255;
+
+    // handle rgba(255,255,255,1.0) format
+    if (color.indexOf('rgb') >= 0) { 
+        // starts with parsed value from Gdk.RGBA
+        color = color.replace('rgba','rgb')
+            .replace('rgb(', '')
+            .replace(')', ''); // make it 255, 255, 255, 1
+        // log.debug(`util color: ${color}`);
+        let colors = color.split(',');
+        r = parseInt(colors[0].trim());
+        g = parseInt(colors[1].trim());
+        b = parseInt(colors[2].trim());
+    } else if (color.charAt(0) === '#') {
+        color_val =  color.substring(1, 7);
+        r = parseInt(color_val.substring(0, 2), 16); // hexToR
+        g = parseInt(color_val.substring(2, 4), 16); // hexToG
+        b = parseInt(color_val.substring(4, 6), 16); // hexToB
+    }
+
+    let uicolors = [r / 255, g / 255, b / 255];
+    let c = uicolors.map((col) => {
+        if (col <= 0.03928) {
+        return col / 12.92;
+        }
+        return Math.pow((col + 0.055) / 1.055, 2.4);
+    });
+    let L = (0.2126 * c[0]) + (0.7152 * c[1]) + (0.0722 * c[2]);
+    return (L <= 0.179);
 }
