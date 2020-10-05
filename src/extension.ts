@@ -956,23 +956,31 @@ export class Ext extends Ecs.System<ExtEvent> {
             if (neighbor && neighbor.index() !== ws.index()) {
                 move_to_neighbor(neighbor);
             } else if (direction === Meta.MotionDirection.DOWN && !last_window()) {
-                neighbor = wom.append_new_workspace(false, global.get_current_time());
+                if (this.settings.dynamic_workspaces()) {
+                    neighbor = wom.append_new_workspace(false, global.get_current_time());
+                } else {
+                    return;
+                }
             } else if (direction === Meta.MotionDirection.UP && ws.index() === 0) {
-                // Add a new workspace, to push everyone to free up the first one
-                wom.append_new_workspace(false, global.get_current_time());
+                if (this.settings.dynamic_workspaces()) {
+                    // Add a new workspace, to push everyone to free up the first one
+                    wom.append_new_workspace(false, global.get_current_time());
 
-                // Move everything one workspace down
-                this.on_workspace_modify(
-                    () => true,
-                    (current) => current + 1,
-                    true
-                );
+                    // Move everything one workspace down
+                    this.on_workspace_modify(
+                        () => true,
+                        (current) => current + 1,
+                        true
+                    );
 
-                neighbor = wom.get_workspace_by_index(0);
+                    neighbor = wom.get_workspace_by_index(0);
 
-                if (!neighbor) return;
+                    if (!neighbor) return;
 
-                move_to_neighbor(neighbor);
+                    move_to_neighbor(neighbor);
+                } else {
+                    return
+                }
             } else {
                 return
             }
