@@ -185,11 +185,10 @@ export class Tiler {
     }
 
     move(ext: Ext, x: number, y: number, w: number, h: number, direction: Direction, focus: () => window.ShellWindow | number | null) {
-        if (this.movements.length === 2) return;
-
-        this.movements.push(() => {
-            if (!this.window) return;
-            if (ext.auto_tiler && !ext.contains_tag(this.window, Tags.Floating)) {
+        if (!this.window) return;
+        if (ext.auto_tiler && !ext.contains_tag(this.window, Tags.Floating)) {
+            if (this.movements.length === 2) return;
+            this.movements.push(() => {
                 const focused = ext.focus_window();
                 if (focused) {
                     // The window that the focused window is being moved onto
@@ -209,14 +208,14 @@ export class Tiler {
                     if (move_to !== null) this.move_auto(ext, focused, move_to, direction === Direction.Left);
                     this.moving = false;
                 }
-            } else {
-                this.swap_window = null;
-                this.rect_by_active_area(ext, (_monitor, rect) => {
-                    this.change(ext.overlay, rect, x, y, w, h)
-                        .change(ext.overlay, rect, 0, 0, 0, 0);
-                });
-            }
-        });
+            })
+        } else {
+            this.swap_window = null;
+            this.rect_by_active_area(ext, (_monitor, rect) => {
+                this.change(ext.overlay, rect, x, y, w, h)
+                    .change(ext.overlay, rect, 0, 0, 0, 0);
+            });
+        }
     }
 
     move_from_stack(ext: Ext, stack: [Fork, Node.Node, boolean], focused: window.ShellWindow, direction: Direction) {
