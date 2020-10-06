@@ -53,7 +53,6 @@ export class ShellWindow {
     grab: boolean = false;
     activate_after_move: boolean = false;
     ignore_detach: boolean = false;
-
     was_attached_to?: [Entity, boolean];
 
     // True if this window is currently smart-gapped
@@ -247,11 +246,13 @@ export class ShellWindow {
 
     move(ext: Ext, rect: Rectangular, on_complete?: () => void) {
         const clone = Rect.Rectangle.from_meta(rect);
-        const actor = this.meta.get_compositor_private();
+        const meta = this.meta;
+        const actor = meta.get_compositor_private();
+
         if (actor) {
-            this.meta.unmaximize(Meta.MaximizeFlags.HORIZONTAL);
-            this.meta.unmaximize(Meta.MaximizeFlags.VERTICAL);
-            this.meta.unmaximize(Meta.MaximizeFlags.HORIZONTAL | Meta.MaximizeFlags.VERTICAL);
+            meta.unmaximize(Meta.MaximizeFlags.HORIZONTAL);
+            meta.unmaximize(Meta.MaximizeFlags.VERTICAL);
+            meta.unmaximize(Meta.MaximizeFlags.HORIZONTAL | Meta.MaximizeFlags.VERTICAL);
 
             const entity_string = String(this.entity);
 
@@ -263,14 +264,14 @@ export class ShellWindow {
                 ext.register({ tag: 2, window: this, kind: { tag: 1 } });
                 if (on_complete) ext.register_fn(on_complete);
                 ext.tween_signals.delete(entity_string);
-                if (this.meta.appears_focused) {
+                if (meta.appears_focused) {
                     this.show_border();
                 }
             };
 
             if (ext.animate_windows && !ext.init) {
-                const current = this.meta.get_frame_rect();
-                const buffer = this.meta.get_buffer_rect();
+                const current = meta.get_frame_rect();
+                const buffer = meta.get_buffer_rect();
 
                 const dx = current.x - buffer.x;
                 const dy = current.y - buffer.y;
@@ -287,10 +288,12 @@ export class ShellWindow {
                 const x = clone.x - dx;
                 const y = clone.y - dy;
 
-                Tweener.add(actor, { x, y, duration: 100, mode: null });
+                const duration = ext.tiler.moving ? 49 : 149;
+
+                Tweener.add(actor, { x, y, duration, mode: null });
 
                 ext.tween_signals.set(entity_string, [
-                    Tweener.on_window_tweened(this.meta, onComplete),
+                    Tweener.on_window_tweened(meta, onComplete),
                     onComplete
                 ]);
             } else {
