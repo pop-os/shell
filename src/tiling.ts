@@ -37,6 +37,8 @@ export class Tiler {
 
     movements: Array<() => void> = new Array();
 
+    moving: boolean = false;
+
     private swap_window: Entity | null = null;
 
     constructor(ext: Ext) {
@@ -193,15 +195,19 @@ export class Tiler {
                     // The window that the focused window is being moved onto
                     const move_to = focus();
 
+                    this.moving = true;
+
                     if (ext.auto_tiler) {
                         const s = ext.auto_tiler.find_stack(focused.entity);
                         if (s) {
                             this.move_from_stack(ext, s, focused, direction);
+                            this.moving = false;
                             return;
                         }
                     }
 
                     if (move_to !== null) this.move_auto(ext, focused, move_to, direction === Direction.Left);
+                    this.moving = false;
                 }
             } else {
                 this.swap_window = null;
@@ -401,30 +407,31 @@ export class Tiler {
     move_auto(ext: Ext, focused: window.ShellWindow, move_to: window.ShellWindow | number, stack_from_left: boolean = true) {
         let watching: null | window.ShellWindow = null;
 
-        if (ext.auto_tiler) {
+        const at = ext.auto_tiler;
+        if (at) {
             if (move_to instanceof ShellWindow) {
                 // Check if we are moving onto a stack, and if so, move into the stack.
-                const stack_info = ext.auto_tiler.find_stack(move_to.entity);
+                const stack_info = at.find_stack(move_to.entity);
                 if (stack_info) {
                     const [stack_fork, branch,] = stack_info;
                     const stack = branch.inner as NodeStack;
 
                     focused.ignore_detach = true;
-                    ext.auto_tiler.detach_window(ext, focused.entity);
+                    at.detach_window(ext, focused.entity);
 
-                    ext.auto_tiler.forest.on_attach(stack_fork.entity, focused.entity);
-                    ext.auto_tiler.update_stack(ext, stack);
+                    at.forest.on_attach(stack_fork.entity, focused.entity);
+                    at.update_stack(ext, stack);
 
-                    ext.auto_tiler.tile(ext, stack_fork, stack_fork.area);
+                    at.tile(ext, stack_fork, stack_fork.area);
 
                     focused.ignore_detach = true;
-                    ext.auto_tiler.detach_window(ext, focused.entity);
-                    ext.auto_tiler.attach_to_window(ext, move_to, focused, Lib.cursor_rect(), stack_from_left);
+                    at.detach_window(ext, focused.entity);
+                    at.attach_to_window(ext, move_to, focused, Lib.cursor_rect(), stack_from_left);
                     watching = focused;
                 } else {
-                    const parent = ext.auto_tiler.windows_are_siblings(focused.entity, move_to.entity);
+                    const parent = at.windows_are_siblings(focused.entity, move_to.entity);
                     if (parent) {
-                        const fork = ext.auto_tiler.forest.forks.get(parent);
+                        const fork = at.forest.forks.get(parent);
                         if (fork) {
                             if (!fork.right) {
                                 Log.error('move_auto: detected as sibling, but fork lacks right branch');
@@ -432,7 +439,7 @@ export class Tiler {
                             }
 
                             if (fork.left.inner.kind === 3) {
-                                Node.stack_remove(ext.auto_tiler.forest, fork.left.inner, focused.entity);
+                                Node.stack_remove(at.forest, fork.left.inner, focused.entity);
                                 focused.stack = null;
                             } else {
                                 const temp = fork.right;
@@ -440,7 +447,7 @@ export class Tiler {
                                 fork.right = fork.left;
                                 fork.left = temp;
 
-                                ext.auto_tiler.tile(ext, fork, fork.area);
+                                at.tile(ext, fork, fork.area);
                                 watching = focused;
                             }
                         }
@@ -448,15 +455,15 @@ export class Tiler {
 
                     if (!watching) {
                         focused.ignore_detach = true;
-                        ext.auto_tiler.detach_window(ext, focused.entity);
-                        ext.auto_tiler.attach_to_window(ext, move_to, focused, Lib.cursor_rect(), false);
+                        at.detach_window(ext, focused.entity);
+                        at.attach_to_window(ext, move_to, focused, Lib.cursor_rect(), false);
                         watching = focused;
                     }
                 }
             } else {
                 focused.ignore_detach = true;
-                ext.auto_tiler.detach_window(ext, focused.entity);
-                ext.auto_tiler.attach_to_workspace(ext, focused, [move_to, ext.active_workspace()]);
+                at.detach_window(ext, focused.entity);
+                at.attach_to_workspace(ext, focused, [move_to, ext.active_workspace()]);
                 watching = focused;
             }
         }

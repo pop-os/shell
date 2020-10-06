@@ -235,21 +235,23 @@ export class Ext extends Ecs.System<ExtEvent> {
                 if (!win.actor_exists()) return;
 
                 if (event.kind.tag === 1) {
-                    let movement = this.movements.remove(event.window.entity);
+                    const { window } = event;
+
+                    let movement = this.movements.remove(window.entity);
                     if (!movement) return;
 
-                    let actor = event.window.meta.get_compositor_private();
+                    let actor = window.meta.get_compositor_private();
                     if (!actor) {
-                        this.auto_tiler?.detach_window(this, event.window.entity);
+                        this.auto_tiler?.detach_window(this, window.entity);
                         return;
                     }
 
                     actor.remove_all_transitions();
                     const { x, y, width, height } = movement;
 
-                    event.window.meta.move_resize_frame(true, x, y, width, height);
+                    window.meta.move_resize_frame(true, x, y, width, height);
 
-                    this.monitors.insert(event.window.entity, [
+                    this.monitors.insert(window.entity, [
                         win.meta.get_monitor(),
                         win.workspace_id()
                     ]);
