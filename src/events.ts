@@ -67,8 +67,7 @@ export function global(event: GlobalEvent): GlobalEventTag {
 }
 
 export function window_move(ext: Ext, window: Window.ShellWindow, rect: Rectangular): ManagedWindow {
-    if (!window.movement) ext.windows_moving += 1;
-    window.movement = rect;
+    ext.movements.insert(window.entity, rect);
     return { tag: 2, window, kind: { tag: 1 } };
 }
 

@@ -35,6 +35,8 @@ export class Tiler {
 
     window: Entity | null = null;
 
+    movements: Array<() => void> = new Array();
+
     private swap_window: Entity | null = null;
 
     constructor(ext: Ext) {
@@ -181,30 +183,32 @@ export class Tiler {
     }
 
     move(ext: Ext, x: number, y: number, w: number, h: number, direction: Direction, focus: () => window.ShellWindow | number | null) {
-        if (!this.window) return;
-        if (ext.auto_tiler && !ext.contains_tag(this.window, Tags.Floating)) {
-            const focused = ext.focus_window();
-            if (focused) {
-                // The window that the focused window is being moved onto
-                const move_to = focus();
+        this.movements.push(() => {
+            if (!this.window) return;
+            if (ext.auto_tiler && !ext.contains_tag(this.window, Tags.Floating)) {
+                const focused = ext.focus_window();
+                if (focused) {
+                    // The window that the focused window is being moved onto
+                    const move_to = focus();
 
-                if (ext.auto_tiler) {
-                    const s = ext.auto_tiler.find_stack(focused.entity);
-                    if (s) {
-                        this.move_from_stack(ext, s, focused, direction);
-                        return;
+                    if (ext.auto_tiler) {
+                        const s = ext.auto_tiler.find_stack(focused.entity);
+                        if (s) {
+                            this.move_from_stack(ext, s, focused, direction);
+                            return;
+                        }
                     }
-                }
 
-                if (move_to !== null) this.move_auto(ext, focused, move_to, direction === Direction.Left);
+                    if (move_to !== null) this.move_auto(ext, focused, move_to, direction === Direction.Left);
+                }
+            } else {
+                this.swap_window = null;
+                this.rect_by_active_area(ext, (_monitor, rect) => {
+                    this.change(ext.overlay, rect, x, y, w, h)
+                        .change(ext.overlay, rect, 0, 0, 0, 0);
+                });
             }
-        } else {
-            this.swap_window = null;
-            this.rect_by_active_area(ext, (_monitor, rect) => {
-                this.change(ext.overlay, rect, x, y, w, h)
-                    .change(ext.overlay, rect, 0, 0, 0, 0);
-            });
-        }
+        });
     }
 
     move_from_stack(ext: Ext, stack: [Fork, Node.Node, boolean], focused: window.ShellWindow, direction: Direction) {
