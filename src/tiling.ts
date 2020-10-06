@@ -644,6 +644,8 @@ export class Tiler {
     }
 
     exit(ext: Ext) {
+        this.movements.splice(0);
+
         if (this.window) {
             this.window = null;
 
