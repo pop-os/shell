@@ -1326,7 +1326,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     signals_attach() {
         this.conf_watch = this.attach_config();
 
-        this.tiler_queue = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 250, () => {
+        this.tiler_queue = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 100, () => {
             if (this.tiler_active) return true;
 
             const m = this.tiler.movements.shift();
@@ -1641,7 +1641,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     /** Calls a function once windows are no longer queued for movement. */
     schedule_idle(func: () => boolean): boolean {
         if (!this.movements.is_empty()) {
-            GLib.timeout_add(GLib.PRIORITY_DEFAULT, 64, () => {
+            GLib.timeout_add(GLib.PRIORITY_DEFAULT, 100, () => {
                 return func();
             })
 

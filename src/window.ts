@@ -287,7 +287,7 @@ export class ShellWindow {
                 const x = clone.x - dx;
                 const y = clone.y - dy;
 
-                Tweener.add(actor, { x, y, duration: 149, mode: null });
+                Tweener.add(actor, { x, y, duration: 100, mode: null });
 
                 ext.tween_signals.set(entity_string, [
                     Tweener.on_window_tweened(this.meta, onComplete),
@@ -377,7 +377,6 @@ export class ShellWindow {
      * @param updateState NORMAL, RAISED, WORKSPACE_CHANGED
      */
     restack(updateState: RESTACK_STATE = RESTACK_STATE.NORMAL) {
-
         let restackSpeed = RESTACK_SPEED.NORMAL;
 
         switch (updateState) {
