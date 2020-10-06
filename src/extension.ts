@@ -137,9 +137,6 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     was_locked: boolean = false;
 
-    /** Tracks the number of windows that are currently queued for moving */
-    windows_moving: number = 0;
-
     /** Record of misc. global objects and their attached signals */
     private signals: Map<GObject.Object, Array<SignalID>> = new Map();
 
@@ -153,6 +150,9 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     /** Store for keeping track of which monitor + workspace a window is on */
     monitors: Ecs.Storage<[number, number]> = this.register_storage();
+
+    /** Stores movements that have been queued */
+    movements: Ecs.Storage<Rectangular> = this.register_storage();
 
     /** Store for names associated with windows */
     names: Ecs.Storage<string> = this.register_storage();
@@ -185,6 +185,10 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     /** Calculates window placements when tiling and focus-switching */
     tiler: Tiling.Tiler = new Tiling.Tiler(this);
+
+    tiler_active: boolean = false;
+
+    tiler_queue: null | SignalID = null;
 
     constructor() {
         super(new Executor.GLibExecutor());
@@ -231,7 +235,8 @@ export class Ext extends Ecs.System<ExtEvent> {
                 if (!win.actor_exists()) return;
 
                 if (event.kind.tag === 1) {
-                    if (!event.window.movement) return;
+                    let movement = this.movements.remove(event.window.entity);
+                    if (!movement) return;
 
                     let actor = event.window.meta.get_compositor_private();
                     if (!actor) {
@@ -240,12 +245,9 @@ export class Ext extends Ecs.System<ExtEvent> {
                     }
 
                     actor.remove_all_transitions();
-                    const { x, y, width, height } = event.window.movement;
+                    const { x, y, width, height } = movement;
 
                     event.window.meta.move_resize_frame(true, x, y, width, height);
-
-                    event.window.movement = null;
-                    this.windows_moving -= 1;
 
                     this.monitors.insert(event.window.entity, [
                         win.meta.get_monitor(),
@@ -537,11 +539,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         if (this.auto_tiler) this.auto_tiler.detach_window(this, win);
 
-        if (window.movement) {
-            this.windows_moving -= 1;
-            window.movement = null;
-        }
-
+        this.movements.remove(win)
         this.windows.remove(win)
         this.delete_entity(win);
     }
@@ -1328,6 +1326,30 @@ export class Ext extends Ecs.System<ExtEvent> {
     signals_attach() {
         this.conf_watch = this.attach_config();
 
+        this.tiler_queue = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 250, () => {
+            if (this.tiler_active) return true;
+
+            const m = this.tiler.movements.shift();
+
+            if (m) {
+                this.tiler_active = true;
+
+                const callback = () => {
+                    m();
+                    this.tiler_active = false;
+                };
+
+                if (!this.schedule_idle(() => {
+                    callback();
+                    return false;
+                })) {
+                    callback();
+                }
+            }
+
+            return true;
+        });
+
         const workspace_manager = display.get_workspace_manager();
 
         for (const [, ws] of iter_workspaces(workspace_manager)) {
@@ -1493,6 +1515,10 @@ export class Ext extends Ecs.System<ExtEvent> {
             this.conf_watch = null;
         }
 
+        if (this.tiler_queue) {
+            GLib.source_remove(this.tiler_queue)
+        }
+
         this.signals.clear();
     }
 
@@ -1554,12 +1580,10 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     auto_tile_off() {
-        if (this.windows_moving) {
-            GLib.timeout_add(GLib.PRIORITY_DEFAULT, 200, () => {
-                this.auto_tile_off()
-                return false
-            })
-
+        if (this.schedule_idle(() => {
+            this.auto_tile_off()
+            return false
+        })) {
             return
         }
 
@@ -1578,12 +1602,10 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     auto_tile_on() {
-        if (this.windows_moving) {
-            GLib.timeout_add(GLib.PRIORITY_DEFAULT, 200, () => {
-                this.auto_tile_on()
-                return false
-            })
-
+        if (this.schedule_idle(() => {
+            this.auto_tile_on()
+            return false;
+        })) {
             return
         }
 
@@ -1614,6 +1636,19 @@ export class Ext extends Ecs.System<ExtEvent> {
         }
 
         this.register_fn(() => this.switch_to_workspace(original));
+    }
+
+    /** Calls a function once windows are no longer queued for movement. */
+    schedule_idle(func: () => boolean): boolean {
+        if (!this.movements.is_empty()) {
+            GLib.timeout_add(GLib.PRIORITY_DEFAULT, 64, () => {
+                return func();
+            })
+
+            return true
+        }
+
+        return false
     }
 
     unset_grab_op() {

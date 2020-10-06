@@ -14,7 +14,6 @@ import type { Entity } from './ecs';
 import type { Ext } from './extension';
 import type { Rectangle } from './rectangle';
 
-// const GLib: GLib = imports.gi.GLib;
 const { Gdk, Meta, Shell, St, GLib } = imports.gi;
 
 const { OnceCell } = once_cell;
@@ -63,9 +62,6 @@ export class ShellWindow {
     border: St.Bin = new St.Bin({ style_class: 'pop-shell-active-hint pop-shell-border-normal' });
 
     prev_rect: null | Rectangular = null;
-
-    /** Stores a queued window movement */
-    movement: null | Rectangular = null;
 
     private was_hidden: boolean = false;
 
@@ -261,9 +257,7 @@ export class ShellWindow {
 
             this.hide_border();
 
-            if (!this.movement) ext.windows_moving += 1;
-
-            this.movement = clone;
+            ext.movements.insert(this.entity, clone);
 
             const onComplete = () => {
                 ext.register({ tag: 2, window: this, kind: { tag: 1 } });

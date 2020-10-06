@@ -106,6 +106,12 @@ export class Storage<T> {
         this.store[id] = [gen, component];
     }
 
+    /** Check if the storage is empty */
+    is_empty(): boolean {
+        for (const slot of this.store) if (slot) return false;
+        return true;
+    }
+
     /// Removes the component for this entity, if it exists
     remove(entity: Entity): T | null {
         const comp = this.get(entity);
