@@ -110,6 +110,7 @@ Tasks for a tester to verify when approving a patch. Use complex window layouts 
 ## Miscellaneous
 
 - [ ] Close all windows-- no icons should be active in the GNOME launcher.
+- [ ] Open a window, enable tiling, stack the window, move to a different workspace, and disable tiling. The window should not become visible on the empty workspace.
 
 ## Enhancement Tests
 
