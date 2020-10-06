@@ -93,7 +93,9 @@ set_keybindings() {
 set_keybindings
 
 # Use a window placement behavior which works better for tiling
-gnome-extensions enable native-window-placement
+
+Gnome_extension_native_windows_placement_name=$(gnome-extensions list | grep "native-window")
+gnome-extensions enable $Gnome_extension_native_windows_placement_name
 
 # Workspaces spanning displays works better with Pop Shell
 dconf write /org/gnome/mutter/workspaces-only-on-primary false
