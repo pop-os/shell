@@ -183,6 +183,8 @@ export class Tiler {
     }
 
     move(ext: Ext, x: number, y: number, w: number, h: number, direction: Direction, focus: () => window.ShellWindow | number | null) {
+        if (this.movements.length === 2) return;
+
         this.movements.push(() => {
             if (!this.window) return;
             if (ext.auto_tiler && !ext.contains_tag(this.window, Tags.Floating)) {
