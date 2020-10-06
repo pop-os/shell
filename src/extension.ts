@@ -1612,6 +1612,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         }
 
         const original = this.active_workspace();
+        this.hide_all_borders();
 
         let tiler = new auto_tiler.AutoTiler(
             new Forest.Forest()
