@@ -153,7 +153,7 @@ export class AutoTiler {
             const [, fork] = attached;
             const monitor = ext.monitors.get(attachee.entity);
             if (monitor) {
-                if (fork.is_toplevel && fork.smart_gapped) {
+                if (fork.is_toplevel && fork.smart_gapped && fork.right) {
                     fork.smart_gapped = false;
                     let rect = ext.monitor_work_area(fork.monitor);
 
