@@ -204,7 +204,7 @@ export class ExternalLauncher implements LauncherExtension {
 
     ext?: Ext;
     search?: Search;
-    results?: Array<{id: string, widget: St.Widget}>;
+    results?: Array<{id: string, result: string[], widget: St.Widget}>;
 
     get_sesid(): number {
         if (this.search)
@@ -243,9 +243,9 @@ export class ExternalLauncher implements LauncherExtension {
         const cmd = this.get_cmd(query);
         if (!cmd) { return false; }
 
-        const result = this.results[index];
+        const item = this.results[index];
 
-        spawnCommandLine(`${cmd.action} ${cmd.tag} apply ${result.id}`);
+        spawnCommandLine(`${cmd.action} ${cmd.tag} apply ${item.id} "${item.result[1]}"`);
 
         return false;
     }
@@ -291,6 +291,7 @@ export class ExternalLauncher implements LauncherExtension {
 
                     this.results?.push({
                         id: arr[0],
+                        result: arr,
                         widget: widget
                     });
 
