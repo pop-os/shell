@@ -277,7 +277,7 @@ export class ExternalLauncher implements LauncherExtension {
                     const arr = line.split(/\t/);
 
                     const widget: St.Widget = widgets.application_button(
-                        `${arr[1]}\n- ${decodeURI(arr[2])}`,
+                        `${arr[1]}\n- ${arr[2]}`,
                         new St.Icon({
                             icon_name: 'applications-internet',
                             icon_size: (this.search?.icon_size() ?? DEFAULT_ICON_SIZE) / 2,
