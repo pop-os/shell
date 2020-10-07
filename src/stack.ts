@@ -99,8 +99,8 @@ export class Stack {
         });
 
         const id = this.buttons.insert(button);
-        
-        let tab: Tab = {active, entity, signals: [], button: id, button_signal: null };
+
+        let tab: Tab = { active, entity, signals: [], button: id, button_signal: null };
         this.bind_hint_events(tab);
         this.tabs.push(tab);
         this.watch_signals(this.tabs.length - 1, id, window);
@@ -159,7 +159,7 @@ export class Stack {
                         let settings = this.ext.settings;
                         let color_value = settings.hint_color_rgba();
                         tab_color = `background: ${color_value}; color: ${utils.is_dark(color_value) ? 'white' : 'black'}`;
-                        
+
                     } else {
                         tab_color = `background: ${INACTIVE_TAB_STYLE}`;
                     }
@@ -260,7 +260,8 @@ export class Stack {
         const window = this.ext.windows.get(c.entity);
         if (window) {
             for (const s of c.signals) window.meta.disconnect(s);
-            window.meta.get_compositor_private()?.show();
+
+            if (this.workspace === this.ext.active_workspace()) window.meta.get_compositor_private()?.show();
         }
 
         c.signals = [];
@@ -293,7 +294,11 @@ export class Stack {
         // Disconnect stack signals from each window, and unhide them.
         for (const c of this.tabs) {
             this.tab_disconnect(c);
-            this.ext.windows.get(c.entity)?.meta.get_compositor_private()?.show();
+            if (this.workspace === this.ext.active_workspace()) {
+                global.log(`showing`)
+                this.ext.windows.get(c.entity)?.meta.get_compositor_private()?.show();
+            }
+
         }
 
         for (const b of this.buttons.values()) b.destroy();
