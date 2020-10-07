@@ -83,10 +83,6 @@ export class ShellWindow {
 
         this.known_workspace = this.workspace_id()
 
-        if (this.is_transient()) {
-            window.make_above();
-        }
-
         if (this.may_decorate()) {
             if (!window.is_client_decorated()) {
                 if (ext.settings.show_title()) {
@@ -140,7 +136,7 @@ export class ShellWindow {
             }
             return false;
         });
-        
+
         this.border.connect('destroy', () => { settings.ext.disconnect(change_id) });
         this.border.connect('style-changed', () => {
             this.on_style_changed();
@@ -413,11 +409,22 @@ export class ShellWindow {
                         }
                     }
 
-                    // finally, move the border above the current window actor
+                    // Move the border above the current window actor
                     if (border.get_parent() === actor.get_parent()) {
                         win_group.set_child_above_sibling(border, actor);
                     }
                 }
+
+                // Honor transient windows
+                for (const window of this.ext.windows.values()) {
+                    const parent = window.meta.get_transient_for()
+                    const window_actor = window.meta.get_compositor_private();
+                    if (!parent || !window_actor) continue
+                    const parent_actor = parent.get_compositor_private()
+                    if (!parent_actor && parent_actor !== actor) continue
+                    win_group.set_child_below_sibling(border, window_actor)
+                }
+
                 this.update_border_layout();
             }
 
