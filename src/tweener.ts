@@ -14,8 +14,11 @@ export interface TweenParams {
 export function add(win: ShellWindow, p: TweenParams) {
     let a = win.meta.get_compositor_private();
     if (!p.mode) p.mode = Clutter.AnimationMode.LINEAR;
-    if (a)
+    if (a) {
+        win.hide_border();
+        win.update_border_layout();
         a.ease(p);
+    }
 }
 
 export function remove(a: Clutter.Actor) {
@@ -30,6 +33,7 @@ export function is_tweening(a: Clutter.Actor) {
 }
 
 export function on_window_tweened(win: ShellWindow, callback: () => void): SignalID {
+    win.update_border_layout();
     win.hide_border();
     return GLib.timeout_add(GLib.PRIORITY_DEFAULT, 100, () => {
         const actor = win.meta.get_compositor_private();

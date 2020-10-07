@@ -378,14 +378,16 @@ export class ShellWindow {
     }
 
     show_border() {
+        this.restack();
         if (this.ext.settings.active_hint()) {
             let border = this.border;
             if (!this.meta.is_fullscreen() &&
                 !this.meta.minimized &&
                 this.same_workspace()) {
-                border.show();
+                if (this.meta.appears_focused) {
+                    border.show();
+                }
             }
-            this.restack();
         }
     }
 
@@ -403,6 +405,7 @@ export class ShellWindow {
      * @param updateState NORMAL, RAISED, WORKSPACE_CHANGED
      */
     restack(updateState: RESTACK_STATE = RESTACK_STATE.NORMAL) {
+        this.update_border_layout();
         let restackSpeed = RESTACK_SPEED.NORMAL;
 
         switch (updateState) {
@@ -423,6 +426,7 @@ export class ShellWindow {
             let win_group = global.window_group;
 
             if (actor && border && win_group) {
+                this.update_border_layout();
                 // move the border above the window group first
                 win_group.set_child_above_sibling(border, null);
 
@@ -451,8 +455,6 @@ export class ShellWindow {
                     if (!parent_actor && parent_actor !== actor) continue
                     win_group.set_child_below_sibling(border, window_actor)
                 }
-
-                this.update_border_layout();
             }
 
             return false; // make sure it runs once
@@ -469,13 +471,14 @@ export class ShellWindow {
 
         return above_windows;
     }
+    
 
     hide_border() {
         let b = this.border;
         if (b) b.hide();
     }
 
-    private update_border_layout() {
+    update_border_layout() {
         let rect = this.meta.get_frame_rect();
         let border = this.border;
         let borderSize = this.border_size;
@@ -510,8 +513,8 @@ export class ShellWindow {
     }
 
     private window_changed() {
-        this.ext.show_border_on_focused();
         this.update_border_layout();
+        this.show_border();
     }
 
     private window_raised() {
