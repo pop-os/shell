@@ -5,6 +5,10 @@
     box-shadow: inset 0 0 0 1px rgba(24, 23, 23, 0)
 }
 
+.pop-shell-overlay {
+    background-color: rgba(53, 132, 228, 0.3);
+}
+
 .pop-shell-border-normal {
     border-width: 3px;
 }
