@@ -1582,6 +1582,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     auto_tile_off() {
+        this.hide_all_borders();
         if (this.schedule_idle(() => {
             this.auto_tile_off()
             return false
@@ -1604,6 +1605,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     auto_tile_on() {
+        this.hide_all_borders();
         if (this.schedule_idle(() => {
             this.auto_tile_on()
             return false;
@@ -1649,7 +1651,6 @@ export class Ext extends Ecs.System<ExtEvent> {
 
             return true
         }
-
         return false
     }
 
