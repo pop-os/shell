@@ -673,8 +673,6 @@ export class Ext extends Ecs.System<ExtEvent> {
 
             log.debug(msg + '}');
         }
-
-        // Log.debug(`Window(${win.entity}): parent: ${this.auto_tiler?.attached.get(win.entity)}`)
     }
 
     on_tile_attach(entity: Entity, window: Entity) {
@@ -960,7 +958,6 @@ export class Ext extends Ecs.System<ExtEvent> {
         const win = this.focus_window();
         if (!win) return;
 
-
         /** Move a window between workspaces */
         const workspace_move = (direction: Meta.MotionDirection) => {
             const ws = win.meta.get_workspace();
@@ -984,7 +981,6 @@ export class Ext extends Ecs.System<ExtEvent> {
                         this.size_signals_unblock(win);
                     }
                 } else {
-
                     this.workspace_window_move(win, monitor, monitor);
                 }
 
@@ -1295,6 +1291,13 @@ export class Ext extends Ecs.System<ExtEvent> {
             // Fix phantom apps in dash
             for (const window of this.windows.values()) {
                 if (!window.actor_exists()) this.auto_tiler.detach_window(this, window.entity);
+            }
+        } else {
+            for (const [entity, window] of this.windows.iter()) {
+                const ws = window.workspace_id();
+                if (condition(ws)) {
+                    window_move(this, entity, modify(ws))
+                }
             }
         }
     }
