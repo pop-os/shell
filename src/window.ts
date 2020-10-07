@@ -130,8 +130,7 @@ export class ShellWindow {
         let change_id = settings.ext.connect('changed', (_, key) => {
             if (this.border) {
                 if (key === 'hint-color-rgba') {
-                    let color_value = settings.hint_color_rgba();
-                    this.border.set_style(`border-color: ${color_value}`);
+                    this.update_hint_colors();
                 }
             }
             return false;
@@ -142,8 +141,37 @@ export class ShellWindow {
             this.on_style_changed();
         });
 
-        let selected_color = settings.hint_color_rgba();
-        this.border.set_style(`border-color: ${selected_color}`);
+        this.update_hint_colors();
+    }
+
+    /**
+     * Adjust the colors for: 
+     * - border hint
+     * - overlay
+     */
+    private update_hint_colors() {
+        let settings = this.ext.settings;
+        const color_value = settings.hint_color_rgba();
+
+        if (this.ext.overlay) {
+            const gdk = new Gdk.RGBA();
+            // TODO Probably move overlay color/opacity to prefs.js in future,
+            // For now mimic the hint color with lower opacity
+            const overlay_alpha = 0.3;
+            const orig_overlay = 'rgba(53, 132, 228, 0.3)';
+            gdk.parse(color_value);
+            
+            if (utils.is_dark(gdk.to_string())) {
+                // too dark, use the blue overlay
+                gdk.parse(orig_overlay);
+            }
+
+            gdk.alpha = overlay_alpha
+            this.ext.overlay.set_style(`background: ${gdk.to_string()}`);
+        }
+
+        if (this.border) 
+            this.border.set_style(`border-color: ${color_value}`);
     }
 
     cmdline(): string | null {
