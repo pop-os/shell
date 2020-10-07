@@ -53,15 +53,20 @@ export class Indicator {
             bm.addMenuItem(show_title(ext));
         }
 
-        bm.addMenuItem(
-            toggle(
-                _("Show Active Hint"),
-                ext.settings.active_hint(),
-                (toggle) => {
-                    ext.settings.set_active_hint(toggle.state);
-                }
-            )
+        let active_hint_toggle = toggle(
+            _("Show Active Hint"),
+            ext.settings.active_hint(),
+            (toggle) => {
+                ext.settings.set_active_hint(toggle.state);
+            }
         );
+        ext.settings.ext.connect('changed', (_: any, key: string) => {
+            if (key === 'active-hint') {
+                active_hint_toggle.setToggleState(ext.settings.active_hint());
+            }
+        })
+
+        bm.addMenuItem(active_hint_toggle);
 
         // CSS Selector
         bm.addMenuItem(color_selector(ext, bm),);
@@ -161,10 +166,12 @@ function shortcuts(menu: any): any {
     layout_manager.set_column_spacing(30);
     layout_manager.attach(create_label(_('Shortcuts')), 0, 0, 2, 1);
 
+    // TODO, add the new shortcuts in GCC, and pop-shell-shortcuts app
     [
         [_('Launcher'), _('Super + /')],
         [_('Navigate Windows'), _('Super + Arrow Keys')],
         [_('Toggle Tiling'), _('Super + Y')],
+        [_('Open Pop!_Shell Settings'), _('Super + .')],
     ].forEach((section, idx) => {
         let key = create_label(section[0]);
         key.get_clutter_text().set_margin_left(12);
@@ -323,19 +330,12 @@ function color_selector(ext: Ext, menu: any) {
 
     color_selector_item.add_child(color_button);
     color_button.connect('button-press-event', () => {
-        let path = Me.dir.get_path() + "/color_dialog/main.js";
-        let resp = GLib.spawn_command_line_async(`gjs ${path}`);
-        if (!resp) {
-
-            return null;
-        }
-
+        Utils.open_color_dialog();
         // clean up and focus on the color dialog
         GLib.timeout_add(GLib.PRIORITY_LOW, 300, () => {
             menu.close();
             return false;
         });
-
     });
 
     return color_selector_item;

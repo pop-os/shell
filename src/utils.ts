@@ -3,11 +3,12 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 import * as result from 'result';
 import * as error from 'error';
-// import * as log from 'log';
+import * as constants from 'constants';
 
 const { Gio, GLib, GObject, Meta } = imports.gi;
 const { Ok, Err } = result;
 const { Error } = error;
+const Util = imports.misc.util;
 
 export function is_wayland(): boolean {
     return Meta.is_wayland_compositor();
@@ -85,6 +86,53 @@ export function is_dark(color: string): boolean {
     });
     let L = (0.2126 * c[0]) + (0.7152 * c[1]) + (0.0722 * c[2]);
     return (L <= 0.179);
+}
+
+export function open_prefs() {
+    // TODO, this does not solve preferences being opened from Tweaks
+    let prefs_window = find_window_with_title(constants.PREFS_WINDOW_TITLE);
+    if (prefs_window) {
+        prefs_window.raise();
+        prefs_window.activate(global.get_current_time());
+        return;
+    }
+    Util.spawnCommandLine('gnome-extensions prefs pop-shell@system76.com');
+}
+
+export function open_color_dialog() {
+    let color_dialog = find_window_with_title(constants.COLOR_DIALOG_WINDOW_TITLE);
+
+    if (color_dialog) {
+        color_dialog.raise();
+        color_dialog.activate(global.get_current_time());
+        return;
+    }
+
+    let path = Me.dir.get_path() + "/color_dialog/main.js";
+    // NOTE, imports.misc.utils.spawnCommandLine does not work on gjs that waits for Gtk loop to finish, 
+    // Use the GLib async spawn instead
+    let resp = GLib.spawn_command_line_async(`gjs ${path}`);
+    if (!resp) {
+        // FIXME, need to handle the journal log segfaults but no impact on PopShell
+        return null;
+    }
+}
+
+export function find_window_with_title(title: string, type: Meta.TabList = Meta.TabList.NORMAL): Meta.Window | undefined {
+    let display: Meta.Display = global.display;
+    let workspace_manager = display.get_workspace_manager();
+    let num_workspaces: number = workspace_manager.get_n_workspaces();
+
+    for (let w_id = 1; w_id <= num_workspaces; w_id++) {
+        let workspace = workspace_manager.get_workspace_by_index(w_id);
+        for (const window of display.get_tab_list(type, workspace)) {
+            if (window.get_title() && title && window.get_title() === title) {
+                return window;
+            }
+        }
+    }
+
+    return undefined;
 }
 
 /** Utility function for running a process in the background and fetching its standard output as a string. */

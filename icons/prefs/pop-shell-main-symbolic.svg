@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:osb="http://www.openswatchbook.org/uri/2009/osb"
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   inkscape:version="0.92.5 (2060ec1f9f, 2020-04-08)"
+   sodipodi:docname="pop-shell-auto-off-symbolic.svg"
+   width="16.031464"
+   version="1.1"
+   style="enable-background:new"
+   id="svg7384"
+   height="16">
+  <sodipodi:namedview
+     inkscape:current-layer="svg7384"
+     inkscape:window-maximized="0"
+     inkscape:window-y="27"
+     inkscape:window-x="0"
+     inkscape:cy="7.8736667"
+     inkscape:cx="5.4863836"
+     inkscape:zoom="47.743848"
+     showgrid="true"
+     id="namedview26"
+     inkscape:window-height="1016"
+     inkscape:window-width="1920"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0"
+     guidetolerance="10"
+     gridtolerance="10"
+     objecttolerance="10"
+     borderopacity="1"
+     bordercolor="#666666"
+     pagecolor="#ffffff"
+     inkscape:snap-intersection-paths="true"
+     inkscape:snap-smooth-nodes="true">
+    <inkscape:grid
+       type="xygrid"
+       id="grid834" />
+  </sodipodi:namedview>
+  <metadata
+     id="metadata90">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title>Pop Symbolic Icon Theme</dc:title>
+        <cc:license
+           rdf:resource="http://creativecommons.org/licenses/by-sa/4.0/" />
+      </cc:Work>
+      <cc:License
+         rdf:about="http://creativecommons.org/licenses/by-sa/4.0/">
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Reproduction" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#Distribution" />
+        <cc:requires
+           rdf:resource="http://creativecommons.org/ns#Notice" />
+        <cc:requires
+           rdf:resource="http://creativecommons.org/ns#Attribution" />
+        <cc:permits
+           rdf:resource="http://creativecommons.org/ns#DerivativeWorks" />
+        <cc:requires
+           rdf:resource="http://creativecommons.org/ns#ShareAlike" />
+      </cc:License>
+    </rdf:RDF>
+  </metadata>
+  <title
+     id="title8473">Pop Symbolic Icon Theme</title>
+  <defs
+     id="defs7386">
+    <linearGradient
+       osb:paint="solid"
+       id="linearGradient8297">
+      <stop
+         style="stop-color:#000000;stop-opacity:1;"
+         offset="0"
+         id="stop8295" />
+    </linearGradient>
+    <linearGradient
+       osb:paint="solid"
+       id="linearGradient6882">
+      <stop
+         style="stop-color:#555555;stop-opacity:1;"
+         offset="0"
+         id="stop6884" />
+    </linearGradient>
+    <linearGradient
+       osb:paint="solid"
+       id="linearGradient5606">
+      <stop
+         style="stop-color:#000000;stop-opacity:1;"
+         offset="0"
+         id="stop5608" />
+    </linearGradient>
+    <filter
+       style="color-interpolation-filters:sRGB"
+       id="filter7554">
+      <feBlend
+         mode="darken"
+         in2="BackgroundImage"
+         id="feBlend7556" />
+    </filter>
+  </defs>
+  <g
+     transform="translate(-1124.0002,555)"
+     style="display:inline"
+     id="layer9" />
+  <g
+     transform="translate(-1124.0002,555)"
+     style="display:inline;filter:url(#filter7554)"
+     id="layer10" />
+  <g
+     transform="translate(-883,-62)"
+     style="display:inline"
+     id="layer1" />
+  <g
+     transform="translate(-1124.0002,555)"
+     style="display:inline"
+     id="layer14" />
+  <g
+     transform="translate(-1124.0002,555)"
+     style="display:inline"
+     id="layer15" />
+  <g
+     transform="translate(-1124.0002,555)"
+     style="display:inline"
+     id="g71291" />
+  <g
+     transform="translate(-883,88)"
+     style="display:inline"
+     id="layer2" />
+  <g
+     transform="translate(-1124.0002,555)"
+     style="display:inline"
+     id="layer12" />
+  <path
+     style="fill:#4c5263;fill-opacity:0.98832703;stroke:none;stroke-width:2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     d="m 11,9 v 1.199219 C 11,11.179122 10.179122,12 9.199219,12 H 4 v 1.199219 C 4,13.642419 4.3575812,14 4.8007812,14 H 13.199219 C 13.642419,14 14,13.642419 14,13.199219 V 9 Z"
+     id="rect3162"
+     inkscape:connector-curvature="0"
+     sodipodi:nodetypes="csscsssscc" />
+  <path
+     style="fill:#4c5263;fill-opacity:0.98832703;stroke:none;stroke-width:2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     d="M 6.8007812,1 C 6.3575812,1 6,1.3575812 6,1.8007812 V 3 H 9.199219 C 10.179122,3 10.976468,3.8211611 11,4.8007812 V 8 h 4.199219 C 15.642419,8 16,7.6424188 16,7.1992188 V 1.8007812 C 16,1.3575812 15.642419,1 15.199219,1 Z"
+     id="rect3160"
+     inkscape:connector-curvature="0"
+     sodipodi:nodetypes="sscsscsssss" />
+  <rect
+     height="7"
+     id="rect3158"
+     ry="0.80000001"
+     style="fill:#4c5263;fill-opacity:0.98832703;stroke:none;stroke-width:113.38600159;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     width="10"
+     x="0"
+     y="4" />
+</svg>

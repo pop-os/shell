@@ -57,6 +57,7 @@ const SMART_GAPS = "smart-gaps";
 const SNAP_TO_GRID = "snap-to-grid";
 const TILE_BY_DEFAULT = "tile-by-default";
 const HINT_COLOR_RGBA = "hint-color-rgba";
+const HINT_SIZE = "hint-size";
 const DEFAULT_RGBA_COLOR = "rgba(251, 184, 108, 1)"; //pop-orange
 const LOG_LEVEL = "log-level";
 
@@ -97,6 +98,10 @@ export class ExtensionSettings {
         }
 
         return rgba;
+    }
+
+    hint_size() {
+        return this.ext.get_uint(HINT_SIZE);
     }
 
     is_dark(): boolean {
@@ -172,6 +177,10 @@ export class ExtensionSettings {
         } else {
             this.ext.set_string(HINT_COLOR_RGBA, DEFAULT_RGBA_COLOR);
         }
+    }
+
+    set_hint_size(size: number) {
+        this.ext.set_uint(HINT_SIZE, size);
     }
 
     set_row_size(size: number) {

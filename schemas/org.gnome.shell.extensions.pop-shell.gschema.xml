@@ -7,6 +7,36 @@
             <summary>Show a hint around the active window</summary>
         </key>
 
+        <key type="s" name="hint-color-rgba">
+            <default>'rgba(251, 184, 108, 1)'</default>
+            <summary>The current active-hint-color in RGBA</summary>
+        </key>
+
+        <key type="u" name="hint-size">
+            <default>3</default>
+            <summary>The current active-hint size in pixels</summary>
+        </key>
+
+        <key type="as" name="kbd-hint-size-decrease">
+            <default><![CDATA[['<Shift><Super>Minus']]]></default>
+            <summary>Decrease hint size</summary>
+        </key>
+
+        <key type="as" name="kbd-hint-size-increase">
+            <default><![CDATA[['<Shift><Super>Plus']]]></default>
+            <summary>Increase hint size</summary>
+        </key>
+
+        <key type="as" name="kbd-show-active-hint">
+            <default><![CDATA[['<Shift><Super>x']]]></default>
+            <summary>Increase hint size</summary>
+        </key>
+
+        <key type="as" name="kbd-show-hint-color-dialog">
+            <default><![CDATA[['<Shift><Super>c']]]></default>
+            <summary>Increase hint size</summary>
+        </key>
+
         <key type="u" name="gap-inner">
             <default>2</default>
             <summary>Gap between tiled windows</summary>
@@ -217,10 +247,14 @@
             <summary>Move window to the rightward monitor</summary>
         </key>
 
-        <key type="s" name="hint-color-rgba">
-            <default>'rgba(251, 184, 108, 1)'</default>
-            <summary>The current active-hint-color in RGBA</summary>
+        <!-- Miscellaneous Shortcuts -->
+
+        <key type="as" name="pop-display-settings">
+            <default><![CDATA[['<Super>Period']]]></default>
+            <summary>Opens Pop!_Shell's Preferences Window</summary>
         </key>
+
+        <!-- Development -->
         <key type="u" name="log-level">
             <default>0</default>
             <summary>

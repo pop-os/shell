@@ -164,6 +164,13 @@ declare namespace Meta {
         RIGHT
     }
 
+    enum TabList {
+        NORMAL = 0,// — Normal windows
+        DOCKS = 1, // — Dock windows
+        GROUP = 2, // — Groups
+        NORMAL_ALL = 3 // — All windows
+    }
+
     interface Display extends GObject.Object {
         get_current_monitor(): number;
         get_focus_window(): null | Meta.Window;

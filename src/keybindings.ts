@@ -9,6 +9,7 @@ const { Meta, Shell } = imports.gi;
 
 import * as Node from 'node';
 import { Stack } from "./stack";
+import * as utils from 'utils';
 
 export class Keybindings {
     global: Object;
@@ -24,7 +25,12 @@ export class Keybindings {
                 ext.window_search.load_desktop_files();
                 ext.window_search.open(ext);
             },
-            "tile-enter": () => ext.tiler.enter(ext)
+            "tile-enter": () => ext.tiler.enter(ext),
+            "pop-display-settings": () => utils.open_prefs(),
+            "kbd-hint-size-decrease": () => this.hint_decrease(),
+            "kbd-hint-size-increase": () => this.hint_increase(),
+            "kbd-show-active-hint": () => this.toggle_hint(),
+            "kbd-show-hint-color-dialog": () => utils.open_color_dialog()
         };
 
         this.window_focus = {
@@ -71,6 +77,30 @@ export class Keybindings {
 
             "pop-workspace-down": () => ext.move_workspace(Meta.DisplayDirection.DOWN)
         };
+    }
+
+    toggle_hint() {
+        this.ext.settings.set_active_hint(!this.ext.settings.active_hint());
+    }
+
+    hint_decrease() {
+        const min = 3;
+        let size_change = this.ext.settings.hint_size() - 1;
+
+        if (size_change < min) {
+            size_change = min;
+        }
+        this.ext.settings.set_hint_size(size_change);
+    }
+
+    hint_increase() {
+        const max = 8;
+        let size_change = this.ext.settings.hint_size() + 1;
+
+        if (size_change > max) {
+            size_change = max;
+        }
+        this.ext.settings.set_hint_size(size_change);
     }
 
     stack_select(
