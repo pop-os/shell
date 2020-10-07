@@ -204,8 +204,7 @@ export class ExternalLauncher implements LauncherExtension {
 
     ext?: Ext;
     search?: Search;
-    results?: Array<RecentItem>;
-    cache?: any = null;
+    results?: Array<{id: string, widget: St.Widget}>;
 
     get_sesid(): number {
         if (this.search)
@@ -235,10 +234,6 @@ export class ExternalLauncher implements LauncherExtension {
         this.ext = ext;
         this.search = search;
 
-        if (!this.cache) {
-            this.cache = {tag: 0, action: "", items: new Array<RecentItem>()};
-        }
-
         return this;
     }
 
@@ -248,54 +243,16 @@ export class ExternalLauncher implements LauncherExtension {
         const cmd = this.get_cmd(query);
         if (!cmd) { return false; }
 
-        const uri = this.results[index].uri;
-        const display_name = this.results[index].display_name;
+        const result = this.results[index];
 
-        spawnCommandLine(`${cmd.action} ${cmd.tag} apply ${uri} "${display_name}"`);
+        spawnCommandLine(`${cmd.action} ${cmd.tag} apply ${result.id}`);
 
         return false;
     }
 
-    items(cmd: any): Array<RecentItem> | undefined {
-        if (this.cache?.tag == cmd.tag && this.cache?.action == cmd.action) {
-            return this.cache?.items;
-        }
-
-        let items = undefined;
-
-        // This started out, as an async method, but I couldn't figure out howto make search_results async.        
-        let [result, stdout, stderr, exit] = GLib.spawn_command_line_sync(`${cmd.action} ${cmd.tag} list`);
-
-        if (result) {
-            if (stderr && stderr.length > 0) {
-                const str: string = new ByteArray(stderr).toString();
-                log.error(`ExternalLauncher: error, exitcode ${exit}, message ${str}`);
-            } else if (stdout && stdout.length > 0) {
-                const str: string = new ByteArray(stdout).toString();
-
-                items = str.trim().split(/\r?\n/).map((line: string): RecentItem => {
-                    const arr = line.split(/\t/);
-                    return {
-                        display_name: arr[1],
-                        icon: arr.length > 2 ? arr[2] : 'applications-internet',
-                        uri: arr[0]
-                    };
-                });
-            } else {
-                log.error(`ExternalLauncher: undefined error, exitcode ${exit}`);
-            }
-        } else {
-            log.error('ExternalLauncher: unexpected error, spawn_command_line_sync failed');
-        }
-
-        this.cache.tag = cmd.tag;
-        this.cache.action = cmd.action;
-        this.cache.items = items;
-        
-        return items;
-    }
-
     search_results(query: string): Array<St.Widget> | null {
+        this.results = [];
+
         if (!this.search) {
             log.error('ExternalLauncher: init not called before performing search');
             return null;
@@ -304,19 +261,48 @@ export class ExternalLauncher implements LauncherExtension {
         const cmd = this.get_cmd(query);
         if (!cmd) { return null; }
 
-        const items = this.items(cmd);
-        if (!items) { return null; }
+        // This started out, as an async method, but I couldn't figure out howto make search_results async.        
+        let [result, stdout, stderr, exit] = GLib.spawn_command_line_sync(`${cmd.action} ${cmd.tag} search ${cmd.query}`);
 
-        const normalized_query = cmd.query.toLowerCase();
-        this.results = items.filter(item => item.display_name.toLowerCase().includes(normalized_query) || item.uri.toLowerCase().includes(normalized_query)).slice(0, this.search.list_max()).sort((a, b) => a.display_name.localeCompare(b.display_name));
-        return this.results.map((item): St.Widget => widgets.application_button(`${item.display_name}: ${decodeURI(item.uri)}`,
-            new St.Icon({
-                icon_name: 'focus-windows-symbolic',
-                icon_size: (this.search?.icon_size() ?? DEFAULT_ICON_SIZE) / 2,
-                style_class: "pop-shell-search-cat"
-            }), new St.Icon({
-                icon_name: item.icon,
-                icon_size: (this.search?.icon_size() ?? DEFAULT_ICON_SIZE) / 2,
-            })));
+        let items: Array<St.Widget> = [];
+
+        if (result) {
+            if (stderr && stderr.length > 0) {
+                const str: string = new ByteArray(stderr).toString();
+                log.error(`ExternalLauncher: error, exitcode ${exit}, message ${str}`);
+            } else if (stdout && stdout.length > 0) {
+                const str: string = new ByteArray(stdout).toString();
+
+                str.trim().split(/\r?\n/).forEach((line: string) => {
+                    const arr = line.split(/\t/);
+
+                    const widget: St.Widget = widgets.application_button(
+                        `${arr[1]}\n- ${decodeURI(arr[2])}`,
+                        new St.Icon({
+                            icon_name: 'applications-internet',
+                            icon_size: (this.search?.icon_size() ?? DEFAULT_ICON_SIZE) / 2,
+                            style_class: "pop-shell-search-cat"
+                        }),
+                        new St.Icon({
+                            icon_name: arr.length > 3 ? arr[3] : 'focus-windows-symbolic',
+                            icon_size: (this.search?.icon_size() ?? DEFAULT_ICON_SIZE) / 2,
+                        })
+                    );
+
+                    this.results?.push({
+                        id: arr[0],
+                        widget: widget
+                    });
+
+                    items.push(widget);
+                });
+            } else {
+                log.error(`ExternalLauncher: undefined error, exitcode ${exit}`);
+            }
+        } else {
+            log.error('ExternalLauncher: unexpected error, spawn_command_line_sync failed');
+        }
+
+        return items;
     }
 }

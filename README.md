@@ -142,7 +142,7 @@ By default, the launcher searches windows and applications. However, you can des
 - `t:`: Execute a command in `sh` in a terminal
 - `=`: Calculator mode, powered by [MathJS](https://mathjs.org/)
 - `d:` Recent documents
-- `.{script}` Calls a script or program in $HOME/.pop-shell-launchers/ called {script} with either `{tag} list` or `{tag} apply`  
+- `.{script}` Calls a script or program in $HOME/.pop-shell-launchers/ called {script} with either `{tag} search` or `{tag} apply`  
     See: [EXTERNALLAUNCHER.md](EXTERNALLAUNCHER.md) for an example script using [brotab](https://github.com/balta2ar/brotab) to control browser tabs.
 
 ### Inner and Outer Gaps
