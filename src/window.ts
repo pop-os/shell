@@ -269,6 +269,7 @@ export class ShellWindow {
     }
 
     move(ext: Ext, rect: Rectangular, on_complete?: () => void) {
+        this.hide_border();
         const clone = Rect.Rectangle.from_meta(rect);
         const meta = this.meta;
         const actor = meta.get_compositor_private();
@@ -279,9 +280,6 @@ export class ShellWindow {
             meta.unmaximize(Meta.MaximizeFlags.HORIZONTAL | Meta.MaximizeFlags.VERTICAL);
 
             const entity_string = String(this.entity);
-
-            this.hide_border();
-
             ext.movements.insert(this.entity, clone);
 
             const onComplete = () => {
@@ -289,6 +287,7 @@ export class ShellWindow {
                 if (on_complete) ext.register_fn(on_complete);
                 ext.tween_signals.delete(entity_string);
                 if (meta.appears_focused) {
+                    this.update_border_layout();
                     this.show_border();
                 }
             };
@@ -314,10 +313,10 @@ export class ShellWindow {
 
                 const duration = ext.tiler.moving ? 49 : 149;
 
-                Tweener.add(actor, { x, y, duration, mode: null });
+                Tweener.add(this, { x, y, duration, mode: null });
 
                 ext.tween_signals.set(entity_string, [
-                    Tweener.on_window_tweened(meta, onComplete),
+                    Tweener.on_window_tweened(this, onComplete),
                     onComplete
                 ]);
             } else {
@@ -477,36 +476,36 @@ export class ShellWindow {
     }
 
     private update_border_layout() {
-        let frameRect = this.meta.get_frame_rect();
-        let [frameX, frameY, frameWidth, frameHeight] = [frameRect.x, frameRect.y, frameRect.width, frameRect.height];
-
+        let rect = this.meta.get_frame_rect();
         let border = this.border;
         let borderSize = this.border_size;
 
-        if (!this.is_max_screen()) {
-            border.remove_style_class_name('pop-shell-border-maximize');
-        } else {
-            borderSize = 0;
-            border.add_style_class_name('pop-shell-border-maximize');
-        }
-
-        let stack_number = this.stack;
-
-        if (stack_number !== null) {
-            const stack = this.ext.auto_tiler?.forest.stacks.get(stack_number);
-            if (stack) {
-                let stack_tab_height = stack.tabs_height;
-
-                if (borderSize === 0 || this.grab) { // not in max screen state
-                    stack_tab_height = 0;
-                }
-
-                border.set_position(frameX - borderSize, frameY - stack_tab_height - borderSize);
-                border.set_size(frameWidth + 2 * borderSize, frameHeight + stack_tab_height + 2 * borderSize);
+        if (border) {
+            if (!this.is_max_screen()) {
+                border.remove_style_class_name('pop-shell-border-maximize');
+            } else {
+                borderSize = 0;
+                border.add_style_class_name('pop-shell-border-maximize');
             }
-        } else {
-            border.set_position(frameX - borderSize, frameY - borderSize);
-            border.set_size(frameWidth + (2 * borderSize), frameHeight + (2 * borderSize));
+    
+            let stack_number = this.stack;
+    
+            if (stack_number !== null) {
+                const stack = this.ext.auto_tiler?.forest.stacks.get(stack_number);
+                if (stack) {
+                    let stack_tab_height = stack.tabs_height;
+    
+                    if (borderSize === 0 || this.grab) { // not in max screen state
+                        stack_tab_height = 0;
+                    }
+    
+                    border.set_position(rect.x - borderSize, rect.y - stack_tab_height - borderSize);
+                    border.set_size(rect.width + 2 * borderSize, rect.height + stack_tab_height + 2 * borderSize);
+                }
+            } else {
+                border.set_position(rect.x - borderSize, rect.y - borderSize);
+                border.set_size(rect.width + (2 * borderSize), rect.height + (2 * borderSize));
+            }
         }
     }
 
