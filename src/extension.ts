@@ -67,7 +67,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     // Widgets
 
     /** An overlay which shows a preview of where a window will be moved */
-    overlay: Clutter.Actor = new St.BoxLayout({ style_class: "tile-preview", visible: false });
+    overlay: St.Widget = new St.BoxLayout({ style_class: "pop-shell-overlay", visible: false });
 
     /** The application launcher, focus search, and calculator dialog */
     window_search: Launcher = new launcher.Launcher(this);
