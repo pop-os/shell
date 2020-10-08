@@ -696,6 +696,8 @@ export class Tiler {
 };
 
 export function locate_monitor(win: window.ShellWindow, direction: Meta.DisplayDirection): number | null {
+    if (!win.actor_exists()) return null;
+
     const from = win.meta.get_monitor();
     let next = shell.monitor_neighbor_index(from, direction);
 
@@ -751,7 +753,7 @@ function move_window_or_monitor(
         const window = method.call(ext.focus_selector, ext, null);
         if (window) return window;
         const focus = ext.focus_window();
-        return focus ? locate_monitor(focus, direction) : null;
+        return (!focus || !focus.actor_exists()) ? null : locate_monitor(focus, direction)
     };
 }
 
