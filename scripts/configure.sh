@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set -eux
+set -ex
 
 shortcut_applied() {
     # Check if user confirmed overriding shortcuts
@@ -94,8 +94,9 @@ set_keybindings
 
 # Use a window placement behavior which works better for tiling
 
-Gnome_extension_native_windows_placement_name=$(gnome-extensions list | grep "native-window")
-gnome-extensions enable $Gnome_extension_native_windows_placement_name
+if gnome-extensions list | grep native-window; then
+    gnome-extensions enable $(gnome-extensions list | grep native-window)
+fi
 
 # Workspaces spanning displays works better with Pop Shell
 dconf write /org/gnome/mutter/workspaces-only-on-primary false
