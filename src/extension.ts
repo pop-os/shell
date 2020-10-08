@@ -1270,12 +1270,21 @@ export class Ext extends Ecs.System<ExtEvent> {
                 if (!window.actor_exists()) this.auto_tiler.detach_window(this, window.entity);
             }
         } else {
+            let to_delete = new Array();
+
             for (const [entity, window] of this.windows.iter()) {
+                if (!window.actor_exists()) {
+                    to_delete.push(entity);
+                    continue
+                }
+
                 const ws = window.workspace_id();
                 if (condition(ws)) {
                     window_move(this, entity, modify(ws))
                 }
             }
+
+            for (const e of to_delete) this.delete_entity(e)
         }
     }
 
