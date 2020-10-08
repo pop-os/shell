@@ -915,30 +915,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         if (!win) return;
 
         const prev_monitor = win.meta.get_monitor();
-        let next_monitor = Tiling.locate_monitor(prev_monitor, direction);
-
-        if (next_monitor === null) {
-            // There's a chance that GNOME Shell is simply wrong. Correct it.
-            const ref = win.meta.get_work_area_for_monitor(prev_monitor) as any;
-            const n_monitors = display.get_n_monitors();
-            for (let mon = 0; mon < n_monitors; mon += 1) {
-                if (mon === prev_monitor) continue;
-                const work_area = win.meta.get_work_area_for_monitor(mon);
-                if (!work_area) continue;
-
-                if (direction === Meta.DisplayDirection.UP) {
-                    if (work_area.y < ref.y) {
-                        next_monitor = mon;
-                        break
-                    }
-                } else if (direction === Meta.DisplayDirection.DOWN) {
-                    if (work_area.y > ref.y) {
-                        next_monitor = mon;
-                        break
-                    }
-                }
-            }
-        }
+        let next_monitor = Tiling.locate_monitor(win, direction);
 
         if (next_monitor !== null) {
             if (this.auto_tiler && !this.contains_tag(win.entity, Tags.Floating)) {

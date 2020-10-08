@@ -695,8 +695,34 @@ export class Tiler {
     }
 };
 
-export function locate_monitor(from: number, direction: Meta.DisplayDirection): number | null {
-    return shell.monitor_neighbor_index(from, direction);
+export function locate_monitor(win: window.ShellWindow, direction: Meta.DisplayDirection): number | null {
+    const from = win.meta.get_monitor();
+    let next = shell.monitor_neighbor_index(from, direction);
+
+    // There's a chance that GNOME Shell is simply wrong. Correct it.
+    if (next === null) {
+        const ref = win.meta.get_work_area_for_monitor(from) as any;
+        const n_monitors = global.display.get_n_monitors();
+        for (let mon = 0; mon < n_monitors; mon += 1) {
+            if (mon === from) continue;
+            const work_area = win.meta.get_work_area_for_monitor(mon);
+            if (!work_area) continue;
+
+            if (direction === Meta.DisplayDirection.UP) {
+                if (work_area.y < ref.y) {
+                    next = mon;
+                    break
+                }
+            } else if (direction === Meta.DisplayDirection.DOWN) {
+                if (work_area.y > ref.y) {
+                    next = mon;
+                    break
+                }
+            }
+        }
+    }
+
+    return next
 }
 
 function monitor_rect(monitor: Rectangle, columns: number, rows: number): Rectangle {
@@ -723,8 +749,9 @@ function move_window_or_monitor(
 ): () => window.ShellWindow | number | null {
     return () => {
         const window = method.call(ext.focus_selector, ext, null);
-
-        return window ?? locate_monitor(ext.active_monitor(), direction);
+        if (window) return window;
+        const focus = ext.focus_window();
+        return focus ? locate_monitor(focus, direction) : null;
     };
 }
 
