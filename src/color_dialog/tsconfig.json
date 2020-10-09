@@ -1,0 +1,23 @@
+{
+    "compileOnSave": true,
+    "compilerOptions": {
+        "target": "es2015",
+        "strict": true,
+        "outDir": "../../target/color_dialog",
+        "forceConsistentCasingInFileNames": true,
+        "downlevelIteration": true,
+        "lib": [
+            "es2015"
+        ],
+        "pretty": true,
+        "sourceMap": true,
+        "declaration": true,
+        "removeComments": true,
+        "incremental": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true
+    },
+    "include": [
+        "src/*.ts",
+    ]
+}

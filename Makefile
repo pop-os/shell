@@ -8,6 +8,8 @@ INSTALLBASE = $(DESTDIR)/usr/share/gnome-shell/extensions
 endif
 INSTALLNAME = $(UUID)
 
+PROJECTS = color_dialog
+
 $(info UUID is "$(UUID)")
 
 .PHONY: all clean install zip-file
@@ -21,6 +23,7 @@ clean:
 
 transpile: $(sources) clean
 	tsc
+	for proj in $(PROJECTS); do tsc --p src/$${proj}; done
 
 # Configure local settings on system
 configure:
@@ -29,7 +32,11 @@ configure:
 compile: convert metadata.json schemas
 	rm -rf _build
 	mkdir -p _build
-	cp -r metadata.json icons schemas target/*.js imports/*.js *.css src/gtk/*.js _build
+	cp -r metadata.json icons schemas target/*.js imports/*.js *.css _build
+	for proj in $(PROJECTS); do \
+		mkdir -p _build/$${proj}; \
+		cp -r target/$${proj}/*.js _build/$${proj}; \
+	done
 
 convert: transpile
 	sh scripts/transpile.sh
