@@ -42,7 +42,7 @@ declare interface GLib {
 
     source_remove(id: SignalID): void;
     spawn_command_line_sync(cmd: string): ProcessResult;
-    spawn_command_line_async(cmd: string): ProcessResult;
+    spawn_command_line_async(cmd: string): boolean;
 
     timeout_add(priority: number, ms: number, callback: () => Boolean): number;
 }
@@ -56,7 +56,7 @@ declare namespace GObject {
     }
 }
 
-declare module Gtk {
+declare namespace Gtk {
     export enum Orientation {
         HORIZONTAL,
         VERTICAL,

@@ -23,15 +23,15 @@ export class Indicator {
         ext.button_gio_icon_auto_off = Gio.icon_new_for_string(`${Me.path}/icons/pop-shell-auto-off-symbolic.svg`);
 
         let button_icon_auto_on = new St.Icon({
-            gicon: ext.button_gio_icon_auto_on ,
+            gicon: ext.button_gio_icon_auto_on,
             style_class: "system-status-icon",
         });
         let button_icon_auto_off = new St.Icon({
-            gicon:  ext.button_gio_icon_auto_off,
+            gicon: ext.button_gio_icon_auto_off,
             style_class: "system-status-icon",
         });
 
-        if (ext.settings.tile_by_default()){
+        if (ext.settings.tile_by_default()) {
             this.button.icon = button_icon_auto_on;
         } else {
             this.button.icon = button_icon_auto_off;
@@ -62,7 +62,7 @@ export class Indicator {
         );
 
         // CSS Selector
-        this.button.menu.addMenuItem(color_selector(ext, this.button.menu), );
+        this.button.menu.addMenuItem(color_selector(ext, this.button.menu),);
 
         this.button.menu.addMenuItem(
             number_entry(
@@ -276,7 +276,7 @@ function color_selector(ext: Ext, menu: any) {
     let color_button = new St.Button();
     let settings = ext.settings;
     let selected_color = settings.hint_color_rgba();
-    
+
     // TODO, find a way to expand the button text, :)
     color_button.label = "           "; // blank for now
     color_button.set_style(`background-color: ${selected_color}; border: 2px solid lightgray; border-radius: 2px`);
@@ -297,8 +297,11 @@ function color_selector(ext: Ext, menu: any) {
     color_selector_item.add_child(color_button);
     color_button.connect('button-press-event', () => {
         // spawn an async process - so gnome-shell will not lock up
-        let color_dialog_response = GLib.spawn_command_line_async(`gjs ${Me.dir.get_path() + "/color-dialog.js"}`);
-        if (!color_dialog_response) {
+        let path = Me.dir.get_path() + "/color_dialog/main.js";
+        global.log(`launching ${path}`)
+        let resp = GLib.spawn_command_line_async(`gjs ${path}`);
+        if (!resp) {
+
             return null;
         }
 
@@ -307,7 +310,7 @@ function color_selector(ext: Ext, menu: any) {
             menu.close();
             return false;
         });
-        
+
     });
 
     return color_selector_item;

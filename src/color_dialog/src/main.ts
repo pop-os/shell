@@ -11,7 +11,7 @@ const EXT_PATH_DEFAULTS = [
 const DEFAULT_HINT_COLOR = 'rgba(251, 184, 108, 1)'; //pop-orange
 
 /** Look for the extension in path */
-function getExtensionPath(uuid) {
+function getExtensionPath(uuid: string) {
     let ext_path = null;
 
     for (let i = 0; i < EXT_PATH_DEFAULTS.length; i++) {
@@ -27,7 +27,7 @@ function getExtensionPath(uuid) {
     return ext_path;
 }
 
-function getSettings(schema) {
+function getSettings(schema: string) {
     let extensionPath = getExtensionPath("pop-shell@system76.com");
     if (!extensionPath)
         throw new Error('getSettings() can only be called when extension is available');
@@ -77,7 +77,7 @@ function launch_color_dialog() {
     } else if (response === Gtk.ResponseType.OK) {
         // save the selected RGBA to GSettings
         // TODO, save alpha instead of always 1.0
-        let applied = popshell_settings.set_string("hint-color-rgba", color_dialog.get_rgba().to_string());
+        popshell_settings.set_string("hint-color-rgba", color_dialog.get_rgba().to_string());
         Gio.Settings.sync();
         color_dialog.destroy();
     }

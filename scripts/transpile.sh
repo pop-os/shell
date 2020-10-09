@@ -1,6 +1,6 @@
 #!/bin/sh
 
-for file in target/*.js; do
+for file in $(find target -name '*.js'); do
     sed -i \
         -e 's#export function#function#g' \
         -e 's#export var#var#g' \
