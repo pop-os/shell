@@ -59,9 +59,9 @@ export function is_dark(color: string): boolean {
     let b = 255;
 
     // handle rgba(255,255,255,1.0) format
-    if (color.indexOf('rgb') >= 0) { 
+    if (color.indexOf('rgb') >= 0) {
         // starts with parsed value from Gdk.RGBA
-        color = color.replace('rgba','rgb')
+        color = color.replace('rgba', 'rgb')
             .replace('rgb(', '')
             .replace(')', ''); // make it 255, 255, 255, 1
         // log.debug(`util color: ${color}`);
@@ -70,7 +70,7 @@ export function is_dark(color: string): boolean {
         g = parseInt(colors[1].trim());
         b = parseInt(colors[2].trim());
     } else if (color.charAt(0) === '#') {
-        color_val =  color.substring(1, 7);
+        color_val = color.substring(1, 7);
         r = parseInt(color_val.substring(0, 2), 16); // hexToR
         g = parseInt(color_val.substring(2, 4), 16); // hexToG
         b = parseInt(color_val.substring(4, 6), 16); // hexToB
@@ -79,10 +79,35 @@ export function is_dark(color: string): boolean {
     let uicolors = [r / 255, g / 255, b / 255];
     let c = uicolors.map((col) => {
         if (col <= 0.03928) {
-        return col / 12.92;
+            return col / 12.92;
         }
         return Math.pow((col + 0.055) / 1.055, 2.4);
     });
     let L = (0.2126 * c[0]) + (0.7152 * c[1]) + (0.0722 * c[2]);
     return (L <= 0.179);
+}
+
+/** Utility function for running a process in the background and fetching its standard output as a string. */
+export function async_process(argv: Array<string>, input = null, cancellable = null): Promise<string> {
+    let flags = Gio.SubprocessFlags.STDOUT_PIPE
+
+    if (input !== null)
+        flags |= Gio.SubprocessFlags.STDIN_PIPE;
+
+    let proc = new Gio.Subprocess({
+        argv: argv,
+        flags: flags
+    });
+    proc.init(cancellable);
+
+    return new Promise((resolve, reject) => {
+        proc.communicate_utf8_async(input, cancellable, (proc: any, res: any) => {
+            try {
+                let bytes = proc.communicate_utf8_finish(res)[1];
+                resolve(bytes.toString());
+            } catch (e) {
+                reject(e);
+            }
+        });
+    });
 }

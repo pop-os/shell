@@ -1,24 +1,30 @@
-//@ts-ignore
-const Me = imports.misc.extensionUtils.getCurrentExtension();
-
 const { Gio, GLib } = imports.gi;
-
-import * as error from 'error';
-import * as log from 'log';
-import * as result from 'result';
-
-import type { Result } from 'result';
-import type { Error } from 'error';
-
-const { Err, Ok } = result;
 
 const CONF_DIR: string = GLib.get_home_dir() + "/.config/pop-shell"
 export var CONF_FILE: string = CONF_DIR + "/config.json"
 
-const DEFAULT_RULES: Array<FloatRule> =[
+export interface FloatRule {
+    class?: string;
+    title?: string;
+    disabled?: boolean;
+}
+
+interface Ok<T> {
+    tag: 0
+    value: T
+}
+
+interface Error {
+    tag: 1
+    why: string
+}
+
+type Result<T> = Ok<T> | Error;
+
+export const DEFAULT_RULES: Array<FloatRule> = [
     { class: "Authy Desktop", },
-    { class: "Enpass", title: "Enpass Assistant"},
-    { class: "Zotero", title: "Quick Format Citation"},
+    { class: "Enpass", title: "Enpass Assistant" },
+    { class: "Zotero", title: "Quick Format Citation" },
     { class: "Com.github.donadigo.eddy", },
     { class: "Conky", },
     { class: "Gnome-screenshot", },
@@ -29,12 +35,12 @@ const DEFAULT_RULES: Array<FloatRule> =[
     { class: "Slack", title: "Slack | mini panel" },
     { class: "Solaar", },
     { class: "zoom", },
-]
+];
 
 export interface FloatRule {
     class?: string;
     title?: string;
-}
+};
 
 export class Config {
     /** List of windows that should float, regardless of their WM hints */
@@ -43,62 +49,140 @@ export class Config {
     /** Logs window details on focus of window */
     log_on_focus: boolean = false;
 
+    /** Add a floating exception which matches by wm_class */
+    add_app_exception(wmclass: string) {
+        for (const r of this.float) {
+            if (r.class === wmclass && r.title === undefined) return;
+        }
+
+        this.float.push({ class: wmclass });
+        this.sync_to_disk();
+    }
+
+    /** Add a floating exception which matches by wm_title */
+    add_window_exception(wmclass: string, title: string) {
+        for (const r of this.float) {
+            if (r.class === wmclass && r.title === title) return;
+        }
+
+        this.float.push({ class: wmclass, title });
+        this.sync_to_disk();
+    }
+
     window_shall_float(wclass: string, title: string): boolean {
-        return this.float.find((rule) => {
+        for (const rule of this.float.concat(DEFAULT_RULES)) {
             if (rule.class) {
                 if (!new RegExp(rule.class).test(wclass)) {
-                    return false;
+                    continue
                 }
             }
 
             if (rule.title) {
                 if (!new RegExp(rule.title).test(title)) {
-                    return false;
+                    continue
                 }
             }
 
-            return true;
-        }) !== undefined;
+            return rule.disabled ? false : true;
+        }
+
+        return false;
     }
 
     reload() {
         const conf = Config.from_config();
 
-        if (conf.kind === 2) {
-            log.error(`failed to open pop-shell config: ${conf.value.format()}`);
-            return;
+        if (conf.tag === 0) {
+            let c = conf.value;
+            this.float = c.float;
+            this.log_on_focus = c.log_on_focus;
+        } else {
+            log(`error loading conf: ${conf.why}`)
+        }
+    }
+
+    rule_disabled(rule: FloatRule): boolean {
+        for (const value of this.float.values()) {
+            if (value.disabled && rule.class === value.class && value.title === rule.title) {
+                return true
+            }
         }
 
-        this.float = DEFAULT_RULES.concat(conf.value.float);
-        this.log_on_focus = conf.value.log_on_focus;
+        return false;
     }
 
     to_json(): string {
-        return JSON.stringify(this, undefined, 2);
+        return JSON.stringify(this, set_to_json, 2);
+    }
+
+    toggle_system_exception(wmclass: string | undefined, wmtitle: string | undefined, disabled: boolean) {
+        if (disabled) {
+            for (const value of DEFAULT_RULES) {
+                if (value.class === wmclass && value.title === wmtitle) {
+                    value.disabled = disabled;
+                    this.float.push(value);
+                    this.sync_to_disk();
+                    return;
+                }
+            }
+        }
+
+        let index = 0;
+        let found = false;
+        for (const value of this.float) {
+            if (value.class === wmclass && value.title === wmtitle) {
+                found = true;
+                break
+            }
+            index += 1;
+        }
+
+        if (found) swap_remove(this.float, index)
+
+        this.sync_to_disk();
+    }
+
+    remove_user_exception(wmclass: string | undefined, wmtitle: string | undefined) {
+        let index = 0
+        let found = new Array();
+        for (const value of this.float.values()) {
+            if (value.class === wmclass && value.title === wmtitle) {
+                found.push(index)
+            }
+
+            index += 1
+        }
+
+        if (found.length !== 0) {
+            for (const idx of found) swap_remove(this.float, idx)
+
+            this.sync_to_disk()
+        }
     }
 
     static from_json(json: string): Config {
         try {
             return JSON.parse(json);
         } catch (error) {
-            log.error(`failed to parse config: ${error}`);
             return new Config();
         }
     }
 
-    private static from_config(): Result<Config, Error> {
+    private static from_config(): Result<Config> {
         const stream = Config.read();
-        return stream.kind === 2 ? stream : Ok(Config.from_json(stream.value));
+        if (stream.tag === 1) return stream;
+        let value = Config.from_json(stream.value)
+        return { tag: 0, value }
     }
 
-    private static gio_file(): Result<any, Error> {
+    private static gio_file(): Result<any> {
         try {
             const conf = Gio.File.new_for_path(CONF_FILE);
 
             if (!conf.query_exists(null)) {
                 const dir = Gio.File.new_for_path(CONF_DIR);
                 if (!dir.query_exists(null) && !dir.make_directory(null)) {
-                    return Err(new error.Error('failed to create pop-shell config directory'));
+                    return { tag: 1, why: 'failed to create pop-shell config directory' }
                 }
 
                 const example = new Config();
@@ -108,42 +192,51 @@ export class Config {
                     .write_all(JSON.stringify(example, undefined, 2), null);
             }
 
-            return Ok(conf);
+            return { tag: 0, value: conf };
         } catch (why) {
-            return Err(new error.Error(`Gio.File I/O error: ${why}`));
+            return { tag: 1, why: `Gio.File I/O error: ${why}` }
         }
     }
 
-    private static read(): Result<string, Error> {
+    private static read(): Result<string> {
         try {
             const file = Config.gio_file();
-            if (file.kind === 2) return file;
+            if (file.tag === 1) return file;
 
             const [, buffer] = file.value.load_contents(null);
 
-            return Ok(imports.byteArray.toString(buffer));
+            return { tag: 0, value: imports.byteArray.toString(buffer) }
         } catch (why) {
-            return Err(new error.Error(`failed to read pop-shell config: ${why}`));
+            return { tag: 1, why: `failed to read pop-shell config: ${why}` };
         }
     }
 
-    private static write(data: string): Result<void, Error> {
+    private static write(data: string): Result<null> {
         try {
             const file = Config.gio_file();
-            if (file.kind === 2) return file;
+            if (file.tag === 1) return file;
 
             file.value.replace_contents(data, null, false, Gio.FileCreateFlags.NONE, null)
 
-            return Ok(void(0));
+            return { tag: 0, value: file.value }
         } catch (why) {
-            return Err(new error.Error(`failed to write to config: ${why}`));
+            return { tag: 1, why: `failed to write to config: ${why}` };
         }
     }
 
     sync_to_disk() {
-        const result = Config.write(this.to_json());
-        if (result.kind === 2) {
-            log.error(`failed to sync disk to config: ${result.value.format()}`);
-        }
+        Config.write(this.to_json());
     }
+}
+
+function set_to_json(_key: string, value: any) {
+    if (typeof value === 'object' && value instanceof Set) {
+        return [...value];
+    }
+    return value;
+}
+
+function swap_remove<T>(array: Array<T>, index: number): T | undefined {
+    array[index] = array[array.length - 1];
+    return array.pop();
 }

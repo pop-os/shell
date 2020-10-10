@@ -160,7 +160,7 @@ export class ShellWindow {
             const overlay_alpha = 0.3;
             const orig_overlay = 'rgba(53, 132, 228, 0.3)';
             gdk.parse(color_value);
-            
+
             if (utils.is_dark(gdk.to_string())) {
                 // too dark, use the blue overlay
                 gdk.parse(orig_overlay);
@@ -170,7 +170,7 @@ export class ShellWindow {
             this.ext.overlay.set_style(`background: ${gdk.to_string()}`);
         }
 
-        if (this.border) 
+        if (this.border)
             this.border.set_style(`border-color: ${color_value}`);
     }
 
@@ -246,17 +246,19 @@ export class ShellWindow {
     }
 
     is_tilable(ext: Ext): boolean {
+        let tile_checks = () => {
+            let wm_class = this.meta.get_wm_class();
+            return !this.meta.is_skip_taskbar()
+                // Only normal windows will be considered for tiling
+                && this.meta.window_type == Meta.WindowType.NORMAL
+                // Transient windows are most likely dialogs
+                && !this.is_transient()
+                // Blacklist any windows that happen to leak through our filter
+                && (wm_class === null || !ext.conf.window_shall_float(wm_class, this.meta.get_title()));
+        };
+
         return !ext.contains_tag(this.entity, Tags.Floating)
-            && ext.tilable.get_or(this.entity, () => {
-                let wm_class = this.meta.get_wm_class();
-                return !this.meta.is_skip_taskbar()
-                    // Only normal windows will be considered for tiling
-                    && this.meta.window_type == Meta.WindowType.NORMAL
-                    // Transient windows are most likely dialogs
-                    && !this.is_transient()
-                    // Blacklist any windows that happen to leak through our filter
-                    && (wm_class === null || !ext.conf.window_shall_float(wm_class, this.meta.get_title()));
-            });
+            && tile_checks()
     }
 
     is_transient(): boolean {
@@ -471,7 +473,7 @@ export class ShellWindow {
 
         return above_windows;
     }
-    
+
 
     hide_border() {
         let b = this.border;
@@ -490,18 +492,18 @@ export class ShellWindow {
                 borderSize = 0;
                 border.add_style_class_name('pop-shell-border-maximize');
             }
-    
+
             let stack_number = this.stack;
-    
+
             if (stack_number !== null) {
                 const stack = this.ext.auto_tiler?.forest.stacks.get(stack_number);
                 if (stack) {
                     let stack_tab_height = stack.tabs_height;
-    
+
                     if (borderSize === 0 || this.grab) { // not in max screen state
                         stack_tab_height = 0;
                     }
-    
+
                     border.set_position(rect.x - borderSize, rect.y - stack_tab_height - borderSize);
                     border.set_size(rect.width + 2 * borderSize, rect.height + stack_tab_height + 2 * borderSize);
                 }

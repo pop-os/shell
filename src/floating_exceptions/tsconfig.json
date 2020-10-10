@@ -1,0 +1,21 @@
+{
+    "compileOnSave": true,
+    "compilerOptions": {
+        "target": "es2015",
+        // "strict": true,
+        "outDir": "../../target/floating_exceptions",
+        "forceConsistentCasingInFileNames": true,
+        "downlevelIteration": true,
+        "lib": [
+            "es2015"
+        ],
+        "pretty": true,
+        "sourceMap": true,
+        "declaration": true,
+        "removeComments": true,
+        "incremental": true,
+    },
+    "include": [
+        "src/*.ts",
+    ]
+}

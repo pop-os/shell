@@ -8,7 +8,7 @@ import * as error from 'error';
 import * as lib from 'lib';
 import * as log from 'log';
 import * as result from 'result';
-import * as search from 'search';
+import * as search from 'dialog_search';
 import * as window from 'window';
 import * as launchers from 'launcherext';
 import * as widgets from 'widgets';

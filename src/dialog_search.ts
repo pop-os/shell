@@ -7,7 +7,13 @@ const { Clutter, St } = imports.gi;
 const { ModalDialog } = imports.ui.modalDialog;
 
 export class Search {
-    dialog: Shell.ModalDialog;
+    dialog: Shell.ModalDialog = new ModalDialog({
+        styleClass: "pop-shell-search modal-dialog",
+        destroyOnClose: false,
+        shellReactive: true,
+        shouldFadeIn: false,
+        shouldFadeOut: false
+    });
 
     private active_id: number;
     private mode_prefixes: Array<string>;
@@ -31,13 +37,6 @@ export class Search {
         this.apply_cb = apply;
         this.cancel_cb = cancel;
         this.select_cb = select;
-        this.dialog = new ModalDialog({
-            styleClass: "pop-shell-search modal-dialog",
-            destroyOnClose: false,
-            shellReactive: true,
-            shouldFadeIn: false,
-            shouldFadeOut: false
-        });
 
         this.active_id = 0;
         this.mode_prefixes = mode_prefixes;
