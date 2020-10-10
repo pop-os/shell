@@ -14,19 +14,20 @@ import * as Rect from 'rectangle';
 import * as Settings from 'settings';
 import * as Tiling from 'tiling';
 import * as Window from 'window';
-import * as launcher from 'launcher';
+import * as launcher from 'dialog_launcher';
 import * as auto_tiler from 'auto_tiler';
 import * as node from 'node';
 import * as utils from 'utils';
 import * as Executor from 'executor';
 import * as movement from 'movement';
 import * as stack from 'stack';
+import * as add_exception from 'dialog_add_exception';
 
 import type { Entity } from 'ecs';
 import type { ExtEvent } from 'events';
 import type { Rectangle } from 'rectangle';
 import type { Indicator } from 'panel_settings';
-import type { Launcher } from './launcher';
+import type { Launcher } from './dialog_launcher';
 import { Fork } from './fork';
 
 const display = global.display;
@@ -101,6 +102,9 @@ export class Ext extends Ecs.System<ExtEvent> {
     /** The current scaling factor in GNOME Shell */
     dpi: number = St.ThemeContext.get_for_stage(global.stage).scale_factor;
 
+    /** If set, the user is currently selecting a window to add to floating exceptions */
+    exception_selecting: boolean = false;
+
     /** The number of pixels between windows */
     gap_inner: number = 0;
 
@@ -165,9 +169,6 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     /** Set to true if a window is snapped to the grid */
     snapped: Ecs.Storage<boolean> = this.register_storage();
-
-    /** Set the true if the window is tilable */
-    tilable: Ecs.Storage<boolean> = this.register_storage();
 
     /** Primary storage for the window entities, containing the actual window */
     windows: Ecs.Storage<Window.ShellWindow> = this.register_storage();
@@ -387,7 +388,24 @@ export class Ext extends Ecs.System<ExtEvent> {
         const monitor = this.conf_watch = Gio.File.new_for_path(Config.CONF_FILE)
             .monitor(Gio.FileMonitorFlags.NONE, null);
 
-        return [monitor, monitor.connect('changed', () => this.conf.reload())];
+        return [monitor, monitor.connect('changed', () => {
+            this.conf.reload()
+
+            // If the auto-tilable status of a window has changed, detach or attach the window.
+            if (this.auto_tiler) {
+                const at = this.auto_tiler;
+                for (const [entity, window] of this.windows.iter()) {
+                    const attachment = at.attached.get(entity);
+                    if (window.is_tilable(this)) {
+                        if (!attachment) {
+                            at.auto_tile(this, window, this.init);
+                        }
+                    } else if (attachment) {
+                        at.detach_window(this, entity)
+                    }
+                }
+            }
+        })];
     }
 
     /// Connects a callback signal to a GObject, and records the signal.
@@ -434,6 +452,52 @@ export class Ext extends Ecs.System<ExtEvent> {
                 this.register(Events.window_event(win, WindowEvent.Minimize));
             }),
         ]);
+    }
+
+    exception_add(win: Window.ShellWindow) {
+        this.exception_selecting = false;
+        let d = new add_exception.AddExceptionDialog(
+            // Cancel
+            () => this.exception_dialog(),
+            // this_app
+            () => {
+                let wmclass = win.meta.get_wm_class();
+                if (wmclass) this.conf.add_app_exception(wmclass);
+                this.exception_dialog()
+            },
+            // current-window
+            () => {
+                let wmclass = win.meta.get_wm_class();
+                if (wmclass) this.conf.add_window_exception(
+                    wmclass,
+                    win.meta.get_title()
+                );
+                this.exception_dialog()
+            }
+        );
+        d.open();
+    }
+
+    exception_dialog() {
+        let path = Me.dir.get_path() + "/floating_exceptions/main.js";
+
+        utils.async_process(["gjs", path], null, null)
+            .then(output => {
+                log.debug(`Floating Window Dialog Event: ${output}`)
+                switch (output.trim()) {
+                    case "SELECT":
+                        this.register_fn(() => this.exception_select())
+                }
+            })
+            .catch(error => {
+                log.error(`floating window process error: ${error}`)
+            })
+    }
+
+    exception_select() {
+        log.debug('select a window plz')
+        overview.show()
+        this.exception_selecting = true;
     }
 
     exit_modes() {
@@ -607,6 +671,10 @@ export class Ext extends Ecs.System<ExtEvent> {
         this.exit_modes();
 
         this.size_signals_unblock(win);
+
+        if (this.exception_selecting) {
+            this.exception_add(win);
+        }
 
         // Keep the last-focused window from being shifted too quickly. 300ms debounce
         if (this.focus_trigger === null) {

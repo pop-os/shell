@@ -8,7 +8,7 @@ INSTALLBASE = $(DESTDIR)/usr/share/gnome-shell/extensions
 endif
 INSTALLNAME = $(UUID)
 
-PROJECTS = color_dialog
+PROJECTS = color_dialog floating_exceptions
 
 $(info UUID is "$(UUID)")
 

@@ -1,5 +1,6 @@
 declare const global: Global,
     imports: any,
+    log: any,
     _: (arg: string) => string;
 
 interface Global {
@@ -23,6 +24,13 @@ interface Rectangular {
     y: number;
     width: number;
     height: number;
+}
+
+interface DialogButtonAction {
+    label: string;
+    action: () => void;
+    key?: number;
+    default?: boolean;
 }
 
 declare type ProcessResult = [boolean, any, any, number];
@@ -242,6 +250,8 @@ declare namespace Shell {
     interface ModalDialog extends St.Widget {
         contentLayout: St.Widget;
         dialogLayout: Dialog;
+
+        addButton(action: DialogButtonAction): void;
 
         close(timestamp: number): void;
         open(timestamp: number, on_primary: boolean): void;

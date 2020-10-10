@@ -10,7 +10,7 @@ import * as once_cell from 'once_cell';
 import * as widgets from 'widgets';
 
 import type { Ext } from 'extension';
-import type { Search } from 'search';
+import type { Search } from 'dialog_search';
 
 const DEFAULT_ICON_SIZE = 34;
 

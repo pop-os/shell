@@ -39,19 +39,21 @@ export class Indicator {
 
         this.button.add_actor(this.button.icon);
 
-        this.button.menu.addMenuItem(tiled(ext));
+        let bm = this.button.menu;
+
+        bm.addMenuItem(tiled(ext));
+        bm.addMenuItem(floating_window_exceptions(ext, bm));
+
+        bm.addMenuItem(menu_separator(''));
+        bm.addMenuItem(shortcuts(bm));
+        bm.addMenuItem(settings_button(bm));
+        bm.addMenuItem(menu_separator(''));
 
         if (!Utils.is_wayland()) {
-            this.button.menu.addMenuItem(show_title(ext));
+            bm.addMenuItem(show_title(ext));
         }
 
-        this.button.menu.addMenuItem(menu_separator(''));
-
-        this.button.menu.addMenuItem(shortcuts(this.button.menu));
-        this.button.menu.addMenuItem(settings_button(this.button.menu));
-        this.button.menu.addMenuItem(menu_separator(''));
-
-        this.button.menu.addMenuItem(
+        bm.addMenuItem(
             toggle(
                 _("Show Active Hint"),
                 ext.settings.active_hint(),
@@ -62,9 +64,9 @@ export class Indicator {
         );
 
         // CSS Selector
-        this.button.menu.addMenuItem(color_selector(ext, this.button.menu),);
+        bm.addMenuItem(color_selector(ext, bm),);
 
-        this.button.menu.addMenuItem(
+        bm.addMenuItem(
             number_entry(
                 _("Gaps"),
                 ext.settings.gap_inner(),
@@ -103,11 +105,37 @@ function settings_button(menu: any): any {
     return item;
 }
 
+function floating_window_exceptions(ext: Ext, menu: any): any {
+    let label = new St.Label({ text: "Floating Window Exceptions" })
+    label.set_x_expand(true)
+
+    let icon = new St.Icon({ icon_name: "go-next-symbolic", icon_size: 16 })
+
+    let widget = new St.BoxLayout({ vertical: false })
+    widget.add(label);
+    widget.add(icon);
+    widget.set_x_expand(true)
+
+    let base = new PopupBaseMenuItem();
+    base.add_child(widget);
+    base.connect('activate', () => {
+        ext.exception_dialog();
+
+        GLib.timeout_add(GLib.PRIORITY_LOW, 300, () => {
+            menu.close();
+            return false;
+        });
+    });
+
+    return base;
+}
+
 function shortcuts(menu: any): any {
     let layout_manager = new Clutter.GridLayout({ orientation: Clutter.Orientation.HORIZONTAL });
     let widget = new St.Widget({ layout_manager, x_expand: true });
 
     let item = new PopupBaseMenuItem();
+    item.add_child(widget);
     item.connect('activate', () => {
         let path: string | null = GLib.find_program_in_path('pop-shell-shortcuts');
         if (path) {
@@ -118,7 +146,6 @@ function shortcuts(menu: any): any {
 
         menu.close();
     })
-    item.add_child(widget);
 
     function create_label(text: string): any {
         return new St.Label({ text });
@@ -296,9 +323,7 @@ function color_selector(ext: Ext, menu: any) {
 
     color_selector_item.add_child(color_button);
     color_button.connect('button-press-event', () => {
-        // spawn an async process - so gnome-shell will not lock up
         let path = Me.dir.get_path() + "/color_dialog/main.js";
-        global.log(`launching ${path}`)
         let resp = GLib.spawn_command_line_async(`gjs ${path}`);
         if (!resp) {
 
