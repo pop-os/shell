@@ -26,6 +26,9 @@ const DEFAULT_RULES: Array<FloatRule> =[
     { class: "KotatogramDesktop", title: "Media viewer" },
     { class: "Steam", title: "^((?!Steam).)*$" },
     { class: "TelegramDesktop", title: "Media viewer" },
+    { class: "Slack", title: "Slack | mini panel" },
+    { class: "Solaar", },
+    { class: "zoom", },
 ]
 
 export interface FloatRule {
