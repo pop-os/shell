@@ -1,7 +1,6 @@
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 // import * as auto_tiler from 'auto_tiler';
-import * as log from 'log';
 import * as Utils from 'utils';
 
 //import type { Entity } from './ecs';
@@ -94,7 +93,7 @@ function settings_button(menu: any): any {
         if (path) {
             imports.misc.util.spawn([path]);
         } else {
-            log.error(`You must install \`pop-shell-shortcuts\``)
+            imports.misc.util.spawn(['xdg-open', 'https://support.system76.com/articles/pop-keyboard-shortcuts/']);
         }
 
         menu.close();
@@ -141,7 +140,7 @@ function shortcuts(menu: any): any {
         if (path) {
             imports.misc.util.spawn([path]);
         } else {
-            log.error(`You must install \`pop-shell-shortcuts\``)
+            imports.misc.util.spawn(['xdg-open', 'https://support.system76.com/articles/pop-keyboard-shortcuts/']);
         }
 
         menu.close();
