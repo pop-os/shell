@@ -190,7 +190,7 @@ This provides the tiling window manager experience, where windows are automatica
 - Ultra-wide displays are treated as two separate displays by default (**Unimplemented**)
 
 ### Customizing the Floating Window List
-There is file `$HOME/.config/pop-shell/config.json` where you can add the following structure:
+There is file `$XDG_CONFIG_HOME/pop-shell/config.json` where you can add the following structure:
 ```
 {
   class: "<WM_CLASS String from xprop>",

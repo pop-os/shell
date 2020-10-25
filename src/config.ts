@@ -1,6 +1,6 @@
 const { Gio, GLib } = imports.gi;
 
-const CONF_DIR: string = GLib.get_home_dir() + "/.config/pop-shell"
+const CONF_DIR: string = GLib.get_user_config_dir() + "/pop-shell"
 export var CONF_FILE: string = CONF_DIR + "/config.json"
 
 export interface FloatRule {
