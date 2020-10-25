@@ -1,8 +1,12 @@
 # Retrieve the UUID from ``metadata.json``
 UUID = $(shell grep -E '^[ ]*"uuid":' ./metadata.json | sed 's@^[ ]*"uuid":[ ]*"\(.\+\)",[ ]*@\1@')
 
+ifeq ($(XDG_DATA_HOME),)
+XDG_DATA_HOME = $(HOME)/.local/share
+endif
+
 ifeq ($(strip $(DESTDIR)),)
-INSTALLBASE = $(HOME)/.local/share/gnome-shell/extensions
+INSTALLBASE = $(XDG_DATA_HOME)/gnome-shell/extensions
 else
 INSTALLBASE = $(DESTDIR)/usr/share/gnome-shell/extensions
 endif
