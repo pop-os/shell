@@ -1,7 +1,10 @@
 {
     "name": "Pop Shell",
     "description": "Pop Shell",
+    "version": 1,
     "uuid": "pop-shell@system76.com",
     "settings-schema": "org.gnome.shell.extensions.pop-shell",
-    "shell-version": ["3.36"]
+    "shell-version": [
+        "3.36"
+    ]
 }
