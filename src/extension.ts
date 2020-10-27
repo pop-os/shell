@@ -1294,7 +1294,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         function window_move(ext: Ext, entity: Entity, ws: WorkspaceID) {
             if (change_workspace) {
                 const window = ext.windows.get(entity);
-                if (!window || !window.actor_exists()) return;
+                if (!window || !window.actor_exists() || window.meta.is_on_all_workspaces()) return;
 
                 ext.size_signals_block(window);
                 window.meta.change_workspace_by_index(ws, false);
