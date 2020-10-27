@@ -1,4 +1,5 @@
 {
+    "version": "1.0.0",
     "compileOnSave": true,
     "compilerOptions": {
         "target": "es2015",
@@ -6,7 +7,9 @@
         "outDir": "./target",
         "forceConsistentCasingInFileNames": true,
         "downlevelIteration": true,
-        "lib": [ "es2015" ],
+        "lib": [
+            "es2015"
+        ],
         "pretty": true,
         "sourceMap": true,
         "declaration": true,
