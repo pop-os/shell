@@ -27,7 +27,7 @@ export const DEFAULT_RULES: Array<FloatRule> = [
     { class: "Zotero", title: "Quick Format Citation" },
     { class: "Com.github.donadigo.eddy", },
     { class: "Conky", },
-    { class: "Gnome-screenshot", },
+    { class: "gnome-screenshot", },
     { class: "jetbrains-toolbox", },
     { class: "KotatogramDesktop", title: "Media viewer" },
     { class: "Steam", title: "^((?!Steam).)*$" },
@@ -72,13 +72,13 @@ export class Config {
     window_shall_float(wclass: string, title: string): boolean {
         for (const rule of this.float.concat(DEFAULT_RULES)) {
             if (rule.class) {
-                if (!new RegExp(rule.class).test(wclass)) {
+                if (!new RegExp(rule.class, 'i').test(wclass)) {
                     continue
                 }
             }
 
             if (rule.title) {
-                if (!new RegExp(rule.title).test(title)) {
+                if (!new RegExp(rule.title, 'i').test(title)) {
                     continue
                 }
             }
