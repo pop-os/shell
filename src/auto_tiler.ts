@@ -371,6 +371,17 @@ export class AutoTiler {
         if (ext.contains_tag(focused.entity, Tags.Floating)) {
             ext.delete_tag(focused.entity, Tags.Floating);
             this.auto_tile(ext, focused, false);
+        } else if (!focused.is_tilable(ext)) {
+            if (ext.contains_tag(focused.entity, Tags.ForcedTile)) {
+                ext.delete_tag(focused.entity, Tags.ForcedTile);
+                const fork_entity = this.attached.get(focused.entity);
+                if (fork_entity) {
+                    this.detach_window(ext, focused.entity);
+                }
+            } else {
+                ext.add_tag(focused.entity, Tags.ForcedTile);
+                this.auto_tile(ext, focused, false);
+            }
         } else {
             const fork_entity = this.attached.get(focused.entity);
             if (fork_entity) {
