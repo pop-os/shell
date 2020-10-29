@@ -1,3 +1,9 @@
+pop-shell (1.0.0) focal; urgency=medium
+
+  * First stable release
+
+ -- Michael Aaron Murphy <michael@system76.com>  Thu, 29 Oct 2020 11:57:36 -0600
+
 pop-shell (0.1.0) focal; urgency=medium
 
   * Initial release.
