@@ -1,19 +1,21 @@
 // @ts-ignore
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
+import * as Config from 'config';
 import * as lib from 'lib';
 import * as log from 'log';
 import * as once_cell from 'once_cell';
 import * as Rect from 'rectangle';
 import * as Tags from 'tags';
+import * as Tweener from 'tweener';
 import * as utils from 'utils';
 import * as xprop from 'xprop';
-import * as Tweener from 'tweener';
-
 import type { Entity } from './ecs';
 import type { Ext } from './extension';
 import type { Rectangle } from './rectangle';
 
+
+const { DefaultPointerPosition } = Config;
 const { Gdk, Meta, Shell, St, GLib } = imports.gi;
 
 const { OnceCell } = once_cell;
@@ -108,7 +110,7 @@ export class ShellWindow {
     }
 
     activate(): void {
-        activate(this.meta);
+        activate(this.ext.conf.default_pointer_position, this.meta);
     }
 
     actor_exists(): boolean {
@@ -351,7 +353,7 @@ export class ShellWindow {
         let br = other.rect().clone();
 
         other.move(ext, ar);
-        this.move(ext, br, () => place_pointer_on(this.meta));
+        this.move(ext, br, () => place_pointer_on(this.ext.conf.default_pointer_position, this.meta));
     }
 
 
@@ -522,6 +524,16 @@ export class ShellWindow {
     private window_raised() {
         this.restack(RESTACK_STATE.RAISED);
         this.show_border();
+        if (this.ext.conf.move_pointer_on_switch && !this.pointer_already_on_window()) {
+            place_pointer_on(this.ext.conf.default_pointer_position, this.meta);
+        }
+    }
+
+    private pointer_already_on_window(): boolean {
+        const rect = Rect.Rectangle.from_meta(this.meta.get_frame_rect());
+        const cursor = lib.cursor_rect();
+
+        return cursor.intersects(rect);
     }
 
     private workspace_changed() {
@@ -529,18 +541,44 @@ export class ShellWindow {
     }
 }
 
-/// Activates a window, and moves the mouse point to the center of it.
-export function activate(win: Meta.Window) {
+/// Activates a window, and moves the mouse point.
+export function activate(default_pointer_position: Config.DefaultPointerPosition, win: Meta.Window) {
     win.raise();
     win.unminimize();
     win.activate(global.get_current_time());
-    place_pointer_on(win)
+    place_pointer_on(default_pointer_position, win)
 }
 
-export function place_pointer_on(win: Meta.Window) {
+export function place_pointer_on(default_pointer_position: Config.DefaultPointerPosition, win: Meta.Window) {
     const rect = win.get_frame_rect();
-    const x = rect.x + 8;
-    const y = rect.y + 8;
+    let x = rect.x;
+    let y = rect.y;
+
+    switch (default_pointer_position) {
+        case DefaultPointerPosition.TopLeft:
+            x += 8;
+            y += 8;
+            break;
+        case DefaultPointerPosition.BottomLeft:
+            x += 8;
+            y += (rect.height - 16);
+            break;
+        case DefaultPointerPosition.TopRight:
+            x += (rect.width - 16);
+            y += 8;
+            break;
+        case DefaultPointerPosition.BottomRight:
+            x += (rect.width - 16);
+            y += (rect.height - 16);
+            break;
+        case DefaultPointerPosition.Center:
+            x += (rect.width / 2) + 8;
+            y += (rect.height / 2) + 8;
+            break;
+        default:
+            x += 8;
+            y += 8;
+    }
 
     const display = Gdk.DisplayManager.get().get_default_display();
 
