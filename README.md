@@ -74,6 +74,10 @@ If you want to uninstall the extension, you may invoke `make uninstall`, and the
 
 > Note that if you are packaging for your Linux distribution, many features in Pop Shell will not work out of the box because they require changes to GNOME's default keyboard shortcuts. A local install is necessary if you aren't packaging your own GNOME session with these default keyboard shortcuts unset or changed.
 
+### Packaging status
+
+- [Fedora](https://src.fedoraproject.org/rpms/gnome-shell-extension-pop-shell/): `sudo dnf install gnome-shell-extension-pop-shell`
+
 ---
 
 ## Shared Features
