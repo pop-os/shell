@@ -121,6 +121,8 @@ export class Stack {
 
     /** Activates the tab of this entity */
     activate(entity: Entity) {
+        if (this.widgets) this.widgets.tabs.visible = true;
+
         // Don't activate if we've already activated this window
         if (Ecs.entity_eq(entity, this.active)) {
             this.restack();
