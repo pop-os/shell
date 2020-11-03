@@ -273,6 +273,10 @@ export class ShellWindow {
     }
 
     move(ext: Ext, rect: Rectangular, on_complete?: () => void) {
+        if ((!this.same_workspace() && this.is_maximized())) {
+            return
+        }
+
         this.hide_border();
         const clone = Rect.Rectangle.from_meta(rect);
         const meta = this.meta;
