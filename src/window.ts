@@ -255,8 +255,10 @@ export class ShellWindow {
                 && this.meta.window_type == Meta.WindowType.NORMAL
                 // Transient windows are most likely dialogs
                 && !this.is_transient()
+                // If a window lacks a class, it's probably an web browser dialog
+                && wm_class !== null
                 // Blacklist any windows that happen to leak through our filter
-                && (wm_class === null || !ext.conf.window_shall_float(wm_class, this.meta.get_title()));
+                && !ext.conf.window_shall_float(wm_class, this.meta.get_title());
         };
 
         return !ext.contains_tag(this.entity, Tags.Floating)
