@@ -34,6 +34,7 @@ export const DEFAULT_RULES: Array<FloatRule> = [
     { class: "TelegramDesktop", title: "Media viewer" },
     { class: "Slack", title: "Slack | mini panel" },
     { class: "Solaar", },
+    { class: "system76-driver", },
     { class: "zoom", },
 ];
 
