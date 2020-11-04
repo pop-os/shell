@@ -1472,6 +1472,10 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         this.connect(sessionMode, 'updated', () => {
             if ('user' !== global.session_mode) this.exit_modes();
+
+            if (indicator) {
+                indicator.button.visible = !sessionMode.isLocked;
+            }
         });
 
         this.connect(overview, 'showing', () => {
