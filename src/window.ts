@@ -416,6 +416,11 @@ export class ShellWindow {
      */
     restack(updateState: RESTACK_STATE = RESTACK_STATE.NORMAL) {
         this.update_border_layout();
+
+        if (this.meta.is_fullscreen()) {
+            this.hide_border()
+        }
+
         let restackSpeed = RESTACK_SPEED.NORMAL;
 
         switch (updateState) {
