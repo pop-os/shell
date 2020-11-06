@@ -502,6 +502,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     exit_modes() {
         this.tiler.exit(this);
+        this.window_search.reset();
         this.window_search.close();
         this.overlay.visible = false;
     }
@@ -1471,10 +1472,12 @@ export class Ext extends Ecs.System<ExtEvent> {
         });
 
         this.connect(sessionMode, 'updated', () => {
-            if ('user' !== global.session_mode) this.exit_modes();
-
             if (indicator) {
                 indicator.button.visible = !sessionMode.isLocked;
+            }
+
+            if (sessionMode.isLocked) {
+                this.exit_modes()
             }
         });
 
