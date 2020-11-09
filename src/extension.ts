@@ -544,7 +544,6 @@ export class Ext extends Ecs.System<ExtEvent> {
         this.row_size = this.settings.row_size() * this.dpi;
     }
 
-
     monitor_work_area(monitor: number): Rectangle {
         const meta = display.get_workspace_manager()
             .get_active_workspace()
@@ -556,16 +555,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     on_active_workspace_changed() {
         this.exit_modes();
         this.last_focused = null;
-
-        // Hide / Show Stacks
-        this.register_fn(() => {
-            if (this.auto_tiler) {
-                for (const container of this.auto_tiler.forest.stacks.values()) {
-                    container.set_visible(container.workspace === this.active_workspace());
-                    container.restack();
-                }
-            }
-        });
+        this.restack()
     }
 
     on_destroy(win: Entity) {
@@ -670,7 +660,6 @@ export class Ext extends Ecs.System<ExtEvent> {
     /** Triggered when a window has been focused */
     on_focused(win: Window.ShellWindow) {
         this.exit_modes();
-
         this.size_signals_unblock(win);
 
         if (this.exception_selecting) {
@@ -1081,13 +1070,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                 break;
         }
 
-        if (this.auto_tiler) {
-            const workspace = this.active_workspace();
-            for (const stack of this.auto_tiler.forest.stacks.values()) {
-                stack.set_visible(stack.workspace === workspace)
-                stack.restack();
-            }
-        }
+        if (this.auto_tiler) this.restack()
     }
 
     /** Triggered when a grab operation has been started */
@@ -1362,6 +1345,22 @@ export class Ext extends Ecs.System<ExtEvent> {
             (current) => current > number,
             (prev) => prev - 1
         );
+    }
+
+    restack() {
+        // NOTE: Workaround for GNOME Shell showing our hidden windows on a workspace switch
+        let attempts = 0
+        GLib.timeout_add(GLib.PRIORITY_LOW, 50, () => {
+            if (this.auto_tiler) {
+                for (const container of this.auto_tiler.forest.stacks.values()) {
+                    container.restack();
+                }
+            }
+
+            let x = attempts
+            attempts += 1
+            return x < 10
+        })
     }
 
     set_gap_inner(gap: number) {
@@ -1716,6 +1715,10 @@ export class Ext extends Ecs.System<ExtEvent> {
             return true
         }
         return false
+    }
+
+    should_ignore_workspace(monitor: number): boolean {
+        return this.settings.workspaces_only_on_primary() && monitor !== global.display.get_primary_monitor()
     }
 
     unset_grab_op() {
