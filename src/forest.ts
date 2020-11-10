@@ -85,19 +85,27 @@ export class Forest extends Ecs.World {
     }
 
     /** Place all windows into their calculated positions. */
-    arrange(ext: Ext, _workspace: number, _ignore_reset: boolean = false) {
+    arrange(ext: Ext, workspace: number, _ignore_reset: boolean = false) {
         for (const [entity, r] of this.requested) {
             const window = ext.windows.get(entity);
             if (!window) continue;
 
-            let on_complete = () => { }
+            let on_complete = () => {
+                if (!window.actor_exists()) return
+                window.meta.change_workspace_by_index(workspace, false)
+            }
+
             if (ext.tiler.window) {
                 if (Ecs.entity_eq(ext.tiler.window, entity)) {
                     on_complete = () => {
                         ext.set_overlay(window.rect());
+
+                        if (!window.actor_exists()) return
+                        window.meta.change_workspace_by_index(workspace, false)
                     }
                 }
             }
+
             move_window(ext, window, r.rect, on_complete);
         }
 

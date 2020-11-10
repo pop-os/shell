@@ -93,6 +93,9 @@ export class Ext extends Ecs.System<ExtEvent> {
     /** The currently-loaded theme variant */
     current_style: Style = this.settings.is_dark_shell() ? Style.Dark : Style.Light;
 
+    /** Set when the display configuration has been triggered for execution */
+    displays_updating: SignalID | null = null;
+
     /** Row size in snap-to-grid */
     row_size: number = 32;
 
@@ -520,6 +523,25 @@ export class Ext extends Ecs.System<ExtEvent> {
         return [primary, this.displays.get(primary) as Display];
     }
 
+    find_unused_workspace(): [number, any] {
+        if (!this.auto_tiler) return [0, wom.get_workspace_by_index(0)]
+
+        let id = 0
+
+        for (const fork of this.auto_tiler.forest.forks.values()) {
+            if (id < fork.monitor) id = fork.monitor
+        }
+
+        let new_work
+        if (id + 1 === wom.get_n_workspaces()) {
+            new_work = wom.append_new_workspace(true, global.get_current_time())
+        } else {
+            new_work = wom.get_workspace_by_index(id + 1)
+        }
+
+        return [id + 1, new_work];
+    }
+
     focus_window(): Window.ShellWindow | null {
         let focused = this.get_window(display.get_focus_window())
         if (!focused && this.last_focused) {
@@ -621,12 +643,13 @@ export class Ext extends Ecs.System<ExtEvent> {
         let forest = this.auto_tiler.forest;
         let blocked = new Array();
 
+        let [new_work_id] = this.find_unused_workspace();
+
         for (const [entity, [mon_id,]] of forest.toplevel.values()) {
             if (mon_id === id) {
                 let fork = forest.forks.get(entity);
                 if (!fork) continue;
 
-                const [new_work_id] = find_unused_workspace();
                 const [new_mon_id, new_mon] = this.find_monitor_to_retach(display.area.width, display.area.height);
 
                 fork.workspace = new_work_id;
@@ -644,21 +667,31 @@ export class Ext extends Ecs.System<ExtEvent> {
                             let window = this.windows.get(child.inner.entity);
                             if (window) {
                                 this.size_signals_block(window);
+                                window.meta.change_workspace_by_index(new_work_id, false)
                                 blocked.push(window);
                             }
                             break
                         case 3:
                             for (const entity of child.inner.entities) {
+                                let stack = this.auto_tiler.forest.stacks.get(child.inner.idx);
+                                if (stack) {
+                                    stack.workspace = new_work_id
+                                }
+
                                 let window = this.windows.get(entity);
+
                                 if (window) {
                                     this.size_signals_block(window);
+                                    window.meta.change_workspace_by_index(new_work_id, false)
                                     blocked.push(window);
                                 }
                             }
                     }
                 }
 
-                fork.migrate(this, forest, new_mon.ws, new_mon_id, new_work_id);
+                fork?.migrate(this, forest, new_mon.ws, new_mon_id, new_work_id);
+
+                new_work_id += 1
             }
         }
 
@@ -1581,7 +1614,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             this.conf_watch = null;
         }
 
-        if (this.tiler_queue) {
+        if (this.tiler_queue !== null) {
             GLib.source_remove(this.tiler_queue)
         }
 
@@ -1726,53 +1759,62 @@ export class Ext extends Ecs.System<ExtEvent> {
         }
     }
 
-    update_display_configuration(workareas_only: boolean) {
-        if (!this.auto_tiler) return;
-
-        if (sessionMode.isLocked) return;
+    update_display_configuration(_workareas_only: boolean) {
+        if (!this.auto_tiler || sessionMode.isLocked) return
 
         if (this.ignore_display_update) {
-            this.ignore_display_update = false;
-            return;
+            this.ignore_display_update = false
+            return
         }
 
         // Ignore the update if there are no monitors to assign to
-        if (layoutManager.monitors.length === 0) return;
+        if (layoutManager.monitors.length === 0) return
 
-        let updated = new Map();
+        if (this.displays_updating !== null) GLib.source_remove(this.displays_updating)
 
-        // Fetch a new list of monitors
-        for (const monitor of layoutManager.monitors) {
-            const mon = monitor as Monitor;
+        // Delay actions until 3 seconds later, in case of temporary connection loss
+        this.displays_updating = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 2000, () => {
+            (() => {
+                if (!this.auto_tiler) return
 
-            const area = new Rect.Rectangle([mon.x, mon.y, mon.width, mon.height]);
-            const ws = this.monitor_work_area(mon.index);
+                let updated = new Map()
 
-            updated.set(mon.index, { area, ws });
-        }
+                // Fetch a new list of monitors
+                for (const monitor of layoutManager.monitors) {
+                    const mon = monitor as Monitor
 
-        // Remove missing monitors from previous recording
-        if (!workareas_only) {
-            for (const [id, display] of this.displays) {
-                if (!updated.has(id)) {
-                    this.on_display_remove(id, display);
+                    const area = new Rect.Rectangle([mon.x, mon.y, mon.width, mon.height])
+                    const ws = this.monitor_work_area(mon.index)
+
+                    updated.set(mon.index, { area, ws })
                 }
-            }
-        }
 
-        // Remember our new list
-        this.displays = updated;
+                for (const [id, display] of this.displays) {
+                    if (!updated.has(id)) {
+                        log.info(`removing display ${id}: ${display}`)
+                        this.on_display_remove(id, display)
+                    }
+                }
 
-        // Update every tree on each display with the new dimensions
-        for (const [entity, [mon_id,]] of this.auto_tiler.forest.toplevel.values()) {
-            let fork = this.auto_tiler.forest.forks.get(entity);
-            let display = this.displays.get(mon_id);
+                // Remember our new list
+                this.displays = updated
 
-            if (fork && display) {
-                fork.monitor = mon_id;
-                this.auto_tiler.update_toplevel(this, fork, mon_id, this.settings.smart_gaps());
-            }
-        }
+                // Update every tree on each display with the new dimensions
+                for (const [entity, [mon_id,]] of this.auto_tiler.forest.toplevel.values()) {
+                    let fork = this.auto_tiler.forest.forks.get(entity);
+                    let display = this.displays.get(mon_id);
+                    if (fork && display) {
+                        fork.monitor = mon_id;
+                        this.auto_tiler.update_toplevel(this, fork, mon_id, this.settings.smart_gaps());
+                    }
+                }
+
+                return
+            })()
+
+            this.displays_updating = null
+            return false
+        })
     }
 
     update_scale() {
@@ -1962,30 +2004,6 @@ function disable() {
         indicator.destroy();
         indicator = null;
     }
-}
-
-function find_unused_workspace(): [number, any] {
-    let new_work = null;
-
-    let id = 0;
-    let ws = wom.get_workspace_by_index(id);
-
-    while (ws !== null) {
-        if (ws.n_windows === 0) {
-            new_work = ws;
-            break
-        }
-
-        id += 1;
-        ws = wom.get_workspace_by_index(id);
-    }
-
-    if (new_work === null) {
-        new_work = wom.append_new_workspace(true, global.get_current_time());
-        id = new_work.index();
-    }
-
-    return [id, new_work];
 }
 
 function stylesheet_path(name: string) { return Me.path + "/" + name + ".css"; }
