@@ -36,6 +36,7 @@ export const DEFAULT_RULES: Array<FloatRule> = [
     { class: "Solaar", },
     { class: "system76-driver", },
     { class: "zoom", },
+    { class: "pop-shell-exceptions", },
 ];
 
 export interface FloatRule {
