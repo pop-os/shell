@@ -144,6 +144,8 @@ export class Ext extends Ecs.System<ExtEvent> {
     /** Record of misc. global objects and their attached signals */
     private signals: Map<GObject.Object, Array<SignalID>> = new Map();
 
+    private size_requests: Map<GObject.Object, SignalID> = new Map();
+
     /** Used to debounce on_focus triggers */
     private focus_trigger: null | SignalID = null;
 
@@ -438,16 +440,31 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     connect_window(win: Window.ShellWindow) {
+        const size_event = () => {
+            const old = this.size_requests.get(win.meta)
+
+            if (old) {
+                try { GLib.source_remove(old) } catch (_) { }
+            }
+
+            const new_s = GLib.timeout_add(GLib.PRIORITY_LOW, 500, () => {
+                this.register(Events.window_event(win, WindowEvent.Size));
+                this.size_requests.delete(win.meta)
+                return false
+            })
+
+            this.size_requests.set(win.meta, new_s)
+        }
+
         this.size_signals.insert(win.entity, [
-            this.connect_size_signal(win, 'size-changed', () => {
-                this.register(Events.window_event(win, WindowEvent.Size));
-            }),
-            this.connect_size_signal(win, 'position-changed', () => {
-                this.register(Events.window_event(win, WindowEvent.Size));
-            }),
+            this.connect_size_signal(win, 'size-changed', size_event),
+
+            this.connect_size_signal(win, 'position-changed', size_event),
+
             this.connect_size_signal(win, 'workspace-changed', () => {
                 this.register(Events.window_event(win, WindowEvent.Workspace));
             }),
+
             this.connect_size_signal(win, 'notify::minimized', () => {
                 this.register(Events.window_event(win, WindowEvent.Minimize));
             }),
