@@ -102,6 +102,7 @@ These are key to many of the shortcuts utilized by tiling window managers. This 
 - `Super` + `f`: Files
 - `Super` + `e`: Email
 - `Super` + `b`: Web Browser
+- `Super` + `t`: Terminal
 
 ### Window Management Mode
 
