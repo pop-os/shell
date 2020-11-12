@@ -723,7 +723,8 @@ export class Ext extends Ecs.System<ExtEvent> {
                 + `  name: ${win.name(this)},\n`
                 + `  rect: ${win.rect().fmt()},\n`
                 + `  workspace: ${win.workspace_id()},\n`
-                + `  xid: ${win.xid()},\n`;
+                + `  xid: ${win.xid()},\n`
+                + `  stack: ${win.stack},\n`
 
             if (this.auto_tiler) {
                 msg += `  fork: (${this.auto_tiler.attached.get(win.entity)}),\n`;
@@ -1145,20 +1146,45 @@ export class Ext extends Ecs.System<ExtEvent> {
                 const fork = this.auto_tiler.forest.forks.get(attached);
                 if (!fork) return;
 
-                win.was_attached_to = [attached, fork.left.is_window(win.entity)];
+                let attachment: boolean | number
+                if (win.stack !== null) {
+                    attachment = win.stack
+                } else {
+                    attachment = fork.left.is_window(win.entity)
+                }
+
+                win.was_attached_to = [attached, attachment];
                 this.auto_tiler.detach_window(this, win.entity);
             } else if (!this.contains_tag(win.entity, Tags.Floating)) {
                 if (win.was_attached_to) {
-                    const [entity, is_left] = win.was_attached_to;
+                    const [entity, attachment] = win.was_attached_to;
                     delete win.was_attached_to;
 
                     const tiler = this.auto_tiler;
 
                     const fork = tiler.forest.forks.get(entity);
                     if (fork) {
-                        tiler.forest.attach_fork(this, fork, win.entity, is_left);
-                        tiler.tile(this, fork, fork.area);
-                        return
+                        if (typeof attachment === "boolean") {
+                            tiler.forest.attach_fork(this, fork, win.entity, attachment);
+                            tiler.tile(this, fork, fork.area);
+                            return
+                        } else {
+                            const stack = tiler.forest.stacks.get(attachment)
+                            if (stack) {
+                                const stack_info = tiler.find_stack(stack.active)
+                                if (stack_info) {
+                                    const node = stack_info[1].inner as node.NodeStack
+
+                                    win.stack = attachment
+                                    node.entities.push(win.entity)
+                                    tiler.update_stack(this, node)
+                                    tiler.forest.on_attach(fork.entity, win.entity)
+                                    stack.activate(win.entity)
+                                    tiler.tile(this, fork, fork.area);
+                                    return
+                                }
+                            }
+                        }
                     }
                 }
 
