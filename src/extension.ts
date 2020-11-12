@@ -456,14 +456,14 @@ export class Ext extends Ecs.System<ExtEvent> {
             this.size_requests.set(win.meta, new_s)
         }
 
+        this.connect_meta(win, 'workspace-changed', () => {
+            this.register(Events.window_event(win, WindowEvent.Workspace));
+        })
+
         this.size_signals.insert(win.entity, [
             this.connect_size_signal(win, 'size-changed', size_event),
 
             this.connect_size_signal(win, 'position-changed', size_event),
-
-            this.connect_size_signal(win, 'workspace-changed', () => {
-                this.register(Events.window_event(win, WindowEvent.Workspace));
-            }),
 
             this.connect_size_signal(win, 'notify::minimized', () => {
                 this.register(Events.window_event(win, WindowEvent.Minimize));
@@ -862,10 +862,12 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     /** Triggered when a grab operation has been ended */
-    on_grab_end(meta: Meta.Window, op: any) {
+    on_grab_end(meta: Meta.Window, op?: any) {
         let win = this.get_window(meta);
 
-        if (null == win || !win.is_tilable(this)) {
+
+
+        if (null === win || !win.is_tilable(this)) {
             return;
         }
 
@@ -882,64 +884,75 @@ export class Ext extends Ecs.System<ExtEvent> {
             return;
         }
 
-        if (win && this.grab_op && Ecs.entity_eq(this.grab_op.entity, win.entity)) {
-            if (this.auto_tiler) {
-                let crect = win.rect()
-                const rect = this.grab_op.rect;
-                if (is_move_op(op)) {
-                    this.on_monitor_changed(win, (_changed_from, changed_to, workspace) => {
-                        if (win) {
-                            this.monitors.insert(win.entity, [changed_to, workspace]);
-                        }
-                    });
+        const grab_op = this.grab_op
 
-                    if (rect.x != crect.x || rect.y != crect.y) {
-                        if (rect.contains(cursor_rect())) {
-                            this.auto_tiler.reflow(this, win.entity);
-                        } else {
-                            this.auto_tiler.on_drop(this, win);
-                        }
-                    }
-                } else {
-                    const fork_entity = this.auto_tiler.attached.get(win.entity);
-                    if (fork_entity) {
-                        const forest = this.auto_tiler.forest;
-                        const fork = forest.forks.get(fork_entity);
-                        if (fork) {
-                            if (win.stack) {
-                                const tab_dimension = this.dpi * stack.TAB_HEIGHT;
-                                crect.height += tab_dimension;
-                                crect.y -= tab_dimension;
-                            }
+        this.grab_op = null
 
-                            let top_level = forest.find_toplevel(this.workspace_id());
-                            if (top_level) {
-                                crect.clamp((forest.forks.get(top_level) as Fork).area);
-                            }
-
-                            const movement = this.grab_op.operation(crect);
-
-                            if (this.movement_is_valid(win, movement)) {
-                                forest.resize(this, fork_entity, fork, win.entity, movement, crect);
-                                forest.arrange(this, fork.workspace);
-                            } else {
-                                forest.tile(this, fork, fork.area);
-                            }
-                        } else {
-                            log.error(`no fork component found`);
-                        }
-                    } else {
-                        log.error(`no fork entity found`);
-                    }
-                }
-            } else if (this.settings.snap_to_grid()) {
-                this.tiler.snap(this, win);
-            }
-        } else {
-            log.error(`mismatch on grab op entity`);
+        if (!win) {
+            log.error('an entity was dropped, but there is no window')
+            return
         }
 
-        this.grab_op = null;
+        if (this.auto_tiler && op === undefined) {
+            const current = global.display.get_current_monitor()
+            this.monitors.insert(win.entity, [current, win.workspace_id()])
+            this.auto_tiler.on_drop(this, win, true)
+            return
+        }
+
+        if (!(grab_op && Ecs.entity_eq(grab_op.entity, win.entity))) {
+            log.error(`grabbed entity is not the same as the one that was dropped`)
+            return
+        }
+
+        if (this.auto_tiler) {
+            let crect = win.rect()
+            const rect = grab_op.rect;
+            if (is_move_op(op)) {
+                this.monitors.insert(win.entity, [win.meta.get_monitor(), win.workspace_id()])
+
+                if ((rect.x != crect.x || rect.y != crect.y)) {
+                    if (rect.contains(cursor_rect())) {
+                        this.auto_tiler.reflow(this, win.entity);
+                    } else {
+                        this.auto_tiler.on_drop(this, win);
+                    }
+                }
+            } else {
+                const fork_entity = this.auto_tiler.attached.get(win.entity);
+                if (fork_entity) {
+                    const forest = this.auto_tiler.forest;
+                    const fork = forest.forks.get(fork_entity);
+                    if (fork) {
+                        if (win.stack) {
+                            const tab_dimension = this.dpi * stack.TAB_HEIGHT;
+                            crect.height += tab_dimension;
+                            crect.y -= tab_dimension;
+                        }
+
+                        let top_level = forest.find_toplevel(this.workspace_id());
+                        if (top_level) {
+                            crect.clamp((forest.forks.get(top_level) as Fork).area);
+                        }
+
+                        const movement = grab_op.operation(crect);
+
+                        if (this.movement_is_valid(win, movement)) {
+                            forest.resize(this, fork_entity, fork, win.entity, movement, crect);
+                            forest.arrange(this, fork.workspace);
+                        } else {
+                            forest.tile(this, fork, fork.area);
+                        }
+                    } else {
+                        log.error(`no fork component found`);
+                    }
+                } else {
+                    log.error(`no fork entity found`);
+                }
+            }
+        } else if (this.settings.snap_to_grid()) {
+            this.tiler.snap(this, win);
+        }
     }
 
     movement_is_valid(win: Window.ShellWindow, movement: movement.Movement) {
@@ -1092,7 +1105,8 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     /** Triggered when a grab operation has been started */
-    on_grab_start(meta: Meta.Window) {
+    on_grab_start(meta: null | Meta.Window) {
+        if (!meta) return
         let win = this.get_window(meta);
         if (win) {
             win.grab = true;
@@ -1218,6 +1232,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         const actual_monitor = win.meta.get_monitor();
         const actual_workspace = win.workspace_id();
         const monitor = this.monitors.get(win.entity);
+
         if (monitor) {
             const [expected_monitor, expected_workspace] = monitor;
             if (expected_monitor != actual_monitor || actual_workspace != expected_workspace) {
@@ -1563,6 +1578,18 @@ export class Ext extends Ecs.System<ExtEvent> {
         this.connect(display, 'grab-op-end', (_, _display, win, op) => {
             this.register_fn(() => this.on_grab_end(win, op));
         });
+
+        this.connect(overview, 'window-drag-begin', (_, win) => {
+            this.on_grab_start(win)
+        })
+
+        this.connect(overview, 'window-drag-end', (_, win) => {
+            this.register_fn(() => this.on_grab_end(win))
+        })
+
+        this.connect(overview, 'window-drag-cancelled', () => {
+            this.unset_grab_op()
+        })
 
         this.connect(wim, 'switch-workspace', () => {
             this.hide_all_borders();
