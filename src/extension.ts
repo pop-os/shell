@@ -456,14 +456,14 @@ export class Ext extends Ecs.System<ExtEvent> {
             this.size_requests.set(win.meta, new_s)
         }
 
+        this.connect_meta(win, 'workspace-changed', () => {
+            this.register(Events.window_event(win, WindowEvent.Workspace));
+        })
+
         this.size_signals.insert(win.entity, [
             this.connect_size_signal(win, 'size-changed', size_event),
 
             this.connect_size_signal(win, 'position-changed', size_event),
-
-            this.connect_size_signal(win, 'workspace-changed', () => {
-                this.register(Events.window_event(win, WindowEvent.Workspace));
-            }),
 
             this.connect_size_signal(win, 'notify::minimized', () => {
                 this.register(Events.window_event(win, WindowEvent.Minimize));
@@ -862,10 +862,10 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     /** Triggered when a grab operation has been ended */
-    on_grab_end(meta: Meta.Window, op: any) {
+    on_grab_end(meta: Meta.Window, op?: any) {
         let win = this.get_window(meta);
 
-        if (null == win || !win.is_tilable(this)) {
+        if (null === win || !win.is_tilable(this)) {
             return;
         }
 
@@ -886,7 +886,9 @@ export class Ext extends Ecs.System<ExtEvent> {
             if (this.auto_tiler) {
                 let crect = win.rect()
                 const rect = this.grab_op.rect;
-                if (is_move_op(op)) {
+                if (op === undefined) {
+                    this.auto_tiler.on_drop(this, win);
+                } else if (is_move_op(op)) {
                     this.on_monitor_changed(win, (_changed_from, changed_to, workspace) => {
                         if (win) {
                             this.monitors.insert(win.entity, [changed_to, workspace]);
@@ -1092,7 +1094,8 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     /** Triggered when a grab operation has been started */
-    on_grab_start(meta: Meta.Window) {
+    on_grab_start(meta: null | Meta.Window) {
+        if (!meta) return
         let win = this.get_window(meta);
         if (win) {
             win.grab = true;
@@ -1563,6 +1566,18 @@ export class Ext extends Ecs.System<ExtEvent> {
         this.connect(display, 'grab-op-end', (_, _display, win, op) => {
             this.register_fn(() => this.on_grab_end(win, op));
         });
+
+        this.connect(overview, 'window-drag-begin', (_, win) => {
+            this.on_grab_start(win)
+        })
+
+        this.connect(overview, 'window-drag-end', (_, win) => {
+            this.register_fn(() => this.on_grab_end(win))
+        })
+
+        this.connect(overview, 'window-drag-cancelled', () => {
+            this.unset_grab_op()
+        })
 
         this.connect(wim, 'switch-workspace', () => {
             this.hide_all_borders();
