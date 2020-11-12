@@ -55,7 +55,7 @@ export class ShellWindow {
     grab: boolean = false;
     activate_after_move: boolean = false;
     ignore_detach: boolean = false;
-    was_attached_to?: [Entity, boolean];
+    was_attached_to?: [Entity, boolean | number];
 
     // True if this window is currently smart-gapped
     smart_gapped: boolean = false;
