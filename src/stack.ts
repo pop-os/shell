@@ -53,6 +53,8 @@ export class Stack {
 
     tabs: Array<Tab> = new Array();
 
+    monitor: number;
+
     workspace: number;
 
     buttons: a.Arena<St.Button> = new Arena();
@@ -69,9 +71,10 @@ export class Stack {
 
     private tabs_destroy: SignalID;
 
-    constructor(ext: Ext, active: Entity, workspace: number) {
+    constructor(ext: Ext, active: Entity, workspace: number, monitor: number) {
         this.ext = ext;
         this.active = active;
+        this.monitor = monitor;
         this.workspace = workspace;
         this.tabs_height = TAB_HEIGHT * this.ext.dpi;
 
@@ -123,11 +126,7 @@ export class Stack {
     activate(entity: Entity) {
         if (this.widgets) this.widgets.tabs.visible = true;
 
-        // Don't activate if we've already activated this window
-        if (Ecs.entity_eq(entity, this.active)) {
-            this.restack();
-            return;
-        }
+        this.restack();
 
         const win = this.ext.windows.get(entity);
         if (!win) return;
@@ -262,7 +261,6 @@ export class Stack {
         const window = this.ext.windows.get(c.entity);
         if (window) {
             for (const s of c.signals) window.meta.disconnect(s);
-
             if (this.workspace === this.ext.active_workspace()) window.meta.get_compositor_private()?.show();
         }
 
@@ -297,7 +295,6 @@ export class Stack {
         for (const c of this.tabs) {
             this.tab_disconnect(c);
             if (this.workspace === this.ext.active_workspace()) {
-                global.log(`showing`)
                 this.ext.windows.get(c.entity)?.meta.get_compositor_private()?.show();
             }
 
@@ -435,25 +432,12 @@ export class Stack {
             return;
         }
 
-        let restack = false;
         const stack_parent = this.widgets.tabs.get_parent();
-        if (!stack_parent) {
-            parent.add_child(this.widgets.tabs);
-            restack = true;
-        } else if (stack_parent != parent) {
+        if (stack_parent) {
             stack_parent.remove_child(this.widgets.tabs);
-            restack = true;
         }
 
-        if (restack) {
-            parent.add_child(this.widgets.tabs);
-            for (const c of this.tabs) {
-                if (Ecs.entity_eq(c.entity, this.active)) continue;
-                const actor = this.ext.windows.get(c.entity)?.meta.get_compositor_private();
-                if (!actor) continue
-                actor.hide();
-            }
-        }
+        parent.add_child(this.widgets.tabs);
 
         // Reposition actors on the screen, being careful about not displaying over maximized windows
         if (!window.meta.is_fullscreen() && !window.is_maximized() && !this.ext.maximized_on_active_display()) {
@@ -463,27 +447,39 @@ export class Stack {
         }
     }
 
+    permitted_to_show(workspace?: number): boolean {
+        const active_workspace = workspace ?? global.workspace_manager.get_active_workspace_index()
+        const primary = global.display.get_primary_monitor()
+        const only_primary = this.ext.settings.workspaces_only_on_primary()
+
+        return active_workspace === this.workspace
+            || (only_primary && this.monitor != primary)
+    }
+
+    reset_visibility() {
+        let idx = 0
+        for (const c of this.tabs) {
+            this.actor_exec(idx, c.entity, (actor) => actor.hide())
+            idx += 1
+        }
+
+        if (this.permitted_to_show()) {
+            this.actor_exec(this.active_id, this.active, (actor) => actor.show())
+        }
+    }
+
     /** Repositions the stack, and hides all but the active window in the stack */
     restack() {
         this.on_grab(() => {
             if (!this.widgets) return;
-            let idx = 0;
 
-            // Hide all actors on incompatible workspace / show them when marked to reveal
-            if (global.workspace_manager.get_active_workspace_index() !== this.workspace) {
+            if (!this.permitted_to_show()) {
                 this.widgets.tabs.visible = false;
-                for (const c of this.tabs) {
-                    this.actor_exec(idx, c.entity, (actor) => actor.hide());
-                    idx += 1;
-                }
-            } else if (this.widgets.tabs.visible) {
-                for (const c of this.tabs) {
-                    this.actor_exec(idx, c.entity, (actor) => actor.hide());
-                    idx += 1;
-                }
-
+            } else {
                 this.reposition();
             }
+
+            this.reset_visibility()
         })
     }
 
