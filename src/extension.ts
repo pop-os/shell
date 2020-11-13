@@ -865,8 +865,6 @@ export class Ext extends Ecs.System<ExtEvent> {
     on_grab_end(meta: Meta.Window, op?: any) {
         let win = this.get_window(meta);
 
-
-
         if (null === win || !win.is_tilable(this)) {
             return;
         }
@@ -894,9 +892,17 @@ export class Ext extends Ecs.System<ExtEvent> {
         }
 
         if (this.auto_tiler && op === undefined) {
-            const current = global.display.get_current_monitor()
-            this.monitors.insert(win.entity, [current, win.workspace_id()])
-            this.auto_tiler.on_drop(this, win, true)
+            let mon = this.monitors.get(win.entity)
+            if (mon) {
+                let rect = win.meta.get_work_area_for_monitor(mon[0])
+                if (rect && Rect.Rectangle.from_meta(rect).contains(cursor_rect())) {
+                    this.auto_tiler.reflow(this, win.entity);
+                } else {
+                    this.auto_tiler.on_drop(this, win, true)
+                }
+            }
+
+
             return
         }
 
@@ -1112,6 +1118,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             win.grab = true;
 
             if (win.is_tilable(this)) {
+                global.log(`grabbed ${win.entity}`)
                 let entity = win.entity;
                 let rect = win.rect();
 
