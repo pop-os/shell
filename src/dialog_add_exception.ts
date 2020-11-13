@@ -61,7 +61,7 @@ export class AddExceptionDialog {
     }
 
     show() {
-        this.dialog.show_all();
+        this.dialog.show();
     }
 
     open() {
