@@ -42,6 +42,7 @@ declare interface GLib {
 
     find_program_in_path(prog: string): string | null;
     get_current_dir(): string;
+    get_monotonic_time(): number;
 
     idle_add(priority: any, callback: () => boolean): number;
 
