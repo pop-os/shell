@@ -103,7 +103,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     dpi: number = St.ThemeContext.get_for_stage(global.stage).scale_factor;
 
     /** If set, the user is currently selecting a window to add to floating exceptions */
-    exception_selecting: boolean = false;
+    exception_selecting: number = 0;
 
     /** The number of pixels between windows */
     gap_inner: number = 0;
@@ -472,7 +472,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     exception_add(win: Window.ShellWindow) {
-        this.exception_selecting = false;
+        this.exception_selecting = 0;
         let d = new add_exception.AddExceptionDialog(
             // Cancel
             () => this.exception_dialog(),
@@ -513,8 +513,10 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     exception_select() {
         log.debug('select a window plz')
-        overview.show()
-        this.exception_selecting = true;
+        this.register_fn(() => {
+            this.exception_selecting = GLib.get_monotonic_time()
+            overview.show()
+        })
     }
 
     exit_modes() {
@@ -680,7 +682,9 @@ export class Ext extends Ecs.System<ExtEvent> {
         this.size_signals_unblock(win);
 
         if (this.exception_selecting) {
-            this.exception_add(win);
+            if ((GLib.get_monotonic_time() - this.exception_selecting) < 1000000) return
+
+            this.exception_add(win)
         }
 
         // Keep the last-focused window from being shifted too quickly. 300ms debounce
