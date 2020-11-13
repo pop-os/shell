@@ -36,6 +36,8 @@ export const DEFAULT_RULES: Array<FloatRule> = [
     { class: "Solaar", },
     { class: "system76-driver", },
     { class: "zoom", },
+    { class: "Gnome-terminal", title: "Preferences – General"},
+    { class: "Gjs", title: "Settings"},
 ];
 
 export interface FloatRule {
