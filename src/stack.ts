@@ -587,7 +587,8 @@ export class Stack {
         if (window && window.actor_exists()) {
             func(window)
         } else {
-            this.tab_disconnect(this.tabs[comp])
+            const tab = this.tabs[comp]
+            if (tab) this.tab_disconnect(tab)
         }
     }
 }
