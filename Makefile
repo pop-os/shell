@@ -86,7 +86,7 @@ restart-shell:
 
 update-repository:
 	git fetch origin
-	git reset --hard origin/master_focal
+	git reset --hard origin/master
 	git clean -fd
 
 schemas: schemas/gschemas.compiled
