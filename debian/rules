@@ -4,5 +4,11 @@
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
+BASEDIR=debian/pop-shell/usr/share/gnome-shell/extensions/pop-shell@system76.com
+
 %:
 	dh $@
+
+override_dh_install:
+	dh_install
+	rm -rf $(BASEDIR)/schemas
