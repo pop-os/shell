@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<KeyListEntries group="system" schema="org.gnome.shell.extensions.pop-shell" name="Tiling">
+  <KeyListEntry name="tile-orientation" description="Change window orientation"/>
+  <KeyListEntry name="toggle-floating" description="Toggles a window between floating and tiling"/>
+  <KeyListEntry name="toggle-tiling" description="Toggles auto-tiling"/>
+</KeyListEntries>

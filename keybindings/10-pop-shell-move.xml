@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<KeyListEntries group="system" schema="org.gnome.shell.extensions.pop-shell" name="Move, resize, and swap windows">
+  <KeyListEntry name="tile-accept" description="Apply changes"/>
+  <KeyListEntry name="tile-enter" description="Adjustment mode"/>
+  <KeyListEntry name="tile-move-down" description="Move window down"/>
+  <KeyListEntry name="tile-move-left" description="Move window left"/>
+  <KeyListEntry name="tile-move-right" description="Move window right"/>
+  <KeyListEntry name="tile-move-up" description="Move window up"/>
+  <KeyListEntry name="tile-reject" description="Cancel changes"/>
+  <KeyListEntry name="tile-resize-left" description="Resize window smaller"/>
+  <KeyListEntry name="tile-resize-right" description="Resize window larger"/>
+  <KeyListEntry name="tile-resize-up" description="Resize window shorter"/>
+  <KeyListEntry name="tile-resize-down" description="Resize window taller"/>
+  <KeyListEntry name="tile-swap-down" description="Swap window down"/>
+  <KeyListEntry name="tile-swap-left" description="Swap window left"/>
+  <KeyListEntry name="tile-swap-right" description="Swap window right"/>
+  <KeyListEntry name="tile-swap-up" description="Swap window up"/>
+  <KeyListEntry name="management-orientation" description="Change current window orientation"/>
+</KeyListEntries>

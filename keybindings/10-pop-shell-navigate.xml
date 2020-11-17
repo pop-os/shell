@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<KeyListEntries group="system" schema="org.gnome.shell.extensions.pop-shell" name="Navigate applications and windows">
+  <KeyListEntry name="activate-launcher" description="Launch and switch applications"/>
+  <KeyListEntry name="focus-down" description="Switch focus to window down"/>
+  <KeyListEntry name="focus-left" description="Switch focus to window left"/>
+  <KeyListEntry name="focus-right" description="Switch focus to window right"/>
+  <KeyListEntry name="focus-up" description="Switch focus to window up"/>
+</KeyListEntries>
