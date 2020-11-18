@@ -90,14 +90,20 @@ export class Forest extends Ecs.World {
             const window = ext.windows.get(entity);
             if (!window) continue;
 
-            let on_complete = () => { }
+            let on_complete = () => {
+                if (!window.actor_exists()) return
+            }
+
             if (ext.tiler.window) {
                 if (Ecs.entity_eq(ext.tiler.window, entity)) {
                     on_complete = () => {
                         ext.set_overlay(window.rect());
+
+                        if (!window.actor_exists()) return
                     }
                 }
             }
+
             move_window(ext, window, r.rect, on_complete);
         }
 
@@ -406,9 +412,11 @@ export class Forest extends Ecs.World {
     }
 
     /** Finds the top level fork associated with the given entity. */
-    find_toplevel(id: [number, number]): Entity | null {
-        for (const [entity, [mon, work]] of this.toplevel.values()) {
-            if (mon == id[0] && work == id[1]) {
+    find_toplevel([src_mon, src_work]: [number, number]): Entity | null {
+        for (const [entity, fork] of this.forks.iter()) {
+            if (!fork.is_toplevel) continue
+            const { monitor, workspace } = fork
+            if (monitor == src_mon && workspace == src_work) {
                 return entity;
             }
         }

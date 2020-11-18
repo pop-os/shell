@@ -239,11 +239,9 @@ export class AutoTiler {
     /** Detaches the window from a tiling branch, if it is attached to one. */
     detach_window(ext: Ext, win: Entity) {
         this.attached.take_with(win, (prev_fork: Entity) => {
-            global.log(`attached to fork`)
             const reflow_fork = this.forest.detach(ext, prev_fork, win);
 
             if (reflow_fork) {
-                global.log(`reflow found`)
                 const fork = reflow_fork[1];
                 if (fork.is_toplevel && ext.settings.smart_gaps() && fork.right === null) {
                     let rect = ext.monitor_work_area(fork.monitor);
@@ -326,7 +324,6 @@ export class AutoTiler {
      * - If no window is present, tile onto the monitor
      */
     on_drop(ext: Ext, win: ShellWindow, via_overview: boolean = false) {
-        global.log(`dropped window; via overview ${via_overview}`)
         const [cursor, monitor] = ext.cursor_status();
         const workspace = ext.active_workspace();
 
@@ -336,18 +333,15 @@ export class AutoTiler {
             if (toplevel) {
                 const attach_to = this.forest.largest_window_on(ext, toplevel);
                 if (attach_to) {
-                    global.log(`attaching to window`)
                     this.attach_to_window(ext, attach_to, win, cursor);
                     return;
                 }
             }
 
-            global.log(`attaching to monitor`)
             this.attach_to_monitor(ext, win, workspace_id, ext.settings.smart_gaps());
         }
 
         if (via_overview) {
-            global.log(`detaching window`)
             this.detach_window(ext, win.entity);
             attach_mon()
             return
