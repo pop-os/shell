@@ -12,4 +12,6 @@ Architecture: all
 Depends:
     ${misc:Depends},
     pop-shell-shortcuts
+Replaces: gnome-control-center-data (<< 1:3.38.1-2ubuntu1pop1~)
+Breaks: gnome-control-center-data (<< 1:3.38.1-2ubuntu1pop1~)
 Description: Pop!_OS Shell
