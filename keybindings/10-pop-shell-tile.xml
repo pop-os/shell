@@ -3,4 +3,6 @@
   <KeyListEntry name="tile-orientation" description="Change window orientation"/>
   <KeyListEntry name="toggle-floating" description="Toggles a window between floating and tiling"/>
   <KeyListEntry name="toggle-tiling" description="Toggles auto-tiling"/>
+  <KeyListEntry name="toggle-stacking" description="Toggle stacking mode inside management mode"/>
+  <KeyListEntry name="toggle-stacking-global" description="Toggle stacking mode outside management mode"/>
 </KeyListEntries>
