@@ -256,6 +256,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                     const { x, y, width, height } = movement;
 
                     window.meta.move_resize_frame(true, x, y, width, height);
+                    window.meta.move_frame(true, x, y)
 
                     this.monitors.insert(window.entity, [
                         win.meta.get_monitor(),

@@ -206,6 +206,7 @@ declare namespace Meta {
         make_above(): void;
         make_fullscreen(): void;
         maximize(flags: MaximizeFlags): void;
+        move_frame(user_op: boolean, x: number, y: number): void;
         move_resize_frame(user_op: boolean, x: number, y: number, w: number, h: number): boolean;
         raise(): void;
         unmake_fullscreen(): void;
