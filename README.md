@@ -229,7 +229,7 @@ This breaks down our implementation, explaining how all of the pieces interact w
   - The default ratio of the new fork is assigned to 50%.
 - We decide the orientation of a fork based on the size of the window that was attached to.
   - A horizontal orientation is assumed if the attached window is wider than it was tall.
-- When a window is closed or detached, its slot is freed, and the effected area is retiled.
+- When a window is closed or detached, its slot is freed, and the affected area is retiled.
   - The fork that the detached window was associated with will be detached along with it.
   - If there was another child, it will be assigned to the branch that the fork was assigned to.
 - Dragging and dropping a window will retach the window to a new location.
