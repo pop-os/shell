@@ -111,10 +111,15 @@ export class Launcher extends search.Search {
 
             // Sort the list of matched selections
             this.selections.sort((a, b) => {
-                const a_name = a instanceof window.ShellWindow ? a.name(ext) : a[1].name();
-                const b_name = b instanceof window.ShellWindow ? b.name(ext) : b[1].name();
+                const a_name = a instanceof window.ShellWindow ? a.name(ext).toLowerCase() : a[1].name().toLowerCase();
+                const b_name = b instanceof window.ShellWindow ? b.name(ext).toLowerCase() : b[1].name().toLowerCase();
 
-                return a_name.toLowerCase() > b_name.toLowerCase() ? 1 : 0;
+                const pattern_lower = pattern.toLowerCase()
+
+                const a_includes = a_name.includes(pattern_lower);
+                const b_includes = b_name.includes(pattern_lower);
+
+                return ((a_includes && b_includes) || (!a_includes && !b_includes)) ? (a_name > b_name ? 1 : 0) : a_includes ? -1 : b_includes ? 1 : 0;
             });
 
             // Truncate excess items from the list
