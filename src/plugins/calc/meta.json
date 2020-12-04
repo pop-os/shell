@@ -1,0 +1,7 @@
+{
+    "name": "Calculator",
+    "description": "Perform calculations from terminal",
+    "pattern": "^(=)+",
+    "exec": "main.js",
+    "icon": "x-office-spreadsheet"
+}

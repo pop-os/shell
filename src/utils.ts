@@ -94,10 +94,7 @@ export function async_process(argv: Array<string>, input = null, cancellable = n
     if (input !== null)
         flags |= Gio.SubprocessFlags.STDIN_PIPE;
 
-    let proc = new Gio.Subprocess({
-        argv: argv,
-        flags: flags
-    });
+    let proc = new Gio.Subprocess({ argv, flags });
     proc.init(cancellable);
 
     return new Promise((resolve, reject) => {
@@ -110,4 +107,32 @@ export function async_process(argv: Array<string>, input = null, cancellable = n
             }
         });
     });
+}
+
+export type AsyncIPC = {
+    stdout: any,
+    stdin: any,
+}
+
+export function async_process_ipc(argv: Array<string>): AsyncIPC | null {
+    const { SubprocessLauncher, SubprocessFlags } = Gio;
+
+    const launcher = new SubprocessLauncher({
+        flags: SubprocessFlags.STDIN_PIPE
+            | SubprocessFlags.STDOUT_PIPE
+    })
+
+    const proc = launcher.spawnv(argv)
+
+    let stdin = new Gio.DataOutputStream({
+        base_stream: proc.get_stdin_pipe(),
+        close_base_stream: true
+    })
+
+    let stdout = new Gio.DataInputStream({
+        base_stream: proc.get_stdout_pipe(),
+        close_base_stream: true
+    })
+
+    return { stdin, stdout }
 }

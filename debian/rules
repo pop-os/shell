@@ -12,3 +12,7 @@ BASEDIR=debian/pop-shell/usr/share/gnome-shell/extensions/pop-shell@system76.com
 override_dh_install:
 	dh_install
 	rm -rf $(BASEDIR)/schemas
+
+override_dh_fixperms:
+	dh_fixperms
+	chmod +x debian/pop-shell/usr/lib/pop-shell/launcher/**/*.js

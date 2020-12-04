@@ -1,0 +1,6 @@
+{
+    "name": "System Session Controls",
+    "description": "Shutdown, Reboot, Log Out, etc.",
+    "exec": "main.js",
+    "icon": "system-shutdown"
+}
