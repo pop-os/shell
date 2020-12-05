@@ -20,6 +20,7 @@ import type { AppInfo } from 'app_info';
 const { OK } = result;
 
 const HOME_DIR: string = GLib.get_home_dir();
+const DATA_DIRS: string = GLib.get_system_data_dirs();
 
 /// Search paths for finding applications
 const SEARCH_PATHS: Array<[string, string]> = [
@@ -218,6 +219,18 @@ export class Launcher extends search.Search {
     load_desktop_files() {
         lib.bench("load_desktop_files", () => {
             this.desktop_apps.splice(0);
+            for (const _path of DATA_DIRS) {
+                const path = _path.replace(/\/$/, '') + "/applications";
+                for (const result of app_info.load_desktop_entries(path)) {
+                    if (result.kind == OK) {
+                        const value = result.value;
+                        this.desktop_apps.push(['System', value]);
+                    } else {
+                        const why = result.value;
+                        log.warn(why.context(`failed to load desktop app`).format());
+                    }
+                }
+            }
             for (const [where, path] of SEARCH_PATHS) {
                 for (const result of app_info.load_desktop_entries(path)) {
                     if (result.kind == OK) {
