@@ -56,11 +56,11 @@ depcheck:
 		echo 'You must install TypeScript >= 3.8 to transpile: (node-typescript on Debian systems)'; \
 		exit 1; \
 	fi
-        @if ! command -v gnome-extensions >/dev/null; then \
-                echo \
-                echo 'You must install gnome-extensions to configure or enable via this script (`gnome-shell` on Debian systems, `gnome-extensions` on openSUSE systems.)'; \
-                exit 1; \
-        fi
+	@if ! command -v gnome-extensions >/dev/null; then \
+		echo \
+		echo 'You must install gnome-extensions to configure or enable via this script (`gnome-shell` on Debian systems, `gnome-extensions` on openSUSE systems.)'; \
+		exit 1; \
+	fi
 
 enable:
 	gnome-extensions enable "pop-shell@system76.com"
