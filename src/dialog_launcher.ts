@@ -284,13 +284,9 @@ function window_selection(ext: Ext, window: ShellWindow, icon_size: number): lau
     let name = window.name(ext);
     let title = window.meta.get_title();
 
-    if (name != title) {
-        name += ': ' + title;
-    }
-
     return new launch.SearchOption(
+        title,
         name,
-        null,
         'focus-windows-symbolic',
         {
             widget: window.icon(ext, icon_size)
