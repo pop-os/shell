@@ -83,7 +83,7 @@ class App {
                     this.selections.push({
                         id: 0,
                         name,
-                        description: null,
+                        description: GLib.format_size_for_display(entry.get_size()),
                         content_type,
                         directory
                     })
@@ -110,7 +110,7 @@ class App {
                 id += 1
             }
         } catch (e) {
-            log(`QUERY ERROR: ${e}`)
+            log(`QUERY ERROR: ${e} `)
         }
 
         let selections = this.selections.map(s => ({ ...s }))
@@ -132,9 +132,9 @@ class App {
         if (selected) {
             const path = selection_path(this.parent, selected)
             try {
-                GLib.spawn_command_line_async(`xdg-open '${path}'`)
+                GLib.spawn_command_line_async(`xdg - open '${path}'`)
             } catch (e) {
-                log(`xdg-open failed: ${e}`)
+                log(`xdg - open failed: ${e} `)
             }
         }
 
