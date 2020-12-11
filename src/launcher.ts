@@ -280,7 +280,7 @@ export class SearchOption {
 
     widget: St.Button
 
-    shortcut: St.Widget = new St.Label({ text: "", style: "padding-right: 6px;padding-top: 6px;" })
+    shortcut: St.Widget = new St.Label({ text: "", y_align: Clutter.ActorAlign.CENTER, style: "padding-left: 6px;padding-right: 6px" })
 
     constructor(title: string, description: null | string, category_icon: string, icon: null | IconSrc, icon_size: number, id: Identity) {
         this.title = title
