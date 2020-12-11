@@ -59,6 +59,7 @@ const TILE_BY_DEFAULT = "tile-by-default";
 const HINT_COLOR_RGBA = "hint-color-rgba";
 const DEFAULT_RGBA_COLOR = "rgba(251, 184, 108, 1)"; //pop-orange
 const LOG_LEVEL = "log-level";
+const SEARCH_ENGINE = 'search-engine';
 
 export class ExtensionSettings {
     ext: Settings = settings_new_schema(extension.metadata["settings-schema"]);
@@ -120,6 +121,10 @@ export class ExtensionSettings {
         return this.ext.get_uint(ROW_SIZE);
     }
 
+    search_engine(): string {
+        return this.ext.get_string(SEARCH_ENGINE);
+    }
+
     show_title(): boolean {
         return this.ext.get_boolean(SHOW_TITLE);
     }
@@ -176,6 +181,10 @@ export class ExtensionSettings {
 
     set_row_size(size: number) {
         this.ext.set_uint(ROW_SIZE, size);
+    }
+
+    set_search_engine(search: string) {
+        this.ext.set_string(SEARCH_ENGINE, search);
     }
 
     set_show_title(set: boolean) {

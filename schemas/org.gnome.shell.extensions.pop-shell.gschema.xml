@@ -185,8 +185,13 @@
             <summary>Swap window right</summary>
         </key>
 
-        <!-- Workspace Management -->
+        <!-- Launcher Options -->
+        <key type="s" name="search-engine">
+            <default>"https://www.duckduckgo.com/?q="</default>
+            <summary>Search engine query string</summary>
+        </key>
 
+        <!-- Workspace Management -->
         <key type="as" name="pop-workspace-down">
             <default><![CDATA[['<Super><Shift>Down','<Super><Shift>j']]]></default>
             <summary>Move window to the lower workspace</summary>
