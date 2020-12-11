@@ -23,15 +23,15 @@ const HOME_DIR: string = GLib.get_home_dir();
 const SEARCH_PATHS: Array<[string, string]> = [
     // System-wide
     ["System", "/usr/share/applications/"],
-    ["System-Local", "/usr/local/share/applications/"],
+    ["System (Local)", "/usr/local/share/applications/"],
     // User-local
-    ["Local", HOME_DIR + "/.local/share/applications/"],
+    ["User", HOME_DIR + "/.local/share/applications/"],
     // System-wide flatpaks
-    ["Flatpak (system)", "/var/lib/flatpak/exports/share/applications/"],
+    ["Flatpak (System)", "/var/lib/flatpak/exports/share/applications/"],
     // User-local flatpaks
-    ["Flatpak", HOME_DIR + "/.local/share/flatpak/exports/share/applications/"],
+    ["Flatpak (User)", HOME_DIR + "/.local/share/flatpak/exports/share/applications/"],
     // System-wide Snaps
-    ["Snap (system)", "/var/lib/snapd/desktop/applications/"]
+    ["Snap (System)", "/var/lib/snapd/desktop/applications/"]
 ];
 
 export class Launcher extends search.Search {
@@ -112,8 +112,8 @@ export class Launcher extends search.Search {
                     const generic = app.generic_name();
 
                     apps.push(new launch.SearchOption(
-                        generic ? `${generic} (${app.name()}) [${where}]` : `${app.name()} [${where}]`,
-                        null,
+                        app.name(),
+                        generic ? generic + " — " + where : where,
                         'application-default-symbolic',
                         { gicon: app.icon() },
                         this.icon_size(),
