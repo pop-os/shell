@@ -1,0 +1,7 @@
+{
+    "name": "Recent Documents",
+    "description": "Show recent documents in search results",
+    "pattern": "^(d:).*",
+    "exec": "main.js",
+    "icon": "system-file-manager"
+}

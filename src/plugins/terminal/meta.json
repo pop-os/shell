@@ -1,0 +1,7 @@
+{
+    "name": "Terminal Commands",
+    "description": "Run commands in a terminal",
+    "pattern": "^(:|t:|run ).*",
+    "exec": "main.js",
+    "icon": "utilities-terminal"
+}

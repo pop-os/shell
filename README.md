@@ -143,8 +143,17 @@ The launcher is summoned with `Super` + `/`. The search list displays matching w
 By default, the launcher searches windows and applications. However, you can designate a special launch mode using one of the supported prefixes:
 
 - `:`: Execute a command in `sh`
-- `t:`: Execute a command in `sh` in a terminal
+- `run` | `t:`: Execute a command in `sh` in a terminal
 - `=`: Calculator mode, powered by [MathJS](https://mathjs.org/)
+- `/` | `~`: Navigate and open directories and files in the file system
+- `d`: Search recent documents
+### Launcher Plugins
+
+Pop Shell supports extending the functionality of its launcher, and comes with some plugins by default.
+
+
+
+For plugin developers, see [the API documentation for the launcher API](src/plugins/README.md).
 
 ### Inner and Outer Gaps
 
@@ -205,54 +214,6 @@ There is file `$XDG_CONFIG_HOME/pop-shell/config.json` where you can add the fol
 For example, doing `xprop` on GNOME Settings (or GNOME Control Center), the WM_CLASS values are `gnome-control-center` and `Gnome-control-center`. Use the second value (Gnome-control-center), which pop-shell will read. `title` is optional.
 
 After applying changes in the `config.json`, you can reload the tiling if it doesnt work the first time.
-
-### How It Works
-
-This breaks down our implementation, explaining how all of the pieces interact with each other.
-
-- The first window to be created on a display is assigned to a new top level fork.
-  - A top level fork is a fork that has no parent fork.
-  - The top level fork assumes the size of the work area of the display it is assigned to.
-- A fork consists of a left and right branch, an orientation, and a ratio.
-  - Each branch of a fork may either point to another fork, or to a window.
-  - The orientation defines whether the branches in this fork are tiled horizontally, or vertically.
-  - The ratio defines how much space to allocate to each branch.
-- Forks and their descendants are referred to as a tree.
-  - Each fork knows their parent, as well as their two branched children.
-  - Walking up and down this tree is trivial, as a result.
-- Each additional window created on a display will be assigned to a fork in the tree.
-  - Either the focused window, or the largest window, will be selected as the attachee.
-  - The attachee is then detached from its fork.
-  - A new fork is created, where the both windows become children of it.
-  - The new fork placed on the branch where the attachee was previously attached.
-  - The modified fork is then retiled, placing windows in their appropriate locations.
-  - The default ratio of the new fork is assigned to 50%.
-- We decide the orientation of a fork based on the size of the window that was attached to.
-  - A horizontal orientation is assumed if the attached window is wider than it was tall.
-- When a window is closed or detached, its slot is freed, and the effected area is retiled.
-  - The fork that the detached window was associated with will be detached along with it.
-  - If there was another child, it will be assigned to the branch that the fork was assigned to.
-- Dragging and dropping a window will retach the window to a new location.
-  - The window to attach to is determined by finding the window underneath the cursor.
-  - Then the window is detached, and attached to the new window.
-- The ratio of a fork is controlled by resizing windows
-  - If a window is resized outside of its parent fork, the parent fork will grow with it.
-  - If a window is shrunk smaller than its parent fork, the parent fork will shrink with it.
-  - If a window is resized on the side adjacent to its sibling, the ratio between siblings is adjusted.
-
-Also of note is that we have implemented this extension around an entity-component architecture.
-
-- Entities are generational, which
-  - Allows reuse of indices
-  - Array-backed component storages with reusable slots
-  - Fast lookup, fast deletion, fast creation
-- Each window is an entity in the extension's world.
-  - Window components are stored in separate storage arrays.
-- Each fork is an entity in the auto-tiling world.
-  - Fork components are likewise stored in separate storages.
-- A fork component contains two branches; which consist of an entity, and a kind.
-  - The kind declares which world an entity belongs to.
-  - The entity is used to locate the components belonging to it.
 
 ## Developers
 
