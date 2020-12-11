@@ -132,9 +132,9 @@ class App {
         if (selected) {
             const path = selection_path(this.parent, selected)
             try {
-                GLib.spawn_command_line_async(`xdg - open '${path}'`)
+                GLib.spawn_command_line_async(`xdg-open '${path}'`)
             } catch (e) {
-                log(`xdg - open failed: ${e} `)
+                log(`xdg-open failed: ${e} `)
             }
         }
 
