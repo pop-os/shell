@@ -98,7 +98,7 @@ class App {
 
         if (result) {
             try {
-                spawnCommandLine(`xdg-open '${result.uri}'`)
+                GLib.spawn_command_line_async(`xdg-open '${result.uri}'`)
             } catch (e) {
                 log(`xdg-open failed: ${e}`)
             }
