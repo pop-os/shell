@@ -32,10 +32,11 @@ class App {
         this.send({ event: "noop" })
     }
 
+    /** @param {string} input */
     query(input) {
         if (input.startsWith(':')) {
             this.shell_only = true
-            this.last_query = input.substr(1)
+            this.last_query = input.substr(1).trim()
         } else {
             this.shell_only = false
             this.last_query = input.startsWith('t:')
@@ -53,6 +54,7 @@ class App {
         this.send({ event: "queried", selections })
     }
 
+    /** @param {number} _id */
     submit(_id) {
         try {
             let runner
@@ -72,8 +74,13 @@ class App {
         this.send({ event: "close" })
     }
 
+    /** @param {Object} object */
     send(object) {
-        STDOUT.write_bytes(new GLib.Bytes(JSON.stringify(object) + "\n"), null)
+        try {
+            STDOUT.write_bytes(new GLib.Bytes(JSON.stringify(object) + "\n"), null)
+        } catch (e) {
+            log(`failed to send response to Pop Shell: ${e}`)
+        }
     }
 }
 
