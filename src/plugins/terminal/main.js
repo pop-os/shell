@@ -40,8 +40,8 @@ class App {
         } else {
             this.shell_only = false
             this.last_query = input.startsWith('t:')
-                ? input.substr(2)
-                : input.substr(input.indexOf(" ") + 1)
+                ? input.substr(2).trim()
+                : input.substr(input.indexOf(" ") + 1).trim()
         }
 
 
