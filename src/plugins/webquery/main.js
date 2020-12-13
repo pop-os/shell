@@ -46,8 +46,8 @@ class App {
 
         const selections = [{
             id: 0,
-            name: this.build_query(),
-            description: null,
+            description: this.build_query(),
+            name: `Web Search: ${this.last_query}`,
             icon: this.app_info.get_icon().to_string(),
         }]
 
