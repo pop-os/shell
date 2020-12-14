@@ -48,6 +48,11 @@ class App {
                 this.name_base = 'Google'
                 break
 
+            case 'yt':
+                this.query_base = 'https://www.youtube.com/results?search_query='
+                this.name_base = 'YouTube'
+                break
+
             case 'amazon':
                 this.query_base = 'https://smile.amazon.com/s?k='
                 this.name_base = 'Amazon'
