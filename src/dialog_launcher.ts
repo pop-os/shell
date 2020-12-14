@@ -141,33 +141,6 @@ export class Launcher extends search.Search {
             // Truncate excess items from the list
             this.options.splice(this.list_max());
 
-            // Fall back to web query if nothing found
-            if (this.options.length == 0) {
-                this.service.query(`bing:${pattern}`, (plugin, response) => {
-                    if (!this.last_plugin) this.last_plugin = plugin;
-    
-                    if (response.event === "queried") {
-                        for (const selection of response.selections) {
-                            let icon = null
-                            if (selection.icon) {
-                                icon = { name: selection.icon }
-                            } else if (selection.content_type) {
-                                icon = { gicon: Gio.content_type_get_icon(selection.content_type) }
-                            }
-    
-                            this.options.push(new launch.SearchOption(
-                                selection.name,
-                                selection.description,
-                                plugin.config.icon,
-                                icon,
-                                this.icon_size(),
-                                { plugin, id: selection.id }
-                            ))
-                        }
-                    }
-                })
-            }
-
             return this.options;
         };
 
