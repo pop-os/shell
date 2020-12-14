@@ -29,7 +29,7 @@ class App {
 
         switch (key) {
             case 'wiki':
-                this.query_base = 'https://en.wikipedia.org/wiki/'
+                this.query_base = 'https://en.wikipedia.org/w/index.php?search='
                 this.name_base = 'Wikipedia'
                 break
 
