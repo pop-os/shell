@@ -143,7 +143,7 @@ export class Launcher extends search.Search {
 
             // Fall back to web query if nothing found
             if (this.options.length == 0) {
-                this.service.query(`q:${pattern}`, (plugin, response) => {
+                this.service.query(`bing:${pattern}`, (plugin, response) => {
                     if (!this.last_plugin) this.last_plugin = plugin;
     
                     if (response.event === "queried") {

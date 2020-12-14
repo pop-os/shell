@@ -1,7 +1,7 @@
 {
     "name": "Web Query",
     "description": "Launches a web query",
-    "pattern": "^(q:).*",
+    "pattern": "^(amazon|wiki|bing|ddg|google):.*",
     "exec": "main.js",
     "icon": "system-search"
 }

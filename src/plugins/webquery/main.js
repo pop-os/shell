@@ -1,31 +1,18 @@
 #!/usr/bin/env gjs
 
-const { GLib, Gio } = imports.gi;
+const { GLib, Gio } = imports.gi
 
 const STDIN = new Gio.DataInputStream({ base_stream: new Gio.UnixInputStream({ fd: 0 }) })
 const STDOUT = new Gio.DataOutputStream({ base_stream: new Gio.UnixOutputStream({ fd: 1 }) })
 
 class App {
     constructor() {
-        this.last_query = ""
-        this.last_value = ""
-        this.query_base = this.get_query()
+        this.last_query = ''
+        this.last_value = ''
+        this.query_base = ''
+        this.name_base = ''
         this.app_info = Gio.AppInfo.get_default_for_uri_scheme('https')
     }
-
-    get_query() {
-        const schema = Gio.SettingsSchemaSource.new_from_directory(
-          Gio.File.new_for_path(`${GLib.get_home_dir()}/.local/share/gnome-shell/extensions/pop-shell@system76.com`).get_child("schemas").get_path(),
-          Gio.SettingsSchemaSource.get_default(),
-          false
-        )
-      
-        const settings = new Gio.Settings({
-          settings_schema: schema.lookup("org.gnome.shell.extensions.pop-shell", true),
-        })
-
-        return settings.get_string('search-engine')
-      }
 
     complete() {
         this.send({ event: "noop" })
@@ -36,18 +23,45 @@ class App {
     }
 
     query(input) {
-        this.last_query = input.startsWith('q:') ? input.substr(2) : input;
+        const delim_position = input.indexOf(':')
+        const key = input.substring(0, delim_position)
+        this.last_query = input.substr(delim_position + 1).trim()
 
-        try {
-            this.last_value = evaluate(this.last_query).toString()
-        } catch (e) {
-            this.last_value = this.last_query + ` x = ?`
+        switch (key) {
+            case 'wiki':
+                this.query_base = 'https://en.wikipedia.org/wiki/'
+                this.name_base = 'Wikipedia'
+                break
+
+            case 'bing':
+                this.query_base = 'https://www.bing.com/search?q='
+                this.name_base = 'Bing'
+                break
+
+            case 'ddg':
+                this.query_base = 'https://www.duckduckgo.com/?q='
+                this.name_base = 'DuckDuckGo'
+                break
+
+            case 'google':
+                this.query_base = 'https://www.google.com/search?q='
+                this.name_base = 'Google'
+                break
+
+            case 'amazon':
+                this.query_base = 'https://smile.amazon.com/s?k='
+                this.name_base = 'Amazon'
+                break
+
+            default:
+                this.query_base = 'https://www.duckduckgo.com/?q='
+                this.name_base = 'DuckDuckGo'
         }
 
         const selections = [{
             id: 0,
             description: this.build_query(),
-            name: `Web Search: ${this.last_query}`,
+            name: `${this.name_base}: ${this.last_query}`,
             icon: this.app_info.get_icon().to_string(),
         }]
 
