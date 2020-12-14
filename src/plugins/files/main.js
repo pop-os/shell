@@ -24,8 +24,13 @@ const STDOUT = new Gio.DataOutputStream({ base_stream: new Gio.UnixOutputStream(
 
 class App {
     constructor() {
+        /** @type Array<Selection> */
         this.selections = new Array()
+        
+        /** @type string */
         this.parent = ""
+
+        /** @type string */
         this.last_query = ""
     }
 
@@ -59,26 +64,31 @@ class App {
         this.selections.splice(0)
         this.parent = GLib.path_get_dirname(input)
 
+        /** @type string */
         let base = GLib.path_get_basename(input)
+        
+        const show_hidden = base.startsWith('.')
 
         if (this.parent.endsWith(base)) base = ""
 
         try {
-            let dir = Gio.file_new_for_path(this.parent)
+            const dir = Gio.file_new_for_path(this.parent)
             if (dir.query_exists(null)) {
-                let entries = dir.enumerate_children('standard::*', Gio.FileQueryInfoFlags.NONE, null);
+                const entries = dir.enumerate_children('standard::*', Gio.FileQueryInfoFlags.NONE, null);
                 let entry;
 
                 while ((entry = entries.next_file(null)) !== null) {
                     /** @type {string} */
-                    let name = entry.get_name()
+                    const name = entry.get_name()
 
                     if (base.length !== 0 && name.toLowerCase().indexOf(base.toLowerCase()) === -1) {
                         continue
                     }
 
-                    let content_type = entry.get_content_type()
-                    let directory = entry.get_file_type() === 2
+                    if (!show_hidden && name.startsWith('.')) continue 
+
+                    const content_type = entry.get_content_type()
+                    const directory = entry.get_file_type() === 2
 
                     this.selections.push({
                         id: 0,
