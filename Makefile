@@ -73,7 +73,7 @@ disable:
 listen:
 	journalctl -o cat -n 0 -f "$$(which gnome-shell)" | grep -v warning
 
-local-install: depcheck compile install configure enable restart-shell
+local-install: depcheck compile install configure restart-shell enable
 
 install:
 	rm -rf $(INSTALLBASE)/$(INSTALLNAME)
@@ -92,6 +92,7 @@ restart-shell:
 	else \
 		gnome-session-quit --logout; \
 	fi
+	sleep 3
 
 update-repository:
 	git fetch origin
