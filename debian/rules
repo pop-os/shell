@@ -16,3 +16,4 @@ override_dh_install:
 override_dh_fixperms:
 	dh_fixperms
 	chmod +x debian/pop-shell/usr/lib/pop-shell/launcher/**/*.js
+	chmod +x debian/pop-shell/usr/lib/pop-shell/scripts/*

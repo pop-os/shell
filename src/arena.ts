@@ -1,6 +1,7 @@
 /** Hop slot arena allocator */
 export class Arena<T> {
     private slots: Array<null | T> = new Array();
+
     private unused: Array<number> = new Array()
 
     truncate(n: number) {

@@ -4,164 +4,43 @@ const Me = imports.misc.extensionUtils.getCurrentExtension()
 const { Clutter, Gio, GLib, Pango, St } = imports.gi
 
 import * as app_info from 'app_info'
-import * as utils from 'utils'
+import * as plugins from 'launcher_plugins'
 
 import type { ShellWindow } from 'window'
+import type { Plugin as PluginType, Response } from 'launcher_plugins'
 
+const { Plugin } = plugins
+
+import * as plugin_scripts from 'plugin_scripts'
+
+export var BUILTINS: Array<PluginType.Source> = [
+    {
+        backend: {
+            builtin: (() => {
+                const plug = new plugin_scripts.ScriptsBuiltin()
+                plug.init()
+                return plug
+            })()
+        },
+        config: {
+            name: "Shell Scripts",
+            description: "User-defined shell scripts to execute",
+            pattern: "",
+            exec: "",
+            icon: "utilities-terminal"
+        },
+        pattern: null
+    }
+]
+
+/** Launcher plugins installed locally */
 const LOCAL_PLUGINS: string = GLib.get_home_dir() + "/.local/share/pop-shell/launcher/"
+
+/** Launcher plugins that are installed system-wide */
 const SYSTEM_PLUGINS: string = "/usr/lib/pop-shell/launcher/"
 
-export namespace Response {
-    export interface Selection {
-        id: number
-        name: string
-        description: null | string
-        icon?: string
-        content_type?: string
-    }
-
-    export interface Query {
-        event: "queried",
-        selections: Array<Selection>
-    }
-
-    export interface Fill {
-        event: "fill",
-        text: string
-    }
-
-    export interface Close {
-        event: "close"
-    }
-
-    export type Response = Query | Fill | Close
-
-    export function parse(input: string): null | Response {
-        try {
-            let object = JSON.parse(input) as Response
-            switch (object.event) {
-                case "close":
-                case "fill":
-                case "queried":
-                    return object
-            }
-        } catch (e) {
-
-        }
-
-        return null
-    }
-}
-
-export namespace Plugin {
-    export interface Config {
-        name: string
-        description: string
-        pattern: string
-        exec: string
-        icon: string
-    }
-
-    export function read(file: string): Config | null {
-        global.log(`found plugin at ${file}`)
-        try {
-            let [ok, contents] = Gio.file_new_for_path(file)
-                .load_contents(null)
-
-            if (ok) return parse(imports.byteArray.toString(contents))
-        } catch (e) {
-
-        }
-
-        return null
-    }
-
-    export function parse(input: string): Config | null {
-        try {
-            return JSON.parse(input)
-        } catch (e) {
-            return null
-        }
-    }
-
-    export interface Source {
-        config: Config
-        cmd: string
-        proc: null | utils.AsyncIPC
-        pattern: null | RegExp
-    }
-
-    export function listen(plugin: Plugin.Source): null | Response.Response {
-        if (!plugin.proc) {
-            const proc = Plugin.start(plugin)
-            if (proc) {
-                plugin.proc = proc
-            } else {
-                return null
-            }
-        }
-
-        try {
-            let [bytes,] = plugin.proc.stdout.read_line(null)
-            return Response.parse(imports.byteArray.toString(bytes))
-        } catch (e) {
-            return null
-        }
-    }
-
-    export function complete(plugin: Plugin.Source): boolean {
-        return send(plugin, { event: "complete" })
-    }
-
-    export function query(plugin: Plugin.Source, value: string): boolean {
-        return send(plugin, { event: "query", value })
-    }
-
-    export function quit(plugin: Plugin.Source) {
-        if (plugin.proc) {
-            send(plugin, { event: "quit" })
-            plugin.proc = null
-        }
-    }
-
-    export function submit(plugin: Plugin.Source, id: number): boolean {
-        return send(plugin, { event: "submit", id })
-    }
-
-    export function send(plugin: Plugin.Source, event: Object): boolean {
-        let string = JSON.stringify(event)
-
-        if (!plugin.proc) {
-            plugin.proc = start(plugin)
-        }
-
-        function attempt(plugin: Plugin.Source, string: string) {
-            if (!plugin.proc) return false
-
-            try {
-                plugin.proc.stdin.write_bytes(new GLib.Bytes(string + "\n"), null)
-                return true
-            } catch (e) {
-                global.log(`failed to send message to ${plugin.config.name}: ${e}`)
-                return false
-            }
-        }
-
-        if (!attempt(plugin, string)) {
-            plugin.proc = start(plugin)
-            if (!attempt(plugin, string)) return false
-        }
-
-        return true
-    }
-
-    export function start(plugin: Plugin.Source): null | utils.AsyncIPC {
-        return utils.async_process_ipc([plugin.cmd])
-    }
-}
-
 export class LauncherService {
-    private plugins: Map<string, Plugin.Source> = new Map()
+    private plugins: Map<string, PluginType.Source> = new Map()
 
     destroy() {
         for (const plugin of this.plugins.values()) Plugin.quit(plugin)
@@ -171,9 +50,8 @@ export class LauncherService {
         this.register_plugins()
     }
 
-    query(query: string, callback: (plugin: Plugin.Source, response: Response.Response) => void) {
+    query(query: string, callback: (plugin: PluginType.Source, response: Response.Response) => void) {
         for (const plugin of this.match_query(query)) {
-            global.log(`Plugin "${plugin.config.name} matches ${query}`)
             if (Plugin.query(plugin, query)) {
                 const res = Plugin.listen(plugin)
                 if (res) callback(plugin, res)
@@ -185,8 +63,10 @@ export class LauncherService {
 
     stop_services() {
         for (const plugin of this.plugins.values()) {
-            Plugin.quit(plugin)
-            plugin.proc = null
+            if ('proc' in plugin.backend) {
+                Plugin.quit(plugin)
+                plugin.backend.proc = null
+            }
         }
     }
 
@@ -221,7 +101,7 @@ export class LauncherService {
 
                     let pattern = config.pattern ? new RegExp(config.pattern) : null
 
-                    this.plugins.set(config.name, { config, cmd, proc: null, pattern })
+                    this.plugins.set(config.name, { config, backend: { cmd, proc: null }, pattern })
                 }
             }
         } catch (e) {
@@ -229,7 +109,13 @@ export class LauncherService {
         }
     }
 
-    private *match_query(query: string): IterableIterator<Plugin.Source> {
+    private *match_query(query: string): IterableIterator<PluginType.Source> {
+        for (const plugin of BUILTINS) {
+            if (!plugin.pattern || plugin.pattern.test(query)) {
+                yield plugin
+            }
+        }
+        
         for (const plugin of this.plugins.values()) {
             if (!plugin.pattern || plugin.pattern.test(query)) {
                 yield plugin
@@ -263,7 +149,7 @@ export interface WindowOption {
 }
 
 export interface PluginOption {
-    plugin: Plugin.Source,
+    plugin: PluginType.Source,
     id: number
 }
 

@@ -2,7 +2,7 @@
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 import * as Lib from 'lib';
-import { SearchOption } from './launcher';
+import { SearchOption } from 'launcher_service';
 
 const { Clutter, St } = imports.gi;
 const { ModalDialog } = imports.ui.modalDialog;

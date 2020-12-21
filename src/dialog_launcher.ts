@@ -9,7 +9,8 @@ import * as lib from 'lib';
 import * as log from 'log';
 import * as result from 'result';
 import * as search from 'dialog_search';
-import * as launch from 'launcher';
+import * as launch from 'launcher_service';
+import * as plugins from 'launcher_plugins';
 
 import type { ShellWindow } from 'window';
 import type { Ext } from 'extension';
@@ -39,7 +40,7 @@ export class Launcher extends search.Search {
     options: Array<launch.SearchOption>
     desktop_apps: Array<[string, AppInfo]>
     service: launch.LauncherService
-    last_plugin: null | launch.Plugin.Source
+    last_plugin: null | plugins.Plugin.Source
     mode: number;
 
     constructor(ext: Ext) {
@@ -195,9 +196,9 @@ export class Launcher extends search.Search {
                 }
             } else if ("plugin" in option) {
                 const { plugin, id } = option
-                launch.Plugin.submit(plugin, id)
+                plugins.Plugin.submit(plugin, id)
 
-                const response = launch.Plugin.listen(plugin)
+                const response = plugins.Plugin.listen(plugin)
                 if (response) {
                     if (response.event === "fill") {
                         this.set_text(response.text)
@@ -212,8 +213,8 @@ export class Launcher extends search.Search {
 
         let complete = () => {
             if (this.last_plugin) {
-                launch.Plugin.complete(this.last_plugin)
-                const res = launch.Plugin.listen(this.last_plugin)
+                plugins.Plugin.complete(this.last_plugin)
+                const res = plugins.Plugin.listen(this.last_plugin)
                 if (res && res.event === "fill") {
                     this.set_text(res.text)
                 }
