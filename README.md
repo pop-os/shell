@@ -19,6 +19,7 @@ Therefore, we see an opportunity here to advance the usability of the GNOME desk
   - [Shared Features](#shared-features): Behaviors shared between stacking and auto-tiling modes
   - [Stacking Mode](#stacking-mode): Behaviors specific to the stacking mode
   - [Auto-Tile Mode](#auto-tile-mode): Behaviors specific to the auto-tiling mode
+  - [Plugins](#plugins): Details about plugins and development
 - [Developers](#developers): Guide for getting started with development
 ---
 
@@ -147,13 +148,6 @@ By default, the launcher searches windows and applications. However, you can des
 - `=`: Calculator mode, powered by [MathJS](https://mathjs.org/)
 - `/` | `~`: Navigate and open directories and files in the file system
 - `d`: Search recent documents
-### Launcher Plugins
-
-Pop Shell supports extending the functionality of its launcher, and comes with some plugins by default.
-
-
-
-For plugin developers, see [the API documentation for the launcher API](src/plugins/README.md).
 
 ### Inner and Outer Gaps
 
@@ -214,6 +208,26 @@ There is file `$XDG_CONFIG_HOME/pop-shell/config.json` where you can add the fol
 For example, doing `xprop` on GNOME Settings (or GNOME Control Center), the WM_CLASS values are `gnome-control-center` and `Gnome-control-center`. Use the second value (Gnome-control-center), which pop-shell will read. `title` is optional.
 
 After applying changes in the `config.json`, you can reload the tiling if it doesnt work the first time.
+
+## Plugins
+
+### Launcher Plugins
+
+Pop Shell supports extending the functionality of its launcher, and comes with some plugins by default. System plugins are stored in `/usr/lib/pop-shell/launcher/`, while user plugins are stored in `$HOME/.local/share/pop-shell/launcher/`. Some plugins are included by default:
+
+- [calc](src/plugins/calc)
+- [files](src/plugins/files)
+- [pulse](src/plugins/pulse)
+- [recent](src/plugins/recent)
+- [terminal](src/plugins/terminal)
+- [web](src/plugins/web)
+- [scripts](src/plugin_scripts.ts)
+
+> Plugin developers, see [the API documentation for the launcher API](src/plugins/README.md).
+
+### Scripts Plugin
+
+This builtin plugin displays scripts in search results. Included with Pop Shell is a set of scripts for log out, reboot, and power off. Scripts are stored in `/usr/lib/pop-shell/scripts/` and `$HOME/.local/share/pop-shell/scripts/`. [See the included scripts as an example of how to create our own](src/scripts/).
 
 ## Developers
 
