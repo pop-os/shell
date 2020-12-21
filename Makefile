@@ -56,7 +56,7 @@ compile: convert metadata.json schemas
 	done
 
 # Rebuild, install, reconfigure local settings, restart shell, and listen to journalctl logs
-debug: depcheck compile install configure enable restart-shell listen
+debug: depcheck compile install install-system76-plugins configure enable restart-shell listen
 
 depcheck:
 	@echo depcheck
@@ -84,6 +84,11 @@ install:
 	cp -r src/plugins/* $(PLUGIN_BASE)
 	cp -r src/scripts/* $(SCRIPTS_BASE)
 	chmod +x $(PLUGIN_BASE)/**/*.js $(SCRIPTS_BASE)/*
+
+install-system76-plugins:
+	mkdir -p $(SCRIPTS_BASE)
+	cp -r src/scripts_system76/* $(SCRIPTS_BASE)
+	chmod +x $(SCRIPTS_BASE)/*
 
 uninstall:
 	rm -rf $(INSTALLBASE)/$(INSTALLNAME)

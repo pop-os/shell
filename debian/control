@@ -7,11 +7,17 @@ Standards-Version: 3.9.8
 Homepage: https://github.com/pop-os/shell
 Vcs-Git: https://github.com/pop-os/shell
 
+Package: pop-shell-plugins-system76-power
+Architecture: all
+Depends: pop-shell, system76-power
+Description: Launcher integration with system76-power
+
 Package: pop-shell
 Architecture: all
 Depends:
     ${misc:Depends},
     pop-shell-shortcuts
+Recommends: pop-shell-plugins-system76-power
 Replaces: gnome-control-center-data (<< 1:3.38.1-2ubuntu1pop1~)
 Breaks: gnome-control-center-data (<< 1:3.38.1-2ubuntu1pop1~)
 Description: Pop!_OS Shell

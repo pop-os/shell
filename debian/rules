@@ -5,11 +5,14 @@
 #export DH_VERBOSE=1
 
 BASEDIR=debian/pop-shell/usr/share/gnome-shell/extensions/pop-shell@system76.com
+DESTDIR=debian/tmp
 
 %:
 	dh $@
 
 override_dh_install:
+	make install-system76-plugins DESTDIR=$(DESTDIR)
+	dh_movefiles
 	dh_install
 	rm -rf $(BASEDIR)/schemas
 
