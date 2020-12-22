@@ -62,32 +62,32 @@ class App {
     }
 
     query(input) {
-        input = input.substr(2)
+        input = input.substring(2).trim()
+        
         const items = this.items()
 
         let selections = new Array()
 
         if (items) {
             const normalized = input.toLowerCase()
+
             this.results = items
                 .filter(item => item.display_name.toLowerCase().includes(normalized) || item.uri.toLowerCase().includes(normalized))
-                .slice(0, 8)
                 .sort((a, b) => a.display_name.localeCompare(b.display_name))
+                .slice(0, 9)
 
+            let id = 0
+            
             for (const item of this.results) {
                 selections.push({
-                    name: `${item.display_name}: ${decodeURI(item.uri)}`,
-                    description: null,
+                    name: item.display_name,
+                    description: decodeURI(item.uri),
                     content_type: item.mime,
-                    id: 0
+                    id
                 })
-            }
-        }
 
-        let id = 0
-        for (let selection of selections) {
-            selection.id = id
-            id += 1
+                id += 1
+            }
         }
 
         this.send({ event: "queried", selections })
