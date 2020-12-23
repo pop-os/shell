@@ -17,7 +17,7 @@ import type { Ext } from './extension';
 import { Stack } from './stack';
 
 const { Arena } = arena;
-const { Meta } = imports.gi;
+const { GLib, Meta } = imports.gi;
 const { Movement } = movement;
 
 const DOWN = Movement.DOWN;
@@ -70,6 +70,8 @@ export class Forest extends Ecs.World {
     /** Likewise for detachments */
     on_detach: (child: Entity) => void = () => { };
 
+    arranging: SignalID | null = null
+
     constructor() {
         super();
     }
@@ -80,38 +82,55 @@ export class Forest extends Ecs.World {
 
     /** Measures and arranges windows in the tree from the given fork to the specified area. */
     tile(ext: Ext, fork: Fork.Fork, area: Rectangle, ignore_reset: boolean = true) {
-        this.measure(ext, fork, area);
-        this.arrange(ext, fork.workspace, ignore_reset);
+        GLib.timeout_add(GLib.PRIORITY_DEFAULT, 32, () => {
+            if (this.arranging !== null) return true
+
+            this.measure(ext, fork, area);
+            this.arrange(ext, fork.workspace, ignore_reset);
+
+            return false
+        })
     }
 
     /** Place all windows into their calculated positions. */
     arrange(ext: Ext, _workspace: number, _ignore_reset: boolean = false) {
-        for (const [entity, r] of this.requested) {
-            const window = ext.windows.get(entity);
-            if (!window) continue;
+        const values = this.requested.entries()
 
-            let on_complete = () => {
-                if (!window.actor_exists()) return
-            }
+        this.arranging = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 32, () => {
+            const next = values.next()
+            if (!next.done) {
+                const [entity, r] = next.value
 
-            if (ext.tiler.window) {
-                if (Ecs.entity_eq(ext.tiler.window, entity)) {
-                    on_complete = () => {
-                        ext.set_overlay(window.rect());
+                const window = ext.windows.get(entity);
+                if (!window) return true
 
-                        if (!window.actor_exists()) return
+                let on_complete = () => {
+                    if (!window.actor_exists()) return true
+                }
+
+                if (ext.tiler.window) {
+                    if (Ecs.entity_eq(ext.tiler.window, entity)) {
+                        on_complete = () => {
+                            ext.set_overlay(window.rect());
+
+                            if (!window.actor_exists()) return true
+                        }
                     }
                 }
+
+                move_window(ext, window, r.rect, on_complete);
+                return true
+            } else {
+                for (const [stack,] of this.stack_updates.splice(0)) {
+                    ext.auto_tiler?.update_stack(ext, stack);
+                }
+
+                this.requested.clear();
+                this.arranging = null
+
+                return false
             }
-
-            move_window(ext, window, r.rect, on_complete);
-        }
-
-        this.requested.clear();
-
-        for (const [stack,] of this.stack_updates.splice(0)) {
-            ext.auto_tiler?.update_stack(ext, stack);
-        }
+        })
     }
 
     attach_fork(ext: Ext, fork: Fork.Fork, window: Entity, is_left: boolean) {

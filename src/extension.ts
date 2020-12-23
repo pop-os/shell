@@ -655,10 +655,6 @@ export class Ext extends Ecs.System<ExtEvent> {
         this.delete_entity(win);
     }
 
-    on_display_move(_from_id: number, _to_id: number) {
-        if (!this.auto_tiler) return;
-    }
-
     /** Triggered when a window has been focused */
     on_focused(win: Window.ShellWindow) {
         this.exit_modes();
