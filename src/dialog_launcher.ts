@@ -60,10 +60,10 @@ export class Launcher extends search.Search {
             this.last_plugin = null
 
             this.service.query(pattern, (plugin, response) => {
-                if (!this.last_plugin) this.last_plugin = plugin;
-
                 if (response.event === "queried") {
                     for (const selection of response.selections) {
+                        if (!this.last_plugin) this.last_plugin = plugin;
+
                         let icon = null
                         if (selection.icon) {
                             icon = { name: selection.icon }
