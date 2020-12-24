@@ -869,5 +869,5 @@ function move_window(ext: Ext, window: ShellWindow, rect: Rectangular, on_comple
     window.move(ext, rect, () => {
         on_complete();
         ext.size_signals_unblock(window);
-    });
+    }, false);
 }
