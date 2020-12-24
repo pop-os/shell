@@ -274,7 +274,7 @@ export class ShellWindow {
         return xid ? xprop.may_decorate(xid) : false;
     }
 
-    move(ext: Ext, rect: Rectangular, on_complete?: () => void) {
+    move(ext: Ext, rect: Rectangular, on_complete?: () => void, animate: boolean = true) {
         if ((!this.same_workspace() && this.is_maximized())) {
             return
         }
@@ -302,7 +302,7 @@ export class ShellWindow {
                 }
             };
 
-            if (ext.animate_windows && !ext.init) {
+            if (animate && ext.animate_windows && !ext.init) {
                 const current = meta.get_frame_rect();
                 const buffer = meta.get_buffer_rect();
 
