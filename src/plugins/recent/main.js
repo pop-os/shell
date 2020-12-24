@@ -72,7 +72,7 @@ class App {
             const normalized = input.toLowerCase()
 
             this.results = items
-                .filter(item => item.display_name.toLowerCase().includes(normalized) || item.uri.toLowerCase().includes(normalized))
+                .filter(item => item.display_name.toLowerCase().includes(normalized))
                 .sort((a, b) => a.display_name.localeCompare(b.display_name))
                 .slice(0, 9)
 
