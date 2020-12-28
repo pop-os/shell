@@ -647,10 +647,8 @@ export class Tiler {
 
                 if (!tree_swapped) {
                     ext.size_signals_block(meta);
-                    const meta_entity = this.window;
                     meta.move(ext, ext.overlay, () => {
                         ext.size_signals_unblock(meta);
-                        ext.add_tag(meta_entity, Tags.Tiled);
                     });
                 }
             }

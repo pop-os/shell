@@ -850,7 +850,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     on_grab_end(meta: Meta.Window, op?: any) {
         let win = this.get_window(meta);
 
-        if (null === win || !win.is_tilable(this)) {
+        if (null === win || !win.is_tilable(this) || this.contains_tag(win.entity, Tags.Floating)) {
             return;
         }
 
@@ -1691,14 +1691,6 @@ export class Ext extends Ecs.System<ExtEvent> {
         }
 
         return matched;
-    }
-
-    * tiled_windows(): IterableIterator<Entity> {
-        for (const entity of this.entities()) {
-            if (this.contains_tag(entity, Tags.Tiled)) {
-                yield entity;
-            }
-        }
     }
 
     toggle_tiling() {

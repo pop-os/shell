@@ -118,12 +118,39 @@ export class ShellWindow {
     }
 
     private bind_window_events() {
-        this.ext.window_signals.get_or(this.entity, () => new Array())
+        const ext = this.ext
+        const { entity } = this
+        const { Floating } = Tags
+
+        ext.window_signals.get_or(this.entity, () => new Array())
             .push(
                 this.meta.connect('size-changed', () => { this.window_changed() }),
                 this.meta.connect('position-changed', () => { this.window_changed() }),
                 this.meta.connect('workspace-changed', () => { this.workspace_changed() }),
                 this.meta.connect('raised', () => { this.window_raised() }),
+
+                // When the title changes after a window is opened, check it against tiling exceptions again
+                this.meta.connect('notify::title', () => {
+                    ext.register_fn(() => {
+                        if (ext.auto_tiler) {
+                            const at = ext.auto_tiler;
+        
+                            if (this.is_tilable(ext)) {
+                                if (ext.contains_tag(entity, Floating)) {
+                                    ext.delete_tag(entity, Floating);
+                                    at.auto_tile(ext, this, false);
+                                }
+                            } else if (!ext.contains_tag(entity, Floating)) {
+                                const fork_entity = at.attached.get(entity);
+                                if (fork_entity) {
+                                    at.detach_window(ext, entity);
+                                }
+        
+                                ext.add_tag(entity, Floating);
+                            }
+                        }
+                    })
+                })
             );
     }
 
@@ -261,8 +288,7 @@ export class ShellWindow {
                 && !ext.conf.window_shall_float(wm_class, this.meta.get_title());
         };
 
-        return !ext.contains_tag(this.entity, Tags.Floating)
-            && tile_checks()
+        return tile_checks()
     }
 
     is_transient(): boolean {
