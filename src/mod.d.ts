@@ -7,7 +7,6 @@ interface Global {
     get_current_time(): number;
     get_pointer(): [number, number];
     get_window_actors(): Array<Meta.WindowActor>;
-    get_work_area_for_monitor(i: number): null | Rectangular;
     log(msg: string): void;
 
     display: Meta.Display;

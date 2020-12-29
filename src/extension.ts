@@ -145,6 +145,8 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     was_locked: boolean = false;
 
+    private workareas_update: null | SignalID = null
+
     /** Record of misc. global objects and their attached signals */
     private signals: Map<GObject.Object, Array<SignalID>> = new Map();
 
@@ -599,7 +601,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     monitor_work_area(monitor: number): Rectangle {
-        const meta = display.get_workspace_manager()
+        const meta = wom
             .get_active_workspace()
             .get_work_area_for_monitor(monitor);
 
@@ -1458,7 +1460,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             return true;
         });
 
-        const workspace_manager = display.get_workspace_manager();
+        const workspace_manager = wom;
 
         for (const [, ws] of iter_workspaces(workspace_manager)) {
             let index = ws.index();
@@ -1794,7 +1796,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         }
     }
 
-    update_display_configuration(_workareas_only: boolean) {
+    update_display_configuration(workareas_only: boolean) {
         if (!this.auto_tiler || sessionMode.isLocked) return
 
         if (this.ignore_display_update) {
@@ -1805,7 +1807,42 @@ export class Ext extends Ecs.System<ExtEvent> {
         // Ignore the update if there are no monitors to assign to
         if (layoutManager.monitors.length === 0) return
 
-        if (this.displays_updating !== null) GLib.source_remove(this.displays_updating)
+        function primary_display_ready(ext: Ext): boolean {
+            const primary_display = global.display.get_primary_monitor()
+            const area = global.display.get_monitor_geometry(primary_display)
+            const work_area = ext.monitor_work_area(primary_display)
+            
+            if (!area || !work_area) return false
+
+            return !(area.width === work_area.width && area.height === work_area.height)
+        }
+
+        function displays_ready(): boolean {
+            for (let i = 0; i < global.display.get_n_monitors(); i += 1) {
+                const display = global.display.get_monitor_geometry(i)
+                
+                if (!display) return false
+
+                if (display.width === 0 || display.height === 0) return false
+            }
+
+            return true
+        }
+
+        if (!displays_ready() || !primary_display_ready(this)) {
+            if (this.displays_updating !== null) return
+            if (this.workareas_update !== null) GLib.source_remove(this.workareas_update)
+
+            this.workareas_update = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 500, () => {
+                this.register_fn(() => {
+                    this.update_display_configuration(workareas_only)
+                })
+            
+                return false
+            })
+
+            return
+        }
 
         // Update every tree on each display with the new dimensions
         const update_tiling = () => {
@@ -1814,10 +1851,13 @@ export class Ext extends Ecs.System<ExtEvent> {
             for (const f of this.auto_tiler.forest.forks.values()) {
                 if (!f.is_toplevel) continue
 
-                const display = this.displays.get(f.monitor);
+                const display = this.monitor_work_area(f.monitor)
 
                 if (display) {
-                    f.set_area(display.ws)
+                    const area = new Rect.Rectangle([display.x, display.y, display.width, display.height])
+
+                    f.smart_gapped = false
+                    f.set_area(area.clone());
                     this.auto_tiler.update_toplevel(this, f, f.monitor, this.settings.smart_gaps());
                 }
             }
@@ -1826,13 +1866,15 @@ export class Ext extends Ecs.System<ExtEvent> {
         let updated = new Map()
         let changes = new Map()
 
-        // Records which display's windows were moved to what new display's ID
-        for (const [entity, w] of this.windows.iter()) {
-            if (!w.actor_exists()) continue
+        if (!workareas_only) {
+            // Records which display's windows were moved to what new display's ID
+            for (const [entity, w] of this.windows.iter()) {
+                if (!w.actor_exists()) continue
 
-            this.monitors.with(entity, ([mon,]) => {
-                changes.set(mon, w.meta.get_monitor())
-            })
+                this.monitors.with(entity, ([mon,]) => {
+                    changes.set(mon, w.meta.get_monitor())
+                })
+            }
         }
 
         // Fetch a new list of monitors
@@ -1845,29 +1887,21 @@ export class Ext extends Ecs.System<ExtEvent> {
             updated.set(mon.index, { area, ws })
         }
 
-        function compare_maps<K, V>(map1: Map<K, V>, map2: Map<K, V>) {
-            if (map1.size !== map2.size) {
-                return false
-            }
+        if (workareas_only) {
+            update_tiling()
 
-            let cmp
-
-            for (let [key, val] of map1) {
-                cmp = map2.get(key)
-                if (cmp !== val || (cmp === undefined && !map2.has(key))) {
-                    return false
-                }
-            }
-
-            return true
+            return
         }
 
-        // Delay actions until 3 seconds later, in case of temporary connection loss
+        if (this.displays_updating !== null) GLib.source_remove(this.displays_updating)
+        if (this.workareas_update !== null) GLib.source_remove(this.workareas_update)
+
+        // Delay actions in case of temporary connection loss
         this.displays_updating = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 2000, () => {
             (() => {
                 if (!this.auto_tiler) return
 
-                if (compare_maps(this.displays, updated)) {
+                if (utils.compare_maps(this.displays, updated)) {
                     return
                 }
 
@@ -2053,7 +2087,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     /** Fetch a workspace by its index */
     workspace_by_id(id: number): Meta.Workspace | null {
-        return display.get_workspace_manager().get_workspace_by_index(id);
+        return wom.get_workspace_by_index(id);
     }
 
     workspace_id(window: Window.ShellWindow | null = null): [number, number] {
