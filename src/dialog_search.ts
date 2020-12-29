@@ -72,12 +72,13 @@ export class Search {
                 this.close();
                 cancel();
                 return;
-            } else if (c === 65289) {
+            } else if (c === 65366) { // HACK: code for either pgup/pgdown, need help as I don't how to remove this section
                 this.complete_cb()
             }
 
             let s = event.get_state();
-            if (c == 65362 || (s == Clutter.ModifierType.CONTROL_MASK && c == 107) || (s == Clutter.ModifierType.CONTROL_MASK && c == 112)) {
+            if (c == 65362 || (s == Clutter.ModifierType.CONTROL_MASK && c == 107) || (s == Clutter.ModifierType.CONTROL_MASK && c == 112) ||
+                c == 65056) {
                 // Up arrow was pressed
                 if (0 < this.active_id) {
                     this.select_id(this.active_id - 1)
@@ -85,7 +86,8 @@ export class Search {
                 else if (this.active_id == 0) {
                     this.select_id(this.widgets.length - 1)
                 }
-            } else if (c == 65364 || (s == Clutter.ModifierType.CONTROL_MASK && c == 106) || (s == Clutter.ModifierType.CONTROL_MASK && c == 110)) {
+            } else if (c == 65364 || (s == Clutter.ModifierType.CONTROL_MASK && c == 106) || (s == Clutter.ModifierType.CONTROL_MASK && c == 110) ||
+                c == 65289) {
                 // Down arrow was pressed
                 if (this.active_id + 1 < this.widgets.length) {
                     this.select_id(this.active_id + 1)
