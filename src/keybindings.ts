@@ -69,7 +69,11 @@ export class Keybindings {
 
             "pop-workspace-up": () => ext.move_workspace(Meta.DisplayDirection.UP),
 
-            "pop-workspace-down": () => ext.move_workspace(Meta.DisplayDirection.DOWN)
+            "pop-workspace-down": () => ext.move_workspace(Meta.DisplayDirection.DOWN),
+
+            "pop-workspace-left": () => ext.move_workspace(Meta.DisplayDirection.LEFT),
+
+            "pop-workspace-right": () => ext.move_workspace(Meta.DisplayDirection.RIGHT)
         };
     }
 

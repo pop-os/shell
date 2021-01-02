@@ -1046,13 +1046,13 @@ export class Ext extends Ecs.System<ExtEvent> {
 
             if (neighbor && neighbor.index() !== ws.index()) {
                 move_to_neighbor(neighbor);
-            } else if (direction === Meta.MotionDirection.DOWN && !last_window()) {
+            } else if ((direction === Meta.MotionDirection.DOWN || direction === Meta.MotionDirection.RIGHT) && !last_window()) {
                 if (this.settings.dynamic_workspaces()) {
                     neighbor = wom.append_new_workspace(false, global.get_current_time());
                 } else {
                     return;
                 }
-            } else if (direction === Meta.MotionDirection.UP && ws.index() === 0) {
+            } else if ((direction === Meta.MotionDirection.UP || direction === Meta.MotionDirection.LEFT) && ws.index() === 0) {
                 if (this.settings.dynamic_workspaces()) {
                     // Add a new workspace, to push everyone to free up the first one
                     wom.append_new_workspace(false, global.get_current_time());
@@ -1089,6 +1089,14 @@ export class Ext extends Ecs.System<ExtEvent> {
 
             case Meta.DisplayDirection.UP:
                 workspace_move(Meta.MotionDirection.UP)
+                break;
+
+            case Meta.DisplayDirection.RIGHT:
+                workspace_move(Meta.MotionDirection.RIGHT)
+                break;
+
+            case Meta.DisplayDirection.LEFT:
+                workspace_move(Meta.MotionDirection.LEFT)
                 break;
         }
 

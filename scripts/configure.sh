@@ -46,10 +46,6 @@ set_keybindings() {
     dconf write ${KEYS_GNOME_SHELL}/toggle-message-tray "@as ['<Super>v']"
     # Show the activities overview: disable <Super>s
     dconf write ${KEYS_GNOME_SHELL}/toggle-overview "@as []"
-    # Switch to workspace left: disable <Super>Left
-    dconf write ${KEYS_GNOME_WM}/switch-to-workspace-left "@as []"
-    # Switch to workspace right: disable <Super>Right
-    dconf write ${KEYS_GNOME_WM}/switch-to-workspace-right "@as []"
     # Maximize window: disable <Super>Up
     dconf write ${KEYS_GNOME_WM}/maximize "@as []"
     # Restore window: disable <Super>Down
@@ -68,12 +64,20 @@ set_keybindings() {
     dconf write ${KEYS_GNOME_WM}/move-to-workspace-up "@as []"
     # Move window one monitor to the right
     dconf write ${KEYS_GNOME_WM}/move-to-monitor-right "@as []"
+    # Move window one workspace left
+    dconf write ${KEYS_GNOME_WM}/move-to-workspace-left "@as []"
+    # Move window one workspace right
+    dconf write ${KEYS_GNOME_WM}/move-to-workspace-right "@as []"
 
     # Super + Ctrl + direction keys, change workspaces, move focus between monitors
     # Move to workspace below
     dconf write ${KEYS_GNOME_WM}/switch-to-workspace-down "['<Primary><Super>Down','<Primary><Super>${down}']"
     # Move to workspace above
     dconf write ${KEYS_GNOME_WM}/switch-to-workspace-up "['<Primary><Super>Up','<Primary><Super>${up}']"
+    # Switch to workspace left (default keys from Gnome 3.38)
+    dconf write ${KEYS_GNOME_WM}/switch-to-workspace-left "['<Control><Alt>Left']"
+    # Switch to workspace right
+    dconf write ${KEYS_GNOME_WM}/switch-to-workspace-right "['<Control><Alt>Right']"
 
     # Disable tiling to left / right of screen
     dconf write ${KEYS_MUTTER}/toggle-tiled-left "@as []"

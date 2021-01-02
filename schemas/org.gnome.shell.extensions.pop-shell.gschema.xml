@@ -197,6 +197,16 @@
             <summary>Move window to the upper workspace</summary>
         </key>
 
+        <key type="as" name="pop-workspace-right">
+            <default><![CDATA[['<Control><Shift><Alt>Right']]]></default>
+            <summary>Move window to workspace on the right</summary>
+        </key>
+
+        <key type="as" name="pop-workspace-left">
+            <default><![CDATA[['<Control><Shift><Alt>Left']]]></default>
+            <summary>Move window to workspace on the left</summary>
+        </key>
+
         <key type="as" name="pop-monitor-down">
             <default><![CDATA[['<Super><Shift><Primary>Down','<Super><Shift><Primary>j']]]></default>
             <summary>Move window to the lower monitor</summary>
