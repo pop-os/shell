@@ -68,25 +68,30 @@ class App {
                 this.name_base = 'Crates.io'
                 break
 
-			case 'arch':
+            case 'arch':
                 this.query_base = 'https://wiki.archlinux.org/index.php/'
                 this.name_base = 'Arch Wiki'
-				break
+                break
 
-			case 'pp':
-				this.query_base = 'https://pop-planet.info/forums/search/1/?q='
-				this.name_base = 'Pop!_Planet'
-				break
+            case 'pp':
+                this.query_base = 'https://pop-planet.info/forums/search/1/?q='
+                this.name_base = 'Pop!_Planet'
+                break
 
-			case 'ppw':
-				this.query_base = 'https://pop-planet.info/wiki/?search='
-				this.name_base = 'Pop!_Planet Wiki'
-				break
+            case 'ppw':
+                this.query_base = 'https://pop-planet.info/wiki/?search='
+                this.name_base = 'Pop!_Planet Wiki'
+                break
 
-			case 'rdt':
-				this.query_base = 'https://www.reddit.com/search/?q='
-				this.name_base = 'Reddit'
-				break
+            case 'rdt':
+                this.query_base = 'https://www.reddit.com/search/?q='
+                this.name_base = 'Reddit'
+                break
+
+            case 'bc':
+                this.query_base = 'https://bandcamp.com/search?q='
+                this.name_base = 'Bandcamp'
+                break
 
             default:
                 this.query_base = 'https://www.duckduckgo.com/?q='
