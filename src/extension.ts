@@ -567,7 +567,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
             const win = this.windows.get(window)
 
-            if (win && win.meta.get_monitor() === monitor) tiled_windows.push(win)
+            if (win && !win.reassignment && win.meta.get_monitor() === monitor) tiled_windows.push(win)
         }
 
         cancel:
@@ -1925,6 +1925,16 @@ export class Ext extends Ecs.System<ExtEvent> {
             })
         }
 
+        function mark_for_reassignment(ext: Ext, fork: Ecs.Entity) {
+            for (const win of forest.iter(fork, node.NodeKind.WINDOW)) {
+                if (win.inner.kind === 2) {
+                    const entity = win.inner.entity
+                    const window = ext.windows.get(entity)
+                    if (window) window.reassignment = true
+                }
+            }
+        }
+
         const [ old_primary, old_displays ] = this.displays
 
         const changes = new Map<number, number>()
@@ -1966,6 +1976,8 @@ export class Ext extends Ecs.System<ExtEvent> {
                 for (const f of forest.forks.values()) {
                     const display = updated.get(primary_display)
                     if (display && f.monitor === old_primary) {
+                        mark_for_reassignment(this, f.entity)
+
                         f.monitor = primary_display
                         f.workspace = 0
                         migrations.push([f, primary_display, display.ws, true])
@@ -2034,7 +2046,10 @@ export class Ext extends Ecs.System<ExtEvent> {
                             }
                         }
 
-                        if (migration) migrations.push(migration)
+                        if (migration) {
+                            mark_for_reassignment(this, migration[0].entity)
+                            migrations.push(migration)
+                        }
                     }
                 }
 
