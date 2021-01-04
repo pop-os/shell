@@ -1964,29 +1964,6 @@ export class Ext extends Ecs.System<ExtEvent> {
         const forest = this.auto_tiler.forest
 
         if (old_displays.size === updated.size) {
-            if (primary_display !== old_primary) {
-                let assigned_monitors = new Set<number>()
-
-                for (const [old_mon, new_mon] of changes) {
-                    if (old_mon === new_mon) {
-                        assigned_monitors.add(new_mon)
-                    }
-                }
-
-                for (const f of forest.forks.values()) {
-                    const display = updated.get(primary_display)
-                    if (display && f.monitor === old_primary) {
-                        mark_for_reassignment(this, f.entity)
-
-                        f.monitor = primary_display
-                        f.workspace = 0
-                        migrations.push([f, primary_display, display.ws, true])
-                    }
-                }
-
-                apply_migrations(assigned_monitors)
-            }
-
             update_tiling()
 
             this.displays = [primary_display, updated]
