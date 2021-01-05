@@ -117,6 +117,7 @@ declare namespace Clutter {
         get_parent(): Clutter.Actor | null;
         get_stage(): Clutter.Actor | null;
         get_transition(param: string): any | null;
+        grab_key_focus(): void;
         is_visible(): boolean;
         queue_redraw(): void;
         remove_all_children(): void;
@@ -290,6 +291,5 @@ declare namespace St {
         clutter_text: any;
 
         get_clutter_text(): Clutter.Text;
-        grab_key_focus(): void;
     }
 }

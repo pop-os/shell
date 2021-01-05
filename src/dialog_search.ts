@@ -21,6 +21,7 @@ export class Search {
     private list: St.Widget;
     private text: Clutter.Text;
     private widgets: Array<St.Widget>;
+    private scroller: St.Widget;
 
     private apply_cb: (index: number) => boolean;
     private cancel_cb: () => void;
@@ -130,8 +131,13 @@ export class Search {
             vertical: true,
         });
 
+        const scroller = new St.ScrollView()
+        scroller.add_actor(this.list)
+
         this.dialog.contentLayout.add(this.entry);
-        this.dialog.contentLayout.add(this.list);
+        this.dialog.contentLayout.add(scroller);
+
+        this.scroller = scroller
 
         // Ensure that the width is at least 640 pixels wide.
         this.dialog.contentLayout.width = Math.max(Lib.current_monitor().width / 4, 640);
@@ -167,7 +173,7 @@ export class Search {
     }
 
     list_max() {
-        return 9;
+        return 18;
     }
 
     reset() {
@@ -182,9 +188,10 @@ export class Search {
     }
 
     select() {
-        this.widgets[this.active_id].add_style_pseudo_class(
-            "select"
-        );
+        const widget = this.widgets[this.active_id]
+        widget.add_style_pseudo_class("select")
+
+        imports.misc.util.ensureActorVisibleInScrollView(this.scroller, widget)
     }
 
     select_id(id: number) {
@@ -231,6 +238,13 @@ export class Search {
         if (this.widgets.length != 0) {
             this.select();
             this.select_cb(0);
+        }
+
+        const vscroll = (this.scroller as any).get_vscroll_bar()
+        if ((this.scroller as any).vscrollbar_visible) {
+            vscroll.show()
+        } else {
+            vscroll.hide()
         }
     }
 

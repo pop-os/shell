@@ -74,7 +74,7 @@ class App {
             this.results = items
                 .filter(item => item.display_name.toLowerCase().includes(normalized))
                 .sort((a, b) => a.display_name.localeCompare(b.display_name))
-                .slice(0, 9)
+                .slice(0, 20)
 
             let id = 0
             

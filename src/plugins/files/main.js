@@ -98,7 +98,7 @@ class App {
                         directory
                     })
 
-                    if (this.selections.length === 10) break
+                    if (this.selections.length === 20) break
                 }
             }
 
