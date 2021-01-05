@@ -239,6 +239,13 @@ export class Search {
             this.select();
             this.select_cb(0);
         }
+
+        const vscroll = (this.scroller as any).get_vscroll_bar()
+        if ((this.scroller as any).vscrollbar_visible) {
+            vscroll.show()
+        } else {
+            vscroll.hide()
+        }
     }
 
     set_text(text: string) {
