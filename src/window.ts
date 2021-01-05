@@ -57,6 +57,9 @@ export class ShellWindow {
     ignore_detach: boolean = false;
     was_attached_to?: [Entity, boolean | number];
 
+    // Awaiting reassignment after a display update
+    reassignment: boolean = false
+
     // True if this window is currently smart-gapped
     smart_gapped: boolean = false;
 

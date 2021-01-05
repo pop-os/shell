@@ -285,6 +285,7 @@ export class Fork {
                         let window = ext.windows.get(child.inner.entity);
                         if (window) {
                             ext.size_signals_block(window);
+                            window.reassignment = false
                             window.known_workspace = workspace
                             window.meta.change_workspace_by_index(workspace, true)
                             ext.monitors.insert(window.entity, [monitor, workspace])

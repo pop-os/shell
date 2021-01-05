@@ -143,3 +143,20 @@ export function gnome_version(): null | string {
 
     return imports.byteArray.toString(out).split(' ')[2]
 }
+
+export function map_eq<K, V>(map1: Map<K, V>, map2: Map<K, V>) {
+    if (map1.size !== map2.size) {
+        return false
+    }
+
+    let cmp
+
+    for (let [key, val] of map1) {
+        cmp = map2.get(key)
+        if (cmp !== val || (cmp === undefined && !map2.has(key))) {
+            return false
+        }
+    }
+
+    return true
+}
