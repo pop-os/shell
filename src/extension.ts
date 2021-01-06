@@ -22,6 +22,7 @@ import * as Executor from 'executor';
 import * as movement from 'movement';
 import * as stack from 'stack';
 import * as add_exception from 'dialog_add_exception';
+import * as exec from 'executor';
 
 import type { Entity } from 'ecs';
 import type { ExtEvent } from 'events';
@@ -194,10 +195,6 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     /** Calculates window placements when tiling and focus-switching */
     tiler: Tiling.Tiler = new Tiling.Tiler(this);
-
-    tiler_active: boolean = false;
-
-    tiler_queue: null | SignalID = null;
 
     constructor() {
         super(new Executor.GLibExecutor());
@@ -1454,29 +1451,10 @@ export class Ext extends Ecs.System<ExtEvent> {
     signals_attach() {
         this.conf_watch = this.attach_config();
 
-        this.tiler_queue = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 100, () => {
-            if (this.tiler_active) return true;
-
-            const m = this.tiler.movements.shift();
-
-            if (m) {
-                this.tiler_active = true;
-
-                const callback = () => {
-                    m();
-                    this.tiler_active = false;
-                };
-
-                if (!this.schedule_idle(() => {
-                    callback();
-                    return false;
-                })) {
-                    callback();
-                }
-            }
-
-            return true;
-        });
+        this.tiler.queue.start(100, (movement) => {
+            movement()
+            return true
+        })
 
         const workspace_manager = wom;
 
@@ -1661,9 +1639,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             this.conf_watch = null;
         }
 
-        if (this.tiler_queue !== null) {
-            GLib.source_remove(this.tiler_queue)
-        }
+        this.tiler.queue.stop()
 
         this.signals.clear();
     }
@@ -1888,41 +1864,37 @@ export class Ext extends Ecs.System<ExtEvent> {
             }
         }
 
-        let migrations: Array<[Fork, number, Rectangle, boolean]> = new Array()
+        type Migration = [Fork, number, Rectangle, boolean]
+
+        let migrations: Array<Migration> = new Array()
 
         const apply_migrations = (assigned_monitors: Set<number>) => {
             if (!migrations) return
 
-            const iterator = migrations[Symbol.iterator]()
+            new exec.OnceExecutor<Migration, Migration[]>(migrations)
+                .start(
+                    500,
+                    ([fork, new_monitor, workspace, find_workspace]) => {
+                        let new_workspace
 
-            GLib.timeout_add(GLib.PRIORITY_LOW, 500, () => {
-                let next: null | [Fork, number, Rectangle, boolean] = iterator.next().value;
-
-                if (next) {
-                    const [fork, new_monitor, workspace, find_workspace] = next
-                    let new_workspace
-
-                    if (find_workspace) {
-                        if (assigned_monitors.has(new_monitor)) {
-                            [new_workspace] = this.find_unused_workspace(new_monitor)
+                        if (find_workspace) {
+                            if (assigned_monitors.has(new_monitor)) {
+                                [new_workspace] = this.find_unused_workspace(new_monitor)
+                            } else {
+                                assigned_monitors.add(new_monitor)
+                                new_workspace = 0
+                            }
                         } else {
-                            assigned_monitors.add(new_monitor)
-                            new_workspace = 0
+                            new_workspace = fork.workspace
                         }
-                    } else {
-                        new_workspace = fork.workspace
-                    }
 
-                    fork.migrate(this, forest, workspace, new_monitor, new_workspace);
-                    fork.set_ratio(fork.length() / 2)
+                        fork.migrate(this, forest, workspace, new_monitor, new_workspace);
+                        fork.set_ratio(fork.length() / 2)
 
-                    return true
-                }
-
-                update_tiling()
-
-                return false
-            })
+                        return true
+                    },
+                    () => update_tiling()
+            )
         }
 
         function mark_for_reassignment(ext: Ext, fork: Ecs.Entity) {

@@ -11,6 +11,7 @@ import * as Tags from 'tags';
 import * as Tweener from 'tweener';
 import * as window from 'window';
 import * as geom from 'geom';
+import * as exec from 'executor';
 
 import type { Entity } from './ecs';
 import type { Rectangle } from './rectangle';
@@ -35,11 +36,11 @@ export class Tiler {
 
     window: Entity | null = null;
 
-    movements: Array<() => void> = new Array();
-
     moving: boolean = false;
 
     private swap_window: Entity | null = null;
+
+    queue: exec.ChannelExecutor<() => void> = new exec.ChannelExecutor()
 
     constructor(ext: Ext) {
         this.keybindings = {
@@ -187,8 +188,8 @@ export class Tiler {
     move(ext: Ext, x: number, y: number, w: number, h: number, direction: Direction, focus: () => window.ShellWindow | number | null) {
         if (!this.window) return;
         if (ext.auto_tiler && !ext.contains_tag(this.window, Tags.Floating)) {
-            if (this.movements.length === 2) return;
-            this.movements.push(() => {
+            if (this.queue.length === 2) return;
+            this.queue.send(() => {
                 const focused = ext.focus_window();
                 if (focused) {
                     // The window that the focused window is being moved onto
@@ -662,7 +663,7 @@ export class Tiler {
     }
 
     exit(ext: Ext) {
-        this.movements.splice(0);
+        this.queue.clear()
 
         if (this.window) {
             this.window = null;
