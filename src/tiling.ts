@@ -438,7 +438,7 @@ export class Tiler {
 
                     focused.ignore_detach = true;
                     at.detach_window(ext, focused.entity);
-                    at.attach_to_window(ext, move_to, focused, Lib.cursor_rect(), stack_from_left);
+                    at.attach_to_window(ext, move_to, focused, { cursor: Lib.cursor_rect() }, stack_from_left);
                     watching = focused;
                 } else {
                     const parent = at.windows_are_siblings(focused.entity, move_to.entity);
@@ -466,9 +466,11 @@ export class Tiler {
                     }
 
                     if (!watching) {
+                        let movement = { src: focused.meta.get_frame_rect()}
+
                         focused.ignore_detach = true;
                         at.detach_window(ext, focused.entity);
-                        at.attach_to_window(ext, move_to, focused, Lib.cursor_rect(), false);
+                        at.attach_to_window(ext, move_to, focused, movement, false);
                         watching = focused;
                     }
                 }

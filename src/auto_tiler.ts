@@ -9,7 +9,7 @@ import * as stack from 'stack';
 
 import type { Entity } from 'ecs';
 import type { Ext } from 'extension';
-import type { Forest } from 'forest';
+import type { Forest, MoveBy } from 'forest';
 import type { Fork } from 'fork';
 import type { Rectangle } from 'rectangle';
 import type { Result } from 'result';
@@ -146,8 +146,8 @@ export class AutoTiler {
     }
 
     /** Tiles a window into another */
-    attach_to_window(ext: Ext, attachee: ShellWindow, attacher: ShellWindow, cursor: Rectangle, stack_from_left: boolean = true) {
-        let attached = this.forest.attach_window(ext, attachee.entity, attacher.entity, cursor, stack_from_left);
+    attach_to_window(ext: Ext, attachee: ShellWindow, attacher: ShellWindow, move_by: MoveBy, stack_from_left: boolean = true) {
+        let attached = this.forest.attach_window(ext, attachee.entity, attacher.entity, move_by, stack_from_left);
 
         if (attached) {
             const [, fork] = attached;
@@ -186,7 +186,7 @@ export class AutoTiler {
         if (toplevel) {
             const onto = this.forest.largest_window_on(ext, toplevel);
             if (onto) {
-                if (this.attach_to_window(ext, onto, win, lib.cursor_rect())) {
+                if (this.attach_to_window(ext, onto, win, { cursor: lib.cursor_rect() })) {
                     return;
                 }
             }
@@ -208,7 +208,7 @@ export class AutoTiler {
         if (result.kind == ERR) {
             this.attach_to_workspace(ext, win, ext.workspace_id(win));
         } else {
-            this.attach_to_window(ext, result.value, win, lib.cursor_rect())
+            this.attach_to_window(ext, result.value, win, { cursor: lib.cursor_rect() })
         }
     }
 
@@ -333,7 +333,7 @@ export class AutoTiler {
             if (toplevel) {
                 const attach_to = this.forest.largest_window_on(ext, toplevel);
                 if (attach_to) {
-                    this.attach_to_window(ext, attach_to, win, cursor);
+                    this.attach_to_window(ext, attach_to, win, {cursor});
                     return;
                 }
             }
@@ -360,7 +360,7 @@ export class AutoTiler {
         this.detach_window(ext, win.entity);
 
         if (attach_to) {
-            this.attach_to_window(ext, attach_to, win, cursor);
+            this.attach_to_window(ext, attach_to, win, {cursor});
         } else {
             attach_mon()
         }
