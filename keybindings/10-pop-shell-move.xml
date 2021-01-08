@@ -9,8 +9,8 @@
   <KeyListEntry name="pop-workspace-down" description="Move window to lower workspace"/>
   <KeyListEntry name="pop-workspace-up" description="Move window to upper workspace"/>
   <KeyListEntry name="pop-monitor-down" description="Move window to lower monitor"/>
-  <KeyListEntry name="pop-monitor-left" description="move window to leftward monitor"/>
-  <KeyListEntry name="pop-monitor-right" description="move window to rightward monitor"/>
+  <KeyListEntry name="pop-monitor-left" description="Move window to leftward monitor"/>
+  <KeyListEntry name="pop-monitor-right" description="Move window to rightward monitor"/>
   <KeyListEntry name="pop-monitor-up" description="Move window to upper monitor"/>
   <KeyListEntry name="tile-reject" description="Cancel changes"/>
   <KeyListEntry name="tile-resize-left" description="Resize window smaller"/>
