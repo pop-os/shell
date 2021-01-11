@@ -60,6 +60,8 @@ export class Launcher extends search.Search {
 
             this.last_plugin = null
 
+            let windows = new Array()
+
             this.service.query(pattern, (plugin, response) => {
                 if (response.event === "queried") {
                     for (const selection of response.selections) {
@@ -97,7 +99,7 @@ export class Launcher extends search.Search {
                     || contains_pattern(window.meta.get_title(), needles);
 
                 if (retain) {
-                    this.options.push(window_selection(ext, window, this.icon_size()))
+                    windows.push(window_selection(ext, window, this.icon_size()))
                 }
             }
 
@@ -123,8 +125,7 @@ export class Launcher extends search.Search {
                 }
             }
 
-            // Sort the list of matched selections
-            this.options.sort((a, b) => {
+            const sorter = (a: launch.SearchOption, b: launch.SearchOption) => {
                 const a_name = a.title.toLowerCase()
                 const b_name = b.title.toLowerCase()
 
@@ -143,7 +144,12 @@ export class Launcher extends search.Search {
                 }
 
                 return a_name_weight > b_name_weight ? 1 : 0
-            });
+            }
+
+            // Sort the list of matched selections
+            windows.sort(sorter)
+            this.options.sort(sorter);
+            this.options = windows.concat(this.options)
 
             // Truncate excess items from the list
             this.options.splice(this.list_max());
