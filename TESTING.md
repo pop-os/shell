@@ -52,6 +52,7 @@ Tasks for a tester to verify when approving a patch. Use complex window layouts 
 - [ ] Stacks can be resized with the keyboard.
 - [ ] Stacks can be resized with the mouse.
 - [ ] Lock and unlock the screen-- stacks should still exist and windows should not have moved.
+- [ ] Full-screen an application within the stack, then quit the application-- the remaining tabs should be visible.
 
 ### Workspaces
 
@@ -69,6 +70,7 @@ Tasks for a tester to verify when approving a patch. Use complex window layouts 
 - [ ] Windows move across displays with the mouse
 - [ ] Changing the primary display moves the top bar. Window heights adjust on all monitors for the new position.
 - [ ] Unplug a display - windows from the display retile on a new workspace on the remaining display
+- [ ] Plug an additional display into a laptop - windows and workspaces don't changes
 - [ ] NOTE: Add vertical monitor layout test
 
 ### Launcher
@@ -81,6 +83,7 @@ Tasks for a tester to verify when approving a patch. Use complex window layouts 
 - [ ] Search works for GNOME settings panels
 - [ ] Search for "Extensions". There should be only one entry.
 - [ ] The overlay hint correctly highlights the selected window
+- [ ] Open windows are sorted above applications (e.g. "web browser")
 - [ ] t: executes a command in a terminal
 - [ ] : executes a command in sh
 - [ ] = calculates an equation
@@ -89,6 +92,13 @@ Tasks for a tester to verify when approving a patch. Use complex window layouts 
 
 - [ ] Disabling window titles using global (Pop Shell) option works for Shell Shortcuts, LibreOffice, etc.
 - [ ] Disabling window titles in Firefox works (Check debian and flatpak packages)
+
+### Floating Exceptions
+
+- [ ] Add a window to floating exceptions-- it should float immediately.
+- [ ] Close and re-open the window-- it should float when opened.
+- [ ] Add an app to floating exceptions-- it should float immediately.
+- [ ] Close and re-open the app-- it should float when opened.
 
 ## With Tiling Disabled
 
@@ -115,5 +125,3 @@ Tasks for a tester to verify when approving a patch. Use complex window layouts 
 ## Enhancement Tests
 
 Enhancement test don't have to pass for release. Once an enhancement test passes, move up to the standard required-pass test for release.
-
-- [ ] Plug an additional display into a laptop - windows and workspaces don't change
