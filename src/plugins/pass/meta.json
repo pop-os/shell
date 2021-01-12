@@ -1,0 +1,7 @@
+{
+    "name": "Password Store",
+    "description": "Retrieve passwords from password store",
+    "pattern": "",
+    "exec": "main.js",
+    "icon": "dialog-password"
+}
