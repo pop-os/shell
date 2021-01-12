@@ -109,7 +109,6 @@ export class ShellWindow {
 
         if (this.meta.get_compositor_private()?.get_stage())
             this.on_style_changed();
-
     }
 
     activate(): void {

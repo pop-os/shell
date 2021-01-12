@@ -181,6 +181,20 @@ export class AutoTiler {
             id = [id[0], 0]
         }
 
+        // NOTE: Firefox has a rendering heisenbug. Jiggle it after tiling.
+        if (win.meta.get_wm_class()?.includes("Firefox")) {
+            const { GLib, Meta } = imports.gi;
+
+            GLib.timeout_add(GLib.PRIORITY_DEFAULT, 500, () => {
+                const flags = Meta.MaximizeFlags.HORIZONTAL | Meta.MaximizeFlags.VERTICAL
+                win.meta.maximize(flags)
+
+                GLib.timeout_add(GLib.PRIORITY_DEFAULT, 500, () => {
+                    win.meta.unmaximize(flags)
+                })
+            })
+        }
+
         const toplevel = this.forest.find_toplevel(id);
 
         if (toplevel) {
