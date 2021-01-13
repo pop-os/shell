@@ -4,6 +4,13 @@ const Me = imports.misc.extensionUtils.getCurrentExtension()
 const { Gio, GLib } = imports.gi
 
 import * as utils from 'utils'
+import type { Ext } from 'extension'
+
+export interface Selection {
+    id: number,
+    name: string,
+    description: string,
+}
 
 /** The trait which all builtin plugins implement */
 export abstract class Builtin {
@@ -17,22 +24,22 @@ export abstract class Builtin {
     abstract init(): void
 
     /** Uses the search input to query for search results */
-    abstract query(query: string): Response.Response
+    abstract query(ext: Ext, query: string): Response.Response
     
     /** Applies an option by its ID */
-    abstract submit(id: number): Response.Response
+    abstract submit(ext: Ext, id: number): Response.Response
 
     /** Dispatches a launcher request, and stores the response */
-    handle(event: Request.Request) {
+    handle(ext: Ext, event: Request.Request) {
         switch (event.event) {
             case "complete":
                 this.last_response = { event: "noop" }
                 break
             case "query":
-                this.last_response = this.query(event.value)
+                this.last_response = this.query(ext, event.value)
                 break
             case "submit":
-                this.last_response = this.submit(event.id)
+                this.last_response = this.submit(ext, event.id)
                 break
             default:
                 this.last_response = { event: "noop" }
@@ -178,34 +185,34 @@ export namespace Plugin {
         }
     }
 
-    export function complete(plugin: Plugin.Source): boolean {
-        return send(plugin, { event: "complete" })
+    export function complete(ext: Ext, plugin: Plugin.Source): boolean {
+        return send(ext, plugin, { event: "complete" })
     }
 
-    export function query(plugin: Plugin.Source, value: string): boolean {
-        return send(plugin, { event: "query", value })
+    export function query(ext: Ext, plugin: Plugin.Source, value: string): boolean {
+        return send(ext, plugin, { event: "query", value })
     }
 
-    export function quit(plugin: Plugin.Source) {
+    export function quit(ext: Ext, plugin: Plugin.Source) {
         if ('proc' in plugin.backend) {
             if (plugin.backend.proc) {
-                send(plugin, { event: "quit" })
+                send(ext, plugin, { event: "quit" })
                 plugin.backend.proc = null
             }
         } else {
-            send(plugin, { event: "quit" })
+            send(ext, plugin, { event: "quit" })
         }
     }
 
-    export function submit(plugin: Plugin.Source, id: number): boolean {
-        return send(plugin, { event: "submit", id })
+    export function submit(ext: Ext, plugin: Plugin.Source, id: number): boolean {
+        return send(ext, plugin, { event: "submit", id })
     }
 
-    export function send(plugin: Plugin.Source, event: Request.Request): boolean {
+    export function send(ext: Ext, plugin: Plugin.Source, event: Request.Request): boolean {
         const backend = plugin.backend
         
         if ('builtin' in backend) {
-            backend.builtin.handle(event)
+            backend.builtin.handle(ext, event)
             return true
         } else {
             let string = JSON.stringify(event)

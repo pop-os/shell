@@ -1673,7 +1673,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     stop_launcher_services() {
-        this.window_search.stop_services()
+        this.window_search.stop_services(this)
     }
 
     tab_list(tablist: number, workspace: Meta.Workspace | null): Array<Window.ShellWindow> {

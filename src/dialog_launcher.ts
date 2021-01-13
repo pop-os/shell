@@ -47,7 +47,7 @@ export class Launcher extends search.Search {
     constructor(ext: Ext) {
         let cancel = () => {
             ext.overlay.visible = false;
-            this.stop_services()
+            this.stop_services(ext)
         };
 
         let search = (pattern: string): Array<launch.SearchOption> | null => {
@@ -62,7 +62,7 @@ export class Launcher extends search.Search {
 
             let windows = new Array()
 
-            this.service.query(pattern, (plugin, response) => {
+            this.service.query(ext, pattern, (plugin, response) => {
                 if (response.event === "queried") {
                     for (const selection of response.selections) {
                         if (!this.last_plugin) this.last_plugin = plugin;
@@ -208,7 +208,7 @@ export class Launcher extends search.Search {
                 }
             } else if ("plugin" in option) {
                 const { plugin, id } = option
-                plugins.Plugin.submit(plugin, id)
+                plugins.Plugin.submit(ext, plugin, id)
 
                 const response = plugins.Plugin.listen(plugin)
                 if (response) {
@@ -225,7 +225,7 @@ export class Launcher extends search.Search {
 
         let complete = () => {
             if (this.last_plugin) {
-                plugins.Plugin.complete(this.last_plugin)
+                plugins.Plugin.complete(ext, this.last_plugin)
                 const res = plugins.Plugin.listen(this.last_plugin)
                 if (res && res.event === "fill") {
                     this.set_text(res.text)
@@ -304,8 +304,8 @@ export class Launcher extends search.Search {
         this.dialog.open(global.get_current_time(), false);
     }
 
-    stop_services() {
-        this.service.stop_services()
+    stop_services(ext: Ext) {
+        this.service.stop_services(ext)
     }
 }
 

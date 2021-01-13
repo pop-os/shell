@@ -44,15 +44,7 @@ export class Tiler {
 
     constructor(ext: Ext) {
         this.keybindings = {
-            "management-orientation": () => {
-                if (ext.auto_tiler && this.window) {
-                    const window = ext.windows.get(this.window);
-                    if (window) {
-                        ext.auto_tiler.toggle_orientation(ext, window);
-                    }
-                }
-            },
-
+            "management-orientation": () => this.toggle_orientation(ext),
             "tile-move-left": () => this.move_left(ext),
             "tile-move-down": () => this.move_down(ext),
             "tile-move-up": () => this.move_up(ext),
@@ -67,12 +59,19 @@ export class Tiler {
             "tile-swap-right": () => this.swap_right(ext),
             "tile-accept": () => this.accept(ext),
             "tile-reject": () => this.exit(ext),
-            "toggle-stacking": () => {
-                ext.auto_tiler?.toggle_stacking(ext);
-                const win = ext.focus_window();
-                if (win) this.overlay_watch(ext, win);
-            },
+            "toggle-stacking": () => this.toggle_stacking(ext),
         };
+    }
+
+    toggle_orientation(ext: Ext) {
+        const window = ext.focus_window()
+        if (window) ext.auto_tiler?.toggle_orientation(ext, window)
+    }
+
+    toggle_stacking(ext: Ext) {
+        ext.auto_tiler?.toggle_stacking(ext);
+        const win = ext.focus_window();
+        if (win) this.overlay_watch(ext, win);
     }
 
     rect(ext: Ext, monitor: Rectangle): Rectangle | null {
