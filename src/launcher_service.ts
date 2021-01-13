@@ -7,11 +7,13 @@ import * as app_info from 'app_info'
 import * as plugins from 'launcher_plugins'
 
 import type { ShellWindow } from 'window'
+import type { Ext } from 'extension'
 import type { Plugin as PluginType, Response } from 'launcher_plugins'
 
 const { Plugin } = plugins
 
 import * as plugin_scripts from 'plugin_scripts'
+import * as plugin_shell from 'plugin_shell'
 
 export var BUILTINS: Array<PluginType.Source> = [
     {
@@ -30,6 +32,19 @@ export var BUILTINS: Array<PluginType.Source> = [
             icon: "utilities-terminal"
         },
         pattern: null
+    },
+    {
+        backend: {
+            builtin: new plugin_shell.ShellBuiltin()
+        },
+        config: {
+            name: "Shell Shortcuts",
+            description: "Access shell features from the keyboard",
+            pattern: "",
+            exec: "",
+            icon: `${Me.path}/icons/pop-shell-auto-on-symbolic.svg`
+        },
+        pattern: null
     }
 ]
 
@@ -42,29 +57,29 @@ const SYSTEM_PLUGINS: string = "/usr/lib/pop-shell/launcher/"
 export class LauncherService {
     private plugins: Map<string, PluginType.Source> = new Map()
 
-    destroy() {
-        for (const plugin of this.plugins.values()) Plugin.quit(plugin)
+    destroy(ext: Ext) {
+        for (const plugin of this.plugins.values()) Plugin.quit(ext, plugin)
     }
 
     constructor() {
         this.register_plugins()
     }
 
-    query(query: string, callback: (plugin: PluginType.Source, response: Response.Response) => void) {
-        for (const plugin of this.match_query(query)) {
-            if (Plugin.query(plugin, query)) {
+    query(ext: Ext, query: string, callback: (plugin: PluginType.Source, response: Response.Response) => void) {
+        for (const plugin of this.match_query(ext, query)) {
+            if (Plugin.query(ext, plugin, query)) {
                 const res = Plugin.listen(plugin)
                 if (res) callback(plugin, res)
             } else {
-                Plugin.quit(plugin)
+                Plugin.quit(ext, plugin)
             }
         }
     }
 
-    stop_services() {
+    stop_services(ext: Ext) {
         for (const plugin of this.plugins.values()) {
             if ('proc' in plugin.backend) {
-                Plugin.quit(plugin)
+                Plugin.quit(ext, plugin)
                 plugin.backend.proc = null
             }
         }
@@ -109,7 +124,7 @@ export class LauncherService {
         }
     }
 
-    private *match_query(query: string): IterableIterator<PluginType.Source> {
+    private *match_query(ext: Ext, query: string): IterableIterator<PluginType.Source> {
         for (const plugin of BUILTINS) {
             if (!plugin.pattern || plugin.pattern.test(query)) {
                 yield plugin
@@ -120,7 +135,7 @@ export class LauncherService {
             if (!plugin.pattern || plugin.pattern.test(query)) {
                 yield plugin
             } else {
-                Plugin.quit(plugin)
+                Plugin.quit(ext, plugin)
             }
         }
     }
@@ -173,11 +188,21 @@ export class SearchOption {
         this.description = description
         this.id = id
 
-        let cat_icon = new St.Icon({
-            icon_name: category_icon,
-            icon_size: icon_size / 2,
-            style_class: "pop-shell-search-cat"
-        })
+        let cat_icon
+        const cat_icon_file = Gio.File.new_for_path(category_icon)
+        if (cat_icon_file.query_exists(null)) {
+            cat_icon = new St.Icon({
+                gicon: Gio.icon_new_for_string(category_icon),
+                icon_size: icon_size / 2,
+                style_class: "pop-shell-search-icon"
+            })
+        } else {
+            cat_icon = new St.Icon({
+                icon_name: category_icon,
+                icon_size: icon_size / 2,
+                style_class: "pop-shell-search-cat"
+            })
+        }
 
         let layout = new St.BoxLayout({})
 
@@ -192,11 +217,21 @@ export class SearchOption {
             let app_icon
 
             if ("name" in icon) {
-                app_icon = new St.Icon({
-                    icon_name: icon.name,
-                    icon_size,
-                    style_class: "pop-shell-search-icon"
-                })
+                const file = Gio.File.new_for_path(icon.name)
+
+                if (file.query_exists(null)) {
+                    app_icon = new St.Icon({
+                        gicon: Gio.icon_new_for_string(icon.name),
+                        icon_size,
+                        style_class: "pop-shell-search-icon"
+                    })
+                } else {
+                    app_icon = new St.Icon({
+                        icon_name: icon.name,
+                        icon_size,
+                        style_class: "pop-shell-search-icon"
+                    })
+                }
             } else if ("gicon" in icon) {
                 app_icon = new St.Icon({
                     gicon: icon.gicon,

@@ -5,6 +5,7 @@ const { Gio, GLib } = imports.gi
 
 import * as plugins from 'launcher_plugins'
 
+import type { Ext } from 'extension'
 import type { Response } from 'launcher_plugins'
 
 /** Scripts maintained by the user */
@@ -51,8 +52,6 @@ export class ScriptsBuiltin extends plugins.Builtin {
 
                 if (this.sums.has(name)) continue
 
-                log(`adding ${name}`)
-
                 /** Describes a script, parsed from code comments at the top of the file */
                 const metadata: ScriptData = {
                     name,
@@ -98,7 +97,7 @@ export class ScriptsBuiltin extends plugins.Builtin {
         }
     }
 
-    query(query: string): Response.Response {
+    query(_: Ext, query: string): Response.Response {
         this.filtered.splice(0)
         this.selections.splice(0)
 
@@ -130,14 +129,11 @@ export class ScriptsBuiltin extends plugins.Builtin {
         return { event: "queried", selections: this.selections }
     }
 
-    submit(id: number): Response.Response {
+    submit(_: Ext, id: number): Response.Response {
         let script = this.filtered[id]
-
-        log(`submitting: ${script}`)
 
         if (script) {
             try {
-                log(`executing ${script.path}`)
                 GLib.spawn_command_line_async(`sh ${script.path}`)
             } catch (e) {
                 log(`failed to spawn script at ${script.path}: ${e}`)
