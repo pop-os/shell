@@ -871,6 +871,8 @@ export class Ext extends Ecs.System<ExtEvent> {
             return;
         }
 
+        win.activate()
+
         win.grab = false;
 
         this.size_signals_unblock(win);
@@ -1566,6 +1568,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         this.connect(display, 'grab-op-end', (_, _display, win, op) => {
             this.register_fn(() => this.on_grab_end(win, op));
+            
         });
 
         this.connect(overview, 'window-drag-begin', (_, win) => {
