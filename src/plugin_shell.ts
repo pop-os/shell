@@ -28,6 +28,11 @@ const SELECTIONS: Array<Selection> = [
         name: "Toggle Window Titles",
         description: "Shows or hides window title bars in X11",
     },
+    {
+        id: 4,
+        name: "Toggle Window Tiling",
+        description: "Tiled windows are arranged side by side on the screen"
+    }
     
 ]
 
@@ -55,6 +60,9 @@ export class ShellBuiltin extends plugins.Builtin {
                 break
             case 3:
                 ext.settings.set_show_title(!ext.settings.show_title())
+                break
+            case 4:
+                ext.toggle_tiling()
                 break
         }
 
