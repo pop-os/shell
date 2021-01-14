@@ -15,8 +15,15 @@ export class Indicator {
     button: any;
     appearances: any;
 
+    toggle_tiled : any
+    toggle_titles: null | any
+    toggle_active: any
+
+    entry_gaps: any
+
     constructor(ext: Ext) {
         this.button = new Button(0.0, _("Pop Shell Settings"));
+
         ext.button = this.button;
         ext.button_gio_icon_auto_on = Gio.icon_new_for_string(`${Me.path}/icons/pop-shell-auto-on-symbolic.svg`);
         ext.button_gio_icon_auto_off = Gio.icon_new_for_string(`${Me.path}/icons/pop-shell-auto-off-symbolic.svg`);
@@ -40,7 +47,26 @@ export class Indicator {
 
         let bm = this.button.menu;
 
-        bm.addMenuItem(tiled(ext));
+        this.toggle_tiled = tiled(ext)
+
+        this.toggle_active = toggle(
+            _("Show Active Hint"),
+            ext.settings.active_hint(),
+            (toggle) => {
+                ext.settings.set_active_hint(toggle.state);
+            }
+        )
+
+        this.entry_gaps = number_entry(
+            _("Gaps"),
+            ext.settings.gap_inner(),
+            (value) => {
+                ext.settings.set_gap_inner(value);
+                ext.settings.set_gap_outer(value);
+            }
+        )
+
+        bm.addMenuItem(this.toggle_tiled);
         bm.addMenuItem(floating_window_exceptions(ext, bm));
 
         bm.addMenuItem(menu_separator(''));
@@ -49,32 +75,16 @@ export class Indicator {
         bm.addMenuItem(menu_separator(''));
 
         if (!Utils.is_wayland()) {
-            bm.addMenuItem(show_title(ext));
+            this.toggle_titles = show_title(ext)
+            bm.addMenuItem(this.toggle_titles);
         }
 
-        bm.addMenuItem(
-            toggle(
-                _("Show Active Hint"),
-                ext.settings.active_hint(),
-                (toggle) => {
-                    ext.settings.set_active_hint(toggle.state);
-                }
-            )
-        );
+        bm.addMenuItem(this.toggle_active);
 
         // CSS Selector
         bm.addMenuItem(color_selector(ext, bm),);
 
-        bm.addMenuItem(
-            number_entry(
-                _("Gaps"),
-                ext.settings.gap_inner(),
-                (value) => {
-                    ext.settings.set_gap_inner(value);
-                    ext.settings.set_gap_outer(value);
-                }
-            )
-        )
+        bm.addMenuItem(this.entry_gaps)
     }
 
     destroy() {
@@ -292,7 +302,6 @@ function toggle(desc: string, active: boolean, connect: (toggle: any) => void): 
 
 function tiled(ext: Ext): any {
     let t = toggle(_("Tile Windows"), null != ext.auto_tiler, () => ext.toggle_tiling());
-    ext.tiling_toggle_switch = t;  // property _switch is the actual UI element
     return t;
 }
 
