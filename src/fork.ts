@@ -340,6 +340,15 @@ export class Fork {
         }
     }
 
+    /** Swaps the left branch with the right branch, if there is a right branch */
+    swap_branches() {
+        if (this.right) {
+            const temp = this.left
+            this.left = this.right
+            this.right = temp
+        }
+    }
+
     /** Toggles the orientation of this fork */
     toggle_orientation() {
         this.orientation = Lib.Orientation.HORIZONTAL === this.orientation
