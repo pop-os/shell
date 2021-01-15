@@ -6,6 +6,7 @@ import * as log from 'log';
 import * as node from 'node';
 import * as result from 'result';
 import * as stack from 'stack';
+import * as Rect from 'rectangle';
 
 import type { Entity } from 'ecs';
 import type { Ext } from 'extension';
@@ -186,7 +187,10 @@ export class AutoTiler {
         if (toplevel) {
             const onto = this.forest.largest_window_on(ext, toplevel);
             if (onto) {
-                if (this.attach_to_window(ext, onto, win, { cursor: lib.cursor_rect() })) {
+                if (this.attach_to_window(ext, onto, win, {
+                    cursor: lib.cursor_rect(),
+                    area: Rect.Rectangle.from_meta(onto.meta.get_frame_rect())
+                })) {
                     return;
                 }
             }
@@ -208,7 +212,10 @@ export class AutoTiler {
         if (result.kind == ERR) {
             this.attach_to_workspace(ext, win, ext.workspace_id(win));
         } else {
-            this.attach_to_window(ext, result.value, win, { cursor: lib.cursor_rect() })
+            this.attach_to_window(ext, result.value, win, {
+                cursor: lib.cursor_rect(),
+                area: Rect.Rectangle.from_meta(result.value.meta.get_frame_rect())
+            })
         }
     }
 
@@ -257,7 +264,7 @@ export class AutoTiler {
     }
 
     /** Swaps the location of two windows if the dropped window was dropped onto its sibling */
-    dropped_on_sibling(ext: Ext, win: Entity): boolean {
+    dropped_on_sibling(ext: Ext, win: Entity, swap: boolean = true): boolean {
         const fork_entity = this.attached.get(win);
 
         if (fork_entity) {
@@ -269,19 +276,25 @@ export class AutoTiler {
                     if (fork.left.is_window(win)) {
                         const sibling = ext.windows.get(fork.right.inner.entity);
                         if (sibling && sibling.rect().contains(cursor)) {
-                            fork.left.inner.entity = fork.right.inner.entity;
-                            fork.right.inner.entity = win;
+                            if (swap) {
+                                fork.left.inner.entity = fork.right.inner.entity;
+                                fork.right.inner.entity = win;
 
-                            this.tile(ext, fork, fork.area);
+                                this.tile(ext, fork, fork.area);
+                            }
+
                             return true;
                         }
                     } else if (fork.right.is_window(win)) {
                         const sibling = ext.windows.get(fork.left.inner.entity);
                         if (sibling && sibling.rect().contains(cursor)) {
-                            fork.right.inner.entity = fork.left.inner.entity;
-                            fork.left.inner.entity = win;
+                            if (swap) {
+                                fork.right.inner.entity = fork.left.inner.entity;
+                                fork.left.inner.entity = win;
 
-                            this.tile(ext, fork, fork.area);
+                                this.tile(ext, fork, fork.area);
+                            }
+
                             return true;
                         }
                     }
@@ -333,7 +346,10 @@ export class AutoTiler {
             if (toplevel) {
                 const attach_to = this.forest.largest_window_on(ext, toplevel);
                 if (attach_to) {
-                    this.attach_to_window(ext, attach_to, win, {cursor});
+                    this.attach_to_window(ext, attach_to, win, {
+                        cursor,
+                        area: Rect.Rectangle.from_meta(attach_to.meta.get_frame_rect())
+                    });
                     return;
                 }
             }
@@ -360,7 +376,10 @@ export class AutoTiler {
         this.detach_window(ext, win.entity);
 
         if (attach_to) {
-            this.attach_to_window(ext, attach_to, win, {cursor});
+            this.attach_to_window(ext, attach_to, win, {
+                cursor,
+                area: Rect.Rectangle.from_meta(attach_to.meta.get_frame_rect())
+            });
         } else {
             attach_mon()
         }

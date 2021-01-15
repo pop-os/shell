@@ -21,12 +21,12 @@ const { Arena } = arena;
 const { Meta } = imports.gi;
 const { Movement } = movement;
 
-const DOWN = Movement.DOWN;
-const UP = Movement.UP;
-const LEFT = Movement.LEFT;
-const RIGHT = Movement.RIGHT;
+const { DOWN, UP, LEFT, RIGHT } = Movement
 
-export interface MoveByCursor { cursor: Rectangular }
+export interface MoveByCursor {
+    cursor: Rectangular
+    area: Rectangle
+}
 
 export interface MoveByKeyboard {
     src: Rectangular
@@ -185,52 +185,95 @@ export class Forest extends Ecs.World {
         return null;
     }
 
-    /** Attaches a `new` window to the fork which `onto` is attached to. */
-    attach_window(ext: Ext, onto_entity: Entity, new_entity: Entity, move_by: MoveBy, stack_from_left: boolean): [Entity, Fork.Fork] | null {
-        const right_node = Node.Node.window(new_entity);
+    derive_orientation_by_cursor(area: Rectangle, cursor: Rectangular): [Lib.Orientation, boolean] {
+        const { Side } = geom
+        const [, side] = geom.nearest_side([cursor.x, cursor.y], area)
+        return side === Side.LEFT
+            ? [Lib.Orientation.HORIZONTAL, true]
+            : side === Side.RIGHT
+                ? [Lib.Orientation.HORIZONTAL, false]
+                : side === Side.TOP
+                    ? [Lib.Orientation.VERTICAL, false]
+                    : [Lib.Orientation.VERTICAL, true]
+    }
 
-        function swap_branches(fork: Fork.Fork) {
-            const temp = fork.left
-            fork.left = fork.right as Node.Node
-            fork.right = temp
+    /** Attaches a `new` window to the fork which `onto` is attached to. */
+    attach_window(ext: Ext, onto_entity: Entity, new_entity: Entity, place_by: MoveBy, stack_from_left: boolean): [Entity, Fork.Fork] | null {
+        /** Place a window in a fork based on where the mouse resides at the time of attachment */
+        const place_by_mouse = (fork: Fork.Fork, cursor: Rectangular, area: Rectangle) => {
+            const [orientation, swap] = this.derive_orientation_by_cursor(area, cursor)
+            fork.set_orientation(orientation)
+            if (!swap) fork.swap_branches()
         }
 
-        const placement = (fork: Fork.Fork, left_: [number, number, number, number], right_: [number, number, number, number]) => {
-            const inner_left = new Rect.Rectangle(left_), inner_right = new Rect.Rectangle(right_)
+        /** Place a window in a fork based on where the window was originally located */
+        function place_by_keyboard(fork: Fork.Fork, src: Rectangular, left: Rectangle, right: Rectangle) {
+            const from : [number, number] = [src.x + (src.width / 2), src.y + (src.height / 2)]
 
-            if ("cursor" in move_by) {
-                if (inner_left.contains(move_by.cursor)) {
-                    swap_branches(fork)
-                }
-            } else if ("src" in move_by) {
-                const { src } = move_by
+            const lside = geom.shortest_side(from, left)
+            const rside = geom.shortest_side(from, right)
 
-                const from : [number, number] = [src.x + (src.width / 2), src.y + (src.height / 2)]
+            if (lside < rside) fork.swap_branches()
+        }
 
-                const left = geom.shortest_side(from, inner_left)
-                const right = geom.shortest_side(from, inner_right)
-
-                if (left < right) swap_branches(fork)
+        /** By default, new attachments are positioned on the left of a branch */
+        function place(place_by: MoveBy, fork: Fork.Fork, left: Rectangle, right: Rectangle) {
+            if ("cursor" in place_by) {
+                place_by_mouse(fork, place_by.cursor, place_by.area)
+            } else if ("src" in place_by) {
+                place_by_keyboard(fork, place_by.src, left, right)
             }
         }
+
+        /** Fetch two rectangles representing the inner left and right halves of a fork
+         * 
+         * In the case of a vertical fork, the left and right halves are the top and bottom
+         */
+        function area_of_halves(fork: Fork.Fork): [Rectangle, Rectangle] {
+            const { x, y, width, height } = fork.area
+
+            const [left, right]: [[number, number, number, number], [number, number, number, number]] = fork.is_horizontal()
+                ? [[x, y, width / 2, height], [x + (width / 2), y, width / 2, height]]
+                : [[x, y, width, height / 2], [x, y + (height / 2), width, height / 2]]
+
+            return [new Rect.Rectangle(left), new Rect.Rectangle(right)]
+        }
+
+        /** Create a fork and place this new fork on the left branch */
+        const fork_and_place_on_left = (entity: Entity, fork: Fork.Fork): [Entity, Fork.Fork] | null => {
+            const area = fork.area_of_left(ext)
+
+            const [fork_entity, new_fork] = this.create_fork(fork.left, right_node, area, fork.workspace, fork.monitor)
+
+            fork.left = Node.Node.fork(fork_entity)
+            this.parents.insert(fork_entity, entity)
+
+            const [left, right] = area_of_halves(new_fork)
+            place(place_by, new_fork, left, right)
+
+            return this._attach(onto_entity, new_entity, this.on_attach, entity, fork, [fork_entity, new_fork])
+        }
+
+        /** Create a new fork and place this new fork on the right branch */
+        const fork_and_place_on_right = (entity: Entity, fork: Fork.Fork, right_branch: Node.Node): [Entity, Fork.Fork] | null => {
+            const area = fork.area_of_right(ext)
+            const [fork_entity, new_fork] = this.create_fork(right_branch, right_node, area, fork.workspace, fork.monitor)
+
+            fork.right = Node.Node.fork(fork_entity)
+            this.parents.insert(fork_entity, entity)
+
+            const [left, right] = area_of_halves(new_fork)
+            place(place_by, new_fork, left, right)
+
+            return this._attach(onto_entity, new_entity, this.on_attach, entity, fork, [fork_entity, new_fork]);
+        }
+
+        const right_node = Node.Node.window(new_entity)
 
         for (const [entity, fork] of this.forks.iter()) {
             if (fork.left.is_window(onto_entity)) {
                 if (fork.right) {
-                    const area = fork.area_of_left(ext);
-                    const [fork_entity, new_fork] = this.create_fork(fork.left, right_node, area, fork.workspace, fork.monitor);
-
-                    const { x, y, width, height } = new_fork.area;
-
-                    const [left_, right_]: [[number, number, number, number], [number, number, number, number]] = new_fork.is_horizontal()
-                        ? [[x, y, width / 2, height], [x + (width / 2), y, width / 2, height]]
-                        : [[x, y, width, height / 2], [x, y + (height / 2), width, height / 2]]
-
-                    placement(new_fork, left_, right_)
-
-                    fork.left = Node.Node.fork(fork_entity);
-                    this.parents.insert(fork_entity, entity);
-                    return this._attach(onto_entity, new_entity, this.on_attach, entity, fork, [fork_entity, new_fork]);
+                    return fork_and_place_on_left(entity, fork)
                 } else {
                     fork.right = right_node;
                     fork.set_ratio(fork.length() / 2);
@@ -241,20 +284,8 @@ export class Forest extends Ecs.World {
                 return this.attach_stack(ext, stack, fork, new_entity, stack_from_left);
             } else if (fork.right) {
                 if (fork.right.is_window(onto_entity)) {
-                    const area = fork.area_of_right(ext);
-                    const [fork_entity, new_fork] = this.create_fork(fork.right, right_node, area, fork.workspace, fork.monitor);
-                    const { x, y, width, height } = new_fork.area;
-
-                    const [left_, right_]: [[number, number, number, number], [number, number, number, number]] = new_fork.is_horizontal()
-                        ? [[x, y, width / 2, height], [x + width / 2, y, width / 2, height]]
-                        : [[x, y, width, height / 2], [x, y + height / 2, width, height / 2]]
-
-                    fork.right = Node.Node.fork(fork_entity);
-
-                    placement(new_fork, left_, right_)
-
-                    this.parents.insert(fork_entity, entity);
-                    return this._attach(onto_entity, new_entity, this.on_attach, entity, fork, [fork_entity, new_fork]);
+                    global.log(`right place`)
+                    return fork_and_place_on_right(entity, fork, fork.right)
                 } else if (fork.right.is_in_stack(onto_entity)) {
                     const stack = fork.right.inner as Node.NodeStack;
                     return this.attach_stack(ext, stack, fork, new_entity, stack_from_left);

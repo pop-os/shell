@@ -427,6 +427,11 @@ export class Tiler {
                     const [stack_fork, branch,] = stack_info;
                     const stack = branch.inner as NodeStack;
 
+                    const placement = {
+                        cursor: Lib.cursor_rect(),
+                        area: Rect.Rectangle.from_meta(move_to.meta.get_frame_rect())
+                    }
+
                     focused.ignore_detach = true;
                     at.detach_window(ext, focused.entity);
 
@@ -437,7 +442,7 @@ export class Tiler {
 
                     focused.ignore_detach = true;
                     at.detach_window(ext, focused.entity);
-                    at.attach_to_window(ext, move_to, focused, { cursor: Lib.cursor_rect() }, stack_from_left);
+                    at.attach_to_window(ext, move_to, focused, placement, stack_from_left);
                     watching = focused;
                 } else {
                     const parent = at.windows_are_siblings(focused.entity, move_to.entity);

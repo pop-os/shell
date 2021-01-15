@@ -1128,6 +1128,76 @@ export class Ext extends Ecs.System<ExtEvent> {
                 this.grab_op = new GrabOp.GrabOp(entity, rect);
 
                 this.size_signals_block(win);
+
+
+                /** Display an overlay indicating where the window will be placed if dropped */
+
+                if (overview.visible) return
+
+                const workspace = this.active_workspace();
+
+                GLib.timeout_add(GLib.PRIORITY_LOW, 200, () => {
+                    this.overlay.visible = false
+
+                    if (!this.auto_tiler || !this.grab_op || this.grab_op.entity !== entity) {
+                        return false
+                    }
+    
+                    const [cursor, monitor] = this.cursor_status();
+
+                    let attach_to = null;
+                    for (const found of this.windows_at_pointer(cursor, monitor, workspace)) {
+                        if (found != win && this.auto_tiler.attached.contains(found.entity)) {
+                            attach_to = found;
+                            break
+                        }
+                    }
+
+                    if (!attach_to) return true
+
+                    const area = Rect.Rectangle.from_meta(attach_to.meta.get_frame_rect())
+
+                    if (this.auto_tiler.dropped_on_sibling(this, attach_to.entity, false)) {
+                        this.overlay.x = area.x
+                        this.overlay.y = area.y
+                        this.overlay.width = area.width
+                        this.overlay.height = area.height
+
+                        this.overlay.visible = true
+
+                        return true
+                    }
+                    
+                    const [orientation, swap] = this.auto_tiler.forest
+                        .derive_orientation_by_cursor(area, cursor)
+
+                    let new_area: [number, number, number, number]
+
+                    if (orientation === Lib.Orientation.HORIZONTAL) {
+                        const half = area.width / 2
+                        if (!swap) {
+                            new_area = [area.x, area.y, half, area.height]
+                        } else {
+                            new_area = [area.x + half, area.y, half, area.height]
+                        }
+                    } else {
+                        const half = area.height / 2
+                        if (!swap) {
+                            new_area = [area.x, area.y, area.width, half]
+                        } else {
+                            new_area = [area.x, area.y + half, area.width, half]
+                        }
+                    }
+
+                    this.overlay.x = new_area[0]
+                    this.overlay.y = new_area[1]
+                    this.overlay.width = new_area[2]
+                    this.overlay.height = new_area[3]
+
+                    this.overlay.visible = true
+    
+                    return true
+                })
             }
         }
     }
