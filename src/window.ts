@@ -599,8 +599,7 @@ export function place_pointer_on(default_pointer_position: Config.DefaultPointer
 }
 
 function pointer_already_on_window(meta: Meta.Window): boolean {
-    const rect = Rect.Rectangle.from_meta(meta.get_frame_rect());
-    const cursor = lib.cursor_rect();
+    const cursor = lib.cursor_rect()
 
-    return cursor.intersects(rect);
+    return cursor.intersects(meta.get_frame_rect())
 }

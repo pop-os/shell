@@ -869,8 +869,6 @@ export class Ext extends Ecs.System<ExtEvent> {
             return;
         }
 
-        win.activate()
-
         win.grab = false;
 
         this.size_signals_unblock(win);
@@ -1252,7 +1250,8 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     on_overview_hidden() {
-
+        const win = this.focus_window()
+        if (win) win.activate()
     }
 
     on_overview_shown() {
