@@ -6,11 +6,12 @@ import * as log from 'log';
 import * as node from 'node';
 import * as result from 'result';
 import * as stack from 'stack';
-import * as Rect from 'rectangle';
+import * as geom from 'geom';
+import * as tiling from 'tiling';
 
 import type { Entity } from 'ecs';
 import type { Ext } from 'extension';
-import type { Forest, MoveBy } from 'forest';
+import type { Forest, MoveBy, MoveByCursor } from 'forest';
 import type { Fork } from 'fork';
 import type { Rectangle } from 'rectangle';
 import type { Result } from 'result';
@@ -147,7 +148,7 @@ export class AutoTiler {
     }
 
     /** Tiles a window into another */
-    attach_to_window(ext: Ext, attachee: ShellWindow, attacher: ShellWindow, move_by: MoveBy, stack_from_left: boolean = true) {
+    attach_to_window(ext: Ext, attachee: ShellWindow, attacher: ShellWindow, move_by: MoveBy, stack_from_left: boolean = true): boolean {
         let attached = this.forest.attach_window(ext, attachee.entity, attacher.entity, move_by, stack_from_left);
 
         if (attached) {
@@ -172,9 +173,9 @@ export class AutoTiler {
                 log.error(`missing monitor association for Window(${attachee.entity})`);
             }
         }
+
+        return false
     }
-
-
 
     /** Tile a window onto a workspace */
     attach_to_workspace(ext: Ext, win: ShellWindow, id: [number, number]) {
@@ -187,11 +188,8 @@ export class AutoTiler {
         if (toplevel) {
             const onto = this.forest.largest_window_on(ext, toplevel);
             if (onto) {
-                if (this.attach_to_window(ext, onto, win, {
-                    cursor: lib.cursor_rect(),
-                    area: Rect.Rectangle.from_meta(onto.meta.get_frame_rect())
-                })) {
-                    return;
+                if (this.attach_to_window(ext, onto, win,  { auto: 0 })) {
+                    return
                 }
             }
         }
@@ -212,10 +210,7 @@ export class AutoTiler {
         if (result.kind == ERR) {
             this.attach_to_workspace(ext, win, ext.workspace_id(win));
         } else {
-            this.attach_to_window(ext, result.value, win, {
-                cursor: lib.cursor_rect(),
-                area: Rect.Rectangle.from_meta(result.value.meta.get_frame_rect())
-            })
+            this.attach_to_window(ext, result.value, win,  { auto: 0 })
         }
     }
 
@@ -346,10 +341,8 @@ export class AutoTiler {
             if (toplevel) {
                 const attach_to = this.forest.largest_window_on(ext, toplevel);
                 if (attach_to) {
-                    this.attach_to_window(ext, attach_to, win, {
-                        cursor,
-                        area: Rect.Rectangle.from_meta(attach_to.meta.get_frame_rect())
-                    });
+                    this.attach_to_window(ext, attach_to, win,  { auto: 0 })
+                    
                     return;
                 }
             }
@@ -373,16 +366,49 @@ export class AutoTiler {
             }
         }
 
-        this.detach_window(ext, win.entity);
-
         if (attach_to) {
-            this.attach_to_window(ext, attach_to, win, {
-                cursor,
-                area: Rect.Rectangle.from_meta(attach_to.meta.get_frame_rect())
-            });
+            this.place_or_stack(ext, win, attach_to, cursor)
         } else {
+            this.detach_window(ext, win.entity);
             attach_mon()
         }
+    }
+
+    place_or_stack(ext: Ext, win: ShellWindow, attach_to: ShellWindow, cursor: Rectangular): boolean {
+        const attach_area = attach_to.meta.get_frame_rect()
+        
+        let placement: null | MoveBy = cursor_placement(attach_area, cursor)
+        const stack = ext.auto_tiler?.find_stack(win.entity)
+
+        if (placement) {
+            if (stack) {
+                const { Left, Up, Right, Down } = tiling.Direction
+
+                const direction = placement.orientation === lib.Orientation.HORIZONTAL
+                    ? placement.swap ? Left : Right
+                    : placement.swap ? Up : Down
+
+                if (win.stack === attach_to.stack) {
+                    ext.tiler.move_from_stack(ext, stack, win, direction, true)
+                    return true
+                } else if (attach_to.stack !== null) {
+                    const onto_stack = ext.auto_tiler?.find_stack(attach_to.entity)
+                    if (onto_stack) {
+                        this.detach_window(ext, win.entity)
+                        ext.tiler.move_alongside_stack(ext, onto_stack, win, direction)
+                        return true
+                    }
+                }
+            }
+        } else {
+            this.detach_window(ext, win.entity)
+            this.create_stack(ext, attach_to)
+            placement =  { auto: 0 }
+        }
+
+        this.detach_window(ext, win.entity);
+        const attachment = this.attach_to_window(ext, attach_to, win, placement)
+        return attachment
     }
 
     /** Schedules a fork to be reflowed */
@@ -434,8 +460,8 @@ export class AutoTiler {
         }
     }
 
-    toggle_stacking(ext: Ext) {
-        const focused = ext.focus_window();
+    toggle_stacking(ext: Ext, window?: ShellWindow) {
+        const focused = window ?? ext.focus_window();
         if (!focused) return;
 
         // Disable floating if floating is enabled
@@ -463,10 +489,7 @@ export class AutoTiler {
                 };
 
                 if (fork.left.is_window(focused.entity)) {
-                    // Assign left window as stack.
-                    focused.stack = this.forest.stacks.insert(new Stack(ext, focused.entity, fork.workspace, fork.monitor));
-                    fork.left = node.Node.stacked(focused.entity, focused.stack);
-                    fork.measure(this.forest, ext, fork.area, this.forest.on_record());
+                    this.stack_left(ext, fork, focused)
                 } else if (fork.left.is_in_stack(focused.entity)) {
                     const node = stack_toggle(fork, fork.left);
                     if (node) {
@@ -477,10 +500,7 @@ export class AutoTiler {
                         }
                     };
                 } else if (fork.right?.is_window(focused.entity)) {
-                    // Assign right window as stack
-                    focused.stack = this.forest.stacks.insert(new Stack(ext, focused.entity, fork.workspace, fork.monitor));
-                    fork.right = node.Node.stacked(focused.entity, focused.stack);
-                    fork.measure(this.forest, ext, fork.area, this.forest.on_record());
+                    this.stack_right(ext, fork, focused)
                 } else if (fork.right?.is_in_stack(focused.entity)) {
                     const node = stack_toggle(fork, fork.right);
                     if (node) fork.right = node;
@@ -488,6 +508,33 @@ export class AutoTiler {
 
                 this.tile(ext, fork, fork.area);
             }
+        }
+    }
+
+    stack_left(ext: Ext, fork: Fork, window: ShellWindow) {
+        window.stack = this.forest.stacks.insert(new Stack(ext, window.entity, fork.workspace, fork.monitor));
+        fork.left = node.Node.stacked(window.entity, window.stack);
+        fork.measure(this.forest, ext, fork.area, this.forest.on_record());
+    }
+
+    stack_right(ext: Ext, fork: Fork, window: ShellWindow) {
+        window.stack = this.forest.stacks.insert(new Stack(ext, window.entity, fork.workspace, fork.monitor));
+        fork.right = node.Node.stacked(window.entity, window.stack);
+        fork.measure(this.forest, ext, fork.area, this.forest.on_record());
+    }
+
+    /** Convers a window into a stack if it was not already stacked */
+    create_stack(ext: Ext, window: ShellWindow) {
+        const entity = this.attached.get(window.entity)
+        if (!entity) return
+
+        const fork = this.forest.forks.get(entity)
+        if (!fork) return
+
+        if (fork.left.is_window(window.entity)) {
+            this.stack_left(ext, fork, window)
+        } else if (fork.right?.is_window(window.entity)) {
+            this.stack_right(ext, fork, window)
         }
     }
 
@@ -596,3 +643,27 @@ export class AutoTiler {
         return Ok(void (0));
     }
 }
+
+
+/** Enables deriving the orientation that a window will be attached by the mouse position.
+* 
+* A null indicates that the window should be stacked
+*/
+export function cursor_placement(area: Rectangular, cursor: Rectangular): null | MoveByCursor {
+    const { LEFT, RIGHT, TOP, BOTTOM } = geom.Side
+    const { HORIZONTAL, VERTICAL } = lib.Orientation
+
+    const [, side] = geom.nearest_side([cursor.x, cursor.y], area)
+    
+    let res: null | [lib.Orientation, boolean] = side === LEFT
+        ? [HORIZONTAL, true]
+        : side === RIGHT
+            ? [HORIZONTAL, false]
+            : side === TOP
+                ? [VERTICAL, true]
+                : side === BOTTOM
+                    ? [VERTICAL, false]
+                    : null
+
+    return res ? { orientation: res[0], swap: res[1] } : null
+ }

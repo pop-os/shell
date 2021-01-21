@@ -24,15 +24,19 @@ const { Movement } = movement;
 const { DOWN, UP, LEFT, RIGHT } = Movement
 
 export interface MoveByCursor {
-    cursor: Rectangular
-    area: Rectangle
+    orientation: Lib.Orientation,
+    swap: boolean
 }
 
 export interface MoveByKeyboard {
     src: Rectangular
 }
 
-export type MoveBy = MoveByCursor | MoveByKeyboard
+export interface MoveByAuto {
+    auto: number
+}
+
+export type MoveBy = MoveByCursor | MoveByKeyboard | MoveByAuto
 
 /** A request to move a window into a new location. */
 interface Request {
@@ -185,27 +189,8 @@ export class Forest extends Ecs.World {
         return null;
     }
 
-    derive_orientation_by_cursor(area: Rectangle, cursor: Rectangular): [Lib.Orientation, boolean] {
-        const { Side } = geom
-        const [, side] = geom.nearest_side([cursor.x, cursor.y], area)
-        return side === Side.LEFT
-            ? [Lib.Orientation.HORIZONTAL, true]
-            : side === Side.RIGHT
-                ? [Lib.Orientation.HORIZONTAL, false]
-                : side === Side.TOP
-                    ? [Lib.Orientation.VERTICAL, false]
-                    : [Lib.Orientation.VERTICAL, true]
-    }
-
     /** Attaches a `new` window to the fork which `onto` is attached to. */
     attach_window(ext: Ext, onto_entity: Entity, new_entity: Entity, place_by: MoveBy, stack_from_left: boolean): [Entity, Fork.Fork] | null {
-        /** Place a window in a fork based on where the mouse resides at the time of attachment */
-        const place_by_mouse = (fork: Fork.Fork, cursor: Rectangular, area: Rectangle) => {
-            const [orientation, swap] = this.derive_orientation_by_cursor(area, cursor)
-            fork.set_orientation(orientation)
-            if (!swap) fork.swap_branches()
-        }
-
         /** Place a window in a fork based on where the window was originally located */
         function place_by_keyboard(fork: Fork.Fork, src: Rectangular, left: Rectangle, right: Rectangle) {
             const from : [number, number] = [src.x + (src.width / 2), src.y + (src.height / 2)]
@@ -218,9 +203,12 @@ export class Forest extends Ecs.World {
 
         /** By default, new attachments are positioned on the left of a branch */
         function place(place_by: MoveBy, fork: Fork.Fork, left: Rectangle, right: Rectangle) {
-            if ("cursor" in place_by) {
-                place_by_mouse(fork, place_by.cursor, place_by.area)
+            if ("swap" in place_by) {
+                const { orientation, swap } = place_by
+                fork.set_orientation(orientation)
+                if (swap) fork.swap_branches()
             } else if ("src" in place_by) {
+                global.log(`placing by keyboard: ${new_entity}`)
                 place_by_keyboard(fork, place_by.src, left, right)
             }
         }
@@ -284,7 +272,6 @@ export class Forest extends Ecs.World {
                 return this.attach_stack(ext, stack, fork, new_entity, stack_from_left);
             } else if (fork.right) {
                 if (fork.right.is_window(onto_entity)) {
-                    global.log(`right place`)
                     return fork_and_place_on_right(entity, fork, fork.right)
                 } else if (fork.right.is_in_stack(onto_entity)) {
                     const stack = fork.right.inner as Node.NodeStack;
@@ -437,6 +424,10 @@ export class Forest extends Ecs.World {
                     },
                 );
             }
+        }
+
+        if (stack_detach) {
+            ext.windows.with(window, w => w.stack = null)
         }
 
         this.on_detach(window);
