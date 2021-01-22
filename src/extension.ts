@@ -870,6 +870,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         let win = this.get_window(meta);
 
         if (null === win || !win.is_tilable(this)) {
+            this.unset_grab_op()
             return;
         }
 
@@ -881,10 +882,12 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         if (win.meta && win.meta.minimized) {
             this.on_minimize(win);
+            this.unset_grab_op()
             return;
         }
 
         if (win.is_maximized()) {
+            this.unset_grab_op()
             return;
         }
 
@@ -894,6 +897,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         if (!win) {
             log.error('an entity was dropped, but there is no window')
+            this.unset_grab_op()
             return
         }
 
@@ -908,12 +912,13 @@ export class Ext extends Ecs.System<ExtEvent> {
                 }
             }
 
-
+            this.unset_grab_op()
             return
         }
 
         if (!(grab_op && Ecs.entity_eq(grab_op.entity, win.entity))) {
             log.error(`grabbed entity is not the same as the one that was dropped`)
+            this.unset_grab_op()
             return
         }
 
@@ -969,6 +974,8 @@ export class Ext extends Ecs.System<ExtEvent> {
         } else if (this.settings.snap_to_grid()) {
             this.tiler.snap(this, win);
         }
+
+        this.unset_grab_op()
     }
 
     movement_is_valid(win: Window.ShellWindow, movement: movement.Movement) {
@@ -1873,6 +1880,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     unset_grab_op() {
         if (this.drag_signal !== null) {
+            this.overlay.visible = false
             GLib.source_remove(this.drag_signal)
             this.drag_signal = null
         }

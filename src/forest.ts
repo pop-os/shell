@@ -208,7 +208,6 @@ export class Forest extends Ecs.World {
                 fork.set_orientation(orientation)
                 if (swap) fork.swap_branches()
             } else if ("src" in place_by) {
-                global.log(`placing by keyboard: ${new_entity}`)
                 place_by_keyboard(fork, place_by.src, left, right)
             }
         }
