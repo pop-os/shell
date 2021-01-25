@@ -356,13 +356,27 @@ export class AutoTiler {
             return
         }
 
-        if (this.dropped_on_sibling(ext, win.entity)) return;
-
         let attach_to = null;
         for (const found of ext.windows_at_pointer(cursor, monitor, workspace)) {
             if (found != win && this.attached.contains(found.entity)) {
                 attach_to = found;
                 break
+            }
+        }
+
+        const fork = this.get_parent_fork(win.entity)
+        if (!fork) return
+
+        if (attach_to === null) {
+            if (fork.left.inner.kind === 2 && fork.right?.inner.kind === 2) {
+                let attaching = fork.left.is_window(win.entity)
+                    ? fork.right.inner.entity
+                    : fork.left.inner.entity
+
+                attach_to = ext.windows.get(attaching)
+            } else {
+                this.tile(ext, fork, fork.area)
+                return true
             }
         }
 
@@ -374,8 +388,13 @@ export class AutoTiler {
         }
     }
 
-    place_or_stack(ext: Ext, win: ShellWindow, attach_to: ShellWindow, cursor: Rectangular): boolean {
-        const attach_area = attach_to.meta.get_frame_rect()
+    place_or_stack(ext: Ext, win: ShellWindow, attach_to: ShellWindow, cursor: Rectangle): boolean {
+        const fork = this.get_parent_fork(attach_to.entity)
+        if (!fork) return true;
+
+        const attach_area: Rectangular = (attach_to.stack === null && this.windows_are_siblings(win.entity, attach_to.entity))
+            ? fork.area
+            : attach_to.meta.get_frame_rect()
         
         let placement: null | MoveBy = cursor_placement(attach_area, cursor)
         const stack = ext.auto_tiler?.find_stack(win.entity)
@@ -475,40 +494,40 @@ export class AutoTiler {
         if (fork_entity) {
             const fork = this.forest.forks.get(fork_entity);
             if (fork) {
-                const stack_toggle = (fork: Fork, branch: node.Node) => {
-                    // If the stack contains 1 item, unstack it
-                    const stack = branch.inner as node.NodeStack;
-                    if (stack.entities.length === 1) {
-                        focused.stack = null;
-                        this.forest.stacks.remove(stack.idx)?.destroy();
-                        fork.measure(this.forest, ext, fork.area, this.forest.on_record());
-                        return node.Node.window(focused.entity);
-                    }
-
-                    return null;
-                };
-
-                if (fork.left.is_window(focused.entity)) {
-                    this.stack_left(ext, fork, focused)
-                } else if (fork.left.is_in_stack(focused.entity)) {
-                    const node = stack_toggle(fork, fork.left);
-                    if (node) {
-                        fork.left = node
-
-                        if (!fork.right) {
-                            this.forest.reassign_to_parent(fork, node)
-                        }
-                    };
-                } else if (fork.right?.is_window(focused.entity)) {
-                    this.stack_right(ext, fork, focused)
-                } else if (fork.right?.is_in_stack(focused.entity)) {
-                    const node = stack_toggle(fork, fork.right);
-                    if (node) fork.right = node;
-                }
-
-                this.tile(ext, fork, fork.area);
+                this.unstack(ext, fork, focused)
             }
         }
+    }
+
+    unstack(ext: Ext, fork: Fork, win: ShellWindow) {
+        const stack_toggle = (fork: Fork, branch: node.Node) => {
+            // If the stack contains 1 item, unstack it
+            const stack = branch.inner as node.NodeStack;
+            if (stack.entities.length === 1) {
+                win.stack = null;
+                this.forest.stacks.remove(stack.idx)?.destroy();
+                fork.measure(this.forest, ext, fork.area, this.forest.on_record());
+                return node.Node.window(win.entity);
+            }
+
+            return null;
+        };
+
+        if (fork.left.is_in_stack(win.entity)) {
+            const node = stack_toggle(fork, fork.left);
+            if (node) {
+                fork.left = node
+
+                if (!fork.right) {
+                    this.forest.reassign_to_parent(fork, node)
+                }
+            };
+        } if (fork.right?.is_in_stack(win.entity)) {
+            const node = stack_toggle(fork, fork.right);
+            if (node) fork.right = node;
+        }
+
+        this.tile(ext, fork, fork.area);
     }
 
     stack_left(ext: Ext, fork: Fork, window: ShellWindow) {

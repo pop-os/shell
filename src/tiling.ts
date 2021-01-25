@@ -370,6 +370,16 @@ export class Tiler {
                 detach(Lib.Orientation.VERTICAL, true);
                 break;
         }
+
+        if (inner.entities.length === 1) {
+            const ent = inner.entities[0]
+            const win = ext.windows.get(ent)
+            const fork = ext.auto_tiler.get_parent_fork(ent)
+            if (fork && win) {
+                ext.auto_tiler.unstack(ext, fork, win)
+                ext.auto_tiler.tile(ext, fork, fork.area)
+            }
+        }
     }
 
     move_auto_(ext: Ext, mov1: Rectangle, mov2: Rectangle, callback: (m: Rectangle, a: Rectangle, mov: Rectangle) => boolean) {

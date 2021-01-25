@@ -1161,7 +1161,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     
                     const [cursor, monitor] = this.cursor_status();
 
-                    let attach_to = null;
+                    let attach_to = null
                     for (const found of this.windows_at_pointer(cursor, monitor, workspace)) {
                         if (found != win && this.auto_tiler.attached.contains(found.entity)) {
                             attach_to = found;
@@ -1169,13 +1169,30 @@ export class Ext extends Ecs.System<ExtEvent> {
                         }
                     }
 
-                    if (!attach_to) return true
+                    const fork = this.auto_tiler.get_parent_fork(entity)
+                    if (!fork) return true;
 
-                    const area = Rect.Rectangle.from_meta(attach_to.meta.get_frame_rect())
+                    if (attach_to === null) {
+                        if (fork.left.inner.kind === 2 && fork.right?.inner.kind === 2) {
+                            let attaching = fork.left.is_window(entity)
+                                ? fork.right.inner.entity
+                                : fork.left.inner.entity
+
+                            attach_to = this.windows.get(attaching)
+                        } else {
+                            return true
+                        }
+                    }
+
+                    if (null === attach_to) return true
+
+                    const area = attach_to.stack === null && this.auto_tiler.windows_are_siblings(entity, attach_to.entity)
+                        ? fork.area
+                        : Rect.Rectangle.from_meta(attach_to.meta.get_frame_rect())
 
                     const result = auto_tiler.cursor_placement(area, cursor)
 
-                    if (!result || this.auto_tiler.dropped_on_sibling(this, attach_to.entity, false)) {
+                    if (!result) {
                         this.overlay.x = area.x
                         this.overlay.y = area.y
                         this.overlay.width = area.width
@@ -1184,11 +1201,11 @@ export class Ext extends Ecs.System<ExtEvent> {
                         this.overlay.visible = true
 
                         return true
-                    }
+                    }                    
                     
                     let new_area: [number, number, number, number]
                     const { orientation, swap } = result
-
+                    
                     if (orientation === Lib.Orientation.HORIZONTAL) {
                         const half = area.width / 2
                         if (swap) {
