@@ -122,6 +122,3 @@ Tasks for a tester to verify when approving a patch. Use complex window layouts 
 - [ ] Close all windows-- no icons should be active in the GNOME launcher.
 - [ ] Open a window, enable tiling, stack the window, move to a different workspace, and disable tiling. The window should not become visible on the empty workspace.
 
-## Enhancement Tests
-
-Enhancement test don't have to pass for release. Once an enhancement test passes, move up to the standard required-pass test for release.
