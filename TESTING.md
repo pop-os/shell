@@ -28,29 +28,38 @@ Tasks for a tester to verify when approving a patch. Use complex window layouts 
 - [ ] Windows can be resized with the mouse
 - [ ] Minimizing a window detaches it from the tree and re-tiles remaining windows
 - [ ] Unminimizing a window re-tiles the window
-- [ ] Maximizing with the keyboard removes the active hint and covers tiled windows
-- [ ] Umaximizing with keyboard adds active hint and re-tiles into place
-- [ ] Maximizing with the mouse removes the active hint and covers tiled windows
-- [ ] Umaximizing with mouse adds active hint and re-tiles into place
-- [ ] Full-screening removes the hint and full-screens on one display 
-- [ ] Unfull-screening adds active hint and re-tiles into place
+- [ ] Maximizing with the keyboard (`Super` `M`) covers tiled windows
+- [ ] Unmaximizing with keyboard (`Super` `M`) re-tiles into place
+- [ ] Maximizing with the mouse covers tiled windows
+- [ ] Unmaximizing with mouse re-tiles into place
+- [ ] Full-screening removes the active hint and full-screens on one display 
+- [ ] Unfull-screening adds the active hint and re-tiles into place
 - [ ] Maximizing a YouTube video fills the screen and unmaximizing retiles the browser in place
 - [ ] VIM shortcuts work as direction keys
 - [ ] `Super` `O` changes window orientation
 - [ ] `Super` `G` floats and then re-tiles a window
 - [ ] Float a window with `Super` `G`. It should be movable and resizeable in window management mode with keyboard keys
 - [ ] `Super` `Q` Closes a window
-- [ ] `Super` `M` Maximizes and un-maximizes a window
 - [ ] Turn off auto-tiling. New windows launch floating.
 - [ ] Turn on auto-tiling. Windows automatically tile.
 - [ ] Disabling and enabling auto-tiling correctly handles minimized, maximized, fullscreen, floating, and non-floating windows (This test needs a better definition, steps, or to be separated out.)
+
+### Stacking
+
+- [ ] Windows can be moved into a stack.
+- [ ] Windows can be moved out of a stack.
+- [ ] Windows inside and outside of a stack can be swapped multiple times and in both directions.
+- [ ] Moving the last window out of a stack works as expected.
+- [ ] Stacks can be resized with the keyboard.
+- [ ] Stacks can be resized with the mouse.
+- [ ] Lock and unlock the screen-- stacks should still exist and windows should not have moved.
+- [ ] Full-screen an application within the stack, then quit the application-- the remaining tabs should be visible.
 
 ### Workspaces
 
 - [ ] Windows can be moved to another workspace with the keyboard
 - [ ] Windows can be moved to another workspace with the mouse
 - [ ] Windows can be moved to workspaces between existing workspaces
-  - Works except when moving to a new workspace at the very beginning of the stack. 
 - [ ] Moving windows to another workspace re-tiled the previous and new workspace
 - [ ] Active hint is present on the new workspace and once the window is returned to its previous workspace
 - [ ] Floating windows move across workspaces
@@ -62,6 +71,7 @@ Tasks for a tester to verify when approving a patch. Use complex window layouts 
 - [ ] Windows move across displays with the mouse
 - [ ] Changing the primary display moves the top bar. Window heights adjust on all monitors for the new position.
 - [ ] Unplug a display - windows from the display retile on a new workspace on the remaining display
+- [ ] Plug an additional display into a laptop - windows and workspaces don't changes
 - [ ] NOTE: Add vertical monitor layout test
 
 ### Launcher
@@ -74,13 +84,22 @@ Tasks for a tester to verify when approving a patch. Use complex window layouts 
 - [ ] Search works for GNOME settings panels
 - [ ] Search for "Extensions". There should be only one entry.
 - [ ] The overlay hint correctly highlights the selected window
+- [ ] Open windows are sorted above applications (e.g. "web browser")
 - [ ] t: executes a command in a terminal
 - [ ] : executes a command in sh
 - [ ] = calculates an equation
 
 ### Window Titles
 
+- [ ] Disabling window titles using global (Pop Shell) option works for Shell Shortcuts, LibreOffice, etc.
 - [ ] Disabling window titles in Firefox works (Check debian and flatpak packages)
+
+### Floating Exceptions
+
+- [ ] Add a window to floating exceptions-- it should float immediately.
+- [ ] Close and re-open the window-- it should float when opened.
+- [ ] Add an app to floating exceptions-- it should float immediately.
+- [ ] Close and re-open the app-- it should float when opened.
 
 ## With Tiling Disabled
 
@@ -90,7 +109,7 @@ Tasks for a tester to verify when approving a patch. Use complex window layouts 
 - [ ] Windows can be moved with the keyboard
 - [ ] Windows can be moved with the mouse
 - [ ] Windows swap with the keyboard (test with different size windows)
-- [ ] Windows can be resized with the keyboard (Test resizing four windows above, below, right, and left to ensure shortcut consistency)
+- [ ] Windows can be resized with the keyboard
 - [ ] Windows can be resized with the mouse
 - [ ] Windows can be half-tiled left and right with `Ctrl``Super``left`/`right`
 
@@ -99,8 +118,9 @@ Tasks for a tester to verify when approving a patch. Use complex window layouts 
 - [ ] Windows move across displays in adjustment mode with directions keys
 - [ ] Windows move across displays with the mouse
 
-## Enhancement Tests
+### Miscellaneous
 
-Enhancement test don't have to pass for release. Once an enhancement test passes, move up to the standard required-pass test for release.
-
-- [ ] Plus an additional display into a laptop - windows and workspaces don't change
+- [ ] Close all windows-- no icons should be active in the GNOME launcher.
+- [ ] Open a window, enable tiling, stack the window, move to a different workspace, and disable tiling. The window should not become visible on the empty workspace.
+- [ ] Maximize a window, then open another app with the Activities overview. The newly-opened app should be visible and focused.
+- [ ] Maximize a window, then open another app with the launcher. The newly-opened app should be visible and focused.
