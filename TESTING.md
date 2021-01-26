@@ -117,8 +117,9 @@ Tasks for a tester to verify when approving a patch. Use complex window layouts 
 - [ ] Windows move across displays in adjustment mode with directions keys
 - [ ] Windows move across displays with the mouse
 
-## Miscellaneous
+### Miscellaneous
 
 - [ ] Close all windows-- no icons should be active in the GNOME launcher.
 - [ ] Open a window, enable tiling, stack the window, move to a different workspace, and disable tiling. The window should not become visible on the empty workspace.
-
+- [ ] Maximize a window, then open another app with the Activities overview. The newly-opened app should be visible and focused.
+- [ ] Maximize a window, then open another app with the launcher. The newly-opened app should be visible and focused.
