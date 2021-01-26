@@ -352,10 +352,6 @@ export class Ext extends Ecs.System<ExtEvent> {
                     case GlobalEvent.OverviewShown:
                         this.on_overview_shown();
                         break;
-
-                    case GlobalEvent.OverviewHidden:
-                        this.on_overview_hidden();
-                        break;
                 }
 
                 break
@@ -1247,11 +1243,6 @@ export class Ext extends Ecs.System<ExtEvent> {
         } else {
             func(null, actual_monitor, actual_workspace);
         }
-    }
-
-    on_overview_hidden() {
-        const win = this.focus_window()
-        if (win) win.activate()
     }
 
     on_overview_shown() {
