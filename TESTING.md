@@ -45,6 +45,7 @@ Tasks for a tester to verify when approving a patch. Use complex window layouts 
 - [ ] Disabling and enabling auto-tiling correctly handles minimized, maximized, fullscreen, floating, and non-floating windows (This test needs a better definition, steps, or to be separated out.)
 
 ### Stacking
+
 - [ ] Windows can be moved into a stack.
 - [ ] Windows can be moved out of a stack.
 - [ ] Windows inside and outside of a stack can be swapped multiple times and in both directions.
