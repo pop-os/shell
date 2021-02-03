@@ -107,6 +107,8 @@ export class Ext extends Ecs.System<ExtEvent> {
     /** The current scaling factor in GNOME Shell */
     dpi: number = St.ThemeContext.get_for_stage(global.stage).scale_factor;
 
+    drag_signal: null | SignalID = null
+
     /** If set, the user is currently selecting a window to add to floating exceptions */
     exception_selecting: boolean = false;
 
@@ -271,10 +273,12 @@ export class Ext extends Ecs.System<ExtEvent> {
 
                 switch (event.kind.event) {
                     case WindowEvent.Maximize:
+                        this.unset_grab_op()
                         this.on_maximize(win);
                         break
 
                     case WindowEvent.Minimize:
+                        this.unset_grab_op()
                         this.on_minimize(win);
                         break;
 
@@ -862,6 +866,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         let win = this.get_window(meta);
 
         if (null === win || !win.is_tilable(this)) {
+            this.unset_grab_op()
             return;
         }
 
@@ -871,10 +876,12 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         if (win.meta && win.meta.minimized) {
             this.on_minimize(win);
+            this.unset_grab_op()
             return;
         }
 
         if (win.is_maximized()) {
+            this.unset_grab_op()
             return;
         }
 
@@ -884,6 +891,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         if (!win) {
             log.error('an entity was dropped, but there is no window')
+            this.unset_grab_op()
             return
         }
 
@@ -898,12 +906,13 @@ export class Ext extends Ecs.System<ExtEvent> {
                 }
             }
 
-
+            this.unset_grab_op()
             return
         }
 
         if (!(grab_op && Ecs.entity_eq(grab_op.entity, win.entity))) {
             log.error(`grabbed entity is not the same as the one that was dropped`)
+            this.unset_grab_op()
             return
         }
 
@@ -911,13 +920,21 @@ export class Ext extends Ecs.System<ExtEvent> {
             let crect = win.rect()
             const rect = grab_op.rect;
             if (is_move_op(op)) {
+                const cmon = win.meta.get_monitor()
+                const prev_mon = this.monitors.get(win.entity)
+                const mon_drop = prev_mon ? prev_mon[0] !== cmon : false
+
                 this.monitors.insert(win.entity, [win.meta.get_monitor(), win.workspace_id()])
 
                 if ((rect.x != crect.x || rect.y != crect.y)) {
                     if (rect.contains(cursor_rect())) {
-                        this.auto_tiler.reflow(this, win.entity);
+                        if (this.auto_tiler.attached.contains(win.entity)) {
+                            this.auto_tiler.on_drop(this, win, mon_drop)
+                        } else {
+                            this.auto_tiler.reflow(this, win.entity)
+                        }
                     } else {
-                        this.auto_tiler.on_drop(this, win);
+                        this.auto_tiler.on_drop(this, win, mon_drop);
                     }
                 }
             } else {
@@ -955,6 +972,8 @@ export class Ext extends Ecs.System<ExtEvent> {
         } else if (this.settings.snap_to_grid()) {
             this.tiler.snap(this, win);
         }
+
+        this.unset_grab_op()
     }
 
     movement_is_valid(win: Window.ShellWindow, movement: movement.Movement) {
@@ -1107,7 +1126,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     /** Triggered when a grab operation has been started */
-    on_grab_start(meta: null | Meta.Window) {
+    on_grab_start(meta: null | Meta.Window, op: any) {
         if (!meta) return
         let win = this.get_window(meta);
         if (win) {
@@ -1123,23 +1142,23 @@ export class Ext extends Ecs.System<ExtEvent> {
 
                 this.size_signals_block(win);
 
-
                 /** Display an overlay indicating where the window will be placed if dropped */
 
-                if (overview.visible) return
+                if (overview.visible || !win || op !== 1) return
 
                 const workspace = this.active_workspace();
 
-                GLib.timeout_add(GLib.PRIORITY_LOW, 200, () => {
+                this.drag_signal = GLib.timeout_add(GLib.PRIORITY_LOW, 200, () => {
                     this.overlay.visible = false
 
-                    if (!this.auto_tiler || !this.grab_op || this.grab_op.entity !== entity) {
+                    if (!win || !this.auto_tiler || !this.grab_op || this.grab_op.entity !== entity) {
+                        this.drag_signal = null
                         return false
                     }
     
                     const [cursor, monitor] = this.cursor_status();
 
-                    let attach_to = null;
+                    let attach_to = null
                     for (const found of this.windows_at_pointer(cursor, monitor, workspace)) {
                         if (found != win && this.auto_tiler.attached.contains(found.entity)) {
                             attach_to = found;
@@ -1147,11 +1166,30 @@ export class Ext extends Ecs.System<ExtEvent> {
                         }
                     }
 
-                    if (!attach_to) return true
+                    const fork = this.auto_tiler.get_parent_fork(entity)
+                    if (!fork) return true;
 
-                    const area = Rect.Rectangle.from_meta(attach_to.meta.get_frame_rect())
+                    if (attach_to === null) {
+                        if (fork.left.inner.kind === 2 && fork.right?.inner.kind === 2) {
+                            let attaching = fork.left.is_window(entity)
+                                ? fork.right.inner.entity
+                                : fork.left.inner.entity
 
-                    if (this.auto_tiler.dropped_on_sibling(this, attach_to.entity, false)) {
+                            attach_to = this.windows.get(attaching)
+                        } else {
+                            return true
+                        }
+                    }
+
+                    if (null === attach_to) return true
+
+                    const area = attach_to.stack === null && win.stack === null && this.auto_tiler.windows_are_siblings(entity, attach_to.entity)
+                        ? fork.area
+                        : attach_to.meta.get_frame_rect()
+
+                    const result = auto_tiler.cursor_placement(area, cursor)
+
+                    if (!result) {
                         this.overlay.x = area.x
                         this.overlay.y = area.y
                         this.overlay.width = area.width
@@ -1160,28 +1198,21 @@ export class Ext extends Ecs.System<ExtEvent> {
                         this.overlay.visible = true
 
                         return true
-                    }
+                    }                    
                     
-                    const [orientation, swap] = this.auto_tiler.forest
-                        .derive_orientation_by_cursor(area, cursor)
+                    const { orientation, swap } = result
 
-                    let new_area: [number, number, number, number]
+                    const half_width = area.width / 2
+                    const half_height = area.height / 2
 
-                    if (orientation === Lib.Orientation.HORIZONTAL) {
-                        const half = area.width / 2
-                        if (!swap) {
-                            new_area = [area.x, area.y, half, area.height]
-                        } else {
-                            new_area = [area.x + half, area.y, half, area.height]
-                        }
-                    } else {
-                        const half = area.height / 2
-                        if (!swap) {
-                            new_area = [area.x, area.y, area.width, half]
-                        } else {
-                            new_area = [area.x, area.y + half, area.width, half]
-                        }
-                    }
+                    let new_area: [number, number, number, number] =
+                    orientation === Lib.Orientation.HORIZONTAL
+                        ? swap
+                            ? [area.x, area.y, half_width, area.height]
+                            : [area.x + half_width, area.y, half_width, area.height]
+                        : swap
+                            ? [area.x, area.y, area.width, half_height]
+                            : [area.x, area.y + half_height, area.width, half_height]
 
                     this.overlay.x = new_area[0]
                     this.overlay.y = new_area[1]
@@ -1628,8 +1659,8 @@ export class Ext extends Ecs.System<ExtEvent> {
             this.register({ tag: 3, window });
         });
 
-        this.connect(display, 'grab-op-begin', (_, _display, win) => {
-            this.on_grab_start(win);
+        this.connect(display, 'grab-op-begin', (_, _display, win, op) => {
+            this.on_grab_start(win, op);
         });
 
         this.connect(display, 'grab-op-end', (_, _display, win, op) => {
@@ -1638,7 +1669,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         });
 
         this.connect(overview, 'window-drag-begin', (_, win) => {
-            this.on_grab_start(win)
+            this.on_grab_start(win, 1)
         })
 
         this.connect(overview, 'window-drag-end', (_, win) => {
@@ -1853,6 +1884,12 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     unset_grab_op() {
+        if (this.drag_signal !== null) {
+            this.overlay.visible = false
+            GLib.source_remove(this.drag_signal)
+            this.drag_signal = null
+        }
+
         if (this.grab_op !== null) {
             let window = this.windows.get(this.grab_op.entity);
             if (window) this.size_signals_unblock(window);
