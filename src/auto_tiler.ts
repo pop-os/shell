@@ -324,6 +324,16 @@ export class AutoTiler {
         return this.forest.forks.get(entity);
     }
 
+    largest_on_workspace(ext: Ext, monitor: number ,workspace: number): null | ShellWindow {
+        const workspace_id: [number, number] = [monitor, workspace]
+        const toplevel = this.forest.find_toplevel(workspace_id);
+        if (toplevel) {
+            return this.forest.largest_window_on(ext, toplevel)
+        }
+
+        return null
+    }
+
     /** Performed when a window that has been dropped is destined to be tiled
      *
      * ## Implementation Notes
@@ -338,24 +348,14 @@ export class AutoTiler {
 
         if (win.rect().contains(cursor)) {
             via_overview = false
-        }
-
-        const largest_on_workspace = (): [[number, number], null | ShellWindow] => {
-            const workspace_id: [number, number] = [monitor, workspace]
-            const toplevel = this.forest.find_toplevel(workspace_id);
-            if (toplevel) {
-                return [workspace_id, this.forest.largest_window_on(ext, toplevel)]
-            }
-
-            return [workspace_id, null]
-        }
+        } 
 
         const attach_mon = () => {
-            const [workspace_id, attach_to] = largest_on_workspace()
+            const attach_to = this.largest_on_workspace(ext, monitor, workspace)
             if (attach_to) {
                 this.attach_to_window(ext, attach_to, win, { auto: 0 })
             } else {
-                this.attach_to_monitor(ext, win, workspace_id, ext.settings.smart_gaps());
+                this.attach_to_monitor(ext, win, [monitor, workspace], ext.settings.smart_gaps());
             }
         }
 
@@ -391,12 +391,12 @@ export class AutoTiler {
         }
 
         if (attach_to) {
-            const [workspace_id,attach] = largest_on_workspace()
+            const attach = this.largest_on_workspace(ext, monitor, workspace)
             if (attach) {
                 this.place_or_stack(ext, win, attach_to, cursor)
             } else {
                 this.detach_window(ext, win.entity);
-                this.attach_to_monitor(ext, win, workspace_id, ext.settings.smart_gaps());
+                this.attach_to_monitor(ext, win, [monitor, workspace], ext.settings.smart_gaps());
             }
         } else {
             this.detach_window(ext, win.entity);

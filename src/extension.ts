@@ -1183,11 +1183,15 @@ export class Ext extends Ecs.System<ExtEvent> {
 
                     if (null === attach_to) return true
 
-                    const area = attach_to.stack === null && win.stack === null && this.auto_tiler.windows_are_siblings(entity, attach_to.entity)
-                        ? fork.area
-                        : attach_to.meta.get_frame_rect()
+                    const [area, monitor_attachment] = this.auto_tiler.largest_on_workspace(this, monitor, workspace)
+                        ? attach_to.stack === null && win.stack === null && this.auto_tiler.windows_are_siblings(entity, attach_to.entity)
+                            ? [fork.area, false]
+                            : [attach_to.meta.get_frame_rect(), false]
+                        : [this.monitor_work_area(monitor), true]
 
-                    const result = auto_tiler.cursor_placement(area, cursor)
+                    const result = monitor_attachment
+                        ? null
+                        : auto_tiler.cursor_placement(area, cursor)
 
                     if (!result) {
                         this.overlay.x = area.x
