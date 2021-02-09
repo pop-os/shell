@@ -319,9 +319,11 @@ export class AutoTiler {
     /** Find the fork that belongs to a window */
     get_parent_fork(window: Entity): null | Fork {
         const entity = this.attached.get(window);
-        if (!entity) return null;
+        if (entity === null) return null;
 
-        return this.forest.forks.get(entity);
+        const fork = this.forest.forks.get(entity);
+
+        return fork
     }
 
     largest_on_workspace(ext: Ext, monitor: number ,workspace: number): null | ShellWindow {
@@ -375,6 +377,8 @@ export class AutoTiler {
         const fork = this.get_parent_fork(win.entity)
         if (!fork) return
 
+        const windowless = this.largest_on_workspace(ext, monitor, workspace) === null
+
         // If it appears to not be attaching to anything, assume we are attaching to its sibling
         if (attach_to === null) {
             if (fork.left.inner.kind === 2 && fork.right?.inner.kind === 2) {
@@ -383,20 +387,17 @@ export class AutoTiler {
                     : fork.left.inner.entity
 
                 attach_to = ext.windows.get(attaching)
-            } else {
+            } else if (!windowless) {
                 this.tile(ext, fork, fork.area)
                 return true
             }
         }
 
-        if (attach_to) {
-            const attach = this.largest_on_workspace(ext, monitor, workspace)
-            if (attach) {
-                this.place_or_stack(ext, win, attach_to, cursor)
-            } else {
-                this.detach_window(ext, win.entity);
-                this.attach_to_monitor(ext, win, [monitor, workspace], ext.settings.smart_gaps());
-            }
+        if (windowless) {
+            this.detach_window(ext, win.entity);
+            this.attach_to_monitor(ext, win, [monitor, workspace], ext.settings.smart_gaps());
+        } else if (attach_to) {
+            this.place_or_stack(ext, win, attach_to, cursor)
         } else {
             this.detach_window(ext, win.entity);
             attach_mon()

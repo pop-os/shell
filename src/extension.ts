@@ -1169,6 +1169,8 @@ export class Ext extends Ecs.System<ExtEvent> {
                     const fork = this.auto_tiler.get_parent_fork(entity)
                     if (!fork) return true;
 
+                    let windowless = this.auto_tiler.largest_on_workspace(this, monitor, workspace) === null
+
                     if (attach_to === null) {
                         if (fork.left.inner.kind === 2 && fork.right?.inner.kind === 2) {
                             let attaching = fork.left.is_window(entity)
@@ -1176,18 +1178,20 @@ export class Ext extends Ecs.System<ExtEvent> {
                                 : fork.left.inner.entity
 
                             attach_to = this.windows.get(attaching)
-                        } else {
-                            return true
                         }
                     }
 
-                    if (null === attach_to) return true
+                    let area, monitor_attachment
 
-                    const [area, monitor_attachment] = this.auto_tiler.largest_on_workspace(this, monitor, workspace)
-                        ? attach_to.stack === null && win.stack === null && this.auto_tiler.windows_are_siblings(entity, attach_to.entity)
+                    if (windowless) {
+                        [area, monitor_attachment] = [this.monitor_work_area(monitor), true]
+                    } else if (attach_to) {
+                        [area, monitor_attachment] = attach_to.stack === null && win.stack === null && this.auto_tiler.windows_are_siblings(entity, attach_to.entity)
                             ? [fork.area, false]
                             : [attach_to.meta.get_frame_rect(), false]
-                        : [this.monitor_work_area(monitor), true]
+                    } else {
+                        return true
+                    }
 
                     const result = monitor_attachment
                         ? null
