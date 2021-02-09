@@ -1185,6 +1185,10 @@ export class Ext extends Ecs.System<ExtEvent> {
 
                     if (windowless) {
                         [area, monitor_attachment] = [this.monitor_work_area(monitor), true]
+                        area.x += this.gap_outer
+                        area.y += this.gap_outer
+                        area.width -= this.gap_outer * 2
+                        area.height -= this.gap_outer * 2
                     } else if (attach_to) {
                         [area, monitor_attachment] = attach_to.stack === null && win.stack === null && this.auto_tiler.windows_are_siblings(entity, attach_to.entity)
                             ? [fork.area, false]
