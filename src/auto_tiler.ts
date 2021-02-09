@@ -332,22 +332,31 @@ export class AutoTiler {
      * - If no window is present, tile onto the monitor
      */
     on_drop(ext: Ext, win: ShellWindow, via_overview: boolean = false) {
+        global.log(`on drop: overview? ${via_overview}`)
         const [cursor, monitor] = ext.cursor_status();
         const workspace = ext.active_workspace();
 
-        const attach_mon = () => {
+        if (win.rect().contains(cursor)) {
+            via_overview = false
+        }
+
+        const largest_on_workspace = (): [[number, number], null | ShellWindow] => {
             const workspace_id: [number, number] = [monitor, workspace]
             const toplevel = this.forest.find_toplevel(workspace_id);
             if (toplevel) {
-                const attach_to = this.forest.largest_window_on(ext, toplevel);
-                if (attach_to) {
-                    this.attach_to_window(ext, attach_to, win,  { auto: 0 })
-                    
-                    return
-                }
+                return [workspace_id, this.forest.largest_window_on(ext, toplevel)]
             }
 
-            this.attach_to_monitor(ext, win, workspace_id, ext.settings.smart_gaps());
+            return [workspace_id, null]
+        }
+
+        const attach_mon = () => {
+            const [workspace_id, attach_to] = largest_on_workspace()
+            if (attach_to) {
+                this.attach_to_window(ext, attach_to, win, { auto: 0 })
+            } else {
+                this.attach_to_monitor(ext, win, workspace_id, ext.settings.smart_gaps());
+            }
         }
 
         if (via_overview) {
@@ -382,7 +391,13 @@ export class AutoTiler {
         }
 
         if (attach_to) {
-            this.place_or_stack(ext, win, attach_to, cursor)
+            const [workspace_id,attach] = largest_on_workspace()
+            if (attach) {
+                this.place_or_stack(ext, win, attach_to, cursor)
+            } else {
+                this.detach_window(ext, win.entity);
+                this.attach_to_monitor(ext, win, workspace_id, ext.settings.smart_gaps());
+            }
         } else {
             this.detach_window(ext, win.entity);
             attach_mon()
@@ -404,15 +419,27 @@ export class AutoTiler {
         const stack = ext.auto_tiler?.find_stack(attach_to.entity)
 
         const matching_stack = win.stack !== null && win.stack === attach_to.stack
+        const { Left, Up, Right, Down } = tiling.Direction
+
+        const swap = (o: lib.Orientation, d: tiling.Direction) => {
+            fork.set_orientation(o)
+            const is_left = fork.left.is_window(win.entity)
+            const swap = (is_left && (d == Right || d == Down))
+                || (!is_left && (d == Left || d == Up))
+
+            if (swap) {
+                fork.swap_branches()
+            }
+
+            this.tile(ext, fork, fork.area)
+        }
 
         if (placement) {
+            const direction = placement.orientation === lib.Orientation.HORIZONTAL
+                ? placement.swap ? Left : Right
+                : placement.swap ? Up : Down
+
             if (stack) {
-                const { Left, Up, Right, Down } = tiling.Direction
-
-                const direction = placement.orientation === lib.Orientation.HORIZONTAL
-                    ? placement.swap ? Left : Right
-                    : placement.swap ? Up : Down
-
                 if (matching_stack) {
                     ext.tiler.move_from_stack(ext, stack, win, direction, true)
                     return true
@@ -420,39 +447,29 @@ export class AutoTiler {
                     const onto_stack = ext.auto_tiler?.find_stack(attach_to.entity)
                     if (onto_stack) {
                         if (is_sibling && win.stack === null) {
-                            fork.set_orientation(placement.orientation)
-                            const is_left = fork.left.is_window(win.entity)
-                            const swap = (is_left && (direction == Right || direction == Down))
-                                || (!is_left && (direction == Left || direction == Up))
-                            
-                            if (swap) {
-                                fork.swap_branches()
-                            }
-
-                            this.tile(ext, fork, fork.area)
+                            swap(placement.orientation, direction)
+                            return true
                         } else {
                             ext.tiler.move_alongside_stack(ext, onto_stack, win, direction)
                         }
 
                         return true
                     }
-                } else {
-                    this.detach_window(ext, win.entity)
                 }
-            } else {
-                this.detach_window(ext, win.entity)
+            } else if (is_sibling) {
+                swap(placement.orientation, direction)
+                return true
             }
         } else if (matching_stack) {
             this.tile(ext, fork, fork.area)
             return true
         } else {
-            this.detach_window(ext, win.entity)
-
             if (attach_to.stack === null) this.create_stack(ext, attach_to)
 
             placement = { auto: 0 }
         }
 
+        this.detach_window(ext, win.entity)
         return this.attach_to_window(ext, attach_to, win, placement)
     }
 
