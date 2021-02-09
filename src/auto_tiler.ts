@@ -342,7 +342,6 @@ export class AutoTiler {
      * - If no window is present, tile onto the monitor
      */
     on_drop(ext: Ext, win: ShellWindow, via_overview: boolean = false) {
-        global.log(`on drop: overview? ${via_overview}`)
         const [cursor, monitor] = ext.cursor_status();
         const workspace = ext.active_workspace();
 
@@ -457,6 +456,11 @@ export class AutoTiler {
                     }
                 }
             } else if (is_sibling) {
+                swap(placement.orientation, direction)
+                return true
+            } else if (fork.is_toplevel && fork.right === null) {
+                this.detach_window(ext, win.entity)
+                this.attach_to_window(ext, attach_to, win, placement)
                 swap(placement.orientation, direction)
                 return true
             }
