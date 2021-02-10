@@ -295,7 +295,11 @@ export class Stack {
         for (const c of this.tabs) {
             this.tab_disconnect(c);
             if (this.workspace === this.ext.active_workspace()) {
-                this.ext.windows.get(c.entity)?.meta.get_compositor_private()?.show();
+                const win = this.ext.windows.get(c.entity)
+                if (win) {
+                    win.meta.get_compositor_private()?.show()
+                    win.stack = null
+                }
             }
 
         }
