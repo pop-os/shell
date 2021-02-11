@@ -456,7 +456,7 @@ export class AutoTiler {
                         return true
                     }
                 }
-            } else if (is_sibling) {
+            } else if (is_sibling && win.stack === null) {
                 swap(placement.orientation, direction)
                 return true
             } else if (fork.is_toplevel && fork.right === null) {
