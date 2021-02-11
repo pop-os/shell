@@ -93,6 +93,11 @@ class App {
                 this.name_base = 'Bandcamp'
                 break
 
+            case 'lib':
+                this.query_base = 'https://libraries.io/search?q='
+                this.name_base = 'Libraries.io'
+                break
+
             default:
                 this.query_base = 'https://www.duckduckgo.com/?q='
                 this.name_base = 'DuckDuckGo'
