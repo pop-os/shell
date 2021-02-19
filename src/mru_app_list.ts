@@ -35,16 +35,20 @@ export class MruList {
     this.sync_to_disk();
   }
 
-  is_recent(option: launch.SearchOption): boolean {
+  recent_score(option: launch.SearchOption): number | undefined {
     if (!("app" in option.id)) {
-      return false;
+      return undefined;
+    }
+    const index = this.entries.indexOf(option.id.app.filename);
+    if (index >= 0) {
+      return (this.entries.length - 1) - index;
     }
 
-    if (this.entries.indexOf(option.id.app.filename) >= 0) {
-      return true;
-    }
+    return undefined;
+  }
 
-    return false;
+  is_recent(option: launch.SearchOption): boolean {
+    return this.recent_score(option) !== undefined;
   }
 
   reload() {

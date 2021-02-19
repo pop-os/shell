@@ -147,14 +147,18 @@ export class Launcher extends search.Search {
                 }
 
                 if (this.mru_list) {
-                    const a_recent = this.mru_list.is_recent(a);
-                    const b_recent = this.mru_list.is_recent(b);
-                    if (a_recent && !b_recent) {
+                    const a_recent = this.mru_list.recent_score(a);
+                    const b_recent = this.mru_list.recent_score(b);
+                    if (a_recent !== undefined && b_recent === undefined) {
                         return -1;
                     }
 
-                    if (b_recent && !a_recent) {
+                    if (b_recent !== undefined && a_recent === undefined) {
                         return 1;
+                    }
+
+                    if (a_recent !== undefined && b_recent !== undefined) {
+                        return a_recent > b_recent ? 1 : -1;
                     }
                 }
 
