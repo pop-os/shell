@@ -39,8 +39,6 @@ export class MruList {
       return false;
     }
 
-    log(`${this.entries.length} - ${this.entries}`);
-
     if (this.entries.indexOf(option.id.app.filename) >= 0) {
       return true;
     }
