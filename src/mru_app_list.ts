@@ -1,7 +1,7 @@
 // @ts-ignore
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
-import * as cfm from 'config_file_manager';
+import * as cfm from "config_file_manager";
 import * as launch from "launcher_service";
 
 const MRU_FILE = "mru_apps.json";
@@ -59,7 +59,7 @@ export class MruList {
   sync_to_disk() {
     const res = cfm.ConfigFileManager.write_type(MRU_FILE, this.entries);
     if (res.tag === 1) {
-      log(`error writing mru list ${res.why}`)
+      log(`error writing mru list ${res.why}`);
     }
   }
 }
