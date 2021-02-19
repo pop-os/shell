@@ -5,6 +5,7 @@ import * as cfm from 'config_file_manager';
 import * as launch from "launcher_service";
 
 const MRU_FILE = "mru_apps.json";
+const MAX_ENTRIES = 5;
 
 export class MruList {
   entries = new Array<string>();
@@ -26,7 +27,7 @@ export class MruList {
 
     this.entries.push(id);
 
-    const over = this.entries.length - 5;
+    const over = this.entries.length - MAX_ENTRIES;
     if (over > 0) {
       this.entries.splice(0, over);
     }
