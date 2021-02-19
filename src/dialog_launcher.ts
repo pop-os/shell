@@ -44,6 +44,7 @@ export class Launcher extends search.Search {
     service: launch.LauncherService
     last_plugin: null | plugins.Plugin.Source
     mode: number;
+    mru_list?: mru.MruList;
 
     constructor(ext: Ext) {
         let cancel = () => {
@@ -126,7 +127,7 @@ export class Launcher extends search.Search {
                 }
             }
 
-            const mru_list = new mru.MruList();
+            this.mru_list = this.mru_list ?? new mru.MruList();
             const sorter = (a: launch.SearchOption, b: launch.SearchOption) => {
                 const a_name = a.title.toLowerCase()
                 const b_name = b.title.toLowerCase()
@@ -145,14 +146,16 @@ export class Launcher extends search.Search {
                     b_name_weight = Math.min(b_name_weight, levenshtein.compare(pattern_lower, b.description.toLowerCase()))
                 }
 
-                const a_recent = mru_list.is_recent(a);
-                const b_recent = mru_list.is_recent(b);
-                if (a_recent && !b_recent) {
-                    return -1;
-                }
+                if (this.mru_list) {
+                    const a_recent = this.mru_list.is_recent(a);
+                    const b_recent = this.mru_list.is_recent(b);
+                    if (a_recent && !b_recent) {
+                        return -1;
+                    }
 
-                if (b_recent && !a_recent) {
-                    return 1;
+                    if (b_recent && !a_recent) {
+                        return 1;
+                    }
                 }
 
                 return a_name_weight > b_name_weight ? 1 : 0
@@ -200,8 +203,7 @@ export class Launcher extends search.Search {
             }
 
             const option = selected.id
-            const mru_list = new mru.MruList();
-            mru_list.add_recent(selected);
+            this.mru_list?.add_recent(selected);
 
             if ("window" in option) {
                 option.window.activate()
