@@ -1,8 +1,8 @@
 // @ts-ignore
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
-import * as cfm from "config_file_manager";
-import * as launch from "launcher_service";
+import * as cfm from 'config_file_manager';
+import * as launch from 'launcher_service';
 
 const MRU_FILE = "mru_apps.json";
 const MAX_ENTRIES = 5;
