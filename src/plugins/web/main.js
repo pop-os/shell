@@ -103,6 +103,11 @@ class App {
                 this.name_base = 'npm'
                 break
 
+            case 'gist':
+                this.query_base = 'https://gist.github.com/search?q='
+                this.name_base = 'GitHub Gist'
+                break
+
             default:
                 this.query_base = 'https://www.duckduckgo.com/?q='
                 this.name_base = 'DuckDuckGo'
