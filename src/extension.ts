@@ -146,6 +146,9 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     was_locked: boolean = false;
 
+    /** Set when a window is being moved by the mouse */
+    moved_by_mouse: boolean = false
+
     private workareas_update: null | SignalID = null
 
     /** Record of misc. global objects and their attached signals */
@@ -871,6 +874,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         }
 
         win.grab = false;
+        this.moved_by_mouse = true
 
         this.size_signals_unblock(win);
 
@@ -1907,6 +1911,8 @@ export class Ext extends Ecs.System<ExtEvent> {
             if (window) this.size_signals_unblock(window);
             this.grab_op = null;
         }
+
+        this.moved_by_mouse = false
     }
 
     update_display_configuration(workareas_only: boolean) {
