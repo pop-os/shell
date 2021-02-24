@@ -98,6 +98,26 @@ class App {
                 this.name_base = 'Libraries.io'
                 break
 
+            case 'sdcl':
+                this.query_base = 'https://soundcloud.com/search?q='
+                this.name_base = 'SoundCloud'
+                break
+
+            case 'twitch':
+                this.query_base = 'https://www.twitch.tv/search?term='
+                this.name_base = 'Twitch'
+                break
+
+            case 'yh':
+                this.query_base = 'https://search.yahoo.com/search?p='
+                this.name_base = 'Yahoo!'
+                break
+
+            case 'alie':
+                this.query_base = 'https://www.aliexpress.com/wholesale?SearchText='
+                this.name_base = 'AliExpress'
+                break
+
             default:
                 this.query_base = 'https://www.duckduckgo.com/?q='
                 this.name_base = 'DuckDuckGo'
