@@ -1,7 +1,7 @@
 {
     "name": "Web Search",
     "description": "Searches",
-    "pattern": "^(amazon|wiki|bing|ddg|google|yt|stack|crates|arch|pp|ppw|rdt|bc|lib|npm|gist)\\s.*",
+    "pattern": "^(amazon|wiki|bing|ddg|google|yt|stack|crates|arch|pp|ppw|rdt|bc|lib|npm|gist|fh)\\s.*",
     "exec": "main.js",
     "icon": "system-search"
 }

@@ -108,6 +108,10 @@ class App {
                 this.name_base = 'GitHub Gist'
                 break
 
+			case 'fh':
+				this.query_base = 'https://flathub.org/apps/search/'
+				this.name_base = 'FLATHUB'
+
             default:
                 this.query_base = 'https://www.duckduckgo.com/?q='
                 this.name_base = 'DuckDuckGo'
