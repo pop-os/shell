@@ -1430,8 +1430,10 @@ export class Ext extends Ecs.System<ExtEvent> {
             if (!prev_id || id[0] != prev_id[0] || id[1] != prev_id[1]) {
                 win.ignore_detach = true;
                 this.monitors.insert(win.entity, id);
-                this.auto_tiler.detach_window(this, win.entity);
-                this.auto_tiler.attach_to_workspace(this, win, id);
+                if (win.is_tilable(this)) {
+                    this.auto_tiler.detach_window(this, win.entity);
+                    this.auto_tiler.attach_to_workspace(this, win, id);
+                }
             }
 
             if (win.meta.minimized) {
