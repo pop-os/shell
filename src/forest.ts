@@ -633,6 +633,9 @@ export class Forest extends Ecs.World {
                 const inner = reassign.inner;
 
                 switch (inner.kind) {
+                    case 1:
+                        this.parents.insert(inner.entity, p)
+                        break
                     case 2:
                         this.on_attach(p, inner.entity);
                         break
