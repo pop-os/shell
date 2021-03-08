@@ -388,6 +388,11 @@ export class Forest extends Ecs.World {
                     } else if (fork.right) {
                         fork.left = fork.right
                         fork.right = null
+                        if (parent) {
+                            const pfork = this.reassign_child_to_parent(fork_entity, parent, fork.left);
+                            if (!pfork) return null;
+                            reflow_fork = [parent, pfork];
+                        }
                     } else {
                         this.delete_entity(fork.entity);
                     }
