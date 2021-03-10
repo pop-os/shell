@@ -23,7 +23,8 @@ const ENTRIES = new Map([
     ['lib', { query: 'https://libraries.io/search?q=', name: 'Libraries.io' }],
     ['gist', { query: 'https://gist.github.com/search?q=', name: 'GitHub Gist' }],
     ['fh', { query: 'https://flathub.org/apps/search/', name: 'flathub' }],
-    ['gh', { query: 'https://github.com/search?q=', name: 'github' }]
+    ['gh', { query: 'https://github.com/search?q=', name: 'github' }],
+    ['dev', { query: 'https://dev.to/search?q=', name: 'DEV Community' }]
 ])
 
 class App {
