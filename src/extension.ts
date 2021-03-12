@@ -1159,7 +1159,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                         this.drag_signal = null
                         return false
                     }
-    
+
                     const [cursor, monitor] = this.cursor_status();
 
                     let attach_to = null
@@ -1194,9 +1194,12 @@ export class Ext extends Ecs.System<ExtEvent> {
                         area.width -= this.gap_outer * 2
                         area.height -= this.gap_outer * 2
                     } else if (attach_to) {
-                        [area, monitor_attachment] = attach_to.stack === null && win.stack === null && this.auto_tiler.windows_are_siblings(entity, attach_to.entity)
-                            ? [fork.area, false]
-                            : [attach_to.meta.get_frame_rect(), false]
+                        const is_sibling = this.auto_tiler.windows_are_siblings(entity, attach_to.entity);
+
+                        [area, monitor_attachment] = ((win.stack === null && attach_to.stack === null && is_sibling))
+                            || (win.stack === null && is_sibling)
+                                ? [fork.area, false]
+                                : [attach_to.meta.get_frame_rect(), false]
                     } else {
                         return true
                     }
@@ -1214,8 +1217,8 @@ export class Ext extends Ecs.System<ExtEvent> {
                         this.overlay.visible = true
 
                         return true
-                    }                    
-                    
+                    }
+
                     const { orientation, swap } = result
 
                     const half_width = area.width / 2
@@ -1236,7 +1239,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                     this.overlay.height = new_area[3]
 
                     this.overlay.visible = true
-    
+
                     return true
                 })
             }
@@ -1607,7 +1610,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                 case 'active-hint':
                     if (indicator)
                         indicator.toggle_active.setToggleState(this.settings.active_hint())
-                        
+
                     this.show_border_on_focused();
                 case 'gap-inner':
                     this.on_gap_inner();
@@ -1683,7 +1686,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         this.connect(display, 'grab-op-end', (_, _display, win, op) => {
             this.register_fn(() => this.on_grab_end(win, op));
-            
+
         });
 
         this.connect(overview, 'window-drag-begin', (_, win) => {
@@ -1933,7 +1936,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         const primary_display_ready = (ext: Ext): boolean => {
             const area = global.display.get_monitor_geometry(primary_display)
             const work_area = ext.monitor_work_area(primary_display)
-            
+
             if (!area || !work_area) return false
 
             return !(area.width === work_area.width && area.height === work_area.height)
@@ -1946,7 +1949,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
             for (let i = 0; i < monitors; i += 1) {
                 const display = global.display.get_monitor_geometry(i)
-                
+
                 if (!display) return false
 
                 if (display.width < 1 || display.height < 1) return false
@@ -1965,7 +1968,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                 })
 
                 this.workareas_update = null
-            
+
                 return false
             })
 
@@ -2066,7 +2069,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             update_tiling()
 
             this.displays = [primary_display, updated]
-            
+
             return
         }
 
