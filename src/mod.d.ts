@@ -82,8 +82,8 @@ declare namespace Gtk {
 
     export class Widget {
         constructor();
-
-        show_all(): void;
+        show_all?: () => void;
+        show(): void;
     }
 }
 
