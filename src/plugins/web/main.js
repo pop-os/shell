@@ -22,8 +22,12 @@ const ENTRIES = new Map([
     ['npm', { query: 'https://www.npmjs.com/search?q=', name: 'npm' }],
     ['lib', { query: 'https://libraries.io/search?q=', name: 'Libraries.io' }],
     ['gist', { query: 'https://gist.github.com/search?q=', name: 'GitHub Gist' }],
-    ['fh', { query: 'https://flathub.org/apps/search/', name: 'flathub' }],
-    ['gh', { query: 'https://github.com/search?q=', name: 'github' }],
+    ['fh', { query: 'https://flathub.org/apps/search/', name: 'Flathub' }],
+    ['gh', { query: 'https://github.com/search?q=', name: 'GitHub' }],
+    ['sdcl', { query: 'https://soundcloud.com/search?q=', name: 'SoundCloud' }],
+    ['twitch', { query: 'https://www.twitch.tv/search?term=', name: 'Twitch' }],
+    ['yh', { query: 'https://search.yahoo.com/search?p=', name: 'Yahoo!' }],
+    ['alie', { query: 'https://www.aliexpress.com/wholesale?SearchText=', name: 'AliExpress' }],
     ['dev', { query: 'https://dev.to/search?q=', name: 'DEV Community' }]
 ])
 
