@@ -27,7 +27,8 @@ const ENTRIES = new Map([
     ['sdcl', { query: 'https://soundcloud.com/search?q=', name: 'SoundCloud' }],
     ['twitch', { query: 'https://www.twitch.tv/search?term=', name: 'Twitch' }],
     ['yh', { query: 'https://search.yahoo.com/search?p=', name: 'Yahoo!' }],
-    ['alie', { query: 'https://www.aliexpress.com/wholesale?SearchText=', name: 'AliExpress' }]
+    ['alie', { query: 'https://www.aliexpress.com/wholesale?SearchText=', name: 'AliExpress' }],
+    ['dev', { query: 'https://dev.to/search?q=', name: 'DEV Community' }]
 ])
 
 class App {

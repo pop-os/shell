@@ -388,6 +388,11 @@ export class Forest extends Ecs.World {
                     } else if (fork.right) {
                         fork.left = fork.right
                         fork.right = null
+                        if (parent) {
+                            const pfork = this.reassign_child_to_parent(fork_entity, parent, fork.left);
+                            if (!pfork) return null;
+                            reflow_fork = [parent, pfork];
+                        }
                     } else {
                         this.delete_entity(fork.entity);
                     }
@@ -633,6 +638,9 @@ export class Forest extends Ecs.World {
                 const inner = reassign.inner;
 
                 switch (inner.kind) {
+                    case 1:
+                        this.parents.insert(inner.entity, p)
+                        break
                     case 2:
                         this.on_attach(p, inner.entity);
                         break

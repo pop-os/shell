@@ -191,7 +191,11 @@ export class Search {
         const widget = this.widgets[this.active_id]
         widget.add_style_pseudo_class("select")
 
-        imports.misc.util.ensureActorVisibleInScrollView(this.scroller, widget)
+        try {
+            imports.misc.util.ensureActorVisibleInScrollView(this.scroller, widget)
+        } catch (_error) {
+            
+        }
     }
 
     select_id(id: number) {
