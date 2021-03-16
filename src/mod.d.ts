@@ -82,8 +82,8 @@ declare namespace Gtk {
 
     export class Widget {
         constructor();
-
-        show_all(): void;
+        show_all?: () => void;
+        show(): void;
     }
 }
 
@@ -180,7 +180,7 @@ declare namespace Meta {
     interface Window extends Clutter.Actor {
         appears_focused: Readonly<boolean>;
         minimized: Readonly<boolean>;
-        window_type: Readonly<any>;
+        window_type: Readonly<number>;
 
         activate(time: number): void;
         change_workspace_by_index(workspace: number, append: boolean): void;
