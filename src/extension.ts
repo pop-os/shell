@@ -1848,6 +1848,8 @@ export class Ext extends Ecs.System<ExtEvent> {
             return
         }
 
+        if (indicator) indicator.toggle_tiled.setToggleState(true)
+
         const original = this.active_workspace();
 
         let tiler = new auto_tiler.AutoTiler(
