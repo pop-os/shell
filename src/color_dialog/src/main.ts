@@ -57,7 +57,6 @@ function launch_color_dialog() {
     let color_dialog = new Gtk.ColorChooserDialog({
         title: "Choose Color"
     });
-    color_dialog.connect("destroy", Gtk.main_quit);
     color_dialog.show_editor = true;
     color_dialog.show_all();
 
@@ -81,13 +80,8 @@ function launch_color_dialog() {
         Gio.Settings.sync();
         color_dialog.destroy();
     }
-
-    return color_dialog;
 }
 
 Gtk.init(null);
 
-let dialog = launch_color_dialog();
-dialog.activate_focus();
-
-Gtk.main();
+launch_color_dialog()
