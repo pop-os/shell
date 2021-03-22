@@ -150,7 +150,7 @@ export class ShellWindow {
     }
 
     /**
-     * Adjust the colors for: 
+     * Adjust the colors for:
      * - border hint
      * - overlay
      */

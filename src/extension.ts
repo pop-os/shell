@@ -305,17 +305,11 @@ export class Ext extends Ecs.System<ExtEvent> {
                                         this.auto_tiler.reflow(this, win.entity);
                                     }
                                     if (win.stack !== null) {
-                                        let stack = this.auto_tiler.forest.stacks.get(win.stack);
-                                        if (stack) {
-                                            stack.set_visible(true);
-                                        }
+                                        this.auto_tiler.forest.stacks.get(win.stack)?.set_visible(true)
                                     }
                                 } else { // not full screened
                                     if (win.stack !== null) {
-                                        let stack = this.auto_tiler.forest.stacks.get(win.stack);
-                                        if (stack) {
-                                            stack.set_visible(false);
-                                        }
+                                        this.auto_tiler.forest.stacks.get(win.stack)?.set_visible(false)
                                     }
                                 }
 
@@ -697,40 +691,34 @@ export class Ext extends Ecs.System<ExtEvent> {
             this.last_focused = win.entity;
         }
 
-        function activate_in_stack(ext: Ext, stack: node.NodeStack, win: Window.ShellWindow) {
-            ext.auto_tiler?.forest.stacks.get(stack.idx)?.activate(win.entity);
-        }
-
-        if (this.auto_tiler) {
+        if (null !== this.auto_tiler) {
             win.meta.raise();
 
             // Update the active tab in the stack.
-            const attached = this.auto_tiler.attached.get(win.entity);
-            if (attached) {
-                const fork = this.auto_tiler.forest.forks.get(attached);
-                if (fork) {
-                    if (fork.left.is_in_stack(win.entity)) {
-                        activate_in_stack(this, (fork.left.inner as node.NodeStack), win);
-                    } else if (fork.right?.is_in_stack(win.entity)) {
-                        activate_in_stack(this, (fork.right.inner as node.NodeStack), win);
-                    }
-                }
+            if (null !== win.stack) {
+                ext?.auto_tiler?.forest.stacks.get(win.stack)?.activate(win.entity)
             }
         }
 
         this.show_border_on_focused();
 
-        if (this.auto_tiler && this.prev_focused !== null && win.is_tilable(this)) {
+        if (this.auto_tiler && this.prev_focused !== null) {
             let prev = this.windows.get(this.prev_focused);
             let is_attached = this.auto_tiler.attached.contains(this.prev_focused);
 
-            if (prev && prev !== win && is_attached && prev.actor_exists() && prev.rect().contains(win.rect())) {
-                if (prev.is_maximized()) {
-                    prev.meta.unmaximize(Meta.MaximizeFlags.BOTH);
-                }
+            if (prev && prev !== win && is_attached && prev.actor_exists()) {
+                if (prev.rect().contains(win.rect())) {
+                    if (prev.is_maximized()) {
+                        prev.meta.unmaximize(Meta.MaximizeFlags.BOTH);
+                    }
 
-                if (prev.meta.is_fullscreen()) {
-                    prev.meta.unmake_fullscreen();
+                    if (prev.meta.is_fullscreen()) {
+                        prev.meta.unmake_fullscreen();
+                    }
+                } else if (prev.stack) {
+                    prev.meta.unmaximize(Meta.MaximizeFlags.BOTH)
+                    prev.meta.unmake_fullscreen()
+                    this.auto_tiler.forest.stacks.get(prev.stack)?.restack()
                 }
             }
         }

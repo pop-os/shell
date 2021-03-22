@@ -213,7 +213,7 @@ export class Forest extends Ecs.World {
         }
 
         /** Fetch two rectangles representing the inner left and right halves of a fork
-         * 
+         *
          * In the case of a vertical fork, the left and right halves are the top and bottom
          */
         function area_of_halves(fork: Fork.Fork): [Rectangle, Rectangle] {
@@ -433,7 +433,7 @@ export class Forest extends Ecs.World {
                             fork.right = null
                             this.reassign_to_parent(fork, fork.left)
                         }
-                        
+
                     },
                 );
             }
