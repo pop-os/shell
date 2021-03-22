@@ -104,9 +104,10 @@ export class Stack {
         const id = this.buttons.insert(button);
 
         let tab: Tab = { active, entity, signals: [], button: id, button_signal: null };
+        let comp = this.tabs.length
         this.bind_hint_events(tab);
         this.tabs.push(tab);
-        this.watch_signals(this.tabs.length - 1, id, window);
+        this.watch_signals(comp, id, window);
         this.widgets.tabs.add(button);
     }
 
@@ -114,9 +115,11 @@ export class Stack {
     auto_activate(): null | Entity {
         if (this.tabs.length === 0) return null;
 
-        let id = this.tabs.length <= this.active_id ? this.tabs.length - 1 : this.active_id;
+        if (this.tabs.length <= this.active_id) {
+            this.active_id = this.tabs.length - 1;
+        }
 
-        const c = this.tabs[id];
+        const c = this.tabs[this.active_id];
 
         this.activate(c.entity);
         return c.entity;
@@ -125,8 +128,6 @@ export class Stack {
     /** Activates the tab of this entity */
     activate(entity: Entity) {
         if (this.widgets) this.widgets.tabs.visible = true;
-
-        this.restack();
 
         const win = this.ext.windows.get(entity);
         if (!win) return;
@@ -170,8 +171,6 @@ export class Stack {
 
             id += 1;
         }
-
-        this.restack();
     }
 
     /** Connects `on_window_changed` callbacks to the newly-active window */
@@ -460,15 +459,20 @@ export class Stack {
             || (only_primary && this.monitor != primary)
     }
 
-    reset_visibility() {
+    reset_visibility(permitted: boolean) {
         let idx = 0
-        for (const c of this.tabs) {
-            this.actor_exec(idx, c.entity, (actor) => actor.hide())
-            idx += 1
-        }
 
-        if (this.permitted_to_show()) {
-            this.actor_exec(this.active_id, this.active, (actor) => actor.show())
+        for (const c of this.tabs) {
+            this.actor_exec(idx, c.entity, (actor) => {
+                if (permitted && this.active_id === idx) {
+                    actor.show();
+                    return
+                }
+
+                actor.hide()
+            })
+
+            idx += 1
         }
     }
 
@@ -477,13 +481,13 @@ export class Stack {
         this.on_grab(() => {
             if (!this.widgets) return;
 
-            if (!this.permitted_to_show()) {
-                this.widgets.tabs.visible = false;
-            } else {
-                this.reposition();
-            }
+            const permitted = this.permitted_to_show()
 
-            this.reset_visibility()
+            this.widgets.tabs.visible = permitted
+
+            if (permitted) this.reposition()
+
+            this.reset_visibility(permitted)
         })
     }
 
@@ -491,12 +495,12 @@ export class Stack {
     set_visible(visible: boolean) {
         if (!this.widgets) return;
 
+        this.widgets.tabs.visible = visible;
+
         if (visible) {
-            this.widgets.tabs.show();
-            this.widgets.tabs.visible = true;
+            this.widgets.tabs.show()
         } else {
-            this.widgets.tabs.visible = false;
-            this.widgets.tabs.hide();
+            this.widgets.tabs.hide()
         }
     }
 
