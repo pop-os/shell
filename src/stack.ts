@@ -127,7 +127,11 @@ export class Stack {
 
     /** Activates the tab of this entity */
     activate(entity: Entity) {
-        if (this.widgets) this.widgets.tabs.visible = true;
+        const permitted = this.permitted_to_show()
+
+        if (this.widgets) this.widgets.tabs.visible = permitted;
+
+        this.reset_visibility(permitted)
 
         const win = this.ext.windows.get(entity);
         if (!win) return;
@@ -171,6 +175,8 @@ export class Stack {
 
             id += 1;
         }
+
+        this.reset_visibility(permitted)
     }
 
     /** Connects `on_window_changed` callbacks to the newly-active window */
@@ -303,7 +309,13 @@ export class Stack {
 
         }
 
-        for (const b of this.buttons.values()) b.destroy();
+        for (const b of this.buttons.values()) {
+            try {
+                b.destroy()
+            } catch (e) {
+
+            }
+        }
 
         if (this.widgets) {
             const tabs = this.widgets.tabs;
