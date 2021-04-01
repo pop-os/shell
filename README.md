@@ -147,7 +147,7 @@ By default, the launcher searches windows and applications. However, you can des
 - `run` | `t:`: Execute a command in `sh` in a terminal
 - `=`: Calculator mode, powered by [MathJS](https://mathjs.org/)
 - `/` | `~`: Navigate and open directories and files in the file system
-- `d`: Search recent documents
+- `d:`: Search recent documents
 
 ### Inner and Outer Gaps
 
