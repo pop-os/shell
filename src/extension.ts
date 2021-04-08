@@ -40,6 +40,7 @@ const Movement = movement.Movement;
 const GLib: GLib = imports.gi.GLib;
 
 const { Gio, Meta, St } = imports.gi;
+const { Overview } = imports.ui.overview;
 const { GlobalEvent, WindowEvent } = Events;
 const { cursor_rect, is_move_op } = Lib;
 const { layoutManager, loadTheme, overview, panel, setThemeStylesheet, screenShield, sessionMode } = imports.ui.main;
@@ -366,6 +367,12 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     // Extension methods
+
+    activate_launcher() {
+        this.tiler.exit(this)
+        this.window_search.load_desktop_files()
+        this.window_search.open(this)
+    }
 
     activate_window(window: Window.ShellWindow | null) {
         if (window) {
@@ -1159,7 +1166,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                         this.drag_signal = null
                         return false
                     }
-    
+
                     const [cursor, monitor] = this.cursor_status();
 
                     let attach_to = null
@@ -1214,8 +1221,8 @@ export class Ext extends Ecs.System<ExtEvent> {
                         this.overlay.visible = true
 
                         return true
-                    }                    
-                    
+                    }
+
                     const { orientation, swap } = result
 
                     const half_width = area.width / 2
@@ -1236,7 +1243,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                     this.overlay.height = new_area[3]
 
                     this.overlay.visible = true
-    
+
                     return true
                 })
             }
@@ -1607,7 +1614,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                 case 'active-hint':
                     if (indicator)
                         indicator.toggle_active.setToggleState(this.settings.active_hint())
-                        
+
                     this.show_border_on_focused();
                 case 'gap-inner':
                     this.on_gap_inner();
@@ -1683,7 +1690,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         this.connect(display, 'grab-op-end', (_, _display, win, op) => {
             this.register_fn(() => this.on_grab_end(win, op));
-            
+
         });
 
         this.connect(overview, 'window-drag-begin', (_, win) => {
@@ -1933,7 +1940,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         const primary_display_ready = (ext: Ext): boolean => {
             const area = global.display.get_monitor_geometry(primary_display)
             const work_area = ext.monitor_work_area(primary_display)
-            
+
             if (!area || !work_area) return false
 
             return !(area.width === work_area.width && area.height === work_area.height)
@@ -1946,7 +1953,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
             for (let i = 0; i < monitors; i += 1) {
                 const display = global.display.get_monitor_geometry(i)
-                
+
                 if (!display) return false
 
                 if (display.width < 1 || display.height < 1) return false
@@ -1965,7 +1972,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                 })
 
                 this.workareas_update = null
-            
+
                 return false
             })
 
@@ -2066,7 +2073,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             update_tiling()
 
             this.displays = [primary_display, updated]
-            
+
             return
         }
 
@@ -2256,6 +2263,16 @@ export class Ext extends Ecs.System<ExtEvent> {
 
 let ext: Ext | null = null;
 let indicator: Indicator | null = null;
+let injections: Array<any> = [];
+
+function inject(object: any, parameter: string, replacement: any) {
+    injections.push({
+        "object": object,
+        "parameter": parameter,
+        "value": object[parameter]
+    });
+    object[parameter] = replacement;
+}
 
 // @ts-ignore
 function init() {
@@ -2294,6 +2311,11 @@ function enable() {
     if (ext.settings.tile_by_default()) {
         ext.auto_tile_on();
     }
+
+    // Store the previous Super key function
+    inject(Overview.prototype, 'toggle', () => {
+        ext?.activate_launcher()
+    })
 }
 
 // @ts-ignore
@@ -2325,6 +2347,13 @@ function disable() {
     if (indicator) {
         indicator.destroy();
         indicator = null;
+    }
+
+    // Remove injections
+    let i;
+    for(i in injections) {
+       let injection = injections[i];
+       injection["object"][injection["parameter"]] = injection["value"];
     }
 }
 
