@@ -1652,11 +1652,9 @@ export class Ext extends Ecs.System<ExtEvent> {
             if (screenShield?.locked) this.update_display_configuration(false);
 
             this.connect(display, 'notify::focus-window', () => {
-                GLib.timeout_add(GLib.PRIORITY_DEFAULT, 300, () => {
-                    const window = this.focus_window()
-                    if (window) this.on_focused(window)
-                    return false
-                })
+                const window = this.focus_window()
+                if (window) this.on_focused(window)
+                return false
             });
 
             const window = this.focus_window();
