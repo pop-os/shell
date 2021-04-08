@@ -44,11 +44,15 @@ export class Search {
         this.widgets = [];
 
         this.entry = new St.Entry({
+            style_class: "pop-shell-entry",
             can_focus: true,
             x_expand: true
         });
 
+        this.entry.set_hint_text('  Type to search apps')
+
         this.text = this.entry.get_clutter_text();
+        (this.text as any).set_use_markup(true)
         this.dialog.setInitialKeyFocus(this.text);
 
         this.text.connect("activate", () => this.activate_option(this.active_id));
@@ -194,7 +198,7 @@ export class Search {
         try {
             imports.misc.util.ensureActorVisibleInScrollView(this.scroller, widget)
         } catch (_error) {
-            
+
         }
     }
 
