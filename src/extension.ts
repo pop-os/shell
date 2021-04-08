@@ -1821,6 +1821,9 @@ export class Ext extends Ecs.System<ExtEvent> {
         } else {
             this.auto_tile_on();
         }
+        if (indicator) {
+            indicator.toggle_tiled.setToggleState(this.settings.tile_by_default())
+        }
     }
 
     auto_tile_off() {
