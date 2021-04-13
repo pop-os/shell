@@ -308,7 +308,7 @@ export class Launcher extends search.Search {
         this.list_workspace(ext);
         this.update_search_list(this.options);
 
-        this.dialog.open(global.get_current_time(), false);
+        super._open(global.get_current_time(), false);
     }
 
     stop_services(ext: Ext) {

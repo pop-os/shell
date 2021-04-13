@@ -2304,6 +2304,7 @@ function disable() {
         ext.exit_modes();
         ext.stop_launcher_services();
         ext.hide_all_borders();
+        ext.window_search.remove_injections()
 
         layoutManager.removeChrome(ext.overlay);
 

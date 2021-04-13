@@ -4,8 +4,13 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 import * as Lib from 'lib';
 import { SearchOption } from 'launcher_service';
 
-const { Clutter, St } = imports.gi;
+const { Clutter, Shell, St } = imports.gi;
 const { ModalDialog } = imports.ui.modalDialog;
+
+const { overview, wm } = imports.ui.main;
+const { Overview } = imports.ui.overview;
+
+let overview_toggle: any = null
 
 export class Search {
     dialog: Shell.ModalDialog = new ModalDialog({
@@ -168,7 +173,30 @@ export class Search {
     }
 
     close() {
-        this.dialog.close(global.get_current_time());
+        this.remove_injections()
+
+        this.dialog.close(global.get_current_time())
+
+        wm.allowKeybinding('overlay-key', Shell.ActionMode.NORMAL | Shell.ActionMode.OVERVIEW)
+    }
+
+    _open(timestamp: number, on_primary: boolean) {
+        this.dialog.open(timestamp, on_primary)
+
+        wm.allowKeybinding('overlay-key', Shell.ActionMode.ALL)
+
+        overview_toggle = Overview.prototype['toggle']
+
+        Overview.prototype['toggle'] = () => {
+            if (this.dialog.is_visible()) {
+                this.reset();
+                this.close();
+                this.cancel_cb();
+            } else {
+                this.remove_injections()
+                overview.toggle()
+            }
+        }
     }
 
     get_text(): string {
@@ -261,5 +289,12 @@ export class Search {
 
     set_text(text: string) {
         this.text.set_text(text);
+    }
+
+    remove_injections() {
+        if (overview_toggle !== null) {
+            Overview.prototype['toggle'] = overview_toggle
+            overview_toggle = null
+        }
     }
 }
