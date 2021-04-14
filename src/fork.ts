@@ -31,6 +31,7 @@ export class Fork {
     workspace: number;
     length_left: number;
     prev_length_left: number;
+    prev_ratio: number = 0.5;
     monitor: number;
     minimum_ratio: number = 0.1;
     orientation: Lib.Orientation = Lib.Orientation.HORIZONTAL;
