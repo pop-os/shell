@@ -114,17 +114,8 @@ export class AutoTiler {
             }
         }
 
-        let ratio;
-
-        if (fork.orientation_changed) {
-            fork.orientation_changed = false;
-            ratio = fork.length_left / fork.depth();
-        } else {
-            ratio = fork.length_left / fork.length();
-        }
-
         fork.area = fork.set_area(rect.clone());
-        fork.length_left = Math.round(ratio * fork.length());
+        fork.length_left = Math.round(fork.prev_ratio * fork.length());
         this.tile(ext, fork, fork.area);
     }
 
@@ -349,7 +340,7 @@ export class AutoTiler {
 
         if (win.rect().contains(cursor)) {
             via_overview = false
-        } 
+        }
 
         const attach_mon = () => {
             const attach_to = this.largest_on_workspace(ext, monitor, workspace)
@@ -414,7 +405,7 @@ export class AutoTiler {
             || (win.stack === null && is_sibling)
                 ? fork.area
                 : attach_to.meta.get_frame_rect()
-        
+
         let placement: null | MoveBy = cursor_placement(attach_area, cursor)
         const stack = ext.auto_tiler?.find_stack(attach_to.entity)
 
@@ -723,7 +714,7 @@ export class AutoTiler {
 
 
 /** Enables deriving the orientation that a window will be attached by the mouse position.
-* 
+*
 * A null indicates that the window should be stacked
 */
 export function cursor_placement(area: Rectangular, cursor: Rectangular): null | MoveByCursor {
@@ -731,7 +722,7 @@ export function cursor_placement(area: Rectangular, cursor: Rectangular): null |
     const { HORIZONTAL, VERTICAL } = lib.Orientation
 
     const [, side] = geom.nearest_side([cursor.x, cursor.y], area)
-    
+
     let res: null | [lib.Orientation, boolean] = side === LEFT
         ? [HORIZONTAL, true]
         : side === RIGHT
