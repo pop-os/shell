@@ -223,14 +223,16 @@ export class Launcher extends search.Search {
             return false
         };
 
-        let complete = () => {
+        let complete = (): boolean => {
             if (this.last_plugin) {
                 plugins.Plugin.complete(ext, this.last_plugin)
                 const res = plugins.Plugin.listen(this.last_plugin)
                 if (res && res.event === "fill") {
                     this.set_text(res.text)
+                    return true
                 }
             }
+            return false
         }
 
         super(cancel, search, complete, select, apply);
@@ -244,6 +246,11 @@ export class Launcher extends search.Search {
         this.options = new Array()
         this.desktop_apps = new Array();
         this.mode = -1;
+    }
+
+    clear(){
+        super.clear();
+        this.last_plugin = null;
     }
 
     load_desktop_files() {
