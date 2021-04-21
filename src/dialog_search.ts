@@ -25,13 +25,13 @@ export class Search {
 
     private apply_cb: (index: number) => boolean;
     private cancel_cb: () => void;
-    private complete_cb: () => void;
+    private complete_cb: () => boolean;
     private select_cb: (id: number) => void;
 
     constructor(
         cancel: () => void,
         search: (pattern: string) => Array<SearchOption> | null,
-        complete: () => void,
+        complete: () => boolean,
         select: (id: number) => void,
         apply: (index: number) => boolean,
     ) {
@@ -78,20 +78,23 @@ export class Search {
                 cancel();
                 return;
             } else if (c === 65289) {
-                this.complete_cb()
+                // Tab was pressed, check for tab completion
+                if(this.complete_cb()){
+                    return;
+                }
             }
 
             let s = event.get_state();
-            if (c == 65362 || (s == Clutter.ModifierType.CONTROL_MASK && c == 107) || (s == Clutter.ModifierType.CONTROL_MASK && c == 112)) {
-                // Up arrow was pressed
+            if (c == 65362 || c == 65056 || (s == Clutter.ModifierType.CONTROL_MASK && c == 107) || (s == Clutter.ModifierType.CONTROL_MASK && c == 112)) {
+                // Up arrow or left tab was pressed
                 if (0 < this.active_id) {
                     this.select_id(this.active_id - 1)
                 }
                 else if (this.active_id == 0) {
                     this.select_id(this.widgets.length - 1)
                 }
-            } else if (c == 65364 || (s == Clutter.ModifierType.CONTROL_MASK && c == 106) || (s == Clutter.ModifierType.CONTROL_MASK && c == 110)) {
-                // Down arrow was pressed
+            } else if (c == 65364 || c == 65289 || (s == Clutter.ModifierType.CONTROL_MASK && c == 106) || (s == Clutter.ModifierType.CONTROL_MASK && c == 110)) {
+                // Down arrow or tab was pressed
                 if (this.active_id + 1 < this.widgets.length) {
                     this.select_id(this.active_id + 1)
                 }
