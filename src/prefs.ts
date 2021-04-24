@@ -70,7 +70,6 @@ function settings_dialog_view(): [AppWidgets, Gtk.Container] {
     let grid = new Gtk.Grid({
         column_spacing: 12,
         row_spacing: 12,
-        border_width: 12
     });
 
     let win_label = new Gtk.Label({
@@ -182,6 +181,10 @@ function logging_combo(grid: any, top_index: number) {
 // @ts-ignore
 function buildPrefsWidget() {
     let dialog = settings_dialog_new();
-    dialog.show_all();
+    if (dialog.show_all) {
+        dialog.show_all()
+    } else {
+        dialog.show();
+    }
     return dialog;
 }

@@ -82,8 +82,8 @@ declare namespace Gtk {
 
     export class Widget {
         constructor();
-
-        show_all(): void;
+        show_all?: () => void;
+        show(): void;
     }
 }
 
@@ -291,5 +291,6 @@ declare namespace St {
         clutter_text: any;
 
         get_clutter_text(): Clutter.Text;
+        set_hint_text(hint: string): void;
     }
 }
