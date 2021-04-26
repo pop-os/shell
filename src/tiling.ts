@@ -256,7 +256,7 @@ export class Tiler {
         }
 
         if (!ext.auto_tiler) return;
-        
+
         const inner = branch.inner as NodeStack;
         Node.stack_remove(ext.auto_tiler.forest, inner, focused.entity)
         ext.auto_tiler.detach_window(ext, focused.entity)
@@ -817,7 +817,7 @@ export function locate_monitor(win: window.ShellWindow, direction: Meta.DisplayD
     }
 
     let next: [number, number] | null = null
-    
+
     for (let mon = 0; mon < n_monitors; mon += 1) {
         if (mon === from) continue
 

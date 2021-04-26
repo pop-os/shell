@@ -23,6 +23,7 @@ import * as movement from 'movement';
 import * as stack from 'stack';
 import * as add_exception from 'dialog_add_exception';
 import * as exec from 'executor';
+import * as dbus_service from 'dbus_service';
 
 import type { Entity } from 'ecs';
 import type { ExtEvent } from 'events';
@@ -75,6 +76,8 @@ export class Ext extends Ecs.System<ExtEvent> {
     /** The application launcher, focus search, and calculator dialog */
     window_search: Launcher = new launcher.Launcher(this);
 
+    /** DBus */
+    dbus: dbus_service.Service = new dbus_service.Service();
 
     // State
 
@@ -219,6 +222,12 @@ export class Ext extends Ecs.System<ExtEvent> {
                 this.register(Events.global(GlobalEvent.GtkShellChanged));
             });
         }
+
+        this.dbus.FocusUp = () => this.focus_up()
+        this.dbus.FocusDown = () => this.focus_down()
+        this.dbus.FocusLeft = () => this.focus_left()
+        this.dbus.FocusRight = () => this.focus_right()
+        this.dbus.Launcher = () => this.window_search.open(this)
     }
 
     // System interface
@@ -586,12 +595,75 @@ export class Ext extends Ecs.System<ExtEvent> {
         return [id, new_work];
     }
 
+    focus_left() {
+        this.stack_select(
+            (id, stack) => id === 0 ? null : stack.tabs[id - 1].entity,
+            () => this.activate_window(this.focus_selector.left(this, null))
+        );
+    }
+
+    focus_right() {
+        this.stack_select(
+            (id, stack) => stack.tabs.length > id + 1 ? stack.tabs[id + 1].entity : null,
+            () => this.activate_window(this.focus_selector.right(this, null))
+        )
+    }
+
+    focus_down() {
+        this.activate_window(this.focus_selector.down(this, null))
+    }
+
+    focus_up() {
+        this.activate_window(this.focus_selector.up(this, null))
+    }
+
     focus_window(): Window.ShellWindow | null {
         let focused = this.get_window(display.get_focus_window())
         if (!focused && this.last_focused) {
             focused = this.windows.get(this.last_focused);
         }
         return focused;
+    }
+
+    stack_select(
+        select: (id: number, stack: stack.Stack) => Entity | null,
+        focus_shift: () => void,
+    ) {
+        const switched = this.stack_switch((stack: any) => {
+            if (!stack) return false;
+
+            const stack_con = this.auto_tiler?.forest.stacks.get(stack.idx);
+            if (stack_con) {
+                const id = stack_con.active_id;
+                if (id !== -1) {
+                    const next = select(id, stack_con);
+                    if (next) {
+                        stack_con.activate(next);
+                        const window = this.windows.get(next)
+                        if (window) {
+                            window.activate();
+                            return true;
+                        }
+                    }
+                }
+            }
+
+            return false;
+        });
+
+        if (!switched) {
+            focus_shift();
+        }
+    }
+
+    stack_switch(apply: (stack: node.NodeStack) => boolean) {
+        const window = this.focus_window();
+        if (window) {
+            if (this.auto_tiler) {
+                const node = this.auto_tiler.find_stack(window.entity);
+                return node ? apply(node[1].inner as node.NodeStack) : false;
+            }
+        }
     }
 
     /// Fetches the window component from the entity associated with the metacity window metadata.
