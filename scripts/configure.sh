@@ -95,7 +95,7 @@ set_keybindings() {
     dconf write ${KEYS_MEDIA}/rotate-video-lock-static "@as []"
 
     # Close Window
-    dconf write ${KEYS_GNOME_WM}/close "['<Super>q']"
+    dconf write ${KEYS_GNOME_WM}/close "['<Super>q', '<Alt>F4']"
 }
 
 set_keybindings
