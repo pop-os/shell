@@ -502,8 +502,9 @@ export class ShellWindow {
     }
 
     update_border_layout() {
-        let rect = this.meta.get_frame_rect();
-        let border = this.border;
+        let {x, y, width, height} = this.meta.get_frame_rect();
+
+        const border = this.border;
         let borderSize = this.border_size;
 
         if (border) {
@@ -514,23 +515,51 @@ export class ShellWindow {
                 border.add_style_class_name('pop-shell-border-maximize');
             }
 
-            let stack_number = this.stack;
+            const stack_number = this.stack;
+            let dimensions = null
 
             if (stack_number !== null) {
                 const stack = this.ext.auto_tiler?.forest.stacks.get(stack_number);
                 if (stack) {
                     let stack_tab_height = stack.tabs_height;
 
-                    if (borderSize === 0 || this.grab) { // not in max screen state
+                    if (borderSize === 0 || this.grab === null) { // not in max screen state
                         stack_tab_height = 0;
                     }
 
-                    border.set_position(rect.x - borderSize, rect.y - stack_tab_height - borderSize);
-                    border.set_size(rect.width + 2 * borderSize, rect.height + stack_tab_height + 2 * borderSize);
+                    dimensions = [
+                        x - borderSize,
+                        y - stack_tab_height - borderSize,
+                        width + 2 * borderSize,
+                        height + stack_tab_height + 2 * borderSize
+                    ]
                 }
             } else {
-                border.set_position(rect.x - borderSize, rect.y - borderSize);
-                border.set_size(rect.width + (2 * borderSize), rect.height + (2 * borderSize));
+                dimensions = [
+                    x - borderSize,
+                    y - borderSize,
+                    width + (2 * borderSize),
+                    height + (2 * borderSize)
+                ]
+            }
+
+            if (dimensions) {
+                [x, y, width, height] = dimensions
+
+                const screen = global
+                    .workspace_manager
+                    .get_active_workspace()
+                    .get_work_area_for_monitor(global.display.get_current_monitor())
+
+                if (screen) {
+                    x = Math.max(x, screen.x)
+                    y = Math.max(y, screen.y)
+                    width = Math.min(width, screen.x + screen.width)
+                    height = Math.min(height, screen.y + screen.height)
+                }
+
+                border.set_position(x, y)
+                border.set_size(width, height)
             }
         }
     }
