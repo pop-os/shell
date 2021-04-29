@@ -235,7 +235,22 @@ export class Launcher extends search.Search {
             return false
         }
 
-        super(cancel, search, complete, select, apply);
+        const quit = (id: number) => {
+            const selected = this.options[id];
+
+            if (typeof selected === 'undefined') {
+                return true
+            }
+
+            const option = selected.id
+
+            if ("window" in option) {
+                option.window.meta.delete(global.get_current_time())
+                this.close()
+            }
+        }
+
+        super(cancel, search, complete, select, apply, quit);
 
         this.dialog.dialogLayout._dialog.y_align = Clutter.ActorAlign.START;
         this.dialog.dialogLayout._dialog.x_align = Clutter.ActorAlign.START;

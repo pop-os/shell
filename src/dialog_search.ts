@@ -32,6 +32,7 @@ export class Search {
     private cancel_cb: () => void;
     private complete_cb: () => boolean;
     private select_cb: (id: number) => void;
+    private quit_cb: (id: number) => void;
 
     constructor(
         cancel: () => void,
@@ -39,11 +40,13 @@ export class Search {
         complete: () => boolean,
         select: (id: number) => void,
         apply: (index: number) => boolean,
+        quit: (index: number) => void
     ) {
         this.apply_cb = apply;
         this.cancel_cb = cancel;
         this.complete_cb = complete;
         this.select_cb = select;
+        this.quit_cb = quit;
 
         this.active_id = 0;
         this.widgets = [];
@@ -133,6 +136,10 @@ export class Search {
             } else if (s == Clutter.ModifierType.CONTROL_MASK && c == 57) {
                 this.activate_option(8)
                 return
+            } else if (s == Clutter.ModifierType.CONTROL_MASK && c == 113) {
+                // Ctrl + Q shall quit the selected application
+                this.quit_cb(this.active_id)
+                return
             }
 
             this.select_cb(this.active_id);
@@ -208,7 +215,7 @@ export class Search {
     }
 
     list_max() {
-        return 9; 
+        return 9;
     }
 
     reset() {
