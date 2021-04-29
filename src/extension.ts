@@ -321,13 +321,6 @@ export class Ext extends Ecs.System<ExtEvent> {
                                         this.auto_tiler.forest.stacks.get(win.stack)?.set_visible(false)
                                     }
                                 }
-
-                                if (win.is_maximized()) {
-                                    this.size_changed_block();
-                                    win.meta.unmaximize(Meta.MaximizeFlags.BOTH);
-                                    win.meta.make_fullscreen();
-                                    this.size_changed_unblock();
-                                }
                             }
                         }
 
