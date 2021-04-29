@@ -779,7 +779,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             let prev = this.windows.get(this.prev_focused);
             let is_attached = this.auto_tiler.attached.contains(this.prev_focused);
 
-            if (prev && prev !== win && is_attached && prev.actor_exists()) {
+            if (prev && prev !== win && is_attached && prev.actor_exists() && prev.name(this) !== win.name(this)) {
                 if (prev.rect().contains(win.rect())) {
                     if (prev.is_maximized()) {
                         prev.meta.unmaximize(Meta.MaximizeFlags.BOTH);
