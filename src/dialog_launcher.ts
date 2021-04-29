@@ -246,6 +246,7 @@ export class Launcher extends search.Search {
 
             if ("window" in option) {
                 option.window.meta.delete(global.get_current_time())
+                cancel()
                 this.close()
             }
         }
