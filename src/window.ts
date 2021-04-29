@@ -253,12 +253,17 @@ export class ShellWindow {
     is_tilable(ext: Ext): boolean {
         let tile_checks = () => {
             let wm_class = this.meta.get_wm_class();
+
+            if (wm_class !== null && wm_class.trim().length === 0) {
+                wm_class = this.name(ext)
+            }
+
             return !this.meta.is_skip_taskbar()
                 // Only normal windows will be considered for tiling
                 && this.meta.window_type == Meta.WindowType.NORMAL
                 // Transient windows are most likely dialogs
                 && !this.is_transient()
-                // If a window lacks a class, it's probably an web browser dialog
+                // If a window lacks a class, it's probably a web browser dialog
                 && wm_class !== null
                 // Blacklist any windows that happen to leak through our filter
                 && !ext.conf.window_shall_float(wm_class, this.meta.get_title());

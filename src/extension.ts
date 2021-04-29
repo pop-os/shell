@@ -487,6 +487,10 @@ export class Ext extends Ecs.System<ExtEvent> {
             // this_app
             () => {
                 let wmclass = win.meta.get_wm_class();
+                if (wmclass !== null && wmclass.length === 0) {
+                    wmclass = win.name(this)
+                }
+
                 if (wmclass) this.conf.add_app_exception(wmclass);
                 this.exception_dialog()
             },
