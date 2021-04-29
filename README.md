@@ -77,7 +77,11 @@ If you want to uninstall the extension, you may invoke `make uninstall`, and the
 
 ### Packaging status
 
-- [Fedora](https://src.fedoraproject.org/rpms/gnome-shell-extension-pop-shell/): `sudo dnf install gnome-shell-extension-pop-shell`
+- [Fedora](https://src.fedoraproject.org/rpms/gnome-shell-extension-pop-shell/): `sudo dnf install gnome-shell-extension-pop-shell` 
+- [Arch Linux](https://aur.archlinux.org/packages/?O=0&K=gnome-shell-extension-pop-shell) (Using Yay as AUR helper): 
+    - `yay -S gnome-shell-extension-pop-shell`
+    - For precompiled binary version: `yay -S gnome-shell-extension-pop-shell-bin`
+    - For GitHub repository version: `yay -S gnome-shell-extension-pop-shell-git`
 
 ---
 
