@@ -246,6 +246,7 @@ export class Search {
     }
 
     update_search_list(list: Array<SearchOption>) {
+        let initial_cursor = Lib.cursor_rect()
         Lib.join(
             list.values(),
             (option: SearchOption) => {
@@ -262,6 +263,8 @@ export class Search {
 
                 widget.connect('clicked', () => this.activate_option(id))
                 widget.connect('notify::hover', () => {
+                    const { x, y } = Lib.cursor_rect()
+                    if ( x === initial_cursor.x && y === initial_cursor.y) return
                     this.select_id(id)
                     this.select_cb(id)
                 })
