@@ -302,13 +302,13 @@ export class Launcher extends search.Search {
         this.options.splice(0);
         this.clear();
 
-        this.dialog.dialogLayout.x = (mon.width / 2) - (this.dialog.dialogLayout.width / 2);
-        this.dialog.dialogLayout.y = (mon.height / 2) - (this.dialog.dialogLayout.height);
-
         this.list_workspace(ext);
         this.update_search_list(this.options);
 
         super._open(global.get_current_time(), false);
+
+        this.dialog.dialogLayout.x = (mon.width / 2) - (this.dialog.dialogLayout.width / 2);
+        this.dialog.dialogLayout.y = (mon.height / 2) - (this.dialog.dialogLayout.height / 2);
     }
 
     stop_services(ext: Ext) {
