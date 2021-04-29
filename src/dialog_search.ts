@@ -208,7 +208,7 @@ export class Search {
     }
 
     list_max() {
-        return 18;
+        return 9; 
     }
 
     reset() {
