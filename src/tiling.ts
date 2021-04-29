@@ -186,7 +186,10 @@ export class Tiler {
 
     move(ext: Ext, x: number, y: number, w: number, h: number, direction: Direction, focus: () => window.ShellWindow | number | null) {
         if (!this.window) return;
-        if (ext.auto_tiler && !ext.contains_tag(this.window, Tags.Floating)) {
+        const win = ext.windows.get(this.window)
+        if (!win) return
+
+        if (ext.auto_tiler && win.is_tilable(ext)) {
             if (this.queue.length === 2) return;
             this.queue.send(() => {
                 const focused = ext.focus_window();

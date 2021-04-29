@@ -553,14 +553,14 @@ export class Forest extends Ecs.World {
         }
     }
 
-    /** Finds the largest window on a monitor + workspace. */
+    /** Finds the largest tilable window on a monitor + workspace. */
     largest_window_on(ext: Ext, entity: Entity): ShellWindow | null {
         let largest_window = null;
         let largest_size = 0;
 
         let window_compare = (entity: Entity) => {
             const window = ext.windows.get(entity);
-            if (window) {
+            if (window && window.is_tilable(ext)) {
                 const rect = window.rect();
                 const size = rect.width * rect.height;
                 if (size > largest_size) {
