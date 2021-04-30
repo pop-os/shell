@@ -443,7 +443,9 @@ export class ShellWindow {
                 break;
         }
 
-        GLib.timeout_add(GLib.PRIORITY_LOW, restackSpeed, () => {
+        const action = () => {
+            if (!this.actor_exists) return
+
             let border = this.border;
             let actor = this.meta.get_compositor_private();
             let win_group = global.window_group;
@@ -481,7 +483,9 @@ export class ShellWindow {
             }
 
             return false; // make sure it runs once
-        });
+        }
+
+        GLib.timeout_add(GLib.PRIORITY_LOW, restackSpeed, action)
     }
 
     get always_top_windows(): Clutter.Actor[] {
@@ -546,10 +550,8 @@ export class ShellWindow {
             if (dimensions) {
                 [x, y, width, height] = dimensions
 
-                const screen = global
-                    .workspace_manager
-                    .get_active_workspace()
-                    .get_work_area_for_monitor(global.display.get_current_monitor())
+                const screen = this.meta.get_workspace()
+                    .get_work_area_for_monitor(this.meta.get_monitor())
 
                 if (screen) {
                     x = Math.max(x, screen.x)
