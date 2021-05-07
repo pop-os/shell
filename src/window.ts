@@ -550,8 +550,11 @@ export class ShellWindow {
             if (dimensions) {
                 [x, y, width, height] = dimensions
 
-                const screen = this.meta.get_workspace()
-                    .get_work_area_for_monitor(this.meta.get_monitor())
+                const workspace = this.meta.get_workspace();
+
+                if (workspace === null) return;
+
+                const screen = workspace.get_work_area_for_monitor(this.meta.get_monitor())
 
                 if (screen) {
                     x = Math.max(x, screen.x)
