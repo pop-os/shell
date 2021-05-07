@@ -763,13 +763,10 @@ export class Ext extends Ecs.System<ExtEvent> {
             this.last_focused = win.entity;
         }
 
-        if (null !== this.auto_tiler) {
+        // Update the active tab in the stack.
+        if (null !== this.auto_tiler && null !== win.stack) {
             win.meta.raise();
-
-            // Update the active tab in the stack.
-            if (null !== win.stack) {
-                ext?.auto_tiler?.forest.stacks.get(win.stack)?.activate(win.entity)
-            }
+            ext?.auto_tiler?.forest.stacks.get(win.stack)?.activate(win.entity)
         }
 
         this.show_border_on_focused();
