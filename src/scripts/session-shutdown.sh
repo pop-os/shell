@@ -1,8 +1,8 @@
 #!/bin/sh
 #
-# name: Shut Down
+# name: Power off
 # icon: system-shutdown
-# description: Power off the system
+# description: Shut down the system
 # keywords: power off shutdown
 
 gnome-session-quit --power-off

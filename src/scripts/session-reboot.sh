@@ -1,8 +1,8 @@
 #!/bin/sh
 #
-# name: Reboot
+# name: Restart
 # icon: system-restart
-# description: Restart the system
+# description: Reboot the system
 # keywords: power reboot restart
 
 gnome-session-quit --reboot
