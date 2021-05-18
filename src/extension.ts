@@ -44,6 +44,7 @@ const { Gio, Meta, St } = imports.gi;
 const { GlobalEvent, WindowEvent } = Events;
 const { cursor_rect, is_move_op } = Lib;
 const { layoutManager, loadTheme, overview, panel, setThemeStylesheet, screenShield, sessionMode } = imports.ui.main;
+const { ScreenShield } = imports.ui.screenShield;
 const Tags = Me.imports.tags;
 
 const STYLESHEET_PATHS = ['light', 'dark'].map(stylesheet_path);
@@ -59,6 +60,12 @@ interface Display {
 
 interface Monitor extends Rectangular {
     index: number;
+}
+
+interface Injection {
+    object: any;
+    method: string;
+    func: any;
 }
 
 export class Ext extends Ecs.System<ExtEvent> {
@@ -135,6 +142,9 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     /** A display config update is triggered on a workspace addition */
     ignore_display_update: boolean = false;
+
+    /** Functions replaced in GNOME */
+    injections: Array<Injection> = new Array();
 
     /** The last window that was focused */
     last_focused: Entity | null = null;
@@ -667,6 +677,26 @@ export class Ext extends Ecs.System<ExtEvent> {
     get_window(meta: Meta.Window | null): Window.ShellWindow | null {
         let entity = this.window_entity(meta);
         return entity ? this.windows.get(entity) : null;
+    }
+
+    inject(object: any, method: string, func: any) {
+        const prev = object[method];
+        this.injections.push({ object, method, func: prev })
+        object[method] = func;
+    }
+
+    injections_add() {
+        const screen_unlock_fn = ScreenShield.prototype['deactivate'];
+        this.inject(ScreenShield.prototype, 'deactivate', (args: any) => {
+            screen_unlock_fn.apply(screenShield, [args]);
+            this.update_display_configuration(true);
+        })
+    }
+
+    injections_remove() {
+        for (const { object, method, func } of this.injections.splice(0)) {
+            object[method] = func
+        }
     }
 
     load_settings() {
@@ -1977,6 +2007,10 @@ export class Ext extends Ecs.System<ExtEvent> {
         this.moved_by_mouse = false
     }
 
+    update_display_configuration_before() {
+
+    }
+
     update_display_configuration(workareas_only: boolean) {
         if (!this.auto_tiler || sessionMode.isLocked) return
 
@@ -2339,6 +2373,7 @@ function enable() {
         return;
     }
 
+    ext.injections_add();
     ext.signals_attach();
 
     layoutManager.addChrome(ext.overlay);
@@ -2366,6 +2401,7 @@ function disable() {
             return;
         }
 
+        ext.injections_remove();
         ext.signals_remove();
         ext.exit_modes();
         ext.stop_launcher_services();
