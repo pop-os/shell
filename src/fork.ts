@@ -212,7 +212,9 @@ export class Fork {
         area: Rectangle,
         record: (win: Entity, parent: Entity, area: Rectangle) => void
     ) {
-        let ratio;
+        let ratio = null
+
+        let manually_moved = ext.grab_op !== null || ext.tiler.resizing_window
 
         if (!this.is_toplevel) {
             if (this.orientation_changed) {
@@ -229,7 +231,10 @@ export class Fork {
         }
 
         if (ratio) {
-            this.length_left = Math.round(ratio * this.length());
+            this.length_left = Math.round(ratio * this.length())
+            if (manually_moved) this.prev_ratio = ratio
+        } else if (manually_moved) {
+            this.prev_ratio = this.length_left / this.length()
         }
 
         if (this.right) {

@@ -37,6 +37,7 @@ export class Tiler {
     window: Entity | null = null;
 
     moving: boolean = false;
+    resizing_window: boolean = false;
 
     private swap_window: Entity | null = null;
 
@@ -616,6 +617,7 @@ export class Tiler {
 
     resize(ext: Ext, direction: Direction) {
         if (!this.window) return;
+        this.resizing_window = true
 
         if (ext.auto_tiler && !ext.contains_tag(this.window, Tags.Floating)) {
             this.resize_auto(ext, direction);
@@ -643,6 +645,8 @@ export class Tiler {
                     .change(ext.overlay, rect, 0, 0, 0, 0);
             });
         }
+
+        this.resizing_window = false
     }
 
     swap(ext: Ext, selector: window.ShellWindow | null) {
