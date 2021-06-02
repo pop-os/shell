@@ -238,9 +238,7 @@ export class Search {
         return 34;
     }
 
-    list_max() {
-        return 9;
-    }
+    get list_max() { return 7 }
 
     reset() {
         this.clear();
