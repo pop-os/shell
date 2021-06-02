@@ -47,6 +47,12 @@ export class AppInfo {
         return this.app_info.filename;
     }
 
+    id(): string {
+        let name = this.filename
+        name = name.substr(0, name.lastIndexOf('.'))
+        return name.substr(name.lastIndexOf('/') + 1)
+    }
+
     categories(): string {
         return this.categories_.get_or_init(() => this.app_info.get_categories());
     }
