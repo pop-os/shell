@@ -130,7 +130,7 @@ export class LauncherService {
                 yield plugin
             }
         }
-        
+
         for (const plugin of this.plugins.values()) {
             if (!plugin.pattern || plugin.pattern.test(query)) {
                 yield plugin

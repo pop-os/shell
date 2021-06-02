@@ -3,6 +3,7 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 import * as app_info from 'app_info';
 import * as error from 'error';
+import * as DedicatedGPU from 'dedicated_gpu';
 import * as launch from 'launcher_service';
 import * as levenshtein from 'levenshtein';
 import * as lib from 'lib';
@@ -122,6 +123,8 @@ export class Launcher extends search.Search {
                         this.icon_size(),
                         { app }
                     )
+
+                    DedicatedGPU.addPopup(app, button.widget)
 
                     this.options.push(button)
                 }
