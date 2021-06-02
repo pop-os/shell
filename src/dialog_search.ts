@@ -2,6 +2,8 @@
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 import * as Lib from 'lib';
+import * as rect from 'rectangle';
+
 import { SearchOption } from 'launcher_service';
 
 const { Clutter, Shell, St } = imports.gi;
@@ -160,6 +162,28 @@ export class Search {
 
         // Ensure that the width is at least 640 pixels wide.
         this.dialog.contentLayout.width = Math.max(Lib.current_monitor().width / 4, 640);
+
+        const id = global.stage.connect('event', (_actor: any, event: any) => {
+            const { width, height } = this.dialog.dialogLayout._dialog;
+            const { x, y } = this.dialog.dialogLayout
+            const area = new rect.Rectangle([x, y, width, height]);
+
+            const close = this.dialog.visible
+                && (event.type() == Clutter.EventType.BUTTON_PRESS)
+                && !area.contains(Lib.cursor_rect())
+
+            if (close) {
+                this.reset()
+                this.close()
+                this.cancel_cb()
+            }
+
+            return Clutter.EVENT_PROPAGATE;
+        })
+
+        this.dialog.connect('destroy', () => {
+            global.stage.disconnect(id)
+        })
     }
 
     activate_option(id: number) {
