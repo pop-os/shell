@@ -98,6 +98,12 @@ set_keybindings() {
     dconf write ${KEYS_GNOME_WM}/close "['<Super>q', '<Alt>F4']"
 }
 
+if ! command -v gnome-extensions >/dev/null; then
+    echo 'You must install gnome-extensions to configure or enable via this script'
+    '(`gnome-shell` on Debian systems, `gnome-extensions` on openSUSE systems.)'
+    exit 1
+fi
+
 set_keybindings
 
 # Use a window placement behavior which works better for tiling

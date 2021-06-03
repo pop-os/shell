@@ -11,8 +11,6 @@
             "es2015"
         ],
         "pretty": true,
-        "sourceMap": true,
-        "declaration": true,
         "removeComments": true,
         "incremental": true,
         "noUnusedLocals": true,
