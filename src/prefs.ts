@@ -70,6 +70,7 @@ function settings_dialog_view(): [AppWidgets, Gtk.Container] {
     let grid = new Gtk.Grid({
         column_spacing: 12,
         row_spacing: 12,
+        margin: 10
     });
 
     let win_label = new Gtk.Label({
@@ -88,11 +89,11 @@ function settings_dialog_view(): [AppWidgets, Gtk.Container] {
         xalign: 0.0
     });
 
-    let window_titles = new Gtk.Switch({ halign: Gtk.Align.START });
+    let window_titles = new Gtk.Switch({ halign: Gtk.Align.END });
 
-    let snap_to_grid = new Gtk.Switch({ halign: Gtk.Align.START });
+    let snap_to_grid = new Gtk.Switch({ halign: Gtk.Align.END });
 
-    let smart_gaps = new Gtk.Switch({ halign: Gtk.Align.START });
+    let smart_gaps = new Gtk.Switch({ halign: Gtk.Align.END });
 
     grid.attach(win_label, 0, 0, 1, 1);
     grid.attach(window_titles, 1, 0, 1, 1);
