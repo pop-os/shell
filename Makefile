@@ -28,32 +28,14 @@ sources = src/*.ts *.css
 all: depcheck compile
 
 clean:
-	rm -rf _build schemas/gschemas.compiled target
-
-transpile: $(sources) clean
-	tsc
-	for proj in $(PROJECTS); do tsc --p src/$${proj}; done
+	rm -rf _build target
 
 # Configure local settings on system
 configure:
-	if ! command -v gnome-extensions >/dev/null; then \
-		echo 'You must install gnome-extensions to configure or enable via this script' \
-		'(`gnome-shell` on Debian systems, `gnome-extensions` on openSUSE systems.)'; \
-		exit 1; \
-	fi
 	sh scripts/configure.sh
 
-convert: transpile
-	sh scripts/transpile.sh
-
-compile: convert metadata.json schemas
-	rm -rf _build
-	mkdir -p _build
-	cp -r metadata.json icons schemas target/*.js *.css _build
-	for proj in $(PROJECTS); do \
-		mkdir -p _build/$${proj}; \
-		cp -r target/$${proj}/*.js _build/$${proj}; \
-	done
+compile: $(sources) clean
+	env PROJECTS="$(PROJECTS)" sh scripts/transpile.sh
 
 # Rebuild, install, reconfigure local settings, restart shell, and listen to journalctl logs
 debug: depcheck compile install install-system76-plugins configure enable restart-shell listen
@@ -75,7 +57,7 @@ disable:
 listen:
 	journalctl -o cat -n 0 -f "$$(which gnome-shell)" | grep -v warning
 
-local-install: depcheck compile install configure restart-shell enable
+local-install: depcheck compile install install-system76-plugins configure enable restart-shell
 
 install:
 	rm -rf $(INSTALLBASE)/$(INSTALLNAME)
@@ -107,12 +89,5 @@ update-repository:
 	git reset --hard origin/master
 	git clean -fd
 
-schemas: schemas/gschemas.compiled
-	touch $@
-
-schemas/gschemas.compiled: schemas/*.gschema.xml
-	glib-compile-schemas schemas
-
 zip-file: all
 	cd _build && zip -qr "../$(UUID)_$(VERSION).zip" .
-
