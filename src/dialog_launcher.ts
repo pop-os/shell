@@ -10,6 +10,7 @@ import * as log from 'log';
 import * as result from 'result';
 import * as search from 'dialog_search';
 import * as launch from 'launcher_service';
+import * as mru from 'mru_app_list';
 import * as plugins from 'launcher_plugins';
 import * as levenshtein from 'levenshtein';
 
@@ -43,6 +44,7 @@ export class Launcher extends search.Search {
     service: launch.LauncherService
     last_plugin: null | plugins.Plugin.Source
     mode: number;
+    mru_list?: mru.MruList;
 
     constructor(ext: Ext) {
         let cancel = () => {
@@ -125,6 +127,7 @@ export class Launcher extends search.Search {
                 }
             }
 
+            this.mru_list = this.mru_list ?? new mru.MruList();
             const sorter = (a: launch.SearchOption, b: launch.SearchOption) => {
                 const a_name = a.title.toLowerCase()
                 const b_name = b.title.toLowerCase()
@@ -141,6 +144,22 @@ export class Launcher extends search.Search {
 
                 if (b.description) {
                     b_name_weight = Math.min(b_name_weight, levenshtein.compare(pattern_lower, b.description.toLowerCase()))
+                }
+
+                if (this.mru_list) {
+                    const a_recent = this.mru_list.recent_score(a);
+                    const b_recent = this.mru_list.recent_score(b);
+                    if (a_recent !== undefined && b_recent === undefined) {
+                        return -1;
+                    }
+
+                    if (b_recent !== undefined && a_recent === undefined) {
+                        return 1;
+                    }
+
+                    if (a_recent !== undefined && b_recent !== undefined) {
+                        return a_recent > b_recent ? 1 : -1;
+                    }
                 }
 
                 return a_name_weight > b_name_weight ? 1 : 0
@@ -188,6 +207,7 @@ export class Launcher extends search.Search {
             }
 
             const option = selected.id
+            this.mru_list?.add_recent(selected);
 
             if ("window" in option) {
                 option.window.activate()
