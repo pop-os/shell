@@ -51,13 +51,15 @@ export class Launcher extends search.Search {
             this.stop_services(ext)
         };
 
-        let search = (pattern: string): Array<launch.SearchOption> | null => {
+        let search = (pat: string): Array<launch.SearchOption> | null => {
             this.options.splice(0)
 
-            if (pattern.length == 0) {
+            if (pat.length == 0) {
                 this.list_workspace(ext);
                 return this.options
             }
+
+            const pattern = pat.toLowerCase()
 
             this.last_plugin = null
 
@@ -87,7 +89,7 @@ export class Launcher extends search.Search {
                 }
             })
 
-            const needles = pattern.toLowerCase().split(' ');
+            const needles = pattern.split(' ');
 
             const contains_pattern = (haystack: string, needles: Array<string>): boolean => {
                 const hay = haystack.toLowerCase();
@@ -106,17 +108,17 @@ export class Launcher extends search.Search {
 
             // Filter matching desktop apps
             for (const [where, app] of this.desktop_apps) {
-                const retain = contains_pattern(app.name(), needles)
-                    || contains_pattern(app.desktop_name, needles)
-                    || lib.ok(app.generic_name(), (s) => contains_pattern(s, needles))
-                    || lib.ok(app.comment(), (s) => contains_pattern(s, needles))
-                    || lib.ok(app.categories(), (s) => contains_pattern(s, needles));
+                const name = app.name()
+                const name_match = name.toLowerCase()
+                const retain = name_match.startsWith(pattern)
+                    || name_match.includes(pattern)
+                    || levenshtein.compare(name_match, pattern) < 3
 
                 if (retain) {
                     const generic = app.generic_name();
 
                     const button = new launch.SearchOption(
-                        app.name(),
+                        name,
                         generic ? generic + " — " + where : where,
                         'application-default-symbolic',
                         { gicon: app.icon() },
@@ -134,21 +136,26 @@ export class Launcher extends search.Search {
                 const a_name = a.title.toLowerCase()
                 const b_name = b.title.toLowerCase()
 
-                const pattern_lower = pattern.toLowerCase()
+                let a_name_weight = 0, b_name_weight = 0;
 
-                let a_name_weight = levenshtein.compare(pattern_lower, a_name)
-
-                let b_name_weight = levenshtein.compare(pattern_lower, b_name)
-
-                if (a.description) {
-                    a_name_weight = Math.min(a_name_weight, levenshtein.compare(pattern_lower, a.description.toLowerCase()))
+                if (!a_name.startsWith(pattern)) {
+                    a_name_weight = levenshtein.compare(a_name, pattern)
+                    if (a.description) {
+                        a_name_weight = Math.min(a_name_weight, levenshtein.compare(pattern, a.description.toLowerCase()))
+                    }
                 }
 
-                if (b.description) {
-                    b_name_weight = Math.min(b_name_weight, levenshtein.compare(pattern_lower, b.description.toLowerCase()))
+                if (!b_name.startsWith(pattern)) {
+                    b_name_weight = levenshtein.compare(b_name, pattern)
+
+                    if (b.description) {
+                        b_name_weight = Math.min(b_name_weight, levenshtein.compare(pattern, b.description.toLowerCase()))
+                    }
                 }
 
-                return a_name_weight > b_name_weight ? 1 : 0
+                return a_name_weight === b_name_weight
+                    ? a_name.length > b_name.length ? 1 : 0
+                    : a_name_weight > b_name_weight ? 1 : 0
             }
 
             // Sort the list of matched selections
