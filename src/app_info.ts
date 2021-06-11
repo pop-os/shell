@@ -121,8 +121,12 @@ export function* load_desktop_entries(path: string): IterableIterator<Result<App
 
     while ((entry = entries.next_file(null)) != null) {
         const ft = entry.get_file_type();
-        if (!(ft == Gio.FileType.REGULAR || ft == Gio.FileType.SYMBOLIC_LINK)) {
-            continue
+
+        if (ft == Gio.FileType.DIRECTORY) {
+            yield* load_desktop_entries(path + '/' + entry.get_name());
+            continue;
+        } else if (!(ft == Gio.FileType.REGULAR || ft == Gio.FileType.SYMBOLIC_LINK)) {
+            continue;
         }
 
         const name: string = entry.get_name();
