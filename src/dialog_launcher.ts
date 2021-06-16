@@ -110,10 +110,23 @@ export class Launcher extends search.Search {
             for (const [where, app] of this.desktop_apps) {
                 const name = app.name()
                 const name_match = name.toLowerCase()
-                const retain = name_match.startsWith(pattern)
-                    || name_match.includes(pattern)
-                    || levenshtein.compare(name_match, pattern) < 3
-
+                
+                let retain = false
+                if ( name_match.startsWith(pattern)
+                     || name_match.includes(pattern)
+                     || levenshtein.compare(name_match, pattern) < 3 {
+                    retain = true
+                } else if app.keywords() {
+                    for (const keyword of app.keywords()) {
+                        const keyword_match = keyword.toLowerCase()
+                        if ( keyword_match.startsWith(pattern)
+                             || keyword_match.includes(pattern)
+                             || levenshtein.compare(keyword_match, pattern) < 3) {
+                            retain = true
+                        }
+                    }
+                }
+                
                 if (retain) {
                     const generic = app.generic_name();
 
