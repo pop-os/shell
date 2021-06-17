@@ -129,6 +129,10 @@ export class Launcher extends search.Search {
                 
                 if (retain) {
                     const generic = app.generic_name();
+                    let keywords = "";
+                    if app.keywords() {
+                        keywords = app.keywords();
+                    }
 
                     const button = new launch.SearchOption(
                         name,
@@ -136,7 +140,8 @@ export class Launcher extends search.Search {
                         'application-default-symbolic',
                         { gicon: app.icon() },
                         this.icon_size(),
-                        { app }
+                        { app },
+                        keywords
                     )
 
                     DedicatedGPU.addPopup(app, button.widget)
@@ -149,26 +154,49 @@ export class Launcher extends search.Search {
                 const a_name = a.title.toLowerCase()
                 const b_name = b.title.toLowerCase()
 
-                let a_name_weight = 0, b_name_weight = 0;
+                let a_weight = 0, b_weight = 0;
 
                 if (!a_name.startsWith(pattern)) {
-                    a_name_weight = levenshtein.compare(a_name, pattern)
-                    if (a.description) {
-                        a_name_weight = Math.min(a_name_weight, levenshtein.compare(pattern, a.description.toLowerCase()))
+                    a_weight = 1
+                    if (!a_name.includes(pattern) {
+                        a_weight = levenshtein.compare(a_name, pattern)
+                        if (a.description) {
+                            a_weight = Math.min(a_weight, levenshtein.compare(pattern, a.description.toLowerCase()))
+                        }
+                        if (a.keywords) {
+                            for (const keyword of a.keywords) {
+                                if keyword.toLowerCase().startsWith(pattern) || keyword.toLowerCase().includes(pattern) {
+                                    a_weight = 1
+                                } else {
+                                    a_weight = Math.min(a_weight, (levenshtein.compare(pattern, keyword.toLowerCase()) + 1))
+                                }
+                            }
+                        }
                     }
                 }
 
                 if (!b_name.startsWith(pattern)) {
-                    b_name_weight = levenshtein.compare(b_name, pattern)
-
-                    if (b.description) {
-                        b_name_weight = Math.min(b_name_weight, levenshtein.compare(pattern, b.description.toLowerCase()))
+                    b_weight = 1
+                    if (!b_name.includes(pattern)) {
+                        b_weight = levenshtein.compare(b_name, pattern)
+                        if (b.description) {
+                            b_weight = Math.min(b_weight, levenshtein.compare(pattern, b.description.toLowerCase()))
+                        }
+                        if (b.keywords) {
+                            for (const keyword of b.keywords) {
+                                if keyword.toLowerCase().startsWith(pattern) || keyword.toLowerCase().includes(pattern) {
+                                    b_weight = 1
+                                } else {
+                                    b_weight = Math.min(b_weight, (levenshtein.compare(pattern, keyword.toLowerCase()) + 1))
+                                }
+                            }
+                        }
                     }
                 }
 
-                return a_name_weight === b_name_weight
+                return a_weight === b_weight
                     ? a_name.length > b_name.length ? 1 : 0
-                    : a_name_weight > b_name_weight ? 1 : 0
+                    : a_weight > b_weight ? 1 : 0
             }
 
             // Sort the list of matched selections
