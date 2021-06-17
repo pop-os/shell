@@ -23,21 +23,6 @@ const { OK } = result;
 const HOME_DIR: string = GLib.get_home_dir();
 const DATA_DIRS: string = GLib.get_system_data_dirs();
 
-/// Search paths for finding applications
-const SEARCH_PATHS: Array<[string, string]> = [
-    // System-wide
-    ["System", "/usr/share/applications/"],
-    ["System (Local)", "/usr/local/share/applications/"],
-    // User-local
-    ["User", HOME_DIR + "/.local/share/applications/"],
-    // System-wide flatpaks
-    ["Flatpak (System)", "/var/lib/flatpak/exports/share/applications/"],
-    // User-local flatpaks
-    ["Flatpak (User)", HOME_DIR + "/.local/share/flatpak/exports/share/applications/"],
-    // System-wide Snaps
-    ["Snap (System)", "/var/lib/snapd/desktop/applications/"]
-];
-
 export class Launcher extends search.Search {
     options: Array<launch.SearchOption>
     desktop_apps: Array<[string, AppInfo]>
@@ -335,17 +320,6 @@ export class Launcher extends search.Search {
     load_desktop_files() {
         lib.bench("load_desktop_files", () => {
             this.desktop_apps.splice(0);
-            for (const [where, path] of SEARCH_PATHS) {
-                for (const result of app_info.load_desktop_entries(path)) {
-                    if (result.kind == OK) {
-                        const value = result.value;
-                        this.desktop_apps.push([where, value]);
-                    } else {
-                        const why = result.value;
-                        log.warn(why.context(`failed to load desktop app`).format());
-                    }
-                }
-            }
             for (const _path of DATA_DIRS) {
                 const path = _path.replace(/\/$/, '') + "/applications";
                 for (const result of app_info.load_desktop_entries(path)) {
