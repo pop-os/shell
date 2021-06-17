@@ -23,21 +23,6 @@ const { OK } = result;
 const HOME_DIR: string = GLib.get_home_dir();
 const DATA_DIRS: string = GLib.get_system_data_dirs();
 
-/// Search paths for finding applications
-const SEARCH_PATHS: Array<[string, string]> = [
-    // System-wide
-    ["System", "/usr/share/applications/"],
-    ["System (Local)", "/usr/local/share/applications/"],
-    // User-local
-    ["User", HOME_DIR + "/.local/share/applications/"],
-    // System-wide flatpaks
-    ["Flatpak (System)", "/var/lib/flatpak/exports/share/applications/"],
-    // User-local flatpaks
-    ["Flatpak (User)", HOME_DIR + "/.local/share/flatpak/exports/share/applications/"],
-    // System-wide Snaps
-    ["Snap (System)", "/var/lib/snapd/desktop/applications/"]
-];
-
 export class Launcher extends search.Search {
     options: Array<launch.SearchOption>
     desktop_apps: Array<[string, AppInfo]>
@@ -110,7 +95,9 @@ export class Launcher extends search.Search {
             for (const [where, app] of this.desktop_apps) {
                 const name = app.name()
                 const keywords = app.keywords()
-                const app_items = keywords !== null ? name.split().concat(keywords) : [name]
+                const exec = app.exec()
+                const app_items = keywords !== null ? 
+                      name.split().concat(keywords).concat(exec) : name.split().concat(exec)
                 
                 for (const item of app_items) {
                     const item_match = item.toLowerCase()
@@ -125,6 +112,7 @@ export class Launcher extends search.Search {
                             { gicon: app.icon() },
                             this.icon_size(),
                             { app },
+                            exec,
                             keywords
                         )
 
@@ -139,9 +127,12 @@ export class Launcher extends search.Search {
             const sorter = (a: launch.SearchOption, b: launch.SearchOption) => {
                 const a_name = a.title.toLowerCase()
                 const b_name = b.title.toLowerCase()
+                const a_exec = a.exec ? a.exec.toLowerCase() : ""
+                const b_exec = b.exec ? b.exec.toLowerCase() : ""
 
                 let a_weight = 0, b_weight = 0;
 
+                // Sort by metadata (name, description, keywords)
                 if (!a_name.startsWith(pattern)) {
                     a_weight = 1
                     if (!a_name.includes(pattern) {
@@ -160,7 +151,17 @@ export class Launcher extends search.Search {
                         }
                     }
                 }
+                // Sort by command (exec)
+                if (a_exec.includes(pattern)) {
+                    if (a_exec.startsWith(pattern) {
+                        a_weight = Math.min(a_weight, 2)
+                    } else {
+                        a_weight = Math.min(a_weight, levenshtein.compare(pattern, a_exec))
+                    }
+                }
+                
 
+                // Sort by metadata (name, description, keywords)
                 if (!b_name.startsWith(pattern)) {
                     b_weight = 1
                     if (!b_name.includes(pattern)) {
@@ -177,6 +178,14 @@ export class Launcher extends search.Search {
                                 }
                             }
                         }
+                    }
+                }
+                // Sort by command (exec)
+                if (b_exec.includes(pattern)) {
+                    if (b_exec.startsWith(pattern) {
+                        b_weight = Math.min(b_weight, 2)
+                    } else {
+                        b_weight = Math.min(b_weight, levenshtein.compare(pattern, b_exec))
                     }
                 }
 
@@ -311,17 +320,6 @@ export class Launcher extends search.Search {
     load_desktop_files() {
         lib.bench("load_desktop_files", () => {
             this.desktop_apps.splice(0);
-            for (const [where, path] of SEARCH_PATHS) {
-                for (const result of app_info.load_desktop_entries(path)) {
-                    if (result.kind == OK) {
-                        const value = result.value;
-                        this.desktop_apps.push([where, value]);
-                    } else {
-                        const why = result.value;
-                        log.warn(why.context(`failed to load desktop app`).format());
-                    }
-                }
-            }
             for (const _path of DATA_DIRS) {
                 const path = _path.replace(/\/$/, '') + "/applications";
                 for (const result of app_info.load_desktop_entries(path)) {
