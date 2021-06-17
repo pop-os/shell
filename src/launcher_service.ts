@@ -178,17 +178,17 @@ export class SearchOption {
     title: string
     description: null | string
     id: Identity
+    keywords: null | array
 
     widget: St.Button
 
     shortcut: St.Widget = new St.Label({ text: "", y_align: Clutter.ActorAlign.CENTER, style: "padding-left: 6px;padding-right: 6px" })
-    
-    keywords: null | array
 
     constructor(title: string, description: null | string, category_icon: string, icon: null | IconSrc, icon_size: number, id: Identity, keywords: null | array) {
         this.title = title
         this.description = description
         this.id = id
+        this.keywords = keywords
 
         let cat_icon
         const cat_icon_file = Gio.File.new_for_path(category_icon)
@@ -262,9 +262,5 @@ export class SearchOption {
 
         this.widget = new St.Button({ style_class: "pop-shell-search-element" });
         (this.widget as any).add_actor(layout)
-        
-        if (keywords) {
-            this.keywords = keywords
-        }
     }
 }

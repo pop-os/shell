@@ -109,44 +109,30 @@ export class Launcher extends search.Search {
             // Filter matching desktop apps
             for (const [where, app] of this.desktop_apps) {
                 const name = app.name()
-                const name_match = name.toLowerCase()
+                const keywords = app.keywords()
+                const app_items = keywords !== null ? name.split().concat(keywords) : [name]
                 
-                let retain = false
-                if ( name_match.startsWith(pattern)
-                     || name_match.includes(pattern)
-                     || levenshtein.compare(name_match, pattern) < 3 {
-                    retain = true
-                } else if app.keywords() {
-                    for (const keyword of app.keywords()) {
-                        const keyword_match = keyword.toLowerCase()
-                        if ( keyword_match.startsWith(pattern)
-                             || keyword_match.includes(pattern)
-                             || levenshtein.compare(keyword_match, pattern) < 3) {
-                            retain = true
-                        }
+                for (const item of app_items) {
+                    const item_match = item.toLowerCase()
+                    if ( item_match.startsWith(pattern)
+                         || item_match.includes(pattern)
+                         || levenshtein.compare(item_match, pattern) < 3 {
+                        const generic = app.generic_name();
+                        const button = new launch.SearchOption(
+                            name,
+                            generic ? generic + " — " + where : where,
+                            'application-default-symbolic',
+                            { gicon: app.icon() },
+                            this.icon_size(),
+                            { app },
+                            keywords
+                        )
+
+                        DedicatedGPU.addPopup(app, button.widget)
+
+                        this.options.push(button)
+                        break
                     }
-                }
-                
-                if (retain) {
-                    const generic = app.generic_name();
-                    let keywords = "";
-                    if app.keywords() {
-                        keywords = app.keywords();
-                    }
-
-                    const button = new launch.SearchOption(
-                        name,
-                        generic ? generic + " — " + where : where,
-                        'application-default-symbolic',
-                        { gicon: app.icon() },
-                        this.icon_size(),
-                        { app },
-                        keywords
-                    )
-
-                    DedicatedGPU.addPopup(app, button.widget)
-
-                    this.options.push(button)
                 }
             }
 
