@@ -109,26 +109,30 @@ export class Launcher extends search.Search {
             // Filter matching desktop apps
             for (const [where, app] of this.desktop_apps) {
                 const name = app.name()
-                const name_match = name.toLowerCase()
-                const retain = name_match.startsWith(pattern)
-                    || name_match.includes(pattern)
-                    || levenshtein.compare(name_match, pattern) < 3
+                const keywords = app.keywords()
+                const app_items = keywords !== null ? name.split().concat(keywords) : [name]
+                
+                for (const item of app_items) {
+                    const item_match = item.toLowerCase()
+                    if ( item_match.startsWith(pattern)
+                         || item_match.includes(pattern)
+                         || levenshtein.compare(item_match, pattern) < 3 {
+                        const generic = app.generic_name();
+                        const button = new launch.SearchOption(
+                            name,
+                            generic ? generic + " — " + where : where,
+                            'application-default-symbolic',
+                            { gicon: app.icon() },
+                            this.icon_size(),
+                            { app },
+                            keywords
+                        )
 
-                if (retain) {
-                    const generic = app.generic_name();
+                        DedicatedGPU.addPopup(app, button.widget)
 
-                    const button = new launch.SearchOption(
-                        name,
-                        generic ? generic + " — " + where : where,
-                        'application-default-symbolic',
-                        { gicon: app.icon() },
-                        this.icon_size(),
-                        { app }
-                    )
-
-                    DedicatedGPU.addPopup(app, button.widget)
-
-                    this.options.push(button)
+                        this.options.push(button)
+                        break
+                    }
                 }
             }
 
@@ -136,26 +140,49 @@ export class Launcher extends search.Search {
                 const a_name = a.title.toLowerCase()
                 const b_name = b.title.toLowerCase()
 
-                let a_name_weight = 0, b_name_weight = 0;
+                let a_weight = 0, b_weight = 0;
 
                 if (!a_name.startsWith(pattern)) {
-                    a_name_weight = levenshtein.compare(a_name, pattern)
-                    if (a.description) {
-                        a_name_weight = Math.min(a_name_weight, levenshtein.compare(pattern, a.description.toLowerCase()))
+                    a_weight = 1
+                    if (!a_name.includes(pattern) {
+                        a_weight = levenshtein.compare(a_name, pattern)
+                        if (a.description) {
+                            a_weight = Math.min(a_weight, levenshtein.compare(pattern, a.description.toLowerCase()))
+                        }
+                        if (a.keywords) {
+                            for (const keyword of a.keywords) {
+                                if keyword.toLowerCase().startsWith(pattern) || keyword.toLowerCase().includes(pattern) {
+                                    a_weight = 1
+                                } else {
+                                    a_weight = Math.min(a_weight, (levenshtein.compare(pattern, keyword.toLowerCase()) + 1))
+                                }
+                            }
+                        }
                     }
                 }
 
                 if (!b_name.startsWith(pattern)) {
-                    b_name_weight = levenshtein.compare(b_name, pattern)
-
-                    if (b.description) {
-                        b_name_weight = Math.min(b_name_weight, levenshtein.compare(pattern, b.description.toLowerCase()))
+                    b_weight = 1
+                    if (!b_name.includes(pattern)) {
+                        b_weight = levenshtein.compare(b_name, pattern)
+                        if (b.description) {
+                            b_weight = Math.min(b_weight, levenshtein.compare(pattern, b.description.toLowerCase()))
+                        }
+                        if (b.keywords) {
+                            for (const keyword of b.keywords) {
+                                if keyword.toLowerCase().startsWith(pattern) || keyword.toLowerCase().includes(pattern) {
+                                    b_weight = 1
+                                } else {
+                                    b_weight = Math.min(b_weight, (levenshtein.compare(pattern, keyword.toLowerCase()) + 1))
+                                }
+                            }
+                        }
                     }
                 }
 
-                return a_name_weight === b_name_weight
+                return a_weight === b_weight
                     ? a_name.length > b_name.length ? 1 : 0
-                    : a_name_weight > b_name_weight ? 1 : 0
+                    : a_weight > b_weight ? 1 : 0
             }
 
             // Sort the list of matched selections
