@@ -178,16 +178,19 @@ export class SearchOption {
     title: string
     description: null | string
     id: Identity
+    exec: null | string
     keywords: null | array
 
     widget: St.Button
 
     shortcut: St.Widget = new St.Label({ text: "", y_align: Clutter.ActorAlign.CENTER, style: "padding-left: 6px;padding-right: 6px" })
 
-    constructor(title: string, description: null | string, category_icon: string, icon: null | IconSrc, icon_size: number, id: Identity, keywords: null | array) {
+    constructor(title: string, description: null | string, category_icon: string, icon: null | IconSrc, icon_size: number, id: Identity, 
+                exec: null | string, keywords: null | array) {
         this.title = title
         this.description = description
         this.id = id
+        this.exec = exec
         this.keywords = keywords
 
         let cat_icon
