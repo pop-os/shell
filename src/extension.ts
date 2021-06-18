@@ -1746,7 +1746,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             if (screenShield?.locked) this.update_display_configuration(false);
 
             this.connect(display, 'notify::focus-window', () => {
-                const window = this.focus_window()
+                const window = this.get_window(display.get_focus_window())                
                 if (window) this.on_focused(window)
                 return false
             });
