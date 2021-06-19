@@ -238,7 +238,8 @@ export class ShellWindow {
     }
 
     is_maximized(): boolean {
-        return this.meta.get_maximized() !== 0;
+        let maximized = this.meta.get_maximized() === 3;
+        return maximized;
     }
 
     /**
@@ -399,7 +400,9 @@ export class ShellWindow {
         this.restack();
         if (this.ext.settings.active_hint()) {
             let border = this.border;
+            let monitor_count = this.meta.get_display().get_n_monitors();
             if (!this.meta.is_fullscreen() &&
+                !(this.is_maximized() && monitor_count == 1) &&
                 !this.meta.minimized &&
                 this.same_workspace()) {
                 if (this.meta.appears_focused) {
@@ -424,8 +427,8 @@ export class ShellWindow {
      */
     restack(updateState: RESTACK_STATE = RESTACK_STATE.NORMAL) {
         this.update_border_layout();
-
-        if (this.meta.is_fullscreen()) {
+        let monitor_count = this.meta.get_display().get_n_monitors();
+        if (this.meta.is_fullscreen() || (this.is_max_screen() && monitor_count == 1)) {
             this.hide_border()
         }
 

@@ -153,9 +153,9 @@ declare namespace Meta {
     }
 
     enum MaximizeFlags {
-        HORIZONTAL,
-        VERTICAL,
-        BOTH
+        HORIZONTAL = 1,
+        VERTICAL = 2,
+        BOTH = 3
     }
 
     enum MotionDirection {
@@ -187,6 +187,7 @@ declare namespace Meta {
         delete(timestamp: number): void;
         get_buffer_rect(): Rectangular;
         get_compositor_private(): Clutter.Actor | null;
+        get_display(): Meta.Display | null;
         get_description(): string;
         get_frame_rect(): Rectangular;
         get_maximized(): number;
