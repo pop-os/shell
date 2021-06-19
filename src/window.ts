@@ -238,7 +238,7 @@ export class ShellWindow {
     }
 
     is_maximized(): boolean {
-        let maximized = this.meta.get_maximized() === 3;
+        let maximized = this.meta.get_maximized() == Meta.MaximizeFlags.BOTH;
         return maximized;
     }
 
