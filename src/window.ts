@@ -402,7 +402,7 @@ export class ShellWindow {
             let border = this.border;
             let monitor_count = this.meta.get_display().get_n_monitors();
             if (!this.meta.is_fullscreen() &&
-                !(this.is_maximized() && monitor_count == 1) &&
+                !(this.is_max_screen() && monitor_count == 1) &&
                 !this.meta.minimized &&
                 this.same_workspace()) {
                 if (this.meta.appears_focused) {
@@ -428,7 +428,9 @@ export class ShellWindow {
     restack(updateState: RESTACK_STATE = RESTACK_STATE.NORMAL) {
         this.update_border_layout();
         let monitor_count = this.meta.get_display().get_n_monitors();
-        if (this.meta.is_fullscreen() || (this.is_max_screen() && monitor_count == 1)) {
+        if (this.meta.is_fullscreen() || 
+            (this.is_max_screen() && monitor_count == 1) || 
+            this.meta.minimized) {
             this.hide_border()
         }
 
