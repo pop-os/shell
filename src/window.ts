@@ -532,7 +532,7 @@ export class ShellWindow {
                 if (stack) {
                     let stack_tab_height = stack.tabs_height;
 
-                    if (borderSize === 0 || this.grab === null) { // not in max screen state
+                    if (borderSize === 0 || this.grab) { // not in max screen state
                         stack_tab_height = 0;
                     }
 
@@ -559,12 +559,12 @@ export class ShellWindow {
 
                 if (workspace === null) return;
 
-                const screen = workspace.get_work_area_for_monitor(this.meta.get_monitor())
+                /*const screen = workspace.get_work_area_for_monitor(this.meta.get_monitor())
 
                 if (screen) {
                     width = Math.min(width, screen.x + screen.width)
                     height = Math.min(height, screen.y + screen.height)
-                }
+                }*/
 
                 border.set_position(x, y)
                 border.set_size(width, height)
