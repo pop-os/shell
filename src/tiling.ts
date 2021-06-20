@@ -72,7 +72,7 @@ export class Tiler {
     toggle_stacking(ext: Ext) {
         ext.auto_tiler?.toggle_stacking(ext);
         const win = ext.focus_window();
-        if (win) this.overlay_watch(ext, win);
+        if (win && !win.meta.is_fullscreen()) this.overlay_watch(ext, win);
     }
 
     rect(ext: Ext, monitor: Rectangle): Rectangle | null {
@@ -194,7 +194,7 @@ export class Tiler {
             if (this.queue.length === 2) return;
             this.queue.send(() => {
                 const focused = ext.focus_window();
-                if (focused) {
+                if (focused && !focused.meta.is_fullscreen()) {
                     // The window that the focused window is being moved onto
                     const move_to = focus();
 
@@ -700,6 +700,7 @@ export class Tiler {
         if (!this.window) {
             const win = ext.focus_window();
             if (!win) return;
+            if (win && win.meta.is_fullscreen()) return;
 
             this.window = win.entity;
 
