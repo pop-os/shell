@@ -1109,6 +1109,8 @@ export class Ext extends Ecs.System<ExtEvent> {
     move_monitor(direction: Meta.DisplayDirection) {
         const win = this.focus_window();
         if (!win) return;
+        if (win && win.meta.is_fullscreen())
+            win.meta.unmake_fullscreen();
 
         const prev_monitor = win.meta.get_monitor();
         let next_monitor = Tiling.locate_monitor(win, direction);
@@ -1130,6 +1132,8 @@ export class Ext extends Ecs.System<ExtEvent> {
     move_workspace(direction: Meta.DisplayDirection) {
         const win = this.focus_window();
         if (!win) return;
+        if (win && win.meta.is_fullscreen())
+            win.meta.unmake_fullscreen();
 
         /** Move a window between workspaces */
         const workspace_move = (direction: Meta.MotionDirection) => {
