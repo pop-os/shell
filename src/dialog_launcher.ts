@@ -21,7 +21,8 @@ const { Clutter, Gio, GLib, Meta } = imports.gi
 const { OK } = result;
 
 const HOME_DIR: string = GLib.get_home_dir();
-const DATA_DIRS: string = GLib.get_system_data_dirs();
+const DATA_DIRS_SYSTEM: string = GLib.get_system_data_dirs();
+const DATA_DIRS_USER: string = GLib.get_user_data_dir();
 
 export class Launcher extends search.Search {
     options: Array<launch.SearchOption>
@@ -320,14 +321,29 @@ export class Launcher extends search.Search {
     load_desktop_files() {
         lib.bench("load_desktop_files", () => {
             this.desktop_apps.splice(0);
-            for (const _path of DATA_DIRS) {
+            for (const _path of DATA_DIRS_USER.split().concat(DATA_DIRS_SYSTEM)) {
                 const path = _path.replace(/\/$/, '') + "/applications";
                 for (const result of app_info.load_desktop_entries(path)) {
                     if (result.kind == OK) {
                         const value = result.value;
                         const existAt = this.desktop_apps.findIndex(([ _, app ]) => app.exec() == value.exec());
                         if (existAt == -1) {
-                            this.desktop_apps.push(['System', value]);
+                            let appType = 'System';
+                            switch (path) {
+                                case (HOME_DIR + "/.local/share/applications"):
+                                    appType = 'User';
+                                    break;
+                                case ("/var/lib/flatpak/exports/share/applications"):
+                                    appType = 'Flatpak (System)';
+                                    break;
+                                case (HOME_DIR + "/.local/share/flatpak/exports/share/applications"):
+                                    appType = 'Flatpak (User)';
+                                    break;
+                                case ("/var/lib/snapd/desktop/applications"):
+                                    appType = 'Snap (System)';
+                                    break;
+                            }
+                            this.desktop_apps.push([appType, value]);
                         }
                     } else {
                         const why = result.value;
