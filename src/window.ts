@@ -254,7 +254,7 @@ export class ShellWindow {
 
     is_single_max_screen(): boolean {
         let monitor_count = this.meta.get_display().get_n_monitors();
-        return this.is_max_screen() && monitor_count == 1;
+        return (this.is_maximized() || this.smart_gapped) && monitor_count == 1;
     }
 
     is_snap_edge(): boolean {
