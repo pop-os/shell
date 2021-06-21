@@ -242,6 +242,7 @@ export class ShellWindow {
         return maximized;
     }
 
+
     /**
      * Window is maximized, 0 gapped or smart gapped
      */
@@ -249,6 +250,15 @@ export class ShellWindow {
         // log.debug(`title: ${this.meta.get_title()}`);
         // log.debug(`max: ${this.is_maximized()}, 0-gap: ${this.ext.settings.gap_inner() === 0}, smart: ${this.smart_gapped}`);
         return this.is_maximized() || this.ext.settings.gap_inner() === 0 || this.smart_gapped;
+    }
+
+    is_single_max_screen(): boolean {
+        let monitor_count = this.meta.get_display().get_n_monitors();
+        return this.is_max_screen() && monitor_count == 1;
+    }
+
+    is_snap_edge(): boolean {
+        return this.meta.get_maximized() == Meta.MaximizeFlags.VERTICAL;
     }
 
     is_tilable(ext: Ext): boolean {
@@ -400,9 +410,8 @@ export class ShellWindow {
         this.restack();
         if (this.ext.settings.active_hint()) {
             let border = this.border;
-            let monitor_count = this.meta.get_display().get_n_monitors();
             if (!this.meta.is_fullscreen() &&
-                !(this.is_max_screen() && monitor_count == 1) &&
+                (!this.is_single_max_screen() || this.is_snap_edge()) &&
                 !this.meta.minimized &&
                 this.same_workspace()) {
                 if (this.meta.appears_focused) {
@@ -427,9 +436,8 @@ export class ShellWindow {
      */
     restack(updateState: RESTACK_STATE = RESTACK_STATE.NORMAL) {
         this.update_border_layout();
-        let monitor_count = this.meta.get_display().get_n_monitors();
         if (this.meta.is_fullscreen() || 
-            (this.is_max_screen() && monitor_count == 1) || 
+            (this.is_single_max_screen() && !this.is_snap_edge()) || 
             this.meta.minimized) {
             this.hide_border()
         }
@@ -517,7 +525,7 @@ export class ShellWindow {
         let borderSize = this.border_size;
 
         if (border) {
-            if (!this.is_max_screen()) {
+            if (!(this.is_max_screen() || this.is_snap_edge())) {
                 border.remove_style_class_name('pop-shell-border-maximize');
             } else {
                 borderSize = 0;
@@ -559,12 +567,12 @@ export class ShellWindow {
 
                 if (workspace === null) return;
 
-                /*const screen = workspace.get_work_area_for_monitor(this.meta.get_monitor())
+                const screen = workspace.get_work_area_for_monitor(this.meta.get_monitor())
 
                 if (screen) {
                     width = Math.min(width, screen.x + screen.width)
                     height = Math.min(height, screen.y + screen.height)
-                }*/
+                }
 
                 border.set_position(x, y)
                 border.set_size(width, height)
