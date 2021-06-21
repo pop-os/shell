@@ -866,7 +866,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         const focus = this.focus_window();
         if (focus) {
-            focus.show_border();
+            focus.update_border_state();
         }
     }
 

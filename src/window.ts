@@ -306,7 +306,7 @@ export class ShellWindow {
                 ext.tween_signals.delete(entity_string);
                 if (meta.appears_focused) {
                     this.update_border_layout();
-                    this.show_border();
+                    this.update_border_state();
                 }
             };
 
@@ -395,16 +395,19 @@ export class ShellWindow {
         })
     }
 
-    show_border() {
+    update_border_state() {
         this.restack();
         if (this.ext.settings.active_hint()) {
             let border = this.border;
             if (!this.meta.is_fullscreen() &&
+                !this.is_maximized() &&
                 !this.meta.minimized &&
-                this.same_workspace()) {
-                if (this.meta.appears_focused) {
+                this.same_workspace() &&
+                this.meta.appears_focused) {
                     border.show();
-                }
+            }
+            else {
+                border.hide();
             }
         }
     }
@@ -571,12 +574,12 @@ export class ShellWindow {
 
     private window_changed() {
         this.update_border_layout();
-        this.show_border();
+        this.update_border_state();
     }
 
     private window_raised() {
         this.restack(RESTACK_STATE.RAISED);
-        this.show_border();
+        this.update_border_state();
         if (this.ext.conf.move_pointer_on_switch && !pointer_already_on_window(this.meta)) {
             place_pointer_on(this.ext.conf.default_pointer_position, this.meta);
         }
