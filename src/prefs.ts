@@ -70,7 +70,10 @@ function settings_dialog_view(): [AppWidgets, Gtk.Container] {
     let grid = new Gtk.Grid({
         column_spacing: 12,
         row_spacing: 12,
-        margin: 10
+        margin_start: 10,
+        margin_end: 10,
+        margin_bottom: 10,
+        margin_top: 10,
     });
 
     let win_label = new Gtk.Label({
