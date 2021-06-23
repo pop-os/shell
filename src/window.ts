@@ -258,9 +258,8 @@ export class ShellWindow {
                 wm_class = this.name(ext)
             }
 
-            return !this.meta.is_skip_taskbar()
-                // Only normal windows will be considered for tiling
-                && this.meta.window_type == Meta.WindowType.NORMAL
+            // Only normal windows will be considered for tiling
+            return this.meta.window_type == Meta.WindowType.NORMAL
                 // Transient windows are most likely dialogs
                 && !this.is_transient()
                 // If a window lacks a class, it's probably a web browser dialog
