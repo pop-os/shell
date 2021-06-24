@@ -197,10 +197,12 @@ declare namespace Meta {
         get_title(): string;
         get_transient_for(): Window | null;
         get_wm_class(): string | null;
+        get_wm_class_instance(): string | null;
         get_work_area_for_monitor(monitor: number): null | Rectangular;
         get_workspace(): Workspace;
         has_focus(): boolean;
         is_above(): boolean;
+        is_attached_dialog(): boolean;
         is_client_decorated(): boolean;
         is_fullscreen(): boolean;
         is_on_all_workspaces(): boolean;
@@ -211,6 +213,7 @@ declare namespace Meta {
         move_frame(user_op: boolean, x: number, y: number): void;
         move_resize_frame(user_op: boolean, x: number, y: number, w: number, h: number): boolean;
         raise(): void;
+        skip_taskbar: boolean;
         unmake_fullscreen(): void;
         unmaximize(flags: any): void;
         unminimize(): void;
