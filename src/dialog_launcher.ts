@@ -69,7 +69,9 @@ export class Launcher extends search.Search {
                             plugin.config.icon,
                             icon,
                             this.icon_size(),
-                            { plugin, id: selection.id }
+                            { plugin, id: selection.id },
+                            null,
+                            null
                         ))
                     }
                 }
@@ -97,14 +99,16 @@ export class Launcher extends search.Search {
                 const name = app.name()
                 const keywords = app.keywords()
                 const exec = app.exec()
-                const app_items = keywords !== null ? 
-                      name.split().concat(keywords).concat(exec) : name.split().concat(exec)
-                
+
+                let app_items = name.split(' ')
+                if (keywords !== null) app_items = app_items.concat(keywords)
+                if (exec !== null) app_items = app_items.concat(exec)
+
                 for (const item of app_items) {
                     const item_match = item.toLowerCase()
                     if ( item_match.startsWith(pattern)
                          || item_match.includes(pattern)
-                         || levenshtein.compare(item_match, pattern) < 3 {
+                         || levenshtein.compare(item_match, pattern) < 3) {
                         const generic = app.generic_name();
                         const button = new launch.SearchOption(
                             name,
@@ -136,14 +140,14 @@ export class Launcher extends search.Search {
                 // Sort by metadata (name, description, keywords)
                 if (!a_name.startsWith(pattern)) {
                     a_weight = 1
-                    if (!a_name.includes(pattern) {
+                    if (!a_name.includes(pattern)) {
                         a_weight = levenshtein.compare(a_name, pattern)
                         if (a.description) {
                             a_weight = Math.min(a_weight, levenshtein.compare(pattern, a.description.toLowerCase()))
                         }
                         if (a.keywords) {
                             for (const keyword of a.keywords) {
-                                if keyword.toLowerCase().startsWith(pattern) || keyword.toLowerCase().includes(pattern) {
+                                if (keyword.toLowerCase().startsWith(pattern) || keyword.toLowerCase().includes(pattern)) {
                                     a_weight = 1
                                 } else {
                                     a_weight = Math.min(a_weight, (levenshtein.compare(pattern, keyword.toLowerCase()) + 1))
@@ -154,13 +158,13 @@ export class Launcher extends search.Search {
                 }
                 // Sort by command (exec)
                 if (a_exec.includes(pattern)) {
-                    if (a_exec.startsWith(pattern) {
+                    if (a_exec.startsWith(pattern)) {
                         a_weight = Math.min(a_weight, 2)
                     } else {
                         a_weight = Math.min(a_weight, levenshtein.compare(pattern, a_exec))
                     }
                 }
-                
+
 
                 // Sort by metadata (name, description, keywords)
                 if (!b_name.startsWith(pattern)) {
@@ -172,7 +176,7 @@ export class Launcher extends search.Search {
                         }
                         if (b.keywords) {
                             for (const keyword of b.keywords) {
-                                if keyword.toLowerCase().startsWith(pattern) || keyword.toLowerCase().includes(pattern) {
+                                if (keyword.toLowerCase().startsWith(pattern) || keyword.toLowerCase().includes(pattern)) {
                                     b_weight = 1
                                 } else {
                                     b_weight = Math.min(b_weight, (levenshtein.compare(pattern, keyword.toLowerCase()) + 1))
@@ -183,7 +187,7 @@ export class Launcher extends search.Search {
                 }
                 // Sort by command (exec)
                 if (b_exec.includes(pattern)) {
-                    if (b_exec.startsWith(pattern) {
+                    if (b_exec.startsWith(pattern)) {
                         b_weight = Math.min(b_weight, 2)
                     } else {
                         b_weight = Math.min(b_weight, levenshtein.compare(pattern, b_exec))
@@ -321,7 +325,7 @@ export class Launcher extends search.Search {
     load_desktop_files() {
         lib.bench("load_desktop_files", () => {
             this.desktop_apps.splice(0);
-            for (const _path of DATA_DIRS_USER.split().concat(DATA_DIRS_SYSTEM)) {
+            for (const _path of [DATA_DIRS_USER].concat(DATA_DIRS_SYSTEM)) {
                 const path = _path.replace(/\/$/, '') + "/applications";
                 for (const result of app_info.load_desktop_entries(path)) {
                     if (result.kind == OK) {
@@ -397,6 +401,8 @@ function window_selection(ext: Ext, window: ShellWindow, icon_size: number): lau
             widget: window.icon(ext, icon_size)
         },
         icon_size,
-        { window }
+        { window },
+        null,
+        null
     )
 }
