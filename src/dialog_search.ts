@@ -6,6 +6,8 @@ import * as rect from 'rectangle';
 
 import { SearchOption } from 'launcher_service';
 
+const GLib: GLib = imports.gi.GLib;
+
 const { Clutter, Shell, St } = imports.gi;
 const { ModalDialog } = imports.ui.modalDialog;
 
@@ -52,7 +54,6 @@ export class Search {
 
         this.active_id = 0;
         this.widgets = [];
-
         this.entry = new St.Entry({
             style_class: "pop-shell-entry",
             can_focus: true,
@@ -65,13 +66,35 @@ export class Search {
         (this.text as any).set_use_markup(true)
         this.dialog.setInitialKeyFocus(this.text);
 
-        this.text.connect("activate", () => this.activate_option(this.active_id));
+        let text_changed: null | number = null;
+
+        this.text.connect("activate", () => {
+            if (text_changed !== null) GLib.source_remove(text_changed)
+            text_changed = null
+            this.activate_option(this.active_id)
+        });
 
         this.text.connect("text-changed", (entry: any) => {
-            this.clear();
+            if (text_changed !== null) GLib.source_remove(text_changed)
 
-            const update = search((entry as Clutter.Text).get_text().trim())
-            if (update) this.update_search_list(update)
+            const text = (entry as Clutter.Text).get_text().trim()
+
+            const update = () => {
+                this.clear()
+                const update = search(text)
+                if (update) this.update_search_list(update)
+            }
+
+            if (text.length === 0) {
+                update()
+                return
+            }
+
+            text_changed = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 100, () => {
+                text_changed = null
+                update()
+                return false;
+            })
         });
 
         this.text.connect("key-press-event", (_: any, event: any) => {
