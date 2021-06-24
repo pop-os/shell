@@ -40,11 +40,15 @@ const Movement = movement.Movement;
 
 const GLib: GLib = imports.gi.GLib;
 
-const { Gio, Meta, St } = imports.gi;
+const { Gio, Meta, St, Shell } = imports.gi;
 const { GlobalEvent, WindowEvent } = Events;
 const { cursor_rect, is_move_op } = Lib;
 const { layoutManager, loadTheme, overview, panel, setThemeStylesheet, screenShield, sessionMode } = imports.ui.main;
 const { ScreenShield } = imports.ui.screenShield;
+const { AppSwitcher, AppIcon, WindowSwitcherPopup } = imports.ui.altTab;
+const { SwitcherList } = imports.ui.switcherPopup;
+const { Workspace } = imports.ui.workspace;
+const { WorkspaceThumbnail } = imports.ui.workspaceThumbnail;
 const Tags = Me.imports.tags;
 
 const STYLESHEET_PATHS = ['light', 'dark'].map(stylesheet_path);
@@ -385,7 +389,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     active_window_list(): Array<Window.ShellWindow> {
         let workspace = wom.get_active_workspace();
-        return this.tab_list(Meta.TabList.NORMAL, workspace);
+        return this.tab_list(Meta.TabList.NORMAL_ALL, workspace);
     }
 
     active_workspace(): number {
@@ -2400,6 +2404,10 @@ export class Ext extends Ecs.System<ExtEvent> {
 
 let ext: Ext | null = null;
 let indicator: Indicator | null = null;
+let default_isoverviewwindow_ws: any;
+let default_isoverviewwindow_ws_thumbnail: any;
+let default_init_appswitcher: any;
+let default_getwindowlist_windowswitcher: any;
 
 // @ts-ignore
 function init() {
@@ -2409,6 +2417,8 @@ function init() {
 // @ts-ignore
 function enable() {
     log.info("enable");
+
+    _show_skip_taskbar_windows();
 
     if (!ext) {
         ext = new Ext();
@@ -2444,6 +2454,8 @@ function enable() {
 // @ts-ignore
 function disable() {
     log.info("disable");
+
+    _hide_skip_taskbar_windows();
 
     if (ext) {
         if (sessionMode.isLocked) {
@@ -2522,4 +2534,109 @@ function* iter_workspaces(manager: any): IterableIterator<[number, any]> {
         idx += 1;
         ws = manager.get_workspace_by_index(idx);
     }
+}
+
+/**
+ * Decorates the default gnome-shell workspace/overview handling 
+ * of skip_task_bar. And have those window types included in pop-shell.
+ * Should only be called on extension#enable()
+ */
+function _show_skip_taskbar_windows() {
+    // Handle the overview
+    default_isoverviewwindow_ws = Workspace.prototype._isOverviewWindow;
+    Workspace.prototype._isOverviewWindow = function(window: any) {
+        // wm_class Gjs needs to be skipped to prevent the ghost window in
+        // workspace and overview
+        return (window.skip_taskbar && window.get_wm_class() !== "Gjs") || 
+            default_isoverviewwindow_ws(window);
+    };
+
+    // Handle the workspace thumbnail
+    default_isoverviewwindow_ws_thumbnail = 
+        WorkspaceThumbnail.prototype._isOverviewWindow;
+    WorkspaceThumbnail.prototype._isOverviewWindow = function (win: any) {
+        let meta_win = win.get_meta_window();
+        // wm_class Gjs needs to be skipped to prevent the ghost window in
+        // workspace and overview
+        return (meta_win.skip_taskbar && meta_win.get_wm_class() !== "Gjs") || 
+            default_isoverviewwindow_ws_thumbnail(win);
+    };
+
+    // Handle switch-applications
+    default_init_appswitcher = AppSwitcher.prototype._init;
+    // Do not use the Shell.AppSystem apps
+    AppSwitcher.prototype._init = function(_apps: any, altTabPopup: any) {
+        // Simulate super._init(true);
+        SwitcherList.prototype._init.call(this, true);
+        this.icons = [];
+        this._arrows = [];
+
+        let windowTracker = Shell.WindowTracker.get_default();
+        let settings = new Gio.Settings({ schema_id: 'org.gnome.shell.app-switcher' });
+
+        let workspace = null;
+        if (settings.get_boolean('current-workspace-only')) {
+            let workspaceManager = global.workspace_manager;
+            workspace = workspaceManager.get_active_workspace();
+        }
+
+        let allWindows = global.display.get_tab_list(Meta.TabList.NORMAL_ALL, workspace);
+        let allRunningSkipTaskbarApps = allWindows.filter((w,i,a) => {
+            if (w) {
+                let found_idx: any;
+                // Find the first instance using wm_class
+                for (let index = 0; index < a.length; index++) {
+                    if (a[index].get_wm_class() === w.get_wm_class()) {
+                        found_idx = index;
+                        break;
+                    }
+                }
+                return found_idx == i;
+            }
+        });
+
+        for (let i = 0; i < allRunningSkipTaskbarApps.length; i++) {
+            let appIcon = new AppIcon(windowTracker.get_window_app(allRunningSkipTaskbarApps[i]));
+            appIcon.cachedWindows = allWindows.filter(
+                w => windowTracker.get_window_app(w) === appIcon.app);
+            if (appIcon.cachedWindows.length > 0)
+                this._addIcon(appIcon);
+        }
+
+        this._curApp = -1;
+        this._altTabPopup = altTabPopup;
+        this._mouseTimeOutId = 0;
+
+        this.connect('destroy', this._onDestroy.bind(this));
+    }
+
+    // Handle switch-windows
+    default_getwindowlist_windowswitcher = WindowSwitcherPopup.prototype._getWindowList;
+    WindowSwitcherPopup.prototype._getWindowList = function() {
+        let workspace = null;
+
+        if (this._settings.get_boolean('current-workspace-only')) {
+            let workspaceManager = global.workspace_manager;
+            workspace = workspaceManager.get_active_workspace();
+        }
+
+        let windows = global.display.get_tab_list(Meta.TabList.NORMAL_ALL,
+                                                  workspace);
+        return windows.map(w => {
+            return w.is_attached_dialog() ? w.get_transient_for() : w;
+        }).filter((w, i, a) => w != null && a.indexOf(w) == i);
+    }
+}
+
+/**
+ * This is the cleanup/restore of the decorator for skip_taskbar when pop-shell
+ * is disabled.
+ * Should only be called on extension#disable()
+ */
+function _hide_skip_taskbar_windows() {
+    Workspace.prototype._isOverviewWindow = default_isoverviewwindow_ws;
+    WorkspaceThumbnail.prototype._isOverviewWindow = 
+        default_isoverviewwindow_ws_thumbnail;
+    AppSwitcher.prototype._init = default_init_appswitcher;
+    WindowSwitcherPopup.prototype._getWindowList = default_getwindowlist_windowswitcher;
 }

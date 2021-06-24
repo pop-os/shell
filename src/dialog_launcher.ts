@@ -88,7 +88,7 @@ export class Launcher extends search.Search {
                 };
 
                 // Filter matching windows
-                for (const window of ext.tab_list(Meta.TabList.NORMAL, null)) {
+                for (const window of ext.tab_list(Meta.TabList.NORMAL_ALL, null)) {
                     const retain = contains_pattern(window.name(ext), needles)
                         || contains_pattern(window.meta.get_title(), needles);
 
