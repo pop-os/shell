@@ -109,7 +109,7 @@ export class Launcher extends search.Search {
                         const button = new launch.SearchOption(
                             name,
                             generic ? generic + " — " + where : where,
-                            'application-default-symbolic',
+                            'new-window-symbolic',
                             { gicon: app.icon() },
                             this.icon_size(),
                             { app },
