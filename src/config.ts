@@ -35,7 +35,6 @@ export const DEFAULT_RULES: Array<FloatRule> = [
     { class: "KotatogramDesktop", title: "Media viewer" },
     { class: "Steam", title: "^((?!Steam).)*$" },
     { class: "TelegramDesktop", title: "Media viewer" },
-    { class: "Slack", title: "Slack | mini panel" },
     { class: "Solaar", },
     { class: "system76-driver", },
     { class: "zoom", },
