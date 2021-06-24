@@ -45,13 +45,11 @@ export class Launcher extends search.Search {
                 return this.options
             }
 
-            const pattern = pat.toLowerCase()
-
             this.last_plugin = null
 
             let windows = new Array()
 
-            this.service.query(ext, pattern, (plugin, response) => {
+            this.service.query(ext, pat, (plugin, response) => {
                 if (response.event === "queried") {
                     for (const selection of response.selections) {
                         if (!this.last_plugin) this.last_plugin = plugin;
@@ -76,6 +74,8 @@ export class Launcher extends search.Search {
                     }
                 }
             })
+
+            const pattern = pat.toLowerCase()
 
             const needles = pattern.split(' ');
 
