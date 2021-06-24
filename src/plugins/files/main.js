@@ -26,7 +26,7 @@ class App {
     constructor() {
         /** @type Array<Selection> */
         this.selections = new Array()
-        
+
         /** @type string */
         this.parent = ""
 
@@ -52,8 +52,8 @@ class App {
 
     /**
      * Queries the plugin for results from this input
-     * 
-     * @param {string} input 
+     *
+     * @param {string} input
      */
     query(input) {
         if (input.startsWith('~')) {
@@ -61,12 +61,18 @@ class App {
         }
 
         this.last_query = input
+
+        // Add `/` to query if the input is a directory
+        this.last_query = (!input.endsWith('/') && Gio.file_new_for_path(input).query_file_type(0, null) === 2)
+            ? input + '/'
+            : input
+
         this.selections.splice(0)
-        this.parent = GLib.path_get_dirname(input)
+        this.parent = GLib.path_get_dirname(this.last_query)
 
         /** @type string */
-        let base = GLib.path_get_basename(input)
-        
+        let base = GLib.path_get_basename(this.last_query)
+
         const show_hidden = base.startsWith('.')
 
         if (this.parent.endsWith(base)) base = ""
@@ -85,7 +91,7 @@ class App {
                         continue
                     }
 
-                    if (!show_hidden && name.startsWith('.')) continue 
+                    if (!show_hidden && name.startsWith('.')) continue
 
                     const content_type = entry.get_content_type()
                     const directory = entry.get_file_type() === 2
@@ -106,7 +112,7 @@ class App {
                 const a_name = a.name.toLowerCase()
                 const b_name = b.name.toLowerCase()
 
-                const pattern_lower = input.toLowerCase()
+                const pattern_lower = this.last_query.toLowerCase()
 
                 const a_includes = a_name.includes(pattern_lower)
                 const b_includes = b_name.includes(pattern_lower)
@@ -133,7 +139,7 @@ class App {
 
     /**
      * Applies an option that the user selected
-     * 
+     *
      * @param {number} id
      */
     submit(id) {
@@ -153,8 +159,8 @@ class App {
 
     /**
      * Sends message back to Pop Shell
-     * 
-     * @param {Object} object 
+     *
+     * @param {Object} object
      */
     send(object) {
         STDOUT.write_bytes(new GLib.Bytes(JSON.stringify(object) + "\n"), null)
@@ -162,8 +168,8 @@ class App {
 }
 
 /**
- * 
- * @param {string} parent 
+ *
+ * @param {string} parent
  * @param {Selection} selection
  * @returns {string}
  */

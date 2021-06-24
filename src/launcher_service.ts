@@ -91,7 +91,6 @@ export class LauncherService {
     }
 
     private register_plugin_directory(directory: string) {
-        global.log(`checking for plugins in ${directory}`)
         let dir = Gio.file_new_for_path(directory)
         if (!dir.query_exists(null)) return
 
