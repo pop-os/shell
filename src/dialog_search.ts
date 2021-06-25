@@ -68,11 +68,7 @@ export class Search {
 
         let text_changed: null | number = null;
 
-        this.text.connect("activate", () => {
-            if (text_changed !== null) GLib.source_remove(text_changed)
-            text_changed = null
-            this.activate_option(this.active_id)
-        });
+        this.text.connect("activate", () => this.activate_option(this.active_id));
 
         this.text.connect("text-changed", (entry: any) => {
             if (text_changed !== null) GLib.source_remove(text_changed)
