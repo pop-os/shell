@@ -2,6 +2,7 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 // import * as auto_tiler from 'auto_tiler';
 import * as Utils from 'utils';
+import { Launcher } from './dialog_launcher';
 
 //import type { Entity } from './ecs';
 import type { Ext } from './extension';
@@ -170,8 +171,16 @@ function shortcuts(menu: any): any {
     layout_manager.set_column_spacing(30);
     layout_manager.attach(create_label(_('Shortcuts')), 0, 0, 2, 1);
 
+    let launcher_shortcut = _("Super + /")
+    const cosmic_settings = Me.imports.settings.settings_new_id('org.gnome.shell.extensions.pop-cosmic')
+    if (cosmic_settings) {
+        if (cosmic_settings.get_enum('overlay-key-action') === 2) {
+            launcher_shortcut = _("Super")
+        }
+    }
+
     [
-        [_('Launcher'), _('Super + /')],
+        [_('Launcher'), launcher_shortcut],
         [_('Navigate Windows'), _('Super + Arrow Keys')],
         [_('Toggle Tiling'), _('Super + Y')],
     ].forEach((section, idx) => {
