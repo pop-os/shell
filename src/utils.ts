@@ -47,7 +47,7 @@ export function exists(path: string): boolean {
 }
 
 /**
- * Parse the current background color's darkness 
+ * Parse the current background color's darkness
  * https://stackoverflow.com/a/41491220 - the advanced solution
  * @param color - the RGBA or hex string value
  */
@@ -159,4 +159,18 @@ export function map_eq<K, V>(map1: Map<K, V>, map2: Map<K, V>) {
     }
 
     return true
+}
+
+export function os_release(): null | string {
+    const [ok, bytes] = GLib.file_get_contents("/etc/os-release")
+    if (! ok) return null
+
+    const contents: string = imports.byteArray.toString(bytes)
+    for (const line of contents.split('\n')) {
+        if (line.startsWith("VERSION_ID")) {
+            return line.split('"')[1]
+        }
+    }
+
+    return null
 }
