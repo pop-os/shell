@@ -7,18 +7,21 @@ import type { Response, Selection } from 'launcher_plugins'
 import type { Ext } from './extension'
 
 export class ShellBuiltin extends plugins.Builtin {
+    selections: Array<Selection> = []
+
     init() {}
 
     query(ext :Ext, _: string): Response.Response {
-        let selections = []
+        this.selections.splice(0);
         let id = 0;
 
         for (const [name, service] of ext.window_search.service.plugins) {
             if (service.config.pattern?.length > 0) {
-                selections.push({
+                this.selections.push({
                     id,
                     name,
                     description: service.config.description + `: ${service.config.pattern}`,
+                    fill: service.config.fill
                 })
                 id += 1;
             }
@@ -26,11 +29,20 @@ export class ShellBuiltin extends plugins.Builtin {
 
         return {
             event: "queried",
-            selections
+            selections: this.selections
         }
     }
 
-    submit(ext: Ext, id: number): Response.Response {
-        return { event: "fill", text: "" }
+    submit(_: Ext, id: number): Response.Response {
+        const selection = this.selections[id];
+
+        let text = ""
+        if (selection) {
+            if (selection.fill) {
+                text = selection.fill;
+            }
+        }
+
+        return { event: "fill", text }
     }
 }
