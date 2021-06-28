@@ -41,6 +41,7 @@ export const DEFAULT_RULES: Array<FloatRule> = [
     { class: "Gnome-terminal", title: "Preferences – General" },
     { class: "Gjs", title: "Settings" },
     { class: "Io.elementary.sideload", },
+    { class: "Gnome-initial-setup" },
 ];
 
 export interface FloatRule {
