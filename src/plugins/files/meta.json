@@ -1,6 +1,6 @@
 {
     "name": "File Navigation",
-    "description": "Navigate the file system with tab auto-completion",
+    "description": "Navigate with tab autocomplete",
     "pattern": "^(\/|~).*",
     "exec": "main.js",
     "icon": "system-file-manager",
