@@ -10,6 +10,7 @@ export interface Selection {
     id: number,
     name: string,
     description: string,
+    fill?: string
 }
 
 /** The trait which all builtin plugins implement */
@@ -25,7 +26,7 @@ export abstract class Builtin {
 
     /** Uses the search input to query for search results */
     abstract query(ext: Ext, query: string): Response.Response
-    
+
     /** Applies an option by its ID */
     abstract submit(ext: Ext, id: number): Response.Response
 
@@ -123,6 +124,7 @@ export namespace Plugin {
         pattern: string
         exec: string
         icon: string
+        fill?: string
     }
 
     export function read(file: string): Config | null {
@@ -175,7 +177,7 @@ export namespace Plugin {
                     return null
                 }
             }
-    
+
             try {
                 let [bytes,] = backend.proc.stdout.read_line(null)
                 return Response.parse(imports.byteArray.toString(bytes))
@@ -210,7 +212,7 @@ export namespace Plugin {
 
     export function send(ext: Ext, plugin: Plugin.Source, event: Request.Request): boolean {
         const backend = plugin.backend
-        
+
         if ('builtin' in backend) {
             backend.builtin.handle(ext, event)
             return true

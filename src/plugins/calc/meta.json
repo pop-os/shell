@@ -3,5 +3,6 @@
     "description": "Perform calculations from terminal",
     "pattern": "^(=)+",
     "exec": "main.js",
-    "icon": "x-office-spreadsheet"
+    "icon": "x-office-spreadsheet",
+    "fill": "="
 }

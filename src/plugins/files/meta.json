@@ -3,5 +3,6 @@
     "description": "Searches files in the file system",
     "pattern": "^(\/|~).*",
     "exec": "main.js",
-    "icon": "system-file-manager"
+    "icon": "system-file-manager",
+    "fill": "~/"
 }
