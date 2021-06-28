@@ -54,6 +54,7 @@ export namespace Request {
 
     export interface Complete {
         event: 'complete',
+        id: number,
     }
 
     export interface Submit {
@@ -188,8 +189,8 @@ export namespace Plugin {
         }
     }
 
-    export function complete(ext: Ext, plugin: Plugin.Source): boolean {
-        return send(ext, plugin, { event: "complete" })
+    export function complete(ext: Ext, plugin: Plugin.Source, id: number): boolean {
+        return send(ext, plugin, { event: "complete", id })
     }
 
     export function query(ext: Ext, plugin: Plugin.Source, value: string): boolean {

@@ -25,7 +25,8 @@ export class Search {
         shouldFadeOut: false
     });
 
-    private active_id: number;
+    active_id: number;
+
     private entry: St.Entry;
     private list: St.Widget;
     private text: Clutter.Text;

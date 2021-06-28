@@ -279,14 +279,19 @@ export class Launcher extends search.Search {
         };
 
         let complete = (): boolean => {
-            if (this.last_plugin) {
-                plugins.Plugin.complete(ext, this.last_plugin)
-                const res = plugins.Plugin.listen(this.last_plugin)
-                if (res && res.event === "fill") {
-                    this.set_text(res.text)
-                    return true
+            const option = this.options[this.active_id]
+            if (option) {
+                if ("plugin" in option.id) {
+                    const { plugin, id } = option.id
+                    plugins.Plugin.complete(ext, plugin, id);
+                    const res = plugins.Plugin.listen(plugin)
+                    if (res && res.event === "fill") {
+                        this.set_text(res.text)
+                        return true
+                    }
                 }
             }
+
             return false
         }
 

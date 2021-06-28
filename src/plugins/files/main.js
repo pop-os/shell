@@ -36,11 +36,13 @@ class App {
 
     /**
      * Performs tab completion based on the last-given search query.
+     *
+     * @param {number} id
      */
-    complete() {
+    complete(id) {
         let text
 
-        const selected = this.selections[0]
+        const selected = this.selections[id]
         if (selected) {
             text = selection_path(this.parent, selected)
         } else {
@@ -207,7 +209,7 @@ function main() {
         if ((event_ = parse_event(input_str)) !== null) {
             switch (event_.event) {
                 case "complete":
-                    app.complete()
+                    app.complete(event_.id)
                     break
                 case "query":
                     if (event_.value) app.query(event_.value)
