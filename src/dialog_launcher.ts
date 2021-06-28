@@ -77,7 +77,7 @@ export class Launcher extends search.Search {
 
             const pattern = pat.toLowerCase()
 
-            if (pat !== '?') {
+            if (pat !== '?' && ! pat.startsWith("/") && ! pat.startsWith("~")) {
                 const needles = pattern.split(' ');
 
                 const contains_pattern = (haystack: string, needles: Array<string>): boolean => {
