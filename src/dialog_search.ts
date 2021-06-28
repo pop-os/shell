@@ -60,7 +60,7 @@ export class Search {
             x_expand: true
         });
 
-        this.entry.set_hint_text('  Type to search apps. Press \'?\' for more options')
+        this.entry.set_hint_text("  Type to search apps, or type '?' for more options.")
 
         this.text = this.entry.get_clutter_text();
         (this.text as any).set_use_markup(true)
