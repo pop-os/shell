@@ -77,54 +77,56 @@ export class Launcher extends search.Search {
 
             const pattern = pat.toLowerCase()
 
-            const needles = pattern.split(' ');
+            if (pat !== '?') {
+                const needles = pattern.split(' ');
 
-            const contains_pattern = (haystack: string, needles: Array<string>): boolean => {
-                const hay = haystack.toLowerCase();
-                return needles.every((n) => hay.includes(n));
-            };
+                const contains_pattern = (haystack: string, needles: Array<string>): boolean => {
+                    const hay = haystack.toLowerCase();
+                    return needles.every((n) => hay.includes(n));
+                };
 
-            // Filter matching windows
-            for (const window of ext.tab_list(Meta.TabList.NORMAL, null)) {
-                const retain = contains_pattern(window.name(ext), needles)
-                    || contains_pattern(window.meta.get_title(), needles);
+                // Filter matching windows
+                for (const window of ext.tab_list(Meta.TabList.NORMAL, null)) {
+                    const retain = contains_pattern(window.name(ext), needles)
+                        || contains_pattern(window.meta.get_title(), needles);
 
-                if (retain) {
-                    windows.push(window_selection(ext, window, this.icon_size()))
+                    if (retain) {
+                        windows.push(window_selection(ext, window, this.icon_size()))
+                    }
                 }
-            }
 
-            // Filter matching desktop apps
-            for (const [where, app] of this.desktop_apps) {
-                const name = app.name()
-                const keywords = app.keywords()
-                const exec = app.exec()
+                // Filter matching desktop apps
+                for (const [where, app] of this.desktop_apps) {
+                    const name = app.name()
+                    const keywords = app.keywords()
+                    const exec = app.exec()
 
-                let app_items = name.split(' ')
-                if (keywords !== null) app_items = app_items.concat(keywords)
-                if (exec !== null) app_items = app_items.concat(exec)
+                    let app_items = name.split(' ')
+                    if (keywords !== null) app_items = app_items.concat(keywords)
+                    if (exec !== null) app_items = app_items.concat(exec)
 
-                for (const item of app_items) {
-                    const item_match = item.toLowerCase()
-                    if ( item_match.startsWith(pattern)
-                         || item_match.includes(pattern)
-                         || levenshtein.compare(item_match, pattern) < 3) {
-                        const generic = app.generic_name();
-                        const button = new launch.SearchOption(
-                            name,
-                            generic ? generic + " — " + where : where,
-                            'new-window-symbolic',
-                            { gicon: app.icon() },
-                            this.icon_size(),
-                            { app },
-                            exec,
-                            keywords
-                        )
+                    for (const item of app_items) {
+                        const item_match = item.toLowerCase()
+                        if ( item_match.startsWith(pattern)
+                            || item_match.includes(pattern)
+                            || levenshtein.compare(item_match, pattern) < 3) {
+                            const generic = app.generic_name();
+                            const button = new launch.SearchOption(
+                                name,
+                                generic ? generic + " — " + where : where,
+                                'new-window-symbolic',
+                                { gicon: app.icon() },
+                                this.icon_size(),
+                                { app },
+                                exec,
+                                keywords
+                            )
 
-                        DedicatedGPU.addPopup(app, button.widget)
+                            DedicatedGPU.addPopup(app, button.widget)
 
-                        this.options.push(button)
-                        break
+                            this.options.push(button)
+                            break
+                        }
                     }
                 }
             }
