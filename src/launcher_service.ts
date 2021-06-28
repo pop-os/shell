@@ -14,6 +14,21 @@ const { Plugin } = plugins
 
 import * as plugin_scripts from 'plugin_scripts'
 import * as plugin_shell from 'plugin_shell'
+import * as plugin_help from 'plugin_help'
+
+const BUILTIN_HELP: PluginType.Source = {
+    backend: {
+        builtin: new plugin_help.ShellBuiltin()
+    },
+    config: {
+        name: "Shell Help",
+        description: "Show additional prefixes available",
+        pattern: "",
+        exec: "",
+        icon: "system-help-symbolic"
+    },
+    pattern: null
+};
 
 export var BUILTINS: Array<PluginType.Source> = [
     {
@@ -55,7 +70,7 @@ const LOCAL_PLUGINS: string = GLib.get_home_dir() + "/.local/share/pop-shell/lau
 const SYSTEM_PLUGINS: string = "/usr/lib/pop-shell/launcher/"
 
 export class LauncherService {
-    private plugins: Map<string, PluginType.Source> = new Map()
+    plugins: Map<string, PluginType.Source> = new Map()
 
     destroy(ext: Ext) {
         for (const plugin of this.plugins.values()) Plugin.quit(ext, plugin)
@@ -124,6 +139,11 @@ export class LauncherService {
     }
 
     private *match_query(ext: Ext, query: string): IterableIterator<PluginType.Source> {
+        if (query === "?") {
+            yield BUILTIN_HELP;
+            return
+        }
+
         for (const plugin of BUILTINS) {
             if (!plugin.pattern || plugin.pattern.test(query)) {
                 yield plugin
