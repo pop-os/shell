@@ -17,10 +17,14 @@ export class ShellBuiltin extends plugins.Builtin {
 
         for (const [name, service] of ext.window_search.service.plugins) {
             if (service.config.pattern?.length > 0) {
+                const example = service.config.examples
+                    ? service.config.examples
+                    : service.config.pattern;
+
                 this.selections.push({
                     id,
                     name,
-                    description: service.config.description + `: ${service.config.pattern}`,
+                    description: service.config.description + `: ${example}`,
                     fill: service.config.fill
                 })
                 id += 1;

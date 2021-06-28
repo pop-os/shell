@@ -1,8 +1,9 @@
 {
     "name": "Calculator",
-    "description": "Perform calculations from terminal",
+    "description": "Math.JS calculations",
     "pattern": "^(=)+",
     "exec": "main.js",
     "icon": "x-office-spreadsheet",
-    "fill": "="
+    "fill": "=",
+    "examples": "=5+5, =2 liters in quarts"
 }

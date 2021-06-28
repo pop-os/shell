@@ -4,5 +4,6 @@
     "pattern": "^(:|t:|run ).*",
     "exec": "main.js",
     "icon": "utilities-terminal",
-    "fill": "run "
+    "fill": "run ",
+    "examples": "run cmd, t:cmd, t cmd"
 }

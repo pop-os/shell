@@ -125,6 +125,7 @@ export namespace Plugin {
         exec: string
         icon: string
         fill?: string
+        examples?: string
     }
 
     export function read(file: string): Config | null {

@@ -1,8 +1,9 @@
 {
-    "name": "File Search",
-    "description": "Searches files in the file system",
+    "name": "File Navigation",
+    "description": "Navigate the file system with tab auto-completion",
     "pattern": "^(\/|~).*",
     "exec": "main.js",
     "icon": "system-file-manager",
-    "fill": "~/"
+    "fill": "~/",
+    "examples": "~/Documents, /mnt/media/Videos"
 }
