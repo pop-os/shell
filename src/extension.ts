@@ -1116,7 +1116,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         let next_monitor = Tiling.locate_monitor(win, direction);
 
         if (next_monitor !== null) {
-            if (this.auto_tiler && !this.contains_tag(win.entity, Tags.Floating)) {
+            if (this.auto_tiler && !this.is_floating(win)) {
                 win.ignore_detach = true;
                 this.auto_tiler.detach_window(this, win.entity);
                 this.auto_tiler.attach_to_workspace(this, win, [next_monitor, win.workspace_id()]);
@@ -2347,6 +2347,23 @@ export class Ext extends Ecs.System<ExtEvent> {
         id[1] = Math.max(0, id[1]);
 
         return id;
+    }
+
+    is_floating(window: Window.ShellWindow): boolean {
+        let shall_float: boolean = false;
+        let wm_class = window.meta.get_wm_class(); 
+        let wm_title = window.meta.get_title();
+
+        if (wm_class && wm_title) {
+            shall_float = this.conf.window_shall_float(wm_class, wm_title)
+        }
+
+        let floating_tagged = this.contains_tag(window.entity, Tags.Floating);
+        let force_tiled_tagged = this.contains_tag(window.entity, Tags.ForceTile);
+        // Tags.Tiled does not seem to matter, so not checking here
+
+        return (floating_tagged && !force_tiled_tagged) || 
+            (shall_float && !force_tiled_tagged);
     }
 }
 

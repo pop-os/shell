@@ -22,6 +22,7 @@ interface Error {
 type Result<T> = Ok<T> | Error;
 
 export const DEFAULT_RULES: Array<FloatRule> = [
+    { class: "Floating Window Exceptions"},
     { class: "Authy Desktop", },
     { class: "Enpass", title: "Enpass Assistant" },
     { class: "Zotero", title: "Quick Format Citation" },
