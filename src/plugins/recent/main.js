@@ -46,6 +46,7 @@ class App {
 
         const items = recent_items
             .filter(item => item.exists())
+            .sort((a, b) => a.get_visited() < b.get_visited())
             .map(item => {
                 return {
                     display_name: item.get_display_name(),
@@ -73,8 +74,7 @@ class App {
 
             this.results = items
                 .filter(item => item.display_name.toLowerCase().includes(normalized))
-                .sort((a, b) => a.display_name.localeCompare(b.display_name))
-                .slice(0, 20)
+                .slice(0, 100)
 
             let id = 0
             
