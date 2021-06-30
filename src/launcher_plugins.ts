@@ -10,7 +10,8 @@ export interface Selection {
     id: number,
     name: string,
     description: string,
-    fill?: string
+    fill?: string,
+    content_type?: string
 }
 
 /** The trait which all builtin plugins implement */

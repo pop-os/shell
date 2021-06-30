@@ -12,9 +12,10 @@ import type { Plugin as PluginType, Response } from 'launcher_plugins'
 
 const { Plugin } = plugins
 
+import * as plugin_files from 'plugin_files'
+import * as plugin_help from 'plugin_help'
 import * as plugin_scripts from 'plugin_scripts'
 import * as plugin_shell from 'plugin_shell'
-import * as plugin_help from 'plugin_help'
 
 const BUILTIN_HELP: PluginType.Source = {
     backend: {
@@ -29,6 +30,21 @@ const BUILTIN_HELP: PluginType.Source = {
     },
     pattern: null
 };
+
+export var BUILTIN_FILES: PluginType.Source = {
+    backend: {
+        builtin: new plugin_files.ShellBuiltin()
+    },
+    config: {
+        name: "File Search",
+        description: "Search files in your home folder",
+        examples: "file COSMIC",
+        pattern: "^(file)\\s.*",
+        exec: "",
+        icon: "system-file-manager"
+    },
+    pattern: null
+}
 
 export var BUILTINS: Array<PluginType.Source> = [
     {
@@ -142,6 +158,11 @@ export class LauncherService {
         if (query === "?") {
             yield BUILTIN_HELP;
             return
+        }
+
+        if (query.startsWith("file ")) {
+            yield BUILTIN_FILES;
+            return;
         }
 
         for (const plugin of BUILTINS) {

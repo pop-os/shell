@@ -16,7 +16,8 @@ Package: pop-shell
 Architecture: all
 Depends:
     ${misc:Depends},
-    pop-shell-shortcuts
+    pop-shell-shortcuts,
+    fd-find
 Recommends: pop-shell-plugin-system76-power
 Replaces: gnome-control-center-data (<< 1:3.38.1-2ubuntu1pop1~)
 Breaks: gnome-control-center-data (<< 1:3.38.1-2ubuntu1pop1~)

@@ -2,6 +2,7 @@
 const Me = imports.misc.extensionUtils.getCurrentExtension()
 
 import * as plugins from 'launcher_plugins'
+import * as service from 'launcher_service'
 
 import type { Response, Selection } from 'launcher_plugins'
 import type { Ext } from './extension'
@@ -15,21 +16,25 @@ export class ShellBuiltin extends plugins.Builtin {
         this.selections.splice(0);
         let id = 0;
 
-        for (const [name, service] of ext.window_search.service.plugins) {
-            if (service.config.pattern?.length > 0) {
-                const example = service.config.examples
-                    ? service.config.examples
-                    : service.config.pattern;
+        const files = new Map([[service.BUILTIN_FILES.config.name, service.BUILTIN_FILES]])
+        for (const map of [files, ext.window_search.service.plugins]) {
+            for (const [name, service] of map) {
+                if (service.config.pattern?.length > 0) {
+                    const example = service.config.examples
+                        ? service.config.examples
+                        : service.config.pattern;
 
-                this.selections.push({
-                    id,
-                    name,
-                    description: service.config.description + `: ${example}`,
-                    fill: service.config.fill
-                })
-                id += 1;
+                    this.selections.push({
+                        id,
+                        name,
+                        description: service.config.description + `: ${example}`,
+                        fill: service.config.fill
+                    })
+                    id += 1;
+                }
             }
         }
+
 
         return {
             event: "queried",

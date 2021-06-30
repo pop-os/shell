@@ -1,7 +1,8 @@
 {
     "name": "Recent Documents",
-    "description": "Show recent documents in search results",
-    "pattern": "",
+    "description": "Show recently-opened files",
+    "pattern": "^(recent)\\s.*",
+    "examples": "recent COSMIC",
     "exec": "main.js",
     "icon": "system-file-manager"
 }

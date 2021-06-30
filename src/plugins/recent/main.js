@@ -62,7 +62,7 @@ class App {
     }
 
     query(input) {
-        input = input.trim()
+        input = input.substr(input.indexOf(" ") + 1).trim()
 
         const items = this.items()
 
@@ -74,7 +74,7 @@ class App {
             this.results = items
                 .filter(item => item.display_name.toLowerCase().includes(normalized))
                 .sort((a, b) => a.display_name.localeCompare(b.display_name))
-                .slice(0, 20)
+                .slice(0, 7)
 
             let id = 0
 
