@@ -40,6 +40,7 @@ export var BUILTIN_FILES: PluginType.Source = {
         description: "Search files in your home folder",
         examples: "file COSMIC",
         pattern: "^(file)\\s.*",
+        fill: "file ",
         exec: "",
         icon: "system-file-manager"
     },

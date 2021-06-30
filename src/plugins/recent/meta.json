@@ -3,6 +3,7 @@
     "description": "Show recently-opened files",
     "pattern": "^(recent)\\s.*",
     "examples": "recent COSMIC",
+    "fill": "recent ",
     "exec": "main.js",
     "icon": "system-file-manager"
 }
