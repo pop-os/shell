@@ -77,7 +77,9 @@ export class Launcher extends search.Search {
 
             const pattern = pat.toLowerCase()
 
-            if (pat !== '?' && ! pat.startsWith("/") && ! pat.startsWith("~")) {
+            const navigating_files = pat.startsWith("/") || pat.startsWith("~")
+
+            if (pat !== '?' && ! navigating_files) {
                 const needles = pattern.split(' ');
 
                 const contains_pattern = (haystack: string, needles: Array<string>): boolean => {
@@ -207,7 +209,7 @@ export class Launcher extends search.Search {
             this.options = windows.concat(this.options)
 
             // Truncate excess items from the list
-            this.options.splice(this.list_max);
+            if (!navigating_files) this.options.splice(this.list_max);
 
             return this.options;
         };

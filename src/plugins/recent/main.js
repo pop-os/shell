@@ -62,8 +62,8 @@ class App {
     }
 
     query(input) {
-        input = input.substring(2).trim()
-        
+        input = input.trim()
+
         const items = this.items()
 
         let selections = new Array()
@@ -77,7 +77,7 @@ class App {
                 .slice(0, 20)
 
             let id = 0
-            
+
             for (const item of this.results) {
                 selections.push({
                     name: item.display_name,
