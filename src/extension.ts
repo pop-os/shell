@@ -1095,15 +1095,46 @@ export class Ext extends Ecs.System<ExtEvent> {
         const next_area = win.meta.get_work_area_for_monitor(next_monitor);
 
         if (prev_area && next_area) {
+            // get the current window rect
             let rect = win.rect();
 
-            rect.x = next_area.x + rect.x - prev_area.x;
-            rect.y = next_area.y + rect.y - prev_area.y;
+            let h_ratio: number = 1;
+            let w_ratio: number = 1;
 
-            rect.clamp(next_area);
+            h_ratio = next_area.height / prev_area.height;
+            rect.height = rect.height * h_ratio;
 
-            this.register(Events.window_move(this, win, rect));
-        }
+            w_ratio = next_area.width / prev_area.width;
+            rect.width = rect.width * w_ratio;
+            
+            if (next_area.x < prev_area.x) {
+                rect.x = ((next_area.x + rect.x - prev_area.x) / prev_area.width) * next_area.width;
+            } else if (next_area.x > prev_area.x) {
+                rect.x = ((rect.x / prev_area.width) * next_area.width) + next_area.x;
+            } 
+
+            if (next_area.y < prev_area.y) {
+                rect.y = ((next_area.y + rect.y - prev_area.y) / prev_area.height) * next_area.height;
+            } else if (next_area.y > prev_area.y) {
+                rect.y = ((rect.y / prev_area.height) * next_area.height) + next_area.y;
+            }
+
+
+            if (this.auto_tiler) {
+                if (this.is_floating(win)) {
+                    win.meta.unmaximize(Meta.MaximizeFlags.HORIZONTAL);
+                    win.meta.unmaximize(Meta.MaximizeFlags.VERTICAL);
+                    win.meta.unmaximize(Meta.MaximizeFlags.BOTH);
+                }
+                this.register(Events.window_move(this, win, rect));
+            } else {
+                win.move(this, rect, () => {}, false);
+                // if the resulting dimensions of rect == next
+                if (rect.width == next_area.width && rect.height == next_area.height) {
+                    win.meta.maximize(Meta.MaximizeFlags.BOTH)   
+                }
+            }
+        } 
     }
 
     move_monitor(direction: Meta.DisplayDirection) {
