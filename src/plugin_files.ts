@@ -48,6 +48,10 @@ export class ShellBuiltin extends plugins.Builtin {
 
                             this.selections.push(add(id, file, content_type))
                             id += 1
+
+                            if (id === 7) {
+                                break
+                            }
                         }
                     } catch (e) {
                         global.log(`pop-shell: plugin-files: ${e.message}`)
