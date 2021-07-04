@@ -79,7 +79,7 @@ export class Launcher extends search.Search {
 
             const navigating_files = pat.startsWith("/") || pat.startsWith("~")
 
-            if (pat !== '?' && ! navigating_files) {
+            if (pat !== '?' && ! navigating_files && pat.length > 1) {
                 const needles = pattern.split(' ');
 
                 const contains_pattern = (haystack: string, needles: Array<string>): boolean => {
