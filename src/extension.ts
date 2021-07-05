@@ -47,6 +47,7 @@ const { layoutManager, loadTheme, overview, panel, setThemeStylesheet, screenShi
 const { ScreenShield } = imports.ui.screenShield;
 const { AppSwitcher, AppIcon, WindowSwitcherPopup } = imports.ui.altTab;
 const { SwitcherList } = imports.ui.switcherPopup;
+const { WindowPreview } = imports.ui.windowPreview;
 const { Workspace } = imports.ui.workspace;
 const { WorkspaceThumbnail } = imports.ui.workspaceThumbnail;
 const Tags = Me.imports.tags;
@@ -1745,6 +1746,13 @@ export class Ext extends Ecs.System<ExtEvent> {
                 case 'smart-gaps':
                     this.on_smart_gap();
                     this.show_border_on_focused();
+                    break;
+                case 'show-skip-taskbar':
+                    if (this.settings.show_skiptaskbar()) {
+                        _show_skip_taskbar_windows();
+                    } else {
+                        _hide_skip_taskbar_windows();
+                    }
             }
         });
 
@@ -2404,10 +2412,6 @@ export class Ext extends Ecs.System<ExtEvent> {
 
 let ext: Ext | null = null;
 let indicator: Indicator | null = null;
-let default_isoverviewwindow_ws: any;
-let default_isoverviewwindow_ws_thumbnail: any;
-let default_init_appswitcher: any;
-let default_getwindowlist_windowswitcher: any;
 
 // @ts-ignore
 function init() {
@@ -2417,8 +2421,6 @@ function init() {
 // @ts-ignore
 function enable() {
     log.info("enable");
-
-    _show_skip_taskbar_windows();
 
     if (!ext) {
         ext = new Ext();
@@ -2454,8 +2456,6 @@ function enable() {
 // @ts-ignore
 function disable() {
     log.info("disable");
-
-    _hide_skip_taskbar_windows();
 
     if (ext) {
         if (sessionMode.isLocked) {
@@ -2536,19 +2536,38 @@ function* iter_workspaces(manager: any): IterableIterator<[number, any]> {
     }
 }
 
+let default_isoverviewwindow_ws: any;
+let default_isoverviewwindow_ws_thumbnail: any;
+let default_init_appswitcher: any;
+let default_getwindowlist_windowswitcher: any;
+let default_getcaption_windowpreview: any;
+
 /**
  * Decorates the default gnome-shell workspace/overview handling 
  * of skip_task_bar. And have those window types included in pop-shell.
  * Should only be called on extension#enable()
  */
 function _show_skip_taskbar_windows() {
-    // Handle the overview
-    default_isoverviewwindow_ws = Workspace.prototype._isOverviewWindow;
-    Workspace.prototype._isOverviewWindow = function(window: any) {
-        // wm_class Gjs needs to be skipped to prevent the ghost window in
-        // workspace and overview
-        return (window.skip_taskbar && window.get_wm_class() !== "Gjs") || 
-            default_isoverviewwindow_ws(window);
+    if (!GNOME_VERSION?.startsWith("40.")) {
+        // Handle the overview
+        default_isoverviewwindow_ws = Workspace.prototype._isOverviewWindow;
+        Workspace.prototype._isOverviewWindow = function(window: any) {
+            // wm_class Gjs needs to be skipped to prevent the ghost window in
+            // workspace and overview
+            return (window.skip_taskbar && window.get_wm_class() !== "Gjs") || 
+                default_isoverviewwindow_ws(window);
+        };
+    }
+
+    // Handle _getCaption errors
+    default_getcaption_windowpreview = WindowPreview.prototype._getCaption;
+    WindowPreview.prototype._getCaption = function() {
+        if (this.metaWindow.title)
+            return this.metaWindow.title;
+
+        let tracker = Shell.WindowTracker.get_default();
+        let app = tracker.get_window_app(this.metaWindow);
+        return app? app.get_name() : "";
     };
 
     // Handle the workspace thumbnail
@@ -2634,7 +2653,10 @@ function _show_skip_taskbar_windows() {
  * Should only be called on extension#disable()
  */
 function _hide_skip_taskbar_windows() {
-    Workspace.prototype._isOverviewWindow = default_isoverviewwindow_ws;
+    if (!GNOME_VERSION?.startsWith("40.")) {
+        Workspace.prototype._isOverviewWindow = default_isoverviewwindow_ws;
+    }
+    WindowPreview.prototype._getCaption = default_getcaption_windowpreview;
     WorkspaceThumbnail.prototype._isOverviewWindow = 
         default_isoverviewwindow_ws_thumbnail;
     AppSwitcher.prototype._init = default_init_appswitcher;
