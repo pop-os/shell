@@ -17,6 +17,7 @@ interface AppWidgets {
     smart_gaps: any,
     snap_to_grid: any,
     window_titles: any,
+    show_skip_taskbar: any,
 }
 
 // @ts-ignore
@@ -63,6 +64,12 @@ function settings_dialog_new(): Gtk.Container {
         }
     });
 
+    app.show_skip_taskbar.set_active(ext.show_skiptaskbar());
+    app.show_skip_taskbar.connect('state-set', (_widget: any, state: boolean) => {
+        ext.set_show_skiptaskbar(state);
+        Settings.sync();
+    });
+
     return grid;
 }
 
@@ -92,11 +99,15 @@ function settings_dialog_view(): [AppWidgets, Gtk.Container] {
         xalign: 0.0
     });
 
+    let show_skip_taskbar_label = new Gtk.Label({
+        label: "Show Skip Taskbar",
+        xalign: 0.0
+    });
+    
     let window_titles = new Gtk.Switch({ halign: Gtk.Align.END });
-
     let snap_to_grid = new Gtk.Switch({ halign: Gtk.Align.END });
-
     let smart_gaps = new Gtk.Switch({ halign: Gtk.Align.END });
+    let show_skip_taskbar = new Gtk.Switch({ halign: Gtk.Align.END });
 
     grid.attach(win_label, 0, 0, 1, 1);
     grid.attach(window_titles, 1, 0, 1, 1);
@@ -107,11 +118,14 @@ function settings_dialog_view(): [AppWidgets, Gtk.Container] {
     grid.attach(smart_label, 0, 2, 1, 1);
     grid.attach(smart_gaps, 1, 2, 1, 1);
 
-    logging_combo(grid, 3);
+    grid.attach(show_skip_taskbar_label, 0, 3, 1, 1);
+    grid.attach(show_skip_taskbar, 1, 3, 1, 1);
 
-    let [inner_gap, outer_gap] = gaps_section(grid, 4);
+    logging_combo(grid, 4);
 
-    let settings = { inner_gap, outer_gap, smart_gaps, snap_to_grid, window_titles };
+    let [inner_gap, outer_gap] = gaps_section(grid, 5);
+
+    let settings = { inner_gap, outer_gap, smart_gaps, snap_to_grid, window_titles, show_skip_taskbar };
 
     return [settings, grid];
 }
