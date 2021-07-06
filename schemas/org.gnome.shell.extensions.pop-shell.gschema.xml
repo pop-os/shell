@@ -22,11 +22,6 @@
             <summary>Show title bars on windows with server-side decorations</summary>
         </key>
 
-        <key type="b" name="show-skip-taskbar">
-            <default>false</default>
-            <summary>Handle skip taskbar windows or windows with minimized to tray option</summary>
-        </key>
-
         <!-- Tiling Options -->
         <key type="u" name="column-size">
             <default>64</default>

@@ -31,13 +31,9 @@ const SELECTIONS: Array<Selection> = [
     {
         id: 4,
         name: "Toggle Window Tiling",
-        description: "Tiled windows are arranged side by side on the screen",
-    },
-    {
-        id: 5,
-        name: "Toggle Minimized to Tray Windows (Experimental)",
-        description: "Handle windows with minimized to tray or skip taskbar option",
-    },
+        description: "Tiled windows are arranged side by side on the screen"
+    }
+    
 ]
 
 export class ShellBuiltin extends plugins.Builtin {
@@ -67,9 +63,6 @@ export class ShellBuiltin extends plugins.Builtin {
                 break
             case 4:
                 ext.toggle_tiling()
-                break
-            case 5:
-                ext.settings.set_show_skiptaskbar(!ext.settings.show_skiptaskbar());
                 break
         }
 
