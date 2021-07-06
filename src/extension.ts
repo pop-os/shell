@@ -47,7 +47,6 @@ const { layoutManager, loadTheme, overview, panel, setThemeStylesheet, screenShi
 const { ScreenShield } = imports.ui.screenShield;
 const { AppSwitcher, AppIcon, WindowSwitcherPopup } = imports.ui.altTab;
 const { SwitcherList } = imports.ui.switcherPopup;
-const { WindowPreview } = imports.ui.windowPreview;
 const { Workspace } = imports.ui.workspace;
 const { WorkspaceThumbnail } = imports.ui.workspaceThumbnail;
 const Tags = Me.imports.tags;
@@ -2541,14 +2540,33 @@ let default_isoverviewwindow_ws_thumbnail: any;
 let default_init_appswitcher: any;
 let default_getwindowlist_windowswitcher: any;
 let default_getcaption_windowpreview: any;
+let default_getcaption_workspace: any;
 
 /**
  * Decorates the default gnome-shell workspace/overview handling 
  * of skip_task_bar. And have those window types included in pop-shell.
  * Should only be called on extension#enable()
+ * 
+ * NOTE to future maintainer: 
+ * Skip taskbar has been left out by upstream for a reason. And the
+ * Shell.WindowTracker seems to skip handling skip taskbar windows, so they are
+ * null or undefined. GNOME 40+ and lower version checking should be done to 
+ * constantly support having them within pop-shell.
+ *
+ * Known skip taskbars ddterm, conky, guake, minimized to tray apps, etc.
+ *
+ * While minimize to tray are the target for this feature, 
+ * skip taskbars that float/and avail workspace all 
+ * need to added to config.ts as default floating
+ *
  */
 function _show_skip_taskbar_windows() {
     if (!GNOME_VERSION?.startsWith("40.")) {
+        // TODO GNOME 40 added a call to windowtracker and app var is not checked if null 
+        // in WindowPreview._init(). Then new WindowPreview() is being called on 
+        // _addWindowClone() of workspace.js.
+        // So it has to be skipped being overriden for now.
+
         // Handle the overview
         default_isoverviewwindow_ws = Workspace.prototype._isOverviewWindow;
         Workspace.prototype._isOverviewWindow = function(window: any) {
@@ -2560,15 +2578,30 @@ function _show_skip_taskbar_windows() {
     }
 
     // Handle _getCaption errors
-    default_getcaption_windowpreview = WindowPreview.prototype._getCaption;
-    WindowPreview.prototype._getCaption = function() {
-        if (this.metaWindow.title)
-            return this.metaWindow.title;
+    if (GNOME_VERSION?.startsWith("3.36")) {
+        // imports.ui.windowPreview is not in 3.36,
+        // _getCaption() is still in workspace.js
+        default_getcaption_workspace = Workspace.prototype._getCaption;
+        Workspace.prototype._getCaption = function() {
+            if (this.metaWindow.title)
+                return this.metaWindow.title;
 
-        let tracker = Shell.WindowTracker.get_default();
-        let app = tracker.get_window_app(this.metaWindow);
-        return app? app.get_name() : "";
-    };
+            let tracker = Shell.WindowTracker.get_default();
+            let app = tracker.get_window_app(this.metaWindow);
+            return app? app.get_name() : "";
+        }
+    } else {
+        const { WindowPreview } = imports.ui.windowPreview;
+        default_getcaption_windowpreview = WindowPreview.prototype._getCaption;
+        WindowPreview.prototype._getCaption = function() {
+            if (this.metaWindow.title)
+                return this.metaWindow.title;
+
+            let tracker = Shell.WindowTracker.get_default();
+            let app = tracker.get_window_app(this.metaWindow);
+            return app? app.get_name() : "";
+        };
+    }
 
     // Handle the workspace thumbnail
     default_isoverviewwindow_ws_thumbnail = 
@@ -2651,14 +2684,38 @@ function _show_skip_taskbar_windows() {
  * This is the cleanup/restore of the decorator for skip_taskbar when pop-shell
  * is disabled.
  * Should only be called on extension#disable()
+ * 
+ * Default functions should be checked if they exist, 
+ * especially when skip taskbar setting was left on during an update
+ *
  */
 function _hide_skip_taskbar_windows() {
     if (!GNOME_VERSION?.startsWith("40.")) {
-        Workspace.prototype._isOverviewWindow = default_isoverviewwindow_ws;
+        if (default_isoverviewwindow_ws)
+            Workspace.prototype._isOverviewWindow = default_isoverviewwindow_ws;
     }
-    WindowPreview.prototype._getCaption = default_getcaption_windowpreview;
-    WorkspaceThumbnail.prototype._isOverviewWindow = 
-        default_isoverviewwindow_ws_thumbnail;
-    AppSwitcher.prototype._init = default_init_appswitcher;
-    WindowSwitcherPopup.prototype._getWindowList = default_getwindowlist_windowswitcher;
+
+    if (GNOME_VERSION?.startsWith("3.36")) {
+        if (default_getcaption_workspace)
+            Workspace.prototype._getCaption = default_getcaption_workspace;
+    } else {
+        if (default_getcaption_windowpreview) {
+            const { WindowPreview } = imports.ui.windowPreview;
+            WindowPreview.prototype._getCaption = 
+                default_getcaption_windowpreview;
+        }
+    }
+
+    if (default_isoverviewwindow_ws_thumbnail) {
+        WorkspaceThumbnail.prototype._isOverviewWindow = 
+            default_isoverviewwindow_ws_thumbnail;
+    }
+
+    if (default_init_appswitcher)
+        AppSwitcher.prototype._init = default_init_appswitcher;
+
+    if (default_getwindowlist_windowswitcher) {
+        WindowSwitcherPopup.prototype._getWindowList = 
+            default_getwindowlist_windowswitcher;
+    }
 }
