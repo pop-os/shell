@@ -23,8 +23,8 @@
         </key>
 
         <key type="b" name="show-skip-taskbar">
-            <default>false</default>
-            <summary>Handle skip taskbar windows or windows with minimized to tray option</summary>
+            <default>true</default>
+            <summary>Handle minimized to tray windows</summary>
         </key>
 
         <!-- Tiling Options -->

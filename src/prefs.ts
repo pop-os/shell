@@ -100,7 +100,7 @@ function settings_dialog_view(): [AppWidgets, Gtk.Container] {
     });
 
     let show_skip_taskbar_label = new Gtk.Label({
-        label: "Show Skip Taskbar",
+        label: "Show Minimize to Tray Windows",
         xalign: 0.0
     });
     
