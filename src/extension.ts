@@ -1748,7 +1748,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                     break;
                 case 'show-skip-taskbar':
                     if (this.settings.show_skiptaskbar()) {
-                        _show_skip_taskbar_windows();
+                        _show_skip_taskbar_windows(this);
                     } else {
                         _hide_skip_taskbar_windows();
                     }
@@ -2429,6 +2429,12 @@ function enable() {
         });
     }
 
+    if (ext.settings.show_skiptaskbar()) {
+        _show_skip_taskbar_windows(ext);
+    } else {
+        _hide_skip_taskbar_windows();
+    }
+
     if (ext.was_locked) {
         ext.was_locked = false;
         return;
@@ -2478,6 +2484,8 @@ function disable() {
             ext.auto_tiler.destroy(ext);
             ext.auto_tiler = null;
         }
+
+        _hide_skip_taskbar_windows();
     }
 
     if (indicator) {
@@ -2560,7 +2568,8 @@ let default_getcaption_workspace: any;
  * need to added to config.ts as default floating
  *
  */
-function _show_skip_taskbar_windows() {
+function _show_skip_taskbar_windows(ext: Ext) {
+    let cfg = ext.conf;
     if (!GNOME_VERSION?.startsWith("40.")) {
         // TODO GNOME 40 added a call to windowtracker and app var is not checked if null 
         // in WindowPreview._init(). Then new WindowPreview() is being called on 
@@ -2572,7 +2581,8 @@ function _show_skip_taskbar_windows() {
         Workspace.prototype._isOverviewWindow = function(window: any) {
             // wm_class Gjs needs to be skipped to prevent the ghost window in
             // workspace and overview
-            return (window.skip_taskbar && window.get_wm_class() !== "Gjs") || 
+            let show_skiptb = !cfg.skiptaskbar_shall_hide(window);
+            return (show_skiptb && window.skip_taskbar && window.get_wm_class() !== "Gjs") ||
                 default_isoverviewwindow_ws(window);
         };
     }
@@ -2610,7 +2620,8 @@ function _show_skip_taskbar_windows() {
         let meta_win = win.get_meta_window();
         // wm_class Gjs needs to be skipped to prevent the ghost window in
         // workspace and overview
-        return (meta_win.skip_taskbar && meta_win.get_wm_class() !== "Gjs") || 
+        let show_skiptb = !cfg.skiptaskbar_shall_hide(meta_win);
+        return (show_skiptb && meta_win.skip_taskbar && meta_win.get_wm_class() !== "Gjs") ||
             default_isoverviewwindow_ws_thumbnail(win);
     };
 
@@ -2648,7 +2659,10 @@ function _show_skip_taskbar_windows() {
         });
 
         for (let i = 0; i < allRunningSkipTaskbarApps.length; i++) {
-            let appIcon = new AppIcon(windowTracker.get_window_app(allRunningSkipTaskbarApps[i]));
+            let meta_win = allRunningSkipTaskbarApps[i];
+            let show_skiptb = !cfg.skiptaskbar_shall_hide(meta_win);
+            if (meta_win.is_skip_taskbar() && !show_skiptb) continue;
+            let appIcon = new AppIcon(windowTracker.get_window_app(meta_win));
             appIcon.cachedWindows = allWindows.filter(
                 w => windowTracker.get_window_app(w) === appIcon.app);
             if (appIcon.cachedWindows.length > 0)
@@ -2675,8 +2689,16 @@ function _show_skip_taskbar_windows() {
         let windows = global.display.get_tab_list(Meta.TabList.NORMAL_ALL,
                                                   workspace);
         return windows.map(w => {
-            return w.is_attached_dialog() ? w.get_transient_for() : w;
-        }).filter((w, i, a) => w != null && a.indexOf(w) == i);
+            let show_skiptb = !cfg.skiptaskbar_shall_hide(w);
+            let meta_window = w.is_attached_dialog() ? w.get_transient_for() : w;
+            if (meta_window) {
+                if (!meta_window.is_skip_taskbar() ||
+                    meta_window.is_skip_taskbar() && show_skiptb) {
+                    return meta_window;
+                }
+            }
+            return null;
+        }).filter((w, i, a) => w != null &&  a.indexOf(w) == i);
     }
 }
 

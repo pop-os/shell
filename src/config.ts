@@ -21,13 +21,15 @@ interface Error {
 
 type Result<T> = Ok<T> | Error;
 
-export const DEFAULT_RULES: Array<FloatRule> = [
+export const DEFAULT_FLOAT_RULES: Array<FloatRule> = [
     { class: "Floating Window Exceptions"},
     { class: "Authy Desktop", },
     { class: "Enpass", title: "Enpass Assistant" },
     { class: "Zotero", title: "Quick Format Citation" },
     { class: "Com.github.donadigo.eddy", },
     { class: "Conky", },
+    { class: "Guake", },
+    { class: "Com.github.amezin.ddterm", },
     { class: "gnome-screenshot", },
     { class: "jetbrains-toolbox", },
     { class: "jetbrains-webstorm", title: "License Activation" },
@@ -43,6 +45,22 @@ export const DEFAULT_RULES: Array<FloatRule> = [
     { class: "Gjs", title: "Settings" },
     { class: "Io.elementary.sideload", },
     { class: "Gnome-initial-setup" },
+];
+
+export interface WindowRule {
+    class?: string;
+    title?: string;
+    disabled?: boolean;
+}
+
+/**
+ * These windows will skip showing in Overview, Thumbnails or SwitcherList
+ * And any rule here should be added on the DEFAULT_RULES above
+ */
+export const SKIPTASKBAR_EXCEPTIONS: Array<WindowRule> = [
+    { class: "Conky", },
+    { class: "Guake", },
+    { class: "Com.github.amezin.ddterm", },
 ];
 
 export interface FloatRule {
@@ -61,6 +79,12 @@ export enum DefaultPointerPosition {
 export class Config {
     /** List of windows that should float, regardless of their WM hints */
     float: Array<FloatRule> = [];
+
+    /**
+     * List of Windows with skip taskbar true but still hidden in Overview,
+     * Switchers, Workspace Thumbnails
+     */
+    skiptaskbarhidden: Array<WindowRule> = [];
 
     /** Logs window details on focus of window */
     log_on_focus: boolean = false;
@@ -92,7 +116,7 @@ export class Config {
     }
 
     window_shall_float(wclass: string, title: string): boolean {
-        for (const rule of this.float.concat(DEFAULT_RULES)) {
+        for (const rule of this.float.concat(DEFAULT_FLOAT_RULES)) {
             if (rule.class) {
                 if (!new RegExp(rule.class, 'i').test(wclass)) {
                     continue
@@ -101,6 +125,31 @@ export class Config {
 
             if (rule.title) {
                 if (!new RegExp(rule.title, 'i').test(title)) {
+                    continue
+                }
+            }
+
+            return rule.disabled ? false : true;
+        }
+
+        return false;
+    }
+
+    skiptaskbar_shall_hide(meta_window: any) {
+        let wmclass = meta_window.get_wm_class();
+        let wmtitle = meta_window.get_title();
+
+        if (!meta_window.is_skip_taskbar()) return false;
+
+        for (const rule of this.skiptaskbarhidden.concat(SKIPTASKBAR_EXCEPTIONS)) {
+            if (rule.class) {
+                if (!new RegExp(rule.class, 'i').test(wmclass)) {
+                    continue
+                }
+            }
+
+            if (rule.title) {
+                if (!new RegExp(rule.title, 'i').test(wmtitle)) {
                     continue
                 }
             }
@@ -141,7 +190,7 @@ export class Config {
 
     toggle_system_exception(wmclass: string | undefined, wmtitle: string | undefined, disabled: boolean) {
         if (disabled) {
-            for (const value of DEFAULT_RULES) {
+            for (const value of DEFAULT_FLOAT_RULES) {
                 if (value.class === wmclass && value.title === wmtitle) {
                     value.disabled = disabled;
                     this.float.push(value);
