@@ -12,7 +12,7 @@ imports.searchPath.push(SCRIPT_DIR)
 
 import * as config from 'config';
 
-const { DEFAULT_RULES, Config } = imports.config;
+const { DEFAULT_FLOAT_RULES, Config } = imports.config;
 
 const WM_CLASS_ID = "pop-shell-exceptions"
 
@@ -241,7 +241,7 @@ class App {
 
         this.config.reload();
 
-        for (const value of DEFAULT_RULES.values()) {
+        for (const value of DEFAULT_FLOAT_RULES.values()) {
             let wmtitle = value.title ?? undefined;
             let wmclass = value.class ?? undefined;
 
