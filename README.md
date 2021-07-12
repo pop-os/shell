@@ -20,14 +20,14 @@ Therefore, we see an opportunity here to advance the usability of the GNOME desk
   - [Stacking Mode](#stacking-mode): Behaviors specific to the stacking mode
   - [Auto-Tile Mode](#auto-tile-mode): Behaviors specific to the auto-tiling mode
   - [Plugins](#plugins): Details about plugins and development
-- [Developers](#developers): Guide for getting started with the development
+- [Developers](#developers): Guide for getting started with development
 ---
 
 ## The Proposal
 
 A proposal for integration of the tiling window management features from Pop Shell into GNOME is currently under development. It will be created as a GitLab issue on GNOME Shell for future discussion, once we have invested our time into producing a functioning prototype, and learned what does and does not work in practice.
 
-Ideally, the features explored in Pop Shell will be available for any environment using Mutter — far extending the half-monitor tiling capability currently present. By starting as a shell extension, anyone using GNOME Shell can install this onto their system, without having to install a Pop-specific fork of GNOME on their system.
+Ideally, the features explored in Pop Shell will be available for any environment using Mutter — far extending the half-monitor tiling capability currently present. By starting out as a shell extension, anyone using GNOME Shell can install this onto their system, without having to install a Pop-specific fork of GNOME on their system.
 
 ---
 
@@ -57,7 +57,7 @@ The GNOME desktop comes with many useful desktop integration features, which are
 
 Even worse, many users are completely unfamiliar with tiling window managers, and may never feel comfortable switching "cold turkey" to one. By offering tiling window management as a feature that can be opted into, we can empower the user to ease into gaining greater control over their desktop, so that the idea of tiling window management suddenly becomes accessible.
 
-There are additionally those who do want the traditional stacking window management experience, but they also want to be able to opt into advanced tiling window management, too. So it should be possible to opt into tiling window management as necessary. Other operating systems have successfully combined tiling window management features with the traditional stacking window management experience, and we feel that we can do this with GNOME as well...
+There are additionally those who do want the traditional stacking window management experience, but they also want to be able to opt into advanced tiling window management, too. So it should be possible to opt into tiling window management as necessary. Other operating systems have successfully combined tiling window management features with the traditional stacking window management experience, and we feel that we can do this with GNOME as well.
 
 ---
 
@@ -81,7 +81,7 @@ If you want to uninstall the extension, you may invoke `make uninstall`, and the
 - [Gentoo](https://packages.gentoo.org/packages/gnome-extra/gnome-shell-extension-pop-shell): `emerge gnome-shell-extension-pop-shell`
 - [Arch Linux](https://aur.archlinux.org/packages/?O=0&K=gnome-shell-extension-pop-shell) (Using Yay as AUR helper): 
     - `yay -S gnome-shell-extension-pop-shell`
-    - For pre-compiled binary version: `yay -S gnome-shell-extension-pop-shell-bin`
+    - For precompiled binary version: `yay -S gnome-shell-extension-pop-shell-bin`
     - For GitHub repository version: `yay -S gnome-shell-extension-pop-shell-git`
 
 ---
@@ -142,7 +142,7 @@ Switching focus to the left will calculate from the center of the east side of t
 
 ### Launcher
 
-The launcher is summoned with `Super` + `/`. The search list displays matching windows based on their window name and title, and applications on the system which can be launched. The arrow keys are used to select an application or window from the search list. If it is a window, the selected window will be visually highlighted with an overlay, if two windows have the same name and title. Pressing `Return` on a window will bring that window to focus, switching to its workspace, and unminimizing it if it was minimized.
+The launcher is summoned with `Super` + `/`. The search list displays matching windows based on their window name and title, and applications on the system which can be launched. The arrow keys are used to select an application or window from the search list. If it is a window, the selected window will be visually highlighted with an overlay, in case two windows have the same name and title. Pressing `Return` on a window will bring that window to focus, switching to its workspace, and unminimizing it if it was minimized.
 
 #### Launcher Modes
 
@@ -210,7 +210,7 @@ There is file `$XDG_CONFIG_HOME/pop-shell/config.json` where you can add the fol
   title: "<Optional Window Title>"
 }
 ```
-For example, doing `xprop` on GNOME Settings (or GNOME Control Center), the WM_CLASS values are `gnome-control-center` and `Gnome-control-center`. Use the second value (Gnome-control-center), which pop-shell will read. The `title` is optional.
+For example, doing `xprop` on GNOME Settings (or GNOME Control Center), the WM_CLASS values are `gnome-control-center` and `Gnome-control-center`. Use the second value (Gnome-control-center), which pop-shell will read. The `title` field is optional.
 
 After applying changes in `config.json`, you can reload the tiling if it doesn't work the first time.
 
