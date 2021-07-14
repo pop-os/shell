@@ -776,7 +776,6 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     /** Triggered when a window has been focused */
     on_focused(win: Window.ShellWindow) {
-        this.exit_modes();
         this.size_signals_unblock(win);
 
         if (this.exception_selecting) {
@@ -1110,12 +1109,12 @@ export class Ext extends Ecs.System<ExtEvent> {
 
             w_ratio = next_area.width / prev_area.width;
             rect.width = rect.width * w_ratio;
-            
+
             if (next_area.x < prev_area.x) {
                 rect.x = ((next_area.x + rect.x - prev_area.x) / prev_area.width) * next_area.width;
             } else if (next_area.x > prev_area.x) {
                 rect.x = ((rect.x / prev_area.width) * next_area.width) + next_area.x;
-            } 
+            }
 
             if (next_area.y < prev_area.y) {
                 rect.y = ((next_area.y + rect.y - prev_area.y) / prev_area.height) * next_area.height;
@@ -1135,10 +1134,10 @@ export class Ext extends Ecs.System<ExtEvent> {
                 win.move(this, rect, () => {}, false);
                 // if the resulting dimensions of rect == next
                 if (rect.width == next_area.width && rect.height == next_area.height) {
-                    win.meta.maximize(Meta.MaximizeFlags.BOTH)   
+                    win.meta.maximize(Meta.MaximizeFlags.BOTH)
                 }
             }
-        } 
+        }
     }
 
     move_monitor(direction: Meta.DisplayDirection) {
@@ -1792,7 +1791,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             if (screenShield?.locked) this.update_display_configuration(false);
 
             this.connect(display, 'notify::focus-window', () => {
-                const window = this.get_window(display.get_focus_window())                
+                const window = this.get_window(display.get_focus_window())
                 if (window) this.on_focused(window)
                 return false
             });
@@ -2393,7 +2392,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     is_floating(window: Window.ShellWindow): boolean {
         let shall_float: boolean = false;
-        let wm_class = window.meta.get_wm_class(); 
+        let wm_class = window.meta.get_wm_class();
         let wm_title = window.meta.get_title();
 
         if (wm_class && wm_title) {
@@ -2404,7 +2403,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         let force_tiled_tagged = this.contains_tag(window.entity, Tags.ForceTile);
         // Tags.Tiled does not seem to matter, so not checking here
 
-        return (floating_tagged && !force_tiled_tagged) || 
+        return (floating_tagged && !force_tiled_tagged) ||
             (shall_float && !force_tiled_tagged);
     }
 }
@@ -2551,28 +2550,28 @@ let default_getcaption_windowpreview: any;
 let default_getcaption_workspace: any;
 
 /**
- * Decorates the default gnome-shell workspace/overview handling 
+ * Decorates the default gnome-shell workspace/overview handling
  * of skip_task_bar. And have those window types included in pop-shell.
  * Should only be called on extension#enable()
- * 
- * NOTE to future maintainer: 
+ *
+ * NOTE to future maintainer:
  * Skip taskbar has been left out by upstream for a reason. And the
  * Shell.WindowTracker seems to skip handling skip taskbar windows, so they are
- * null or undefined. GNOME 40+ and lower version checking should be done to 
+ * null or undefined. GNOME 40+ and lower version checking should be done to
  * constantly support having them within pop-shell.
  *
  * Known skip taskbars ddterm, conky, guake, minimized to tray apps, etc.
  *
- * While minimize to tray are the target for this feature, 
- * skip taskbars that float/and avail workspace all 
+ * While minimize to tray are the target for this feature,
+ * skip taskbars that float/and avail workspace all
  * need to added to config.ts as default floating
  *
  */
 function _show_skip_taskbar_windows(ext: Ext) {
     let cfg = ext.conf;
     if (!GNOME_VERSION?.startsWith("40.")) {
-        // TODO GNOME 40 added a call to windowtracker and app var is not checked if null 
-        // in WindowPreview._init(). Then new WindowPreview() is being called on 
+        // TODO GNOME 40 added a call to windowtracker and app var is not checked if null
+        // in WindowPreview._init(). Then new WindowPreview() is being called on
         // _addWindowClone() of workspace.js.
         // So it has to be skipped being overriden for now.
 
@@ -2712,8 +2711,8 @@ function _show_skip_taskbar_windows(ext: Ext) {
  * This is the cleanup/restore of the decorator for skip_taskbar when pop-shell
  * is disabled.
  * Should only be called on extension#disable()
- * 
- * Default functions should be checked if they exist, 
+ *
+ * Default functions should be checked if they exist,
  * especially when skip taskbar setting was left on during an update
  *
  */
@@ -2729,13 +2728,13 @@ function _hide_skip_taskbar_windows() {
     } else {
         if (default_getcaption_windowpreview) {
             const { WindowPreview } = imports.ui.windowPreview;
-            WindowPreview.prototype._getCaption = 
+            WindowPreview.prototype._getCaption =
                 default_getcaption_windowpreview;
         }
     }
 
     if (default_isoverviewwindow_ws_thumbnail) {
-        WorkspaceThumbnail.prototype._isOverviewWindow = 
+        WorkspaceThumbnail.prototype._isOverviewWindow =
             default_isoverviewwindow_ws_thumbnail;
     }
 
@@ -2743,7 +2742,7 @@ function _hide_skip_taskbar_windows() {
         AppSwitcher.prototype._init = default_init_appswitcher;
 
     if (default_getwindowlist_windowswitcher) {
-        WindowSwitcherPopup.prototype._getWindowList = 
+        WindowSwitcherPopup.prototype._getWindowList =
             default_getwindowlist_windowswitcher;
     }
 }
