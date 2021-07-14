@@ -2577,7 +2577,8 @@ function _show_skip_taskbar_windows(ext: Ext) {
         // So it has to be skipped being overriden for now.
 
         // Handle the overview
-        default_isoverviewwindow_ws = Workspace.prototype._isOverviewWindow;
+	if (!default_isoverviewwindow_ws)
+            default_isoverviewwindow_ws = Workspace.prototype._isOverviewWindow;
         Workspace.prototype._isOverviewWindow = function(window: any) {
             // wm_class Gjs needs to be skipped to prevent the ghost window in
             // workspace and overview
@@ -2591,7 +2592,8 @@ function _show_skip_taskbar_windows(ext: Ext) {
     if (GNOME_VERSION?.startsWith("3.36")) {
         // imports.ui.windowPreview is not in 3.36,
         // _getCaption() is still in workspace.js
-        default_getcaption_workspace = Workspace.prototype._getCaption;
+        if (!default_getcaption_workspace)
+            default_getcaption_workspace = Workspace.prototype._getCaption;
         Workspace.prototype._getCaption = function() {
             if (this.metaWindow.title)
                 return this.metaWindow.title;
@@ -2602,7 +2604,8 @@ function _show_skip_taskbar_windows(ext: Ext) {
         }
     } else {
         const { WindowPreview } = imports.ui.windowPreview;
-        default_getcaption_windowpreview = WindowPreview.prototype._getCaption;
+        if (!default_getcaption_windowpreview)
+            default_getcaption_windowpreview = WindowPreview.prototype._getCaption;
         WindowPreview.prototype._getCaption = function() {
             if (this.metaWindow.title)
                 return this.metaWindow.title;
@@ -2614,8 +2617,9 @@ function _show_skip_taskbar_windows(ext: Ext) {
     }
 
     // Handle the workspace thumbnail
-    default_isoverviewwindow_ws_thumbnail = 
-        WorkspaceThumbnail.prototype._isOverviewWindow;
+    if (!default_isoverviewwindow_ws_thumbnail)
+        default_isoverviewwindow_ws_thumbnail =
+            WorkspaceThumbnail.prototype._isOverviewWindow;
     WorkspaceThumbnail.prototype._isOverviewWindow = function (win: any) {
         let meta_win = win.get_meta_window();
         // wm_class Gjs needs to be skipped to prevent the ghost window in
@@ -2626,7 +2630,8 @@ function _show_skip_taskbar_windows(ext: Ext) {
     };
 
     // Handle switch-applications
-    default_init_appswitcher = AppSwitcher.prototype._init;
+    if (!default_init_appswitcher)
+        default_init_appswitcher = AppSwitcher.prototype._init;
     // Do not use the Shell.AppSystem apps
     AppSwitcher.prototype._init = function(_apps: any, altTabPopup: any) {
         // Simulate super._init(true);
@@ -2677,7 +2682,8 @@ function _show_skip_taskbar_windows(ext: Ext) {
     }
 
     // Handle switch-windows
-    default_getwindowlist_windowswitcher = WindowSwitcherPopup.prototype._getWindowList;
+    if (!default_getwindowlist_windowswitcher)
+        default_getwindowlist_windowswitcher = WindowSwitcherPopup.prototype._getWindowList;
     WindowSwitcherPopup.prototype._getWindowList = function() {
         let workspace = null;
 
