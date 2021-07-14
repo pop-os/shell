@@ -2576,14 +2576,18 @@ function _show_skip_taskbar_windows(ext: Ext) {
         // So it has to be skipped being overriden for now.
 
         // Handle the overview
-	if (!default_isoverviewwindow_ws)
+        if (!default_isoverviewwindow_ws)
             default_isoverviewwindow_ws = Workspace.prototype._isOverviewWindow;
-        Workspace.prototype._isOverviewWindow = function(window: any) {
+        Workspace.prototype._isOverviewWindow = function(win: any) {
+            let meta_win = win;
+            if (GNOME_VERSION?.startsWith("3.36"))
+                meta_win = win.get_meta_window();
+
             // wm_class Gjs needs to be skipped to prevent the ghost window in
             // workspace and overview
-            let show_skiptb = !cfg.skiptaskbar_shall_hide(window);
-            return (show_skiptb && window.skip_taskbar && window.get_wm_class() !== "Gjs") ||
-                default_isoverviewwindow_ws(window);
+            let show_skiptb = !cfg.skiptaskbar_shall_hide(meta_win);
+            return (show_skiptb && meta_win.skip_taskbar && meta_win.get_wm_class() !== "Gjs") ||
+                default_isoverviewwindow_ws(win);
         };
     }
 
