@@ -99,7 +99,7 @@ export class Launcher extends search.Search {
 
                 // Filter matching desktop apps
                 for (const [where, app] of this.desktop_apps) {
-                    const name = app.name()
+                    const name = app.app_info.get_display_name()
                     const keywords = app.keywords()
                     const exec = app.exec()
 
