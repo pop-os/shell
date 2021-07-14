@@ -43,7 +43,7 @@ This tends to work fine if you only have a small handful of applications. If you
 
 ### Displays are large. Very, **very** large
 
-Suppose you are a lucky — or perhaps unlucky — owner of an ultra-wide display. A maximized window will have much of its preferences and controls dispersed across the far-left and far-right corners. The application may place a panel with buttons on the far-left, while other buttons get shifted to either the distant center or far-right.
+Suppose you are a lucky — or perhaps unlucky — owner of an ultra-wide display. A maximized window will have much of its preferences and controls dispersed across the far left and far right corners. The application may place a panel with buttons on the far left, while other buttons get shifted to either the distant center or far right.
 
 Half-tiling in this scenario means that each window will be as large as an entire 2560x1440 or 4K display. In either scenario, at such extreme sizes, the mouse becomes completely useless — and applications become unbearable to use — in practice.
 
@@ -114,7 +114,7 @@ These are key to many of the shortcuts utilized by tiling window managers. This 
 
 > This mode is activated with `Super` + `Return`.
 
-Window management mode activates additional keyboard control over the size and location of the currently focused window. The behavior of this mode changes slightly based on whether you are in the auto-tile mode or the default stacking mode. In the default mode, an overlay is displayed snapped to a grid, which represents a possible future location and size of your focused window. This behavior changes slightly in the auto-tiling mode where resizes are performed immediately, and overlays are only shown when swapping windows.
+Window management mode activates additional keyboard control over the size and location of the currently-focused window. The behavior of this mode changes slightly based on whether you are in auto-tile mode, or in the default stacking mode. In the default mode, an overlay is displayed snapped to a grid, which represents a possible future location and size of your focused window. This behavior changes slightly in auto-tiling mode where resizes are performed immediately and overlays are only shown when swapping windows.
 
 Activating this enables the following behaviors:
 
@@ -142,7 +142,7 @@ Switching focus to the left will calculate from the center of the east side of t
 
 ### Launcher
 
-The launcher is summoned with `Super` + `/`. The search list displays matching windows based on their window name and title, and applications on the system which can be launched. The arrow keys are used to select an application or window from the search list. If it is a window, the selected window will be visually highlighted with an overlay, in case two windows have the same name and title. Pressing `Return` on a window will bring that window to focus, switching to its workspace, and unminimizing it if it was minimized.
+The launcher is summoned with `Super` + `/`. The search list displays matching windows based on their window name and title, and applications on the system which can be launched. The arrow keys are used to select an application or window from the search list. If it is a window, the selected window will be visually highlighted with an overlay. Pressing `Return` on a window will bring that window to focus, switching to its workspace, and unminimizing it if it was minimized.
 
 #### Launcher Modes
 
