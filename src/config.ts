@@ -61,6 +61,7 @@ export const SKIPTASKBAR_EXCEPTIONS: Array<WindowRule> = [
     { class: "Conky", },
     { class: "Guake", },
     { class: "Com.github.amezin.ddterm", },
+    { class: "plank", },
 ];
 
 export interface FloatRule {
