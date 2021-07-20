@@ -28,7 +28,9 @@ const ENTRIES = new Map([
     ['twitch', { query: 'https://www.twitch.tv/search?term=', name: 'Twitch' }],
     ['yh', { query: 'https://search.yahoo.com/search?p=', name: 'Yahoo!' }],
     ['alie', { query: 'https://www.aliexpress.com/wholesale?SearchText=', name: 'AliExpress' }],
-    ['dev', { query: 'https://dev.to/search?q=', name: 'DEV Community' }]
+    ['dev', { query: 'https://dev.to/search?q=', name: 'DEV Community' }],
+    ['emoji', { query: 'https://emojipedia.org/search/?q=', name: 'Emojipedia' }],
+    ['giphy', { query: 'https://giphy.com/search/', name: 'Giphy' }]
 ])
 
 class App {
