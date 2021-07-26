@@ -655,11 +655,13 @@ export class AutoTiler {
             return Err('ignoring focus');
         }
 
-        if (!ext.prev_focused) {
+        const prev = ext.prev_focused[0]
+
+        if (!prev) {
             return Err('no window has been previously focused');
         }
 
-        let onto = ext.windows.get(ext.prev_focused);
+        let onto = ext.windows.get(prev);
 
         if (!onto) {
             return Err('no focus window');
