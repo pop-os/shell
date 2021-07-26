@@ -150,11 +150,8 @@ export class Ext extends Ecs.System<ExtEvent> {
     /** Functions replaced in GNOME */
     injections: Array<Injection> = new Array();
 
-    /** The last window that was focused */
-    last_focused: Entity | null = null;
-
     /** The window that was focused before the last window */
-    prev_focused: Entity | null = null;
+    prev_focused: [null | Entity, null | Entity] = [null, null];
 
     tween_signals: Map<string, [SignalID, any]> = new Map();
 
@@ -629,11 +626,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     focus_window(): Window.ShellWindow | null {
-        let focused = this.get_window(display.get_focus_window())
-        if (!focused && this.last_focused) {
-            focused = this.windows.get(this.last_focused);
-        }
-        return focused;
+        return this.get_window(display.get_focus_window())
     }
 
     stack_select(
@@ -723,7 +716,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     on_active_workspace_changed() {
         this.exit_modes();
-        this.last_focused = null;
+        this.prev_focused = [null, null]
         this.restack()
     }
 
@@ -738,20 +731,16 @@ export class Ext extends Ecs.System<ExtEvent> {
             }
         });
 
-        if (this.last_focused == win) {
-            this.last_focused = null;
+        if (this.auto_tiler) {
+            const entity = this.auto_tiler.attached.get(win);
+            if (entity) {
+                const fork = this.auto_tiler.forest.forks.get(entity);
+                if (fork?.right?.is_window(win)) {
+                    const entity = fork.right.inner.kind === 3
+                        ? fork.right.inner.entities[0]
+                        : fork.right.inner.entity;
 
-            if (this.auto_tiler) {
-                const entity = this.auto_tiler.attached.get(win);
-                if (entity) {
-                    const fork = this.auto_tiler.forest.forks.get(entity);
-                    if (fork?.right?.is_window(win)) {
-                        const entity = fork.right.inner.kind === 3
-                            ? fork.right.inner.entities[0]
-                            : fork.right.inner.entity;
-
-                        this.windows.with(entity, (sibling) => sibling.activate())
-                    }
+                    this.windows.with(entity, (sibling) => sibling.activate())
                 }
             }
         }
@@ -782,16 +771,8 @@ export class Ext extends Ecs.System<ExtEvent> {
             this.exception_add(win)
         }
 
-        // Keep the last-focused window from being shifted too quickly. 300ms debounce
-        if (this.focus_trigger === null) {
-            this.focus_trigger = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 300, () => {
-                this.focus_trigger = null;
-                return false;
-            });
-
-            this.prev_focused = this.last_focused;
-            this.last_focused = win.entity;
-        }
+        this.prev_focused[0] = this.prev_focused[1];
+        this.prev_focused[1] = win.entity;
 
         // Update the active tab in the stack.
         if (null !== this.auto_tiler && null !== win.stack) {
@@ -801,9 +782,9 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         this.show_border_on_focused();
 
-        if (this.auto_tiler && this.prev_focused !== null) {
-            let prev = this.windows.get(this.prev_focused);
-            let is_attached = this.auto_tiler.attached.contains(this.prev_focused);
+        if (this.auto_tiler && this.prev_focused[0] !== null) {
+            let prev = this.windows.get(this.prev_focused[0]);
+            let is_attached = this.auto_tiler.attached.contains(this.prev_focused[0]);
 
             if (prev && prev !== win && is_attached && prev.actor_exists() && prev.name(this) !== win.name(this)) {
                 if (prev.rect().contains(win.rect())) {
@@ -1848,7 +1829,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         // Bind show desktop and remove the active hint
         this.connect(workspace_manager, 'showing-desktop-changed', () => {
             this.hide_all_borders();
-            this.last_focused = null
+            this.prev_focused = [null, null]
         });
 
         St.ThemeContext.get_for_stage(global.stage)
