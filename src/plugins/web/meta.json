@@ -1,7 +1,7 @@
 {
     "name": "Web Search",
     "description": "Site-specific web search",
-    "pattern": "^(amazon|wiki|bing|ddg|google|yt|stack|crates|arch|pp|ppw|rdt|bc|lib|npm|gist|fh|gh|dev|sdcl|twitch|yh|alie)\\s.*",
+    "pattern": "^(amazon|wiki|bing|ddg|google|yt|stack|crates|arch|pp|ppw|rdt|bc|lib|npm|gist|fh|gh|dev|sdcl|twitch|yh|alie|sp|brave|tw|wa|steam|imdb)\\s.*",
     "exec": "main.js",
     "icon": "system-search",
     "fill": "ddg ",

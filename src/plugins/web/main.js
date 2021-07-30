@@ -28,7 +28,13 @@ const ENTRIES = new Map([
     ['twitch', { query: 'https://www.twitch.tv/search?term=', name: 'Twitch' }],
     ['yh', { query: 'https://search.yahoo.com/search?p=', name: 'Yahoo!' }],
     ['alie', { query: 'https://www.aliexpress.com/wholesale?SearchText=', name: 'AliExpress' }],
-    ['dev', { query: 'https://dev.to/search?q=', name: 'DEV Community' }]
+    ['dev', { query: 'https://dev.to/search?q=', name: 'DEV Community' }],
+    ['sp', { query: 'https://startpage.com/sp/search?query=', name: 'StartPage' }],
+    ['brave', { query: 'https://search.brave.com/search?q=', name: 'Brave Search' }],
+    ['tw', { query: 'https://twitter.com/search?q=', name: 'Twitter' }],
+    ['wa', { query: 'https://www.wolframalpha.com/input/?i=', name: 'WolframAlpha' }],
+    ['steam', { query: 'https://store.steampowered.com/search/?term=', name: 'Steam' }],
+    ['imdb', { query: 'https://www.imdb.com/find?q=', name: 'IMDb' }]
 ])
 
 class App {
