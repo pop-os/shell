@@ -137,13 +137,6 @@ export function async_process_ipc(argv: Array<string>): AsyncIPC | null {
     return { stdin, stdout }
 }
 
-export function gnome_version(): null | string {
-    let [,out] = GLib.spawn_command_line_sync("gnome-shell --version");
-    if (!out) return null;
-
-    return imports.byteArray.toString(out).split(' ')[2]
-}
-
 export function map_eq<K, V>(map1: Map<K, V>, map2: Map<K, V>) {
     if (map1.size !== map2.size) {
         return false

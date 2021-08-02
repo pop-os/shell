@@ -53,7 +53,7 @@ const Tags = Me.imports.tags;
 
 const STYLESHEET_PATHS = ['light', 'dark'].map(stylesheet_path);
 const STYLESHEETS = STYLESHEET_PATHS.map((path) => Gio.File.new_for_path(path));
-const GNOME_VERSION = utils.gnome_version()
+const GNOME_VERSION = imports.misc.config.PACKAGE_VERSION;
 
 enum Style { Light, Dark }
 
