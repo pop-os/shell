@@ -1790,7 +1790,6 @@ export class Ext extends Ecs.System<ExtEvent> {
         });
 
         if (GNOME_VERSION?.startsWith("3.")) {
-            // GNOME 40 removed the first argument of the callback
             this.connect(display, 'grab-op-begin', (_, _display, win, op) => {
                 this.on_grab_start(win, op);
             });
@@ -1799,6 +1798,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                 this.register_fn(() => this.on_grab_end(win, op));
             });
         } else {
+            // GNOME 40 removed the first argument of the callback
             this.connect(display, 'grab-op-begin', (_display, win, op) => {
                 this.on_grab_start(win, op);
             });
