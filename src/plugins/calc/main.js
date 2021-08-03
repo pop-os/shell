@@ -8,7 +8,8 @@ const SCRIPT_DIR = GLib.path_get_dirname(new Error().stack.split(':')[0].slice(1
 /** Add our directory so we can import modules from it. */
 imports.searchPath.push(SCRIPT_DIR)
 
-const { evaluate } = imports.math.math;
+const math = imports.math.math;
+math.config({number: 'BigNumber'});
 
 /**
  * Request received by the Pop Shell launcher
@@ -44,7 +45,7 @@ class App {
         this.last_query = input.substr(1)
 
         try {
-            this.last_value = evaluate(this.last_query).toString()
+            this.last_value = math.evaluate(this.last_query).toString()
         } catch (e) {
             this.last_value = this.last_query + ` x = ?`
         }
