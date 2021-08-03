@@ -62,6 +62,7 @@ export const SKIPTASKBAR_EXCEPTIONS: Array<WindowRule> = [
     { class: "Guake", },
     { class: "Com.github.amezin.ddterm", },
     { class: "plank", },
+    { class: "geometrydash.exe", },
 ];
 
 export interface FloatRule {
