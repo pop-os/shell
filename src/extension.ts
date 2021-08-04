@@ -2567,138 +2567,154 @@ function _show_skip_taskbar_windows(ext: Ext) {
         // So it has to be skipped being overriden for now.
 
         // Handle the overview
-        if (!default_isoverviewwindow_ws)
+        if (!default_isoverviewwindow_ws) {
             default_isoverviewwindow_ws = Workspace.prototype._isOverviewWindow;
-        Workspace.prototype._isOverviewWindow = function(win: any) {
-            let meta_win = win;
-            if (GNOME_VERSION?.startsWith("3.36"))
-                meta_win = win.get_meta_window();
+            Workspace.prototype._isOverviewWindow = function(win: any) {
+                let meta_win = win;
+                if (GNOME_VERSION?.startsWith("3.36"))
+                    meta_win = win.get_meta_window();
 
-            // wm_class Gjs needs to be skipped to prevent the ghost window in
-            // workspace and overview
-            let show_skiptb = !cfg.skiptaskbar_shall_hide(meta_win);
-            return (show_skiptb && meta_win.skip_taskbar && meta_win.get_wm_class() !== "Gjs") ||
-                default_isoverviewwindow_ws(win);
-        };
+                let show_skiptb = !cfg.skiptaskbar_shall_hide(meta_win);
+                return (show_skiptb && meta_win.skip_taskbar &&
+                        // ignore wm_class == null + Gjs and
+                        // are skip taskbar true
+                        (meta_win.get_wm_class() !== null &&
+                         meta_win.get_wm_class() !== "Gjs")) ||
+                    default_isoverviewwindow_ws(win);
+            };
+        }
     }
 
     // Handle _getCaption errors
     if (GNOME_VERSION?.startsWith("3.36")) {
         // imports.ui.windowPreview is not in 3.36,
         // _getCaption() is still in workspace.js
-        if (!default_getcaption_workspace)
+        if (!default_getcaption_workspace) {
             default_getcaption_workspace = Workspace.prototype._getCaption;
-        Workspace.prototype._getCaption = function() {
-            if (this.metaWindow.title)
-                return this.metaWindow.title;
+            // 3.36 _getCaption
+            Workspace.prototype._getCaption = function() {
+                let metaWindow = this._windowClone.metaWindow;
+                if (metaWindow.title)
+                    return metaWindow.title;
 
-            let tracker = Shell.WindowTracker.get_default();
-            let app = tracker.get_window_app(this.metaWindow);
-            return app? app.get_name() : "";
+                let tracker = Shell.WindowTracker.get_default();
+                let app = tracker.get_window_app(metaWindow);
+                return app ? app.get_name() : "";
+            }
         }
     } else {
         const { WindowPreview } = imports.ui.windowPreview;
-        if (!default_getcaption_windowpreview)
+        if (!default_getcaption_windowpreview) {
             default_getcaption_windowpreview = WindowPreview.prototype._getCaption;
-        WindowPreview.prototype._getCaption = function() {
-            if (this.metaWindow.title)
-                return this.metaWindow.title;
+            log.debug(`override workspace._getCaption`);
+            // 3.38 _getCaption
+            WindowPreview.prototype._getCaption = function() {
+                if (this.metaWindow.title)
+                    return this.metaWindow.title;
 
-            let tracker = Shell.WindowTracker.get_default();
-            let app = tracker.get_window_app(this.metaWindow);
-            return app? app.get_name() : "";
-        };
+                let tracker = Shell.WindowTracker.get_default();
+                let app = tracker.get_window_app(this.metaWindow);
+                return app ? app.get_name() : "";
+            };
+        }
     }
 
     // Handle the workspace thumbnail
-    if (!default_isoverviewwindow_ws_thumbnail)
+    if (!default_isoverviewwindow_ws_thumbnail) {
         default_isoverviewwindow_ws_thumbnail =
             WorkspaceThumbnail.prototype._isOverviewWindow;
-    WorkspaceThumbnail.prototype._isOverviewWindow = function (win: any) {
-        let meta_win = win.get_meta_window();
-        // wm_class Gjs needs to be skipped to prevent the ghost window in
-        // workspace and overview
-        let show_skiptb = !cfg.skiptaskbar_shall_hide(meta_win);
-        return (show_skiptb && meta_win.skip_taskbar && meta_win.get_wm_class() !== "Gjs") ||
-            default_isoverviewwindow_ws_thumbnail(win);
-    };
+        WorkspaceThumbnail.prototype._isOverviewWindow = function (win: any) {
+            let meta_win = win.get_meta_window();
+            // wm_class Gjs needs to be skipped to prevent the ghost window in
+            // workspace and overview
+            let show_skiptb = !cfg.skiptaskbar_shall_hide(meta_win);
+            return (show_skiptb && meta_win.skip_taskbar &&
+                    // ignore wm_class == null + Gjs and
+                    // are skip taskbar true
+                    (meta_win.get_wm_class() !== null &&
+                     meta_win.get_wm_class() !== "Gjs")) ||
+                default_isoverviewwindow_ws_thumbnail(win);
+        };
+    }
 
     // Handle switch-applications
-    if (!default_init_appswitcher)
+    if (!default_init_appswitcher) {
         default_init_appswitcher = AppSwitcher.prototype._init;
-    // Do not use the Shell.AppSystem apps
-    AppSwitcher.prototype._init = function(_apps: any, altTabPopup: any) {
-        // Simulate super._init(true);
-        SwitcherList.prototype._init.call(this, true);
-        this.icons = [];
-        this._arrows = [];
+        // Do not use the Shell.AppSystem apps
+        AppSwitcher.prototype._init = function(_apps: any, altTabPopup: any) {
+            // Simulate super._init(true);
+            SwitcherList.prototype._init.call(this, true);
+            this.icons = [];
+            this._arrows = [];
 
-        let windowTracker = Shell.WindowTracker.get_default();
-        let settings = new Gio.Settings({ schema_id: 'org.gnome.shell.app-switcher' });
+            let windowTracker = Shell.WindowTracker.get_default();
+            let settings = new Gio.Settings({ schema_id: 'org.gnome.shell.app-switcher' });
 
-        let workspace = null;
-        if (settings.get_boolean('current-workspace-only')) {
-            let workspaceManager = global.workspace_manager;
-            workspace = workspaceManager.get_active_workspace();
-        }
-
-        let allWindows = global.display.get_tab_list(Meta.TabList.NORMAL_ALL, workspace);
-        let allRunningSkipTaskbarApps = allWindows.filter((w,i,a) => {
-            if (w) {
-                let found_idx: any;
-                // Find the first instance using wm_class
-                for (let index = 0; index < a.length; index++) {
-                    if (a[index].get_wm_class() === w.get_wm_class()) {
-                        found_idx = index;
-                        break;
-                    }
-                }
-                return found_idx == i;
+            let workspace = null;
+            if (settings.get_boolean('current-workspace-only')) {
+                let workspaceManager = global.workspace_manager;
+                workspace = workspaceManager.get_active_workspace();
             }
-        });
 
-        for (let i = 0; i < allRunningSkipTaskbarApps.length; i++) {
-            let meta_win = allRunningSkipTaskbarApps[i];
-            let show_skiptb = !cfg.skiptaskbar_shall_hide(meta_win);
-            if (meta_win.is_skip_taskbar() && !show_skiptb) continue;
-            let appIcon = new AppIcon(windowTracker.get_window_app(meta_win));
-            appIcon.cachedWindows = allWindows.filter(
-                w => windowTracker.get_window_app(w) === appIcon.app);
-            if (appIcon.cachedWindows.length > 0)
-                this._addIcon(appIcon);
+            let allWindows = global.display.get_tab_list(Meta.TabList.NORMAL_ALL, workspace);
+            let allRunningSkipTaskbarApps = allWindows.filter((w,i,a) => {
+                if (w) {
+                    let found_idx: any;
+                    // Find the first instance using wm_class
+                    for (let index = 0; index < a.length; index++) {
+                        if (a[index].get_wm_class() === w.get_wm_class()) {
+                            found_idx = index;
+                            break;
+                        }
+                    }
+                    return found_idx == i;
+                }
+            });
+
+            for (let i = 0; i < allRunningSkipTaskbarApps.length; i++) {
+                let meta_win = allRunningSkipTaskbarApps[i];
+                let show_skiptb = !cfg.skiptaskbar_shall_hide(meta_win);
+                if (meta_win.is_skip_taskbar() && !show_skiptb) continue;
+                let appIcon = new AppIcon(windowTracker.get_window_app(meta_win));
+                appIcon.cachedWindows = allWindows.filter(
+                    w => windowTracker.get_window_app(w) === appIcon.app);
+                if (appIcon.cachedWindows.length > 0)
+                    this._addIcon(appIcon);
+            }
+
+            this._curApp = -1;
+            this._altTabPopup = altTabPopup;
+            this._mouseTimeOutId = 0;
+
+            this.connect('destroy', this._onDestroy.bind(this));
         }
-
-        this._curApp = -1;
-        this._altTabPopup = altTabPopup;
-        this._mouseTimeOutId = 0;
-
-        this.connect('destroy', this._onDestroy.bind(this));
     }
 
     // Handle switch-windows
-    if (!default_getwindowlist_windowswitcher)
+    if (!default_getwindowlist_windowswitcher) {
         default_getwindowlist_windowswitcher = WindowSwitcherPopup.prototype._getWindowList;
-    WindowSwitcherPopup.prototype._getWindowList = function() {
-        let workspace = null;
+        WindowSwitcherPopup.prototype._getWindowList = function() {
+            let workspace = null;
 
-        if (this._settings.get_boolean('current-workspace-only')) {
-            let workspaceManager = global.workspace_manager;
-            workspace = workspaceManager.get_active_workspace();
-        }
-
-        let windows = global.display.get_tab_list(Meta.TabList.NORMAL_ALL,
-                                                  workspace);
-        return windows.map(w => {
-            let show_skiptb = !cfg.skiptaskbar_shall_hide(w);
-            let meta_window = w.is_attached_dialog() ? w.get_transient_for() : w;
-            if (meta_window) {
-                if (!meta_window.is_skip_taskbar() ||
-                    meta_window.is_skip_taskbar() && show_skiptb) {
-                    return meta_window;
-                }
+            if (this._settings.get_boolean('current-workspace-only')) {
+                let workspaceManager = global.workspace_manager;
+                workspace = workspaceManager.get_active_workspace();
             }
-            return null;
-        }).filter((w, i, a) => w != null &&  a.indexOf(w) == i);
+
+            let windows = global.display.get_tab_list(Meta.TabList.NORMAL_ALL,
+                                                      workspace);
+            return windows.map(w => {
+                let show_skiptb = !cfg.skiptaskbar_shall_hide(w);
+                let meta_window = w.is_attached_dialog() ? w.get_transient_for() : w;
+                if (meta_window) {
+                    if (!meta_window.is_skip_taskbar() ||
+                        meta_window.is_skip_taskbar() && show_skiptb) {
+                        return meta_window;
+                    }
+                }
+                return null;
+            }).filter((w, i, a) => w != null &&  a.indexOf(w) == i);
+        }
     }
 }
 
