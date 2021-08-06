@@ -2574,12 +2574,14 @@ function _show_skip_taskbar_windows(ext: Ext) {
                 if (GNOME_VERSION?.startsWith("3.36"))
                     meta_win = win.get_meta_window();
 
+                let gnome_shell_wm_class = meta_win.get_wm_class() === "Gjs" ||
+                    meta_win.get_wm_class() === "Gnome-shell";
                 let show_skiptb = !cfg.skiptaskbar_shall_hide(meta_win);
                 return (show_skiptb && meta_win.skip_taskbar &&
                         // ignore wm_class == null + Gjs and
                         // are skip taskbar true
                         (meta_win.get_wm_class() !== null &&
-                         meta_win.get_wm_class() !== "Gjs")) ||
+                         !gnome_shell_wm_class) ||
                     default_isoverviewwindow_ws(win);
             };
         }
@@ -2627,12 +2629,14 @@ function _show_skip_taskbar_windows(ext: Ext) {
             let meta_win = win.get_meta_window();
             // wm_class Gjs needs to be skipped to prevent the ghost window in
             // workspace and overview
+            let gnome_shell_wm_class = meta_win.get_wm_class() === "Gjs" ||
+                meta_win.get_wm_class() === "Gnome-shell";
             let show_skiptb = !cfg.skiptaskbar_shall_hide(meta_win);
             return (show_skiptb && meta_win.skip_taskbar &&
                     // ignore wm_class == null + Gjs and
                     // are skip taskbar true
                     (meta_win.get_wm_class() !== null &&
-                     meta_win.get_wm_class() !== "Gjs")) ||
+                     !gnome_shell_wm_class)) ||
                 default_isoverviewwindow_ws_thumbnail(win);
         };
     }
