@@ -9,5 +9,6 @@ debian/*
 !debian/control
 !debian/copyright
 !debian/rules
+!debian/*install
 .confirm_shortcut_change
 .vscode

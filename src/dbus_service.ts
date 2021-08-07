@@ -1,13 +1,24 @@
 const { Gio } = imports.gi
 
-const IFACE: string = `
-<node>
+const IFACE: string = `<node>
   <interface name="com.System76.PopShell">
     <method name="FocusLeft"/>
     <method name="FocusRight"/>
     <method name="FocusUp"/>
     <method name="FocusDown"/>
     <method name="Launcher"/>
+    <method name="WindowFocus">
+        <arg type="(uu)" direction="in" name="window"/>
+    </method>
+    <method name="WindowHighlight">
+        <arg type="(uu)" direction="in" name="window"/>
+    </method>
+    <method name="WindowList">
+        <arg type="a((uu)ss)" direction="out" name="args"/>
+    </method>
+    <method name="WindowQuit">
+        <arg type="(uu)" direction="in" name="window"/>
+    </method>
   </interface>
 </node>`
 
@@ -20,6 +31,9 @@ export class Service {
     FocusUp: () => void = () => {}
     FocusDown: () => void = () => {}
     Launcher: () => void = () => {}
+    WindowFocus: (window: [number, number]) => void = () => {}
+    WindowList: () => Array<[[number, number], string, string]> = () => []
+    WindowQuit: (window: [number, number]) => void = () => {}
 
     constructor() {
         this.dbus = Gio.DBusExportedObject.wrapJSObject(IFACE, this)

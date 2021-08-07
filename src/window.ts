@@ -112,8 +112,8 @@ export class ShellWindow {
 
     }
 
-    activate(): void {
-        activate(this.ext.conf.default_pointer_position, this.meta);
+    activate(move_mouse: boolean = true): void {
+        activate(move_mouse, this.ext.conf.default_pointer_position, this.meta);
     }
 
     actor_exists(): boolean {
@@ -604,12 +604,16 @@ export class ShellWindow {
 }
 
 /// Activates a window, and moves the mouse point.
-export function activate(default_pointer_position: Config.DefaultPointerPosition, win: Meta.Window) {
+export function activate(move_mouse: boolean, default_pointer_position: Config.DefaultPointerPosition, win: Meta.Window) {
+    const workspace = win.get_workspace()
+    if (!workspace) return
+
     win.raise();
     win.unminimize();
-    win.activate(global.get_current_time());
 
-    if (!pointer_already_on_window(win)) {
+    workspace.activate_with_focus(win, global.get_current_time())
+
+    if (move_mouse && !pointer_already_on_window(win)) {
         place_pointer_on(default_pointer_position, win)
     }
 }

@@ -198,7 +198,7 @@ export class Tiler {
                     if (focused.meta.is_fullscreen()) {
                         focused.meta.unmake_fullscreen();
                     }
-                    
+
                     // The window that the focused window is being moved onto
                     const move_to = focus();
 
@@ -451,9 +451,7 @@ export class Tiler {
             ext.register_fn(() => {
                 if (window) {
                     ext.set_overlay(window.rect());
-                    window.meta.raise();
-                    window.meta.unminimize();
-                    window.meta.activate(global.get_current_time());
+                    window.activate(false)
                 }
             });
         });

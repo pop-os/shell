@@ -1,9 +1,0 @@
-{
-    "name": "Calculator",
-    "description": "Math.JS calculations",
-    "pattern": "^(=)+",
-    "exec": "main.js",
-    "icon": "x-office-spreadsheet",
-    "fill": "= ",
-    "examples": "=5+5, =2 liters in quarts"
-}

@@ -77,9 +77,9 @@ If you want to uninstall the extension, you may invoke `make uninstall`, and the
 
 ### Packaging status
 
-- [Fedora](https://src.fedoraproject.org/rpms/gnome-shell-extension-pop-shell/): `sudo dnf install gnome-shell-extension-pop-shell` 
+- [Fedora](https://src.fedoraproject.org/rpms/gnome-shell-extension-pop-shell/): `sudo dnf install gnome-shell-extension-pop-shell`
 - [Gentoo](https://packages.gentoo.org/packages/gnome-extra/gnome-shell-extension-pop-shell): `emerge gnome-shell-extension-pop-shell`
-- [Arch Linux](https://aur.archlinux.org/packages/?O=0&K=gnome-shell-extension-pop-shell) (Using Yay as AUR helper): 
+- [Arch Linux](https://aur.archlinux.org/packages/?O=0&K=gnome-shell-extension-pop-shell) (Using Yay as AUR helper):
     - `yay -S gnome-shell-extension-pop-shell`
     - For precompiled binary version: `yay -S gnome-shell-extension-pop-shell-bin`
     - For GitHub repository version: `yay -S gnome-shell-extension-pop-shell-git`
@@ -142,17 +142,7 @@ Switching focus to the left will calculate from the center of the east side of t
 
 ### Launcher
 
-The launcher is summoned with `Super` + `/`. The search list displays matching windows based on their window name and title, and applications on the system which can be launched. The arrow keys are used to select an application or window from the search list. If it is a window, the selected window will be visually highlighted with an overlay. Pressing `Return` on a window will bring that window to focus, switching to its workspace, and unminimizing it if it was minimized.
-
-#### Launcher Modes
-
-By default, the launcher searches windows and applications. However, you can designate a special launch mode using one of the supported prefixes:
-
-- `:`: Execute a command in `sh`
-- `run` | `t:`: Execute a command in `sh` in a terminal
-- `=`: Calculator mode, powered by [MathJS](https://mathjs.org/)
-- `/` | `~`: Navigate and open directories and files in the file system
-- `d:`: Search recent documents
+Pop Shell provides an integrated launcher which interfaces directly with our [pop-launcher](https://github.com/pop-os/launcher) service. JSON IPC is used to communicate between the shell and the launcher in an asynchronous fashion. This functionality was separated from the shell due to performance and maintainability issues. The new launcher is written in Rust and fully async. The launcher has extensive features that would be useful for implementing desktop launchers beyond a shell extension.
 
 ### Inner and Outer Gaps
 
@@ -160,11 +150,11 @@ Gaps improve the aesthetics of tiled windows and make it easier to grab the edge
 
 ### Hiding Window Title Bars
 
-Windows with server-side decorations may have their title bars completely hidden, resulting in additional screen real estate for your applications, and a visually cleaner environment. This feature can be toggled in the extension's popup menu. Windows can be moved with the mouse by holding `Super` when clicking and dragging a window to another location. Windows may be closed by pressing GNOME's default `Super` + (`grave` / `~`) shortcut.
+Windows with server-side decorations may have their title bars completely hidden, resulting in additional screen real estate for your applications, and a visually cleaner environment. This feature can be toggled in the extension's popup menu. Windows can be moved with the mouse by holding `Super` when clicking and dragging a window to another location, or using the keyboard shortcuts native to pop-shell. Windows may be closed by pressing `Super` + `Q`, and maximized with `Super` + `M`.
 
 ---
 
-## Stacking Mode
+## Floating Mode
 
 This is the default mode of Pop Shell, which combines traditional stacking window management, with optional tiling window management features.
 
@@ -178,29 +168,17 @@ An optional feature to improve your tiling experience is the ability to snap win
 
 ---
 
-## Auto-Tile Mode
+## Tiling Mode
 
-This provides the tiling window manager experience, where windows are automatically tiled across the screen as they are created. This feature is disabled by default but can be enabled through the extension's popup menu in the panel. When enabled, windows that were launched before enabling it will not be associated with any tree. Dragging and dropping them will begin to tile them in a tree.
+Disabled by default, this mode manages windows using a tree-based tiling window manager. Similar to i3, each node of the tree represents two branches. A branch may be a window, a fork containing more branches, or a stack that contains many windows. Each branch represents a rectangular area of space on the screen, and can be subdivided by creating more branches inside of a branch. As windows are created, they are assigned to the window or stack that is actively focused, which creates a new fork on a window, or attaches the window to the focused stack. As windows are destroyed, the opposite is performed to compress the tree and rearrange windows to their new dimensions.
 
 ### Keyboard Shortcuts
 
 - `Super` + `O`
   - Toggles the orientation of a fork's tiling orientation
 - `Super` + `G`
-  - Toggles a window between floating and tiling. 
+  - Toggles a window between floating and tiling.
   - See [#customizing the window float list](#customizing-the-floating-window-list)
-
-### Feature Overview
-
-- If no windows are on a display, a newly-opened window will start maximized on the display
-- As new windows are opened, they are tiled into the currently focused window
-- Windows can be detached and reattached to different areas of the tree by dragging and dropping them
-- The default tiling orientation is based on the dimensions of the window being attached to
-- The tiling orientation of the fork associated with the focused window can be altered with `Super` + `O`.
-- The division of space between branches in a fork can be altered by resizing windows
-  - Window resizes can be carried out with the mouse
-  - Tiling mode may also be used to adjust sizes with the keyboard
-- Ultra-wide displays are treated as two separate displays by default (**Unimplemented**)
 
 ### Customizing the Floating Window List
 There is file `$XDG_CONFIG_HOME/pop-shell/config.json` where you can add the following structure:
@@ -213,26 +191,6 @@ There is file `$XDG_CONFIG_HOME/pop-shell/config.json` where you can add the fol
 For example, doing `xprop` on GNOME Settings (or GNOME Control Center), the WM_CLASS values are `gnome-control-center` and `Gnome-control-center`. Use the second value (Gnome-control-center), which pop-shell will read. The `title` field is optional.
 
 After applying changes in `config.json`, you can reload the tiling if it doesn't work the first time.
-
-## Plugins
-
-### Launcher Plugins
-
-Pop Shell supports extending the functionality of its launcher and comes with some plugins by default. System plugins are stored in `/usr/lib/pop-shell/launcher/`, while user plugins are stored in `$HOME/.local/share/pop-shell/launcher/`. Some plugins are included by default:
-
-- [calc](src/plugins/calc)
-- [files](src/plugins/files)
-- [pulse](src/plugins/pulse)
-- [recent](src/plugins/recent)
-- [terminal](src/plugins/terminal)
-- [web](src/plugins/web)
-- [scripts](src/plugin_scripts.ts)
-
-> Plugin developers, see [the API documentation for the launcher API](src/plugins/README.md).
-
-### Scripts Plugin
-
-This built-in plugin displays scripts in search results. Included with Pop Shell is a set of scripts for log out, reboot, and power off. Scripts are stored in `/usr/lib/pop-shell/scripts/` and `$HOME/.local/share/pop-shell/scripts/`. [See the included scripts as an example of how to create our own](src/scripts/).
 
 ## Developers
 
@@ -247,13 +205,6 @@ Please install the following as dependencies when developing:
 While working on the shell, you can recompile, reconfigure, reinstall, and restart GNOME Shell with logging with `make debug`. Note that this only works reliably in X11 sessions, since Wayland will exit to the login screen on restarting the shell.
 
 [Discussions welcome on Pop Chat](https://chat.pop-os.org/community/channels/dev)
-
-## GNOME JS
-GNOME JS is a little different from standard JS, so the included `Makefile` runs `sed` on the transpiled JavaScript to convert the small number of differences between JS and GJS. Notably, GJS only partially supports ES2015, and has its own module system which works differently from what ES2015 expects. The sed scripts will replace `import` and `export` statements with the expected GNOME variants.
-
-```js
-const Me = imports.misc.extensionUtils.getCurrentExtension();
-```
 
 ## License
 

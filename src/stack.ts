@@ -554,9 +554,7 @@ export class Stack {
                 const actor = window.meta.get_compositor_private();
                 if (actor) {
                     actor.show();
-                    window.meta.raise();
-                    window.meta.unminimize();
-                    window.meta.activate(global.get_current_time());
+                    window.activate(false)
 
                     this.reposition();
 

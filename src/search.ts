@@ -4,11 +4,12 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 import * as Lib from 'lib';
 import * as rect from 'rectangle';
 
-import { SearchOption } from 'launcher_service';
+import type { Ext } from 'extension'
+import type { JsonIPC } from 'launcher_service'
 
 const GLib: GLib = imports.gi.GLib;
 
-const { Clutter, Shell, St } = imports.gi;
+const { Clutter, Gio, Pango, Shell, St } = imports.gi;
 const { ModalDialog } = imports.ui.modalDialog;
 
 const { overview, wm } = imports.ui.main;
@@ -32,27 +33,16 @@ export class Search {
     private text: Clutter.Text;
     private widgets: Array<St.Widget>;
     private scroller: St.Widget;
+    private children_to_abandon: any = null;
 
-    private apply_cb: (index: number) => boolean;
-    private cancel_cb: () => void;
-    private complete_cb: () => boolean;
-    private select_cb: (id: number) => void;
-    private quit_cb: (id: number) => void;
+    activate_id: (index: number) => void = () => {}
+    cancel: () => void = () => {}
+    complete: () => void = () => {}
+    search: (search: string) => void = () => {}
+    select: (id: number) => void = () => {}
+    quit: (id: number) => void = () => {}
 
-    constructor(
-        cancel: () => void,
-        search: (pattern: string) => Array<SearchOption> | null,
-        complete: () => boolean,
-        select: (id: number) => void,
-        apply: (index: number) => boolean,
-        quit: (index: number) => void
-    ) {
-        this.apply_cb = apply;
-        this.cancel_cb = cancel;
-        this.complete_cb = complete;
-        this.select_cb = select;
-        this.quit_cb = quit;
-
+    constructor() {
         this.active_id = 0;
         this.widgets = [];
         this.entry = new St.Entry({
@@ -69,7 +59,7 @@ export class Search {
 
         let text_changed: null | number = null;
 
-        this.text.connect("activate", () => this.activate_option(this.active_id));
+        this.text.connect("activate", () => this.activate_id(this.active_id));
 
         this.text.connect("text-changed", (entry: any) => {
             if (text_changed !== null) GLib.source_remove(text_changed)
@@ -78,8 +68,7 @@ export class Search {
 
             const update = () => {
                 this.clear()
-                const update = search(text)
-                if (update) this.update_search_list(update)
+                this.search(text)
             }
 
             if (text.length === 0) {
@@ -87,7 +76,7 @@ export class Search {
                 return
             }
 
-            text_changed = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 100, () => {
+            text_changed = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 0, () => {
                 text_changed = null
                 update()
                 return false;
@@ -105,13 +94,12 @@ export class Search {
                 // Escape key was pressed
                 this.reset();
                 this.close();
-                cancel();
+                this.cancel();
                 return;
             } else if (c === 65289) {
                 // Tab was pressed, check for tab completion
-                if(this.complete_cb()){
-                    return;
-                }
+                this.complete()
+                return;
             }
 
             let s = event.get_state();
@@ -132,39 +120,39 @@ export class Search {
                     this.select_id(0)
                 }
             } else if (s == Clutter.ModifierType.CONTROL_MASK && c == 49) {
-                this.activate_option(0)
+                this.activate_id(0)
                 return
             } else if (s == Clutter.ModifierType.CONTROL_MASK && c == 50) {
-                this.activate_option(1)
+                this.activate_id(1)
                 return
             } else if (s == Clutter.ModifierType.CONTROL_MASK && c == 51) {
-                this.activate_option(2)
+                this.activate_id(2)
                 return
             } else if (s == Clutter.ModifierType.CONTROL_MASK && c == 52) {
-                this.activate_option(3)
+                this.activate_id(3)
                 return
             } else if (s == Clutter.ModifierType.CONTROL_MASK && c == 53) {
-                this.activate_option(4)
+                this.activate_id(4)
                 return
             } else if (s == Clutter.ModifierType.CONTROL_MASK && c == 54) {
-                this.activate_option(5)
+                this.activate_id(5)
                 return
             } else if (s == Clutter.ModifierType.CONTROL_MASK && c == 55) {
-                this.activate_option(6)
+                this.activate_id(6)
                 return
             } else if (s == Clutter.ModifierType.CONTROL_MASK && c == 56) {
-                this.activate_option(7)
+                this.activate_id(7)
                 return
             } else if (s == Clutter.ModifierType.CONTROL_MASK && c == 57) {
-                this.activate_option(8)
+                this.activate_id(8)
                 return
             } else if (s == Clutter.ModifierType.CONTROL_MASK && c == 113) {
                 // Ctrl + Q shall quit the selected application
-                this.quit_cb(this.active_id)
+                this.quit(this.active_id)
                 return
             }
 
-            this.select_cb(this.active_id);
+            this.select(this.active_id);
         });
 
         this.list = new St.BoxLayout({
@@ -195,35 +183,33 @@ export class Search {
             if (close) {
                 this.reset()
                 this.close()
-                this.cancel_cb()
+                this.cancel()
             }
 
             return Clutter.EVENT_PROPAGATE;
         })
 
-        this.dialog.connect('destroy', () => {
-            global.stage.disconnect(id)
-        })
+        this.dialog.connect('closed', () => this.cancel())
+        this.dialog.connect('destroy', () => global.stage.disconnect(id))
     }
 
-    activate_option(id: number) {
-        const cont = this.apply_cb(id);
-
-        if (!cont) {
-            this.reset();
-            this.close();
-            this.cancel_cb();
+    cleanup() {
+        if (this.children_to_abandon) {
+            for (const child of this.children_to_abandon) {
+                child.destroy();
+            }
+            this.children_to_abandon = null
         }
     }
 
     clear() {
-        this.list.remove_all_children();
-        this.list.hide();
+        this.children_to_abandon = (this.list as any).get_children();
         this.widgets = [];
         this.active_id = 0;
     }
 
     close() {
+        this.reset()
         this.remove_injections()
 
         this.dialog.close(global.get_current_time())
@@ -242,7 +228,7 @@ export class Search {
             if (this.dialog.is_visible()) {
                 this.reset();
                 this.close();
-                this.cancel_cb();
+                this.cancel();
             } else {
                 this.remove_injections()
                 overview.toggle()
@@ -271,71 +257,75 @@ export class Search {
         this.entry.grab_key_focus();
     }
 
-    select() {
+    highlight_selected() {
         const widget = this.widgets[this.active_id]
-        widget.add_style_pseudo_class("select")
+        if (widget) {
+            widget.add_style_pseudo_class("select")
 
-        try {
-            imports.misc.util.ensureActorVisibleInScrollView(this.scroller, widget)
-        } catch (_error) {
+            try {
+                imports.misc.util.ensureActorVisibleInScrollView(this.scroller, widget)
+            } catch (_error) {
 
+            }
         }
     }
 
     select_id(id: number) {
         this.unselect();
         this.active_id = id;
-        this.select();
+        this.highlight_selected();
     }
 
     unselect() {
-        this.widgets[this.active_id].remove_style_pseudo_class(
-            "select"
-        );
+        this.widgets[this.active_id]?.remove_style_pseudo_class("select");
     }
 
-    update_search_list(list: Array<SearchOption>) {
+    append_search_option(option: SearchOption) {
+        const id = this.widgets.length
+
+        if (id !== 0) {
+            this.list.add(Lib.separator())
+        }
+
+        const { widget, shortcut } = option;
+
+        if (id < 9) {
+            (shortcut as any).set_text(`Ctrl + ${id + 1}`);
+            (shortcut as any).show()
+        } else {
+            (shortcut as any).hide()
+        }
+
         let initial_cursor = Lib.cursor_rect()
-        Lib.join(
-            list.values(),
-            (option: SearchOption) => {
-                const id = this.widgets.length;
 
-                const { widget, shortcut } = option;
+        widget.connect('clicked', () => this.activate_id(id))
+        widget.connect('notify::hover', () => {
+            const { x, y } = Lib.cursor_rect()
+            if ( x === initial_cursor.x && y === initial_cursor.y) return
+            this.select_id(id)
+            this.select(id)
+        })
 
-                if (id < 9) {
-                    (shortcut as any).set_text(`Ctrl + ${id + 1}`);
-                    (shortcut as any).show()
-                } else {
-                    (shortcut as any).hide()
-                }
+        this.widgets.push(widget);
+        this.list.add(widget);
 
-                widget.connect('clicked', () => this.activate_option(id))
-                widget.connect('notify::hover', () => {
-                    const { x, y } = Lib.cursor_rect()
-                    if ( x === initial_cursor.x && y === initial_cursor.y) return
-                    this.select_id(id)
-                    this.select_cb(id)
-                })
-
-                this.widgets.push(widget);
-                this.list.add(widget);
-
-            },
-            () => this.list.add(Lib.separator())
-        );
+        this.cleanup()
 
         this.list.show();
-        if (this.widgets.length != 0) {
-            this.select();
-            this.select_cb(0);
-        }
 
         const vscroll = (this.scroller as any).get_vscroll_bar()
         if ((this.scroller as any).vscrollbar_visible) {
             vscroll.show()
         } else {
             vscroll.hide()
+        }
+
+        if (id === 0) {
+            GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
+                this.highlight_selected();
+                this.select(0);
+                return false
+            })
         }
     }
 
@@ -349,4 +339,92 @@ export class Search {
             overview_toggle = null
         }
     }
+}
+
+export class SearchOption {
+    title: string
+    description: null | string
+    exec: null | string
+    keywords: null | Array<string>
+
+    widget: St.Button
+
+    shortcut: St.Widget = new St.Label({ text: "", y_align: Clutter.ActorAlign.CENTER, style: "padding-left: 6px;padding-right: 6px" })
+
+    constructor(ext: Ext, title: string, description: null | string, category_icon: null | JsonIPC.IconSource, icon: null | JsonIPC.IconSource, icon_size: number,
+                exec: null | string, keywords: null | Array<string>) {
+        this.title = title
+        this.description = description
+        this.exec = exec
+        this.keywords = keywords
+
+        const layout = new St.BoxLayout({})
+
+        attach_icon(layout, category_icon, icon_size / 2, ext)
+
+        const label = new St.Label({ text: title })
+        label.clutter_text.set_ellipsize(Pango.EllipsizeMode.END)
+
+        attach_icon(layout, icon, icon_size, ext)
+
+        const info_box = new St.BoxLayout({ y_align: Clutter.ActorAlign.CENTER, vertical: true, x_expand: true });
+        info_box.add_child(label)
+
+        if (description) {
+            info_box.add_child(new St.Label({ text: description, style: "font-size: small" }))
+        }
+
+        layout.add_child(info_box)
+        layout.add_child(this.shortcut)
+
+        this.widget = new St.Button({ style_class: "pop-shell-search-element" });
+        (this.widget as any).add_actor(layout)
+    }
+}
+
+function attach_icon(layout: any, icon: null | JsonIPC.IconSource, icon_size: number, ext: Ext) {
+    if (icon) {
+        const generated = generate_icon(icon, icon_size, ext)
+
+        if (generated) {
+            generated.set_y_align(Clutter.ActorAlign.CENTER)
+            layout.add_child(generated)
+        }
+    }
+}
+
+function generate_icon(icon: JsonIPC.IconSource, icon_size: number, ext: Ext): null | St.Widget {
+    let app_icon = null;
+
+    if ("Name" in icon) {
+        const file = Gio.File.new_for_path(icon.Name)
+
+        if (file.query_exists(null)) {
+            app_icon = new St.Icon({
+                gicon: Gio.icon_new_for_string(icon.Name),
+                icon_size,
+            })
+        } else {
+            app_icon = new St.Icon({
+                icon_name: icon.Name,
+                icon_size,
+            })
+        }
+    } else if ("Mime" in icon) {
+        app_icon = new St.Icon({
+            gicon: Gio.content_type_get_icon(icon.Mime),
+            icon_size,
+        })
+    } else if ("Window" in icon) {
+        const window = ext.windows.get(icon.Window);
+        if (window) {
+            app_icon = window.icon(ext, icon_size);
+        }
+    }
+
+    if (app_icon) {
+        (app_icon as any).style_class = "pop-shell-search-icon"
+    }
+
+    return app_icon
 }

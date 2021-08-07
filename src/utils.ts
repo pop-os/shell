@@ -110,6 +110,7 @@ export function async_process(argv: Array<string>, input = null, cancellable = n
 }
 
 export type AsyncIPC = {
+    child: any,
     stdout: any,
     stdin: any,
 }
@@ -122,19 +123,26 @@ export function async_process_ipc(argv: Array<string>): AsyncIPC | null {
             | SubprocessFlags.STDOUT_PIPE
     })
 
-    const proc = launcher.spawnv(argv)
+    let child
+
+    try {
+        child = launcher.spawnv(argv)
+    } catch (why) {
+        log.error(`failed to spawn ${argv}: ${why}`)
+        return null
+    }
 
     let stdin = new Gio.DataOutputStream({
-        base_stream: proc.get_stdin_pipe(),
+        base_stream: child.get_stdin_pipe(),
         close_base_stream: true
     })
 
     let stdout = new Gio.DataInputStream({
-        base_stream: proc.get_stdout_pipe(),
+        base_stream: child.get_stdout_pipe(),
         close_base_stream: true
     })
 
-    return { stdin, stdout }
+    return { child, stdin, stdout }
 }
 
 export function map_eq<K, V>(map1: Map<K, V>, map2: Map<K, V>) {
