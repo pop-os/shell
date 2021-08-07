@@ -7,15 +7,11 @@ Standards-Version: 3.9.8
 Homepage: https://github.com/pop-os/shell
 Vcs-Git: https://github.com/pop-os/shell
 
-Package: pop-shell-plugin-system76-power
-Architecture: all
-Depends: pop-shell, system76-power
-Description: Launcher integration with system76-power
-
 Package: pop-shell
 Architecture: all
 Depends:
     ${misc:Depends},
+    pop-launcher,
     pop-shell-shortcuts,
     fd-find
 Recommends: pop-shell-plugin-system76-power

@@ -1,3 +1,3 @@
 schemas/org.gnome.shell.extensions.pop-shell.gschema.xml usr/share/glib-2.0/schemas
 keybindings/*.xml usr/share/gnome-control-center/keybindings
-usr/
+usr

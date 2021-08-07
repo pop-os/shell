@@ -1,9 +1,0 @@
-{
-    "name": "File Navigation",
-    "description": "Navigate with tab autocomplete",
-    "pattern": "^(\/|~).*",
-    "exec": "main.js",
-    "icon": "system-file-manager",
-    "fill": "~/",
-    "examples": "~/Documents, /mnt/media/Videos"
-}

@@ -1,6 +1,6 @@
 pop-shell (1.1.0) focal; urgency=medium
 
-  * Bug fixes & Launcher update w/ plugin support 
+  * Bug fixes & Launcher update w/ plugin support
 
  -- Michael Aaron Murphy <michael@system76.com>  Fri, 11 Dec 2020 13:27:27 -0700
 

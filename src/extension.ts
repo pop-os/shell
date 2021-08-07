@@ -14,7 +14,7 @@ import * as Rect from 'rectangle';
 import * as Settings from 'settings';
 import * as Tiling from 'tiling';
 import * as Window from 'window';
-import * as launcher from 'dialog_launcher';
+import * as launcher from 'launcher';
 import * as auto_tiler from 'auto_tiler';
 import * as node from 'node';
 import * as utils from 'utils';
@@ -29,7 +29,8 @@ import type { Entity } from 'ecs';
 import type { ExtEvent } from 'events';
 import type { Rectangle } from 'rectangle';
 import type { Indicator } from 'panel_settings';
-import type { Launcher } from './dialog_launcher';
+import type { Launcher } from 'launcher';
+
 import { Fork } from './fork';
 
 const display = global.display;
@@ -236,6 +237,29 @@ export class Ext extends Ecs.System<ExtEvent> {
         this.dbus.FocusLeft = () => this.focus_left()
         this.dbus.FocusRight = () => this.focus_right()
         this.dbus.Launcher = () => this.window_search.open(this)
+
+        this.dbus.WindowFocus = (window: [number, number]) => {
+            this.windows.get(window)?.activate()
+            this.window_search.close()
+        }
+
+        this.dbus.WindowList = (): Array<[[number, number], string, string]> => {
+            const wins = new Array()
+
+            for (const window of this.tab_list(Meta.TabList.NORMAL, null)) {
+                wins.push([
+                    window.entity,
+                    window.meta.get_title(),
+                    window.name(this),
+                ])
+            }
+
+            return wins;
+        }
+
+        this.dbus.WindowQuit = (win: [number, number]) => {
+            this.windows.get(win)?.meta.delete(global.get_current_time())
+        }
     }
 
     // System interface

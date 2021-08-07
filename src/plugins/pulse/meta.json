@@ -1,6 +1,0 @@
-{
-    "name": "PulseAudio Volume Control",
-    "description": "Control PulseAudio devices and volume",
-    "exec": "main.js",
-    "icon": "multimedia-volume-control"
-}
