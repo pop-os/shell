@@ -104,9 +104,15 @@ export class Launcher extends search.Search {
             this.close()
         } else if ("Update" in response) {
             this.clear()
+
             if (this.append_id !== null) {
                 GLib.source_remove(this.append_id)
                 this.append_id = null
+            }
+
+            if (response.Update.length === 0) {
+                this.cleanup()
+                return;
             }
 
             this.append_id = GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
