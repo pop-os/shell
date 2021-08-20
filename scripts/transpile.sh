@@ -21,10 +21,10 @@ glib-compile-schemas schemas &
 
 for proj in ${PROJECTS}; do
     mkdir -p _build/${proj}
-    tsc --p src/${proj} &
+    tsc --p src/${proj}
 done
 
-tsc &
+tsc
 
 wait
 
@@ -34,7 +34,7 @@ cp -r metadata.json icons schemas *.css _build &
 
 for src in $(find target -name '*.js'); do
     dest=$(echo $src | sed s#target#_build#g)
-    transpile &
+    transpile
 done
 
 wait

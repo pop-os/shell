@@ -253,8 +253,14 @@ export class ShellWindow {
     }
 
     is_single_max_screen(): boolean {
-        let monitor_count = this.meta.get_display().get_n_monitors();
-        return (this.is_maximized() || this.smart_gapped) && monitor_count == 1;
+        const display = this.meta.get_display()
+
+        if (display) {
+            let monitor_count = display.get_n_monitors();
+            return (this.is_maximized() || this.smart_gapped) && monitor_count == 1;
+        }
+
+        return false
     }
 
     is_snap_edge(): boolean {
@@ -435,8 +441,8 @@ export class ShellWindow {
      */
     restack(updateState: RESTACK_STATE = RESTACK_STATE.NORMAL) {
         this.update_border_layout();
-        if (this.meta.is_fullscreen() || 
-            (this.is_single_max_screen() && !this.is_snap_edge()) || 
+        if (this.meta.is_fullscreen() ||
+            (this.is_single_max_screen() && !this.is_snap_edge()) ||
             this.meta.minimized) {
             this.hide_border()
         }
