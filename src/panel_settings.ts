@@ -1,10 +1,7 @@
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
-// import * as auto_tiler from 'auto_tiler';
 import * as Utils from 'utils';
-import { Launcher } from './dialog_launcher';
 
-//import type { Entity } from './ecs';
 import type { Ext } from './extension';
 
 const { Clutter, Gio, St } = imports.gi;
