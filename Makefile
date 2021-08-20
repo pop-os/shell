@@ -35,7 +35,7 @@ configure:
 	sh scripts/configure.sh
 
 compile: $(sources) clean
-	env PROJECTS="$(PROJECTS)" sh scripts/transpile.sh
+	env PROJECTS="$(PROJECTS)" ./scripts/transpile.sh
 
 # Rebuild, install, reconfigure local settings, restart shell, and listen to journalctl logs
 debug: depcheck compile install install-system76-plugins configure enable restart-shell listen

@@ -170,9 +170,6 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     private size_requests: Map<GObject.Object, SignalID> = new Map();
 
-    /** Used to debounce on_focus triggers */
-    private focus_trigger: null | SignalID = null;
-
     // Entity-component associations
 
     /** Store for stable sequences of each registered window */
@@ -2582,7 +2579,7 @@ function _show_skip_taskbar_windows(ext: Ext) {
                         // are skip taskbar true
                         (meta_win.get_wm_class() !== null &&
                          !gnome_shell_wm_class) ||
-                    default_isoverviewwindow_ws(win);
+                    default_isoverviewwindow_ws(win));
             };
         }
     }
