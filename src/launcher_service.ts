@@ -26,7 +26,7 @@ export class LauncherService {
                 const [bytes,] = stdout.read_line_finish(res)
                 if (bytes) {
                     const string = byteArray.toString(bytes)
-                    log.debug(`received response from launcher service: ${string}`)
+                    // log.debug(`received response from launcher service: ${string}`)
                     callback(JSON.parse(string))
                     this.service.stdout.read_line_async(0, this.cancellable, generator)
                 }
@@ -94,7 +94,7 @@ export class LauncherService {
     send(object: Object) {
         const message = JSON.stringify(object)
         try {
-            this.service.stdin.write_bytes(new GLib.Bytes(message + "\n"), null)
+            this.service.stdin.write_all(message + "\n", null)
         } catch (why) {
             log.error(`failed to send request to pop-launcher: ${why}`)
         }
