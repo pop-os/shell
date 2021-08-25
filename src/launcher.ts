@@ -78,9 +78,6 @@ export class Launcher extends search.Search {
 
             if (selected) {
                 this.service?.activate(selected.result.id)
-                global.log(`service exists? ${this.service !== null}`)
-            } else {
-                global.log(`option does not exist`)
             }
         }
 
@@ -197,30 +194,60 @@ export class Launcher extends search.Search {
         const app = Shell.AppSystem.get_default().lookup_desktop_wmclass(wmclass)
 
         if (app) {
-            if (app.state === Shell.AppState.RUNNING) {
+            const info = app.get_app_info()
+            const is_gnome_settings = info ? info.get_executable() === "gnome-control-center" : false;
+
+            if (is_gnome_settings && app.state === Shell.AppState.RUNNING) {
                 app.activate()
                 const window = app.get_windows()[0]
                 if (window) shell_window.activate(true, DefaultPointerPosition.TopLeft, window)
                 return;
             }
 
+            const existing_windows = app.get_windows().length
+
             app.launch(0, -1, gpuPref)
+
+            let attempts = 0
 
             GLib.timeout_add(GLib.PRIORITY_DEFAULT, 100, () => {
                 if (app.state === Shell.AppState.STOPPED) {
-                    const info = app.get_app_info()
                     if (info) {
-                        this.locate_by_app_info(info)?.activate(false)
+                        const window = this.locate_by_app_info(info);
+                        if (window) {
+                            window.activate(false)
+                            return false;
+                        }
                     }
+                } else if (app.state === Shell.AppState.RUNNING) {
+                    const windows: Array<Meta.Window> = app.get_windows();
 
-                    return false;
+                    if (windows.length > existing_windows) {
+                        let newest_window = null
+                        let newest_time = -1
+                        for (const window of windows) {
+                            const this_time = window.get_user_time()
+                            if (newest_time < this_time) {
+                                newest_window = window
+                                newest_time = this_time
+                            }
+
+                            if (this_time === 0) {
+                                newest_window = window
+                                break
+                            }
+                        }
+
+                        if (newest_window) {
+                            shell_window.activate(true, DefaultPointerPosition.TopLeft, newest_window)
+                        }
+
+                        return false
+                    }
                 }
 
-                const window = app.get_windows()[0]
-                if (window) {
-                    shell_window.activate(true, DefaultPointerPosition.TopLeft, window)
-                    return false
-                }
+                attempts += 1
+                if (attempts === 20) return false
 
                 return true;
             })
