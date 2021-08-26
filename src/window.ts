@@ -608,10 +608,9 @@ export function activate(move_mouse: boolean, default_pointer_position: Config.D
     const workspace = win.get_workspace()
     if (!workspace) return
 
-    win.raise();
     win.unminimize();
-
     workspace.activate_with_focus(win, global.get_current_time())
+    win.raise()
 
     if (move_mouse && !pointer_already_on_window(win)) {
         place_pointer_on(default_pointer_position, win)

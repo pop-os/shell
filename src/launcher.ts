@@ -224,22 +224,22 @@ export class Launcher extends search.Search {
 
                     if (windows.length > existing_windows) {
                         let newest_window = null
-                        let newest_time = -1
+                        let newest_time = null
                         for (const window of windows) {
                             const this_time = window.get_user_time()
-                            if (newest_time < this_time) {
+                            if (newest_time === null || newest_time > this_time) {
                                 newest_window = window
                                 newest_time = this_time
                             }
 
                             if (this_time === 0) {
-                                newest_window = window
+                                newest_window = window;
                                 break
                             }
                         }
 
                         if (newest_window) {
-                            shell_window.activate(true, DefaultPointerPosition.TopLeft, newest_window)
+                            this.ext.get_window(newest_window)?.activate(true);
                         }
 
                         return false
