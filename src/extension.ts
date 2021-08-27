@@ -44,7 +44,7 @@ const GLib: GLib = imports.gi.GLib;
 const { Gio, Meta, St, Shell } = imports.gi;
 const { GlobalEvent, WindowEvent } = Events;
 const { cursor_rect, is_move_op } = Lib;
-const { layoutManager, loadTheme, overview, panel, setThemeStylesheet, screenShield, sessionMode } = imports.ui.main;
+const { layoutManager, loadTheme, overview, panel, setThemeStylesheet, screenShield, sessionMode, windowAttentionHandler } = imports.ui.main;
 const { ScreenShield } = imports.ui.screenShield;
 const { AppSwitcher, AppIcon, WindowSwitcherPopup } = imports.ui.altTab;
 const { SwitcherList } = imports.ui.switcherPopup;
@@ -2454,6 +2454,8 @@ function enable() {
     ext.injections_add();
     ext.signals_attach();
 
+    disable_window_attention_handler()
+
     layoutManager.addChrome(ext.overlay);
 
     if (!indicator) {
@@ -2502,6 +2504,25 @@ function disable() {
     if (indicator) {
         indicator.destroy();
         indicator = null;
+    }
+
+    enable_window_attention_handler()
+}
+
+const handler = windowAttentionHandler
+
+function enable_window_attention_handler() {
+    if (handler && !handler._windowDemandsAttentionId) {
+        handler._windowDemandsAttentionId = global.display.connect('window-demands-attention', (display, window) => {
+            handler._onWindowDemandsAttention(display, window)
+        })
+    }
+}
+
+function disable_window_attention_handler() {
+    if (handler && handler._windowDemandsAttentionId) {
+        global.display.disconnect(handler._windowDemandsAttentionId);
+        handler._windowDemandsAttentionId = null
     }
 }
 
