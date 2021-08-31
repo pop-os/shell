@@ -20,9 +20,9 @@ interface Settings extends GObject.Object {
 function settings_new_id(schema_id: string): Settings | null {
     try {
         return new Gio.Settings({ schema_id });
-    } catch (err) {
+    } catch (why) {
         if (schema_id !== "org.gnome.shell.extensions.user-theme") {
-            global.log(err)
+            global.log(`failed to get settings for ${schema_id}: ${why}`)
         }
 
         return null
