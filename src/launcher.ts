@@ -193,9 +193,12 @@ export class Launcher extends search.Search {
                 ? Shell.AppLaunchGpu.DEFAULT
                 : Shell.AppLaunchGpu.DISCRETE;
 
+        log.debug(`launching desktop entry: ${desktop_entry_id}`)
+
         let app = app_sys.lookup_desktop_wmclass(desktop_entry_id)
 
         if (!app) {
+            log.error(`cannot find desktop entry for ${desktop_entry_id}`)
             return;
         }
 
