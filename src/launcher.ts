@@ -198,6 +198,10 @@ export class Launcher extends search.Search {
         let app = app_sys.lookup_desktop_wmclass(desktop_entry_id)
 
         if (!app) {
+            app = app_sys.lookup_app(desktop_entry_id)
+        }
+
+        if (!app) {
             log.error(`cannot find desktop entry for ${desktop_entry_id}`)
             return;
         }
