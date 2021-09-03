@@ -181,6 +181,14 @@ export class Launcher extends search.Search {
         super.clear()
     }
 
+    launch_desktop_app(app: any, path: string) {
+        try {
+            app.launch([], null);
+        } catch (why) {
+            log.error(`${path}: could not launch by app info: ${why}`)
+        }
+    }
+
     launch_desktop_entry(entry: JsonIPC.DesktopEntry) {
         const basename = (name: string): string => {
             name = name.substr(0, name.lastIndexOf('.'))
@@ -202,12 +210,28 @@ export class Launcher extends search.Search {
         }
 
         if (!app) {
-            log.error(`cannot find desktop entry for ${desktop_entry_id}`)
+            log.error(`GNOME Shell cannot find desktop entry for ${desktop_entry_id}`)
+            log.error(`pop-launcher will use Gio.DesktopAppInfo instead`);
+
+            const dapp = Gio.DesktopAppInfo.new_from_filename(entry.path);
+            
+            if (!dapp) {
+                log.error(`could not find desktop entry for ${entry.path}`);
+                return;
+            }
+
+            this.launch_desktop_app(dapp, entry.path);
             return;
         }
 
         const info = app.get_app_info()
-        const is_gnome_settings = info ? info.get_executable() === "gnome-control-center" : false;
+
+        if (!info) {
+            log.error(`cannot find app info for ${desktop_entry_id}`)
+            return
+        }
+
+        const is_gnome_settings = info.get_executable() === "gnome-control-center"
 
         if (is_gnome_settings && app.state === Shell.AppState.RUNNING) {
             app.activate()
@@ -218,7 +242,12 @@ export class Launcher extends search.Search {
 
         const existing_windows = app.get_windows().length
 
-        app.launch(0, -1, gpuPref)
+        try {
+            app.launch(0, -1, gpuPref)
+        } catch (why) {
+            global.log(`failed to launch application: ${why}`)
+            return;
+        }
 
         let attempts = 0
 
