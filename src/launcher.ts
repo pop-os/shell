@@ -17,6 +17,8 @@ import type { JsonIPC } from 'launcher_service'
 const { DefaultPointerPosition } = config
 const { Clutter, Gio, GLib, Meta, Shell } = imports.gi
 
+const app_sys = Shell.AppSystem.get_default();
+
 interface SearchOption {
     result: JsonIPC.SearchResult
     menu: St.Widget
@@ -185,73 +187,75 @@ export class Launcher extends search.Search {
             return name.substr(name.lastIndexOf('/') + 1)
         }
 
-        const wmclass = basename(entry.path)
+        const desktop_entry_id = basename(entry.path)
 
         const gpuPref = entry.gpu_preference === "Default"
                 ? Shell.AppLaunchGpu.DEFAULT
                 : Shell.AppLaunchGpu.DISCRETE;
 
-        const app = Shell.AppSystem.get_default().lookup_desktop_wmclass(wmclass)
+        let app = app_sys.lookup_desktop_wmclass(desktop_entry_id)
 
-        if (app) {
-            const info = app.get_app_info()
-            const is_gnome_settings = info ? info.get_executable() === "gnome-control-center" : false;
+        if (!app) {
+            return;
+        }
 
-            if (is_gnome_settings && app.state === Shell.AppState.RUNNING) {
-                app.activate()
-                const window = app.get_windows()[0]
-                if (window) shell_window.activate(true, DefaultPointerPosition.TopLeft, window)
-                return;
-            }
+        const info = app.get_app_info()
+        const is_gnome_settings = info ? info.get_executable() === "gnome-control-center" : false;
 
-            const existing_windows = app.get_windows().length
+        if (is_gnome_settings && app.state === Shell.AppState.RUNNING) {
+            app.activate()
+            const window = app.get_windows()[0]
+            if (window) shell_window.activate(true, DefaultPointerPosition.TopLeft, window)
+            return;
+        }
 
-            app.launch(0, -1, gpuPref)
+        const existing_windows = app.get_windows().length
 
-            let attempts = 0
+        app.launch(0, -1, gpuPref)
 
-            GLib.timeout_add(GLib.PRIORITY_DEFAULT, 100, () => {
-                if (app.state === Shell.AppState.STOPPED) {
-                    if (info) {
-                        const window = this.locate_by_app_info(info);
-                        if (window) {
-                            window.activate(false)
-                            return false;
-                        }
-                    }
-                } else if (app.state === Shell.AppState.RUNNING) {
-                    const windows: Array<Meta.Window> = app.get_windows();
+        let attempts = 0
 
-                    if (windows.length > existing_windows) {
-                        let newest_window = null
-                        let newest_time = null
-                        for (const window of windows) {
-                            const this_time = window.get_user_time()
-                            if (newest_time === null || newest_time > this_time) {
-                                newest_window = window
-                                newest_time = this_time
-                            }
-
-                            if (this_time === 0) {
-                                newest_window = window;
-                                break
-                            }
-                        }
-
-                        if (newest_window) {
-                            this.ext.get_window(newest_window)?.activate(true);
-                        }
-
-                        return false
+        GLib.timeout_add(GLib.PRIORITY_DEFAULT, 100, () => {
+            if (app.state === Shell.AppState.STOPPED) {
+                if (info) {
+                    const window = this.locate_by_app_info(info);
+                    if (window) {
+                        window.activate(false)
+                        return false;
                     }
                 }
+            } else if (app.state === Shell.AppState.RUNNING) {
+                const windows: Array<Meta.Window> = app.get_windows();
 
-                attempts += 1
-                if (attempts === 20) return false
+                if (windows.length > existing_windows) {
+                    let newest_window = null
+                    let newest_time = null
+                    for (const window of windows) {
+                        const this_time = window.get_user_time()
+                        if (newest_time === null || newest_time > this_time) {
+                            newest_window = window
+                            newest_time = this_time
+                        }
 
-                return true;
-            })
-        }
+                        if (this_time === 0) {
+                            newest_window = window;
+                            break
+                        }
+                    }
+
+                    if (newest_window) {
+                        this.ext.get_window(newest_window)?.activate(true);
+                    }
+
+                    return false
+                }
+            }
+
+            attempts += 1
+            if (attempts === 20) return false
+
+            return true;
+        })
     }
 
     list_workspace(ext: Ext) {
