@@ -191,8 +191,7 @@ export class Launcher extends search.Search {
 
     launch_desktop_entry(entry: JsonIPC.DesktopEntry) {
         const basename = (name: string): string => {
-            name = name.substr(0, name.lastIndexOf('.'))
-            return name.substr(name.lastIndexOf('/') + 1)
+            return name.substr(name.indexOf('/applications/') + 14).replace('/', '-')
         }
 
         const desktop_entry_id = basename(entry.path)
