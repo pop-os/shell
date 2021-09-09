@@ -193,6 +193,7 @@ declare namespace Meta {
         get_maximized(): number;
         get_monitor(): number;
         get_pid(): number;
+        get_role(): null | string;
         get_stable_sequence(): number;
         get_title(): string;
         get_transient_for(): Window | null;
