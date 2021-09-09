@@ -34,6 +34,7 @@ export class Search {
     private widgets: Array<St.Widget>;
     private scroller: St.Widget;
     private children_to_abandon: any = null;
+    private last_trigger: number = 0;
 
     activate_id: (index: number) => void = () => {}
     cancel: () => void = () => {}
@@ -84,12 +85,60 @@ export class Search {
         });
 
         this.text.connect("key-press-event", (_: any, event: any) => {
-            // Prevents key repeat events
+            const c = event.get_key_symbol();
+            const s = event.get_state();
+
+            const is_down = (): boolean => {
+                return c == 65364 || c == 65289 || (s == Clutter.ModifierType.CONTROL_MASK && c == 106)
+                    || (s == Clutter.ModifierType.CONTROL_MASK && c == 110)
+            }
+
+            const is_up = (): boolean => {
+                return c == 65362 || c == 65056 || (s == Clutter.ModifierType.CONTROL_MASK && c == 107)
+                    || (s == Clutter.ModifierType.CONTROL_MASK && c == 112)
+            }
+
+            // Up arrow or left tab was pressed
+            const up_arrow = () => {
+                if (0 < this.active_id) {
+                    this.select_id(this.active_id - 1)
+                } else if (this.active_id == 0) {
+                    this.select_id(this.widgets.length - 1)
+                }
+            }
+
+            // Down arrow or tab was pressed
+            const down_arrow = () => {
+                if (this.active_id + 1 < this.widgets.length) {
+                    this.select_id(this.active_id + 1)
+                } else if (this.active_id + 1 == this.widgets.length) {
+                    this.select_id(0)
+                }
+            }
+
+            // Delay key repeat events, and handle up/down arrow movements if on repeat.
             if (event.get_flags() != Clutter.EventFlags.NONE) {
+                const now = global.get_current_time()
+
+                if (now - this.last_trigger < 100) {
+                    return
+                }
+
+                this.last_trigger = now;
+
+                if (is_up()) {
+                    up_arrow()
+                    this.select(this.active_id);
+                } else if (is_down()) {
+                    down_arrow()
+                    this.select(this.active_id);
+                }
+
                 return;
             }
 
-            let c = event.get_key_symbol();
+            this.last_trigger = global.get_current_time()
+            
             if (c === 65307) {
                 // Escape key was pressed
                 this.reset();
@@ -102,23 +151,10 @@ export class Search {
                 return;
             }
 
-            let s = event.get_state();
-            if (c == 65362 || c == 65056 || (s == Clutter.ModifierType.CONTROL_MASK && c == 107) || (s == Clutter.ModifierType.CONTROL_MASK && c == 112)) {
-                // Up arrow or left tab was pressed
-                if (0 < this.active_id) {
-                    this.select_id(this.active_id - 1)
-                }
-                else if (this.active_id == 0) {
-                    this.select_id(this.widgets.length - 1)
-                }
-            } else if (c == 65364 || c == 65289 || (s == Clutter.ModifierType.CONTROL_MASK && c == 106) || (s == Clutter.ModifierType.CONTROL_MASK && c == 110)) {
-                // Down arrow or tab was pressed
-                if (this.active_id + 1 < this.widgets.length) {
-                    this.select_id(this.active_id + 1)
-                }
-                else if (this.active_id + 1 == this.widgets.length) {
-                    this.select_id(0)
-                }
+            if (is_up()) {
+                up_arrow()
+            } else if (is_down()) {
+                down_arrow()
             } else if (s == Clutter.ModifierType.CONTROL_MASK && c == 49) {
                 this.activate_id(0)
                 return
