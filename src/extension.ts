@@ -792,8 +792,11 @@ export class Ext extends Ecs.System<ExtEvent> {
             this.exception_add(win)
         }
 
-        this.prev_focused[0] = this.prev_focused[1];
-        this.prev_focused[1] = win.entity;
+        // Track history of focused windows, but do not permit duplicates.
+        if (this.prev_focused[1] !== win.entity) {
+            this.prev_focused[0] = this.prev_focused[1];
+            this.prev_focused[1] = win.entity;
+        }
 
         // Update the active tab in the stack.
         if (null !== this.auto_tiler && null !== win.stack) {
