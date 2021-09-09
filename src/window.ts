@@ -275,6 +275,12 @@ export class ShellWindow {
                 wm_class = this.name(ext)
             }
 
+            const role = this.meta.get_role();
+            
+            // Quake-style terminals such as Tilix's quake mode.
+            if (role === "quake") return false;
+
+
             // Only normal windows will be considered for tiling
             return this.meta.window_type == Meta.WindowType.NORMAL
                 // Transient windows are most likely dialogs
