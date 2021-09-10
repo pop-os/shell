@@ -45,7 +45,8 @@ export const DEFAULT_FLOAT_RULES: Array<FloatRule> = [
     { class: "Gjs", title: "Settings" },
     { class: "Io.elementary.sideload", },
     { class: "Gnome-initial-setup" },
-    { class: "Steam", title: "^.*(Guard|Login).*"}
+    { class: "Steam", title: "^.*(Guard|Login).*" },
+    { class: "krunner" }
 ];
 
 export interface WindowRule {
