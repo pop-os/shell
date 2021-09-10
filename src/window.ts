@@ -280,6 +280,11 @@ export class ShellWindow {
             // Quake-style terminals such as Tilix's quake mode.
             if (role === "quake") return false;
 
+            // Steam loading window is less than 400px wide and 200px tall
+            if (this.meta.get_title() === "Steam") {
+                const rect = this.rect();
+                if (rect.width < 400 && rect.height < 200) return false;
+            }
 
             // Only normal windows will be considered for tiling
             return this.meta.window_type == Meta.WindowType.NORMAL
