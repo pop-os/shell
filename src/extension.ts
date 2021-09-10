@@ -152,7 +152,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     injections: Array<Injection> = new Array();
 
     /** The window that was focused before the last window */
-    prev_focused: [null | Entity, null | Entity] = [null, null];
+    private prev_focused: [null | Entity, null | Entity] = [null, null];
 
     tween_signals: Map<string, [SignalID, any]> = new Map();
 
@@ -1068,6 +1068,17 @@ export class Ext extends Ecs.System<ExtEvent> {
         } else if (this.settings.snap_to_grid()) {
             this.tiler.snap(this, win);
         }
+    }
+
+    previously_focused(active: Window.ShellWindow): null | Ecs.Entity {
+        for (const id of [1, 0]) {
+            const prev = this.prev_focused[id]
+            if (prev && ! Ecs.entity_eq(active.entity, prev)) {
+                return prev;
+            }
+        }
+
+        return null
     }
 
     movement_is_valid(win: Window.ShellWindow, movement: movement.Movement) {
