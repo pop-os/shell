@@ -89,7 +89,7 @@ export class Search {
             const s = event.get_state();
 
             const is_down = (): boolean => {
-                return c == 65364 || c == 65289 || (s == Clutter.ModifierType.CONTROL_MASK && c == 106)
+                return c == 65364 || (s == Clutter.ModifierType.CONTROL_MASK && c == 106)
                     || (s == Clutter.ModifierType.CONTROL_MASK && c == 110)
             }
 
