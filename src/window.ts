@@ -587,7 +587,7 @@ export class ShellWindow {
     }
 
     private wm_class_changed() {
-        if (this.is_tilable(this.ext) && !this.meta.minimized) {
+        if (this.is_tilable(this.ext)) {
             this.ext.connect_window(this);
             if (!this.meta.minimized) {
                 this.ext.auto_tiler?.auto_tile(this.ext, this, this.ext.init);
