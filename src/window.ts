@@ -283,7 +283,11 @@ export class ShellWindow {
             // Steam loading window is less than 400px wide and 200px tall
             if (this.meta.get_title() === "Steam") {
                 const rect = this.rect();
-                if (rect.width < 400 && rect.height < 200) return false;
+
+                const is_dialog = rect.width < 400 && rect.height < 200;
+                const is_first_login = rect.width === 432 && rect.height === 438;
+
+                if (is_dialog || is_first_login) return false;
             }
 
             // Only normal windows will be considered for tiling
