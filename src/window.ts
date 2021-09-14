@@ -126,6 +126,7 @@ export class ShellWindow {
                 this.meta.connect('size-changed', () => { this.window_changed() }),
                 this.meta.connect('position-changed', () => { this.window_changed() }),
                 this.meta.connect('workspace-changed', () => { this.workspace_changed() }),
+                this.meta.connect('notify::wm-class', () => { this.wm_class_changed(); }),
                 this.meta.connect('raised', () => { this.window_raised() }),
             );
     }
@@ -539,7 +540,7 @@ export class ShellWindow {
     }
 
     update_border_layout() {
-        let {x, y, width, height} = this.meta.get_frame_rect();
+        let { x, y, width, height } = this.meta.get_frame_rect();
 
         const border = this.border;
         let borderSize = this.border_size;
@@ -596,6 +597,15 @@ export class ShellWindow {
 
                 border.set_position(x, y)
                 border.set_size(width, height)
+            }
+        }
+    }
+
+    private wm_class_changed() {
+        if (this.is_tilable(this.ext)) {
+            this.ext.connect_window(this);
+            if (!this.meta.minimized) {
+                this.ext.auto_tiler?.auto_tile(this.ext, this, this.ext.init);
             }
         }
     }
