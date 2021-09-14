@@ -2035,7 +2035,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                 let actor = window.meta.get_compositor_private();
                 if (actor) {
                     if (!window.meta.minimized) {
-                        tiler.auto_tile(this, window, false);
+                        tiler.auto_tile(this, window, true);
                     }
                 }
             }
