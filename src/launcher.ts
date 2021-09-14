@@ -337,7 +337,9 @@ export class Launcher extends search.Search {
         super._open(global.get_current_time(), false)
 
         this.dialog.dialogLayout.x = (mon.width / 2) - (this.dialog.dialogLayout.width / 2)
-        this.dialog.dialogLayout.y = (mon.height / 2) - (this.dialog.dialogLayout.height / 2)
+
+        let height = mon.height >= 900 ? mon.height / 2 : mon.height / 3.5
+        this.dialog.dialogLayout.y = height - (this.dialog.dialogLayout.height / 2)
     }
 
     start_services() {
