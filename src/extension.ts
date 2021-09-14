@@ -419,29 +419,30 @@ export class Ext extends Ecs.System<ExtEvent> {
         return window ? window.meta.get_compositor_private() : null;
     }
 
-    attach_config(): [any, SignalID] {
-        const monitor = this.conf_watch = Gio.File.new_for_path(Config.CONF_FILE)
-            .monitor(Gio.FileMonitorFlags.NONE, null);
+    // TODO: Causes gjs to burn CPU cycles in a lock
+    // attach_config(): [any, SignalID] {
+    //     const monitor = this.conf_watch = Gio.File.new_for_path(Config.CONF_FILE)
+    //         .monitor(Gio.FileMonitorFlags.NONE, null);
 
-        return [monitor, monitor.connect('changed', () => {
-            this.conf.reload()
+    //     return [monitor, monitor.connect('changed', () => {
+    //         this.conf.reload()
 
-            // If the auto-tilable status of a window has changed, detach or attach the window.
-            if (this.auto_tiler) {
-                const at = this.auto_tiler;
-                for (const [entity, window] of this.windows.iter()) {
-                    const attachment = at.attached.get(entity);
-                    if (window.is_tilable(this)) {
-                        if (!attachment) {
-                            at.auto_tile(this, window, this.init);
-                        }
-                    } else if (attachment) {
-                        at.detach_window(this, entity)
-                    }
-                }
-            }
-        })];
-    }
+    //         // If the auto-tilable status of a window has changed, detach or attach the window.
+    //         if (this.auto_tiler) {
+    //             const at = this.auto_tiler;
+    //             for (const [entity, window] of this.windows.iter()) {
+    //                 const attachment = at.attached.get(entity);
+    //                 if (window.is_tilable(this)) {
+    //                     if (!attachment) {
+    //                         at.auto_tile(this, window, this.init);
+    //                     }
+    //                 } else if (attachment) {
+    //                     at.detach_window(this, entity)
+    //                 }
+    //             }
+    //         }
+    //     })];
+    // }
 
     /// Connects a callback signal to a GObject, and records the signal.
     connect(object: GObject.Object, property: string, callback: (...args: any) => boolean | void): SignalID {
@@ -1703,7 +1704,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     /** Begin listening for signals from windows, and add any pre-existing windows. */
     signals_attach() {
-        this.conf_watch = this.attach_config();
+        // this.conf_watch = this.attach_config();
 
         this.tiler.queue.start(100, (movement) => {
             movement()
