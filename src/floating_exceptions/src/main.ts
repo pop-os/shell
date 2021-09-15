@@ -259,7 +259,7 @@ class App {
             switch (event.tag) {
                 // SelectWindow
                 case 0:
-                    println(`SELECT`)
+                    println("SELECT")
                     Gtk.main_quit()
                     break
 
@@ -282,12 +282,14 @@ class App {
                 case 2:
                     log(`toggling exception ${event.enable}`)
                     this.config.toggle_system_exception(event.wmclass, event.wmtitle, !event.enable)
+                    println("MODIFIED")
                     break
 
                 // RemoveException
                 case 3:
                     log(`removing exception`)
                     this.config.remove_user_exception(event.wmclass, event.wmtitle)
+                    println("MODIFIED")
                     break
 
             }

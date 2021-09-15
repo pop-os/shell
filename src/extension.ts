@@ -515,20 +515,42 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     exception_dialog() {
         let path = Me.dir.get_path() + "/floating_exceptions/main.js";
+        const cancellable = new Gio.Cancellable();
 
-        utils.async_process(["gjs", path], null, null)
-            .then(output => {
-                log.debug(`Floating Window Dialog Event: ${output}`)
-                this.conf.reload()
-                this.tiling_config_reapply()
-                switch (output.trim()) {
-                    case "SELECT":
-                        this.register_fn(() => this.exception_select())
+        const event_handler = (event: string): boolean => {
+            switch (event) {
+                case "MODIFIED":
+                    this.register_fn(() => {
+                        this.conf.reload()
+                        this.tiling_config_reapply()
+                    })
+                    break
+                case "SELECT":
+                    this.register_fn(() => this.exception_select())
+                    return false
+            }
+
+            return true
+        }
+
+        const ipc = utils.async_process_ipc(["gjs", path])
+
+        if (ipc) {
+            const generator = (stdout: any, res: any) => {
+                try {
+                    const [bytes,] = stdout.read_line_finish(res)
+                    if (bytes) {
+                        if (event_handler((imports.byteArray.toString(bytes) as string).trim())) {
+                            ipc.stdout.read_line_async(0, cancellable, generator)
+                        }
+                    }
+                } catch (why) {
+                    log.error(`failed to read response from floating exceptions dialog: ${why}`)
                 }
-            })
-            .catch(error => {
-                log.error(`floating window process error: ${error}`)
-            })
+            }
+
+            ipc.stdout.read_line_async(0, cancellable, generator)
+        }
     }
 
     exception_select() {
