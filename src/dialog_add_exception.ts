@@ -15,7 +15,7 @@ export class AddExceptionDialog {
         shouldFadeOut: false
     });
 
-    constructor(cancel: () => void, this_app: () => void, current_window: () => void) {
+    constructor(cancel: () => void, this_app: () => void, current_window: () => void, on_close: () => void) {
         let title = St.Label.new("Add Floating Window Exception");
         title.set_x_align(Clutter.ActorAlign.CENTER)
         title.set_style("font-weight: bold")
@@ -34,6 +34,7 @@ export class AddExceptionDialog {
             label: "Cancel",
             action: () => {
                 cancel();
+                on_close()
                 this.close();
             },
             key: Clutter.KEY_Escape
@@ -43,6 +44,7 @@ export class AddExceptionDialog {
             label: "This App's Windows",
             action: () => {
                 this_app();
+                on_close()
                 this.close();
             },
         });
@@ -51,6 +53,7 @@ export class AddExceptionDialog {
             label: "Current Window Only",
             action: () => {
                 current_window();
+                on_close()
                 this.close();
             }
         })

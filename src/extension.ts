@@ -419,31 +419,6 @@ export class Ext extends Ecs.System<ExtEvent> {
         return window ? window.meta.get_compositor_private() : null;
     }
 
-    // TODO: Causes gjs to burn CPU cycles in a lock
-    // attach_config(): [any, SignalID] {
-    //     const monitor = this.conf_watch = Gio.File.new_for_path(Config.CONF_FILE)
-    //         .monitor(Gio.FileMonitorFlags.NONE, null);
-
-    //     return [monitor, monitor.connect('changed', () => {
-    //         this.conf.reload()
-
-    //         // If the auto-tilable status of a window has changed, detach or attach the window.
-    //         if (this.auto_tiler) {
-    //             const at = this.auto_tiler;
-    //             for (const [entity, window] of this.windows.iter()) {
-    //                 const attachment = at.attached.get(entity);
-    //                 if (window.is_tilable(this)) {
-    //                     if (!attachment) {
-    //                         at.auto_tile(this, window, this.init);
-    //                     }
-    //                 } else if (attachment) {
-    //                     at.detach_window(this, entity)
-    //                 }
-    //             }
-    //         }
-    //     })];
-    // }
-
     /// Connects a callback signal to a GObject, and records the signal.
     connect(object: GObject.Object, property: string, callback: (...args: any) => boolean | void): SignalID {
         const signal = object.connect(property, callback);
@@ -528,6 +503,11 @@ export class Ext extends Ecs.System<ExtEvent> {
                     win.meta.get_title()
                 );
                 this.exception_dialog()
+            },
+            // Reload the tiling config on dialog close
+            () => {
+                this.conf.reload()
+                this.tiling_config_reapply()
             }
         );
         d.open();
@@ -539,6 +519,8 @@ export class Ext extends Ecs.System<ExtEvent> {
         utils.async_process(["gjs", path], null, null)
             .then(output => {
                 log.debug(`Floating Window Dialog Event: ${output}`)
+                this.conf.reload()
+                this.tiling_config_reapply()
                 switch (output.trim()) {
                     case "SELECT":
                         this.register_fn(() => this.exception_select())
@@ -1969,6 +1951,23 @@ export class Ext extends Ecs.System<ExtEvent> {
         for (const entity of this.entities()) {
             if (this.contains_tag(entity, Tags.Tiled)) {
                 yield entity;
+            }
+        }
+    }
+
+    /// If the auto-tilable status of a window has changed, detach or attach the window.
+    tiling_config_reapply() {
+        if (this.auto_tiler) {
+            const at = this.auto_tiler;
+            for (const [entity, window] of this.windows.iter()) {
+                const attachment = at.attached.get(entity);
+                if (window.is_tilable(this)) {
+                    if (!attachment) {
+                        at.auto_tile(this, window, this.init);
+                    }
+                } else if (attachment) {
+                    at.detach_window(this, entity)
+                }
             }
         }
     }
