@@ -554,20 +554,11 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     exception_select() {
-        if (GNOME_VERSION?.startsWith("3.36")) {
-            // 3.36 required a delay to work
-            GLib.timeout_add(GLib.PRIORITY_LOW, 500, () => {
-                this.exception_selecting = true
-                overview.show()
-                return false
-            })
-        } else {
-            GLib.idle_add(GLib.PRIORITY_LOW, () => {
-                this.exception_selecting = true
-                overview.show()
-                return false
-            })
-        }
+        GLib.timeout_add(GLib.PRIORITY_LOW, 500, () => {
+            this.exception_selecting = true
+            overview.show()
+            return false
+        })
     }
 
     exit_modes() {
