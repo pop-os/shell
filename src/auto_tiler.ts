@@ -202,7 +202,6 @@ export class AutoTiler {
             log.debug(`attach to workspace: ${result.value}`)
             this.attach_to_workspace(ext, win, ext.workspace_id(win));
         } else {
-            log.debug(`attaching to window ${win.entity}`)
             this.attach_to_window(ext, result.value, win,  { auto: 0 })
         }
     }
@@ -657,7 +656,7 @@ export class AutoTiler {
             return Err('ignoring focus');
         }
 
-        const prev = ext.previously_focused(win)
+        const prev = ext.prev_focused[1]
 
         if (!prev) {
             return Err('no window has been previously focused');
@@ -685,9 +684,9 @@ export class AutoTiler {
             return Err('focused window is not attached');
         }
 
-        return onto.workspace_id() == win.workspace_id()
+        return onto.meta.get_monitor() == win.meta.get_monitor() && onto.workspace_id() == win.workspace_id()
             ? Ok(onto)
-            : Err('window is not on the same workspace');
+            : Err('window is not on the same monitor or workspace');
     }
 
     private toggle_orientation_(ext: Ext, focused: ShellWindow): Result<void, string> {
