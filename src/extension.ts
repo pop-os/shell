@@ -52,11 +52,11 @@ const { Workspace } = imports.ui.workspace;
 const { WorkspaceThumbnail } = imports.ui.workspaceThumbnail;
 const Tags = Me.imports.tags;
 
-const STYLESHEET_PATHS = ['light', 'dark'].map(stylesheet_path);
+const STYLESHEET_PATHS = ['light', 'dark', 'highcontrast'].map(stylesheet_path);
 const STYLESHEETS = STYLESHEET_PATHS.map((path) => Gio.File.new_for_path(path));
 const GNOME_VERSION = imports.misc.config.PACKAGE_VERSION;
 
-enum Style { Light, Dark }
+enum Style { Light, Dark, HighContrast }
 
 interface Display {
     area: Rectangle;
@@ -108,7 +108,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     column_size: number = 32;
 
     /** The currently-loaded theme variant */
-    current_style: Style = this.settings.is_dark_shell() ? Style.Dark : Style.Light;
+    current_style: Style = Style.Dark;
 
     /** Set when the display configuration has been triggered for execution */
     displays_updating: SignalID | null = null;
@@ -215,6 +215,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         super(new Executor.GLibExecutor());
 
         this.load_settings();
+        this.reload_theme()
 
         this.register_fn(() => load_theme(this.current_style));
 
@@ -1379,11 +1380,19 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     on_gtk_shell_changed() {
-        load_theme(this.settings.is_dark_shell() ? Style.Dark : Style.Light);
+        this.reload_theme();
+        load_theme(this.current_style)
     }
 
     on_gtk_theme_change() {
-        load_theme(this.settings.is_dark_shell() ? Style.Dark : Style.Light);
+        this.reload_theme()
+        load_theme(this.current_style)
+    }
+
+    reload_theme() {
+        this.current_style = this.settings.is_dark()
+            ? Style.Dark
+            : this.settings.is_high_contrast() ? Style.HighContrast : Style.Light
     }
 
     /** Handle window maximization notifications */

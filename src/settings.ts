@@ -1,5 +1,5 @@
-const ExtensionUtils = imports.misc.extensionUtils;
-const extension = ExtensionUtils.getCurrentExtension();
+const Me = imports.misc.extensionUtils.getCurrentExtension();
+
 const { Gio, Gdk } = imports.gi;
 
 const DARK = ["dark", "adapta", "plata", "dracula"]
@@ -31,7 +31,7 @@ function settings_new_id(schema_id: string): Settings | null {
 
 function settings_new_schema(schema: string): Settings {
     const GioSSS = Gio.SettingsSchemaSource;
-    const schemaDir = extension.dir.get_child("schemas");
+    const schemaDir = Me.dir.get_child("schemas");
 
     let schemaSource = schemaDir.query_exists(null) ?
         GioSSS.new_from_directory(schemaDir.get_path(), GioSSS.get_default(), false) :
@@ -41,7 +41,7 @@ function settings_new_schema(schema: string): Settings {
 
     if (!schemaObj) {
         throw new Error("Schema " + schema + " could not be found for extension "
-            + extension.metadata.uuid + ". Please check your installation.")
+            + Me.metadata.uuid + ". Please check your installation.")
     }
 
     return new Gio.Settings({ settings_schema: schemaObj });
@@ -62,7 +62,7 @@ const LOG_LEVEL = "log-level";
 const SHOW_SKIPTASKBAR = "show-skip-taskbar";
 
 export class ExtensionSettings {
-    ext: Settings = settings_new_schema(extension.metadata["settings-schema"]);
+    ext: Settings = settings_new_schema(Me.metadata["settings-schema"]);
     int: Settings | null = settings_new_id("org.gnome.desktop.interface");
     mutter: Settings | null = settings_new_id("org.gnome.mutter");
     shell: Settings | null = settings_new_id("org.gnome.shell.extensions.user-theme");
@@ -100,21 +100,21 @@ export class ExtensionSettings {
         return rgba;
     }
 
-    is_dark(): boolean {
-        if (this.int) {
-            let theme = this.int.get_string("gtk-theme").toLowerCase();
-            return DARK.some(dark => theme.includes(dark))
-        }
-
-        return false
+    theme(): string {
+        return this.shell
+            ? this.shell.get_string("name")
+            : this.int
+                ? this.int.get_string("gtk-theme")
+                : "Adwaita"
     }
 
-    is_dark_shell(): boolean {
-        if (this.shell) {
-            let theme = this.shell.get_string("name").toLowerCase()
-            return DARK.some(dark => theme.includes(dark) || theme.length === 0)
-        }
-        return this.is_dark();
+    is_dark(): boolean {
+        const theme = this.theme().toLowerCase()
+        return DARK.some(dark => theme.includes(dark))
+    }
+
+    is_high_contrast(): boolean {
+        return this.theme().toLowerCase() === "highcontrast"
     }
 
     row_size(): number {
