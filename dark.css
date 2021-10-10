@@ -60,7 +60,3 @@
 .pop-shell-tab-urgent {
     background: #D00;
 }
-
-.pop-shell-entry:indeterminate {
-    font-style: italic
-}
