@@ -274,7 +274,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         switch (event.tag) {
             /** Callback Event */
             case 1:
-                (event.callback())
+                (event.callback)();
                 break
 
             /** Window Event */
