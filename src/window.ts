@@ -298,7 +298,7 @@ export class ShellWindow {
                 // If a window lacks a class, it's probably a web browser dialog
                 && wm_class !== null
                 // Blacklist any windows that happen to leak through our filter
-                && !ext.conf.window_shall_float(wm_class, this.meta.get_title());
+                && !ext.conf.window_shall_float(wm_class, this.title());
         };
 
         return !ext.contains_tag(this.entity, Tags.Floating)
@@ -400,6 +400,11 @@ export class ShellWindow {
 
         other.move(ext, ar);
         this.move(ext, br, () => place_pointer_on(this.ext.conf.default_pointer_position, this.meta));
+    }
+
+    title(): string {
+        const title = this.meta.get_title();
+        return title ? title : this.name(this.ext)
     }
 
 

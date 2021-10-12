@@ -249,8 +249,8 @@ export class Ext extends Ecs.System<ExtEvent> {
             for (const window of this.tab_list(Meta.TabList.NORMAL, null)) {
                 wins.push([
                     window.entity,
-                    window.meta.get_title(),
-                    window.name(this),
+                    window.title(),
+                    window.name(this)
                 ])
             }
 
@@ -500,7 +500,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                 let wmclass = win.meta.get_wm_class();
                 if (wmclass) this.conf.add_window_exception(
                     wmclass,
-                    win.meta.get_title()
+                    win.title()
                 );
                 this.exception_dialog()
             },
