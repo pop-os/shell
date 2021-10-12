@@ -92,7 +92,7 @@ export class Stack {
         if (!this.widgets) return;
 
         const entity = window.entity;
-        const label = window.meta.get_title();
+        const label = window.title()
         const active = Ecs.entity_eq(entity, this.active);
 
         const button: St.Button = new St.Button({
@@ -421,7 +421,7 @@ export class Stack {
             }
 
             this.watch_signals(this.active_id, c.button, window);
-            this.buttons.get(c.button)?.set_label(window.meta.get_title());
+            this.buttons.get(c.button)?.set_label(window.title());
             this.activate(window.entity);
         }
     }
@@ -576,7 +576,7 @@ export class Stack {
         this.tabs[comp].signals = [
             window.meta.connect('notify::title', () => {
                 this.window_exec(comp, entity, (window) => {
-                    this.buttons.get(button)?.set_label(window.meta.get_title())
+                    this.buttons.get(button)?.set_label(window.title())
                 });
             }),
 
