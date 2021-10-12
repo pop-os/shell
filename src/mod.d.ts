@@ -195,7 +195,7 @@ declare namespace Meta {
         get_pid(): number;
         get_role(): null | string;
         get_stable_sequence(): number;
-        get_title(): string;
+        get_title(): null | string;
         get_transient_for(): Window | null;
         get_user_time(): number;
         get_wm_class(): string | null;

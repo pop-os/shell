@@ -250,8 +250,8 @@ export class Ext extends Ecs.System<ExtEvent> {
             for (const window of this.tab_list(Meta.TabList.NORMAL, null)) {
                 wins.push([
                     window.entity,
-                    window.meta.get_title(),
-                    window.name(this),
+                    window.title(),
+                    window.name(this)
                 ])
             }
 
@@ -501,7 +501,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                 let wmclass = win.meta.get_wm_class();
                 if (wmclass) this.conf.add_window_exception(
                     wmclass,
-                    win.meta.get_title()
+                    win.title()
                 );
                 this.exception_dialog()
             },
@@ -2057,7 +2057,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                 let actor = window.meta.get_compositor_private();
                 if (actor) {
                     if (!window.meta.minimized) {
-                        tiler.auto_tile(this, window, true);
+                        tiler.auto_tile(this, window, false);
                     }
                 }
             }

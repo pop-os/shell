@@ -685,9 +685,9 @@ export class AutoTiler {
             return Err('focused window is not attached');
         }
 
-        return onto.workspace_id() == win.workspace_id()
+        return onto.meta.get_monitor() == win.meta.get_monitor() && onto.workspace_id() == win.workspace_id()
             ? Ok(onto)
-            : Err('window is not on the same workspace');
+            : Err('window is not on the same monitor or workspace');
     }
 
     private toggle_orientation_(ext: Ext, focused: ShellWindow): Result<void, string> {
