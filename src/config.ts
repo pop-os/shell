@@ -48,7 +48,8 @@ export const DEFAULT_FLOAT_RULES: Array<FloatRule> = [
     { class: "Gnome-initial-setup" },
     { class: "Steam", title: "^.*(Guard|Login).*" },
     { class: "krunner" },
-    { class: "ibus-.*" }
+    { class: "ibus-.*" },
+    { class: "gjs" }
 ];
 
 export interface WindowRule {
