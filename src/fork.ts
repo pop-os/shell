@@ -73,11 +73,13 @@ export class Fork {
         let area: [number, number, number, number];
 
         if (this.is_horizontal()) {
-            const width = this.area.width - this.length_left + ext.gap_inner;
-            area = [width, this.area.y, this.area.width - width, this.area.height];
+            const xpos = this.area.x + this.length_left + ext.gap_inner
+            const width = this.area.width - this.length_left - ext.gap_inner
+            area = [xpos, this.area.y, width, this.area.height];
         } else {
-            const height = this.area.height - this.length_left + ext.gap_inner;
-            area = [this.area.x, height, this.area.width, this.area.height - height];
+            const ypos = this.area.y + this.length_left + ext.gap_inner
+            const height = this.area.height - this.length_left - ext.gap_inner;
+            area = [this.area.x, ypos, this.area.width, height];
         }
 
         return new Rect.Rectangle(area);
