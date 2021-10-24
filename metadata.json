@@ -6,6 +6,7 @@
     "settings-schema": "org.gnome.shell.extensions.pop-shell",
     "shell-version": [
         "3.36",
-        "40.beta"
+        "40",
+        "41"
     ]
 }
