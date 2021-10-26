@@ -803,7 +803,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         this.show_border_on_focused();
 
-        if (this.auto_tiler && this.prev_focused[0] !== null) {
+        if (this.auto_tiler && win.is_tilable(this) && this.prev_focused[0] !== null) {
             let prev = this.windows.get(this.prev_focused[0]);
             let is_attached = this.auto_tiler.attached.contains(this.prev_focused[0]);
 
