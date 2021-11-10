@@ -190,6 +190,11 @@ export class Launcher extends search.Search {
     }
 
     launch_desktop_entry(entry: JsonIPC.DesktopEntry) {
+        if (!("AppLaunchGpu" in Shell)) {
+            this.launch_gio(entry);
+            return;
+        }
+
         const basename = (name: string): string => {
             return name.substr(name.indexOf('/applications/') + 14).replace('/', '-')
         }
@@ -212,14 +217,7 @@ export class Launcher extends search.Search {
             log.error(`GNOME Shell cannot find desktop entry for ${desktop_entry_id}`)
             log.error(`pop-launcher will use Gio.DesktopAppInfo instead`);
 
-            const dapp = Gio.DesktopAppInfo.new_from_filename(entry.path);
-            
-            if (!dapp) {
-                log.error(`could not find desktop entry for ${entry.path}`);
-                return;
-            }
-
-            this.launch_desktop_app(dapp, entry.path);
+            this.launch_gio(entry)
             return;
         }
 
@@ -291,6 +289,17 @@ export class Launcher extends search.Search {
 
             return true;
         })
+    }
+
+    launch_gio(entry: JsonIPC.DesktopEntry) {
+        const dapp = Gio.DesktopAppInfo.new_from_filename(entry.path);
+            
+        if (!dapp) {
+            log.error(`could not find desktop entry for ${entry.path}`);
+            return;
+        }
+
+        this.launch_desktop_app(dapp, entry.path);
     }
 
     list_workspace(ext: Ext) {
