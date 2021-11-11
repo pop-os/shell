@@ -8,6 +8,8 @@
   <KeyListEntry name="tile-move-up" description="Move window up"/>
   <KeyListEntry name="pop-workspace-down" description="Move window to lower workspace"/>
   <KeyListEntry name="pop-workspace-up" description="Move window to upper workspace"/>
+  <KeyListEntry name="pop-workspace-left" description="Move window to left workspace"/>
+  <KeyListEntry name="pop-workspace-righ" description="Move window to right workspace"/>
   <KeyListEntry name="pop-monitor-down" description="Move window to lower monitor"/>
   <KeyListEntry name="pop-monitor-left" description="Move window to leftward monitor"/>
   <KeyListEntry name="pop-monitor-right" description="Move window to rightward monitor"/>

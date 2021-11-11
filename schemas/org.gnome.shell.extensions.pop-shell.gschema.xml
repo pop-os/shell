@@ -202,6 +202,16 @@
             <summary>Move window to the upper workspace</summary>
         </key>
 
+        <key type="as" name="pop-workspace-righ">
+            <default><![CDATA[['<Super><Shift>Right','<Super><Shift>KP_Right','<Super><Shift>l']]]></default>
+            <summary>Move window to the right workspace</summary>
+        </key>
+
+        <key type="as" name="pop-workspace-left">
+            <default><![CDATA[['<Super><Shift>Left','<Super><Shift>KP_Left','<Super><Shift>h']]]></default>
+            <summary>Move window to the left workspace</summary>
+        </key>
+
         <key type="as" name="pop-monitor-down">
             <default><![CDATA[['<Super><Shift><Primary>Down','<Super><Shift><Primary>KP_Down','<Super><Shift><Primary>j']]]></default>
             <summary>Move window to the lower monitor</summary>

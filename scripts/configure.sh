@@ -74,6 +74,10 @@ set_keybindings() {
     dconf write ${KEYS_GNOME_WM}/switch-to-workspace-down "['<Primary><Super>Down','<Primary><Super>${down}']"
     # Move to workspace above
     dconf write ${KEYS_GNOME_WM}/switch-to-workspace-up "['<Primary><Super>Up','<Primary><Super>${up}']"
+    # Move to workspace left
+    dconf write ${KEYS_GNOME_WM}/switch-to-workspace-left "['<Primary><Super>Left','<Primary><Super>${left}']"
+    # Move to workspace right
+    dconf write ${KEYS_GNOME_WM}/switch-to-workspace-right "['<Primary><Super>Right','<Primary><Super>${right}']"
 
     # Disable tiling to left / right of screen
     dconf write ${KEYS_MUTTER}/toggle-tiled-left "@as []"
