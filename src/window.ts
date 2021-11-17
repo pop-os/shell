@@ -67,9 +67,9 @@ export class ShellWindow {
 
     prev_rect: null | Rectangular = null;
 
-    private was_hidden: boolean = false;
+    window_app: any;
 
-    private window_app: any;
+    private was_hidden: boolean = false;
 
     private extra: X11Info = {
         normal_hints: new OnceCell(),

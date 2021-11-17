@@ -451,11 +451,6 @@ function generate_icon(icon: JsonIPC.IconSource, icon_size: number, ext: Ext): n
             gicon: Gio.content_type_get_icon(icon.Mime),
             icon_size,
         })
-    } else if ("Window" in icon) {
-        const window = ext.windows.get(icon.Window);
-        if (window) {
-            app_icon = window.icon(ext, icon_size);
-        }
     }
 
     if (app_icon) {
