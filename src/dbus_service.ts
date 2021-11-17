@@ -14,7 +14,7 @@ const IFACE: string = `<node>
         <arg type="(uu)" direction="in" name="window"/>
     </method>
     <method name="WindowList">
-        <arg type="a((uu)ss)" direction="out" name="args"/>
+        <arg type="a((uu)sss)" direction="out" name="args"/>
     </method>
     <method name="WindowQuit">
         <arg type="(uu)" direction="in" name="window"/>
@@ -32,7 +32,7 @@ export class Service {
     FocusDown: () => void = () => {}
     Launcher: () => void = () => {}
     WindowFocus: (window: [number, number]) => void = () => {}
-    WindowList: () => Array<[[number, number], string, string]> = () => []
+    WindowList: () => Array<[[number, number], string, string, string]> = () => []
     WindowQuit: (window: [number, number]) => void = () => {}
 
     constructor() {

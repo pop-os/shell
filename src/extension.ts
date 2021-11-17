@@ -244,14 +244,16 @@ export class Ext extends Ecs.System<ExtEvent> {
             this.window_search.close()
         }
 
-        this.dbus.WindowList = (): Array<[[number, number], string, string]> => {
+        this.dbus.WindowList = (): Array<[[number, number], string, string, string]> => {
             const wins = new Array()
 
             for (const window of this.tab_list(Meta.TabList.NORMAL, null)) {
+                const string = window.window_app.get_id();
                 wins.push([
                     window.entity,
                     window.title(),
-                    window.name(this)
+                    window.name(this),
+                    string ? string : ""
                 ])
             }
 
