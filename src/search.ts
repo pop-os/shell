@@ -4,7 +4,6 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 import * as Lib from 'lib';
 import * as rect from 'rectangle';
 
-import type { Ext } from 'extension'
 import type { JsonIPC } from 'launcher_service'
 
 const GLib: GLib = imports.gi.GLib;
@@ -138,7 +137,7 @@ export class Search {
             }
 
             this.last_trigger = global.get_current_time()
-            
+
             if (c === 65307) {
                 // Escape key was pressed
                 this.reset();
@@ -387,7 +386,7 @@ export class SearchOption {
 
     shortcut: St.Widget = new St.Label({ text: "", y_align: Clutter.ActorAlign.CENTER, style: "padding-left: 6px;padding-right: 6px" })
 
-    constructor(ext: Ext, title: string, description: null | string, category_icon: null | JsonIPC.IconSource, icon: null | JsonIPC.IconSource, icon_size: number,
+    constructor(title: string, description: null | string, category_icon: null | JsonIPC.IconSource, icon: null | JsonIPC.IconSource, icon_size: number,
                 exec: null | string, keywords: null | Array<string>) {
         this.title = title
         this.description = description
@@ -396,12 +395,12 @@ export class SearchOption {
 
         const layout = new St.BoxLayout({})
 
-        attach_icon(layout, category_icon, icon_size / 2, ext)
+        attach_icon(layout, category_icon, icon_size / 2)
 
         const label = new St.Label({ text: title })
         label.clutter_text.set_ellipsize(Pango.EllipsizeMode.END)
 
-        attach_icon(layout, icon, icon_size, ext)
+        attach_icon(layout, icon, icon_size)
 
         const info_box = new St.BoxLayout({ y_align: Clutter.ActorAlign.CENTER, vertical: true, x_expand: true });
         info_box.add_child(label)
@@ -418,9 +417,9 @@ export class SearchOption {
     }
 }
 
-function attach_icon(layout: any, icon: null | JsonIPC.IconSource, icon_size: number, ext: Ext) {
+function attach_icon(layout: any, icon: null | JsonIPC.IconSource, icon_size: number) {
     if (icon) {
-        const generated = generate_icon(icon, icon_size, ext)
+        const generated = generate_icon(icon, icon_size)
 
         if (generated) {
             generated.set_y_align(Clutter.ActorAlign.CENTER)
@@ -429,7 +428,7 @@ function attach_icon(layout: any, icon: null | JsonIPC.IconSource, icon_size: nu
     }
 }
 
-function generate_icon(icon: JsonIPC.IconSource, icon_size: number, ext: Ext): null | St.Widget {
+function generate_icon(icon: JsonIPC.IconSource, icon_size: number): null | St.Widget {
     let app_icon = null;
 
     if ("Name" in icon) {
