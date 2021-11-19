@@ -119,7 +119,6 @@ export class Launcher extends search.Search {
                 if (item) {
                     try {
                         const button = new search.SearchOption(
-                            this.ext,
                             item.name,
                             item.description,
                             item.category_icon ? item.category_icon : null,
@@ -213,7 +212,7 @@ export class Launcher extends search.Search {
             log.error(`pop-launcher will use Gio.DesktopAppInfo instead`);
 
             const dapp = Gio.DesktopAppInfo.new_from_filename(entry.path);
-            
+
             if (!dapp) {
                 log.error(`could not find desktop entry for ${entry.path}`);
                 return;
