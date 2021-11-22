@@ -498,10 +498,7 @@ export class AutoTiler {
             float_except = ext.conf.window_shall_float(wm_class, wm_title);
         }
 
-        if (ext.contains_tag(focused.entity, Tags.Floating) && !float_except) {
-            ext.delete_tag(focused.entity, Tags.Floating);
-            this.auto_tile(ext, focused, false);
-        } else if (!focused.is_tilable(ext)) {
+        if (float_except) {
             if (ext.contains_tag(focused.entity, Tags.ForceTile)) {
                 ext.delete_tag(focused.entity, Tags.ForceTile);
                 const fork_entity = this.attached.get(focused.entity);
@@ -509,18 +506,21 @@ export class AutoTiler {
                     this.detach_window(ext, focused.entity);
                 }
             } else {
-                if (!float_except) {
-                    ext.add_tag(focused.entity, Tags.ForceTile);
-                    this.auto_tile(ext, focused, false);
-                }
+                ext.add_tag(focused.entity, Tags.ForceTile);
+                this.auto_tile(ext, focused, false);
             }
-        } else {
-            const fork_entity = this.attached.get(focused.entity);
-            if (fork_entity) {
-                this.detach_window(ext, focused.entity);
-                ext.add_tag(focused.entity, Tags.Floating);
-            }
-        }
+	} else {
+	    if (ext.contains_tag(focused.entity, Tags.Floating)) {
+		ext.delete_tag(focused.entity, Tags.Floating);
+		this.auto_tile(ext, focused, false);
+	    } else {
+		const fork_entity = this.attached.get(focused.entity);
+		if (fork_entity) {
+		    this.detach_window(ext, focused.entity);
+		    ext.add_tag(focused.entity, Tags.Floating);
+		}
+	    }
+	}
     }
 
     toggle_orientation(ext: Ext, window: ShellWindow) {
