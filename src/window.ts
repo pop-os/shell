@@ -277,7 +277,7 @@ export class ShellWindow {
             }
 
             const role = this.meta.get_role();
-            
+
             // Quake-style terminals such as Tilix's quake mode.
             if (role === "quake") return false;
 
@@ -291,14 +291,18 @@ export class ShellWindow {
                 if (is_dialog || is_first_login) return false;
             }
 
+            // Blacklist any windows that happen to leak through our filter
+            // Windows that are tagged ForceTile are considered tilable despite exemption
+            if (wm_class !== null && ext.conf.window_shall_float(wm_class, this.title())) {
+                return ext.contains_tag(this.entity, Tags.ForceTile);
+            }
+
             // Only normal windows will be considered for tiling
             return this.meta.window_type == Meta.WindowType.NORMAL
                 // Transient windows are most likely dialogs
                 && !this.is_transient()
                 // If a window lacks a class, it's probably a web browser dialog
-                && wm_class !== null
-                // Blacklist any windows that happen to leak through our filter
-                && !ext.conf.window_shall_float(wm_class, this.title());
+                && wm_class !== null;
         };
 
         return !ext.contains_tag(this.entity, Tags.Floating)
