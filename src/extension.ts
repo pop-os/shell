@@ -2640,7 +2640,7 @@ let default_getcaption_workspace: any;
  */
 function _show_skip_taskbar_windows(ext: Ext) {
     let cfg = ext.conf;
-    if (!GNOME_VERSION?.startsWith("40.")) {
+    if (!GNOME_VERSION?.startsWith("4")) {
         // TODO GNOME 40 added a call to windowtracker and app var is not checked if null
         // in WindowPreview._init(). Then new WindowPreview() is being called on
         // _addWindowClone() of workspace.js.
@@ -2812,7 +2812,7 @@ function _show_skip_taskbar_windows(ext: Ext) {
  *
  */
 function _hide_skip_taskbar_windows() {
-    if (!GNOME_VERSION?.startsWith("40.")) {
+    if (!GNOME_VERSION?.startsWith("4")) {
         if (default_isoverviewwindow_ws)
             Workspace.prototype._isOverviewWindow = default_isoverviewwindow_ws;
     }
