@@ -2639,32 +2639,16 @@ let default_getcaption_workspace: any;
  *
  */
 function _show_skip_taskbar_windows(ext: Ext) {
-    let cfg = ext.conf;
-    if (!GNOME_VERSION?.startsWith("4")) {
-        // TODO GNOME 40 added a call to windowtracker and app var is not checked if null
-        // in WindowPreview._init(). Then new WindowPreview() is being called on
-        // _addWindowClone() of workspace.js.
-        // So it has to be skipped being overriden for now.
-
-        // Handle the overview
-        if (!default_isoverviewwindow_ws) {
-            default_isoverviewwindow_ws = Workspace.prototype._isOverviewWindow;
-            Workspace.prototype._isOverviewWindow = function(win: any) {
-                let meta_win = win;
-                if (GNOME_VERSION?.startsWith("3.36"))
-                    meta_win = win.get_meta_window();
-
-                let gnome_shell_wm_class = meta_win.get_wm_class() === "Gjs" ||
-                    meta_win.get_wm_class() === "Gnome-shell";
-                let show_skiptb = !cfg.skiptaskbar_shall_hide(meta_win);
-                return (show_skiptb && meta_win.skip_taskbar &&
-                        // ignore wm_class == null + Gjs and
-                        // are skip taskbar true
-                        (meta_win.get_wm_class() !== null &&
-                         !gnome_shell_wm_class) ||
-                    default_isoverviewwindow_ws(win));
-            };
-        }
+    // Handle the overview
+    if (!default_isoverviewwindow_ws) {
+        default_isoverviewwindow_ws = Workspace.prototype._isOverviewWindow;
+        Workspace.prototype._isOverviewWindow = function(win: any) {
+            let meta_win = win;
+            if (GNOME_VERSION?.startsWith("3.36"))
+                meta_win = win.get_meta_window();
+            return (is_valid_minimize_to_tray(meta_win, ext) ||
+                default_isoverviewwindow_ws(win));
+        };
     }
 
     // Handle _getCaption errors
@@ -2707,19 +2691,12 @@ function _show_skip_taskbar_windows(ext: Ext) {
             WorkspaceThumbnail.prototype._isOverviewWindow;
         WorkspaceThumbnail.prototype._isOverviewWindow = function (win: any) {
             let meta_win = win.get_meta_window();
-            // wm_class Gjs needs to be skipped to prevent the ghost window in
-            // workspace and overview
-            let gnome_shell_wm_class = meta_win.get_wm_class() === "Gjs" ||
-                meta_win.get_wm_class() === "Gnome-shell";
-            let show_skiptb = !cfg.skiptaskbar_shall_hide(meta_win);
-            return (show_skiptb && meta_win.skip_taskbar &&
-                    // ignore wm_class == null + Gjs and
-                    // are skip taskbar true
-                    (meta_win.get_wm_class() !== null &&
-                     !gnome_shell_wm_class)) ||
+            return is_valid_minimize_to_tray(meta_win, ext) ||
                 default_isoverviewwindow_ws_thumbnail(win);
         };
     }
+
+    let cfg = ext.conf;
 
     // Handle switch-applications
     if (!default_init_appswitcher) {
@@ -2788,12 +2765,10 @@ function _show_skip_taskbar_windows(ext: Ext) {
             let windows = global.display.get_tab_list(Meta.TabList.NORMAL_ALL,
                                                       workspace);
             return windows.map(w => {
-                let show_skiptb = !cfg.skiptaskbar_shall_hide(w);
-                let meta_window = w.is_attached_dialog() ? w.get_transient_for() : w;
-                if (meta_window) {
-                    if (!meta_window.is_skip_taskbar() ||
-                        meta_window.is_skip_taskbar() && show_skiptb) {
-                        return meta_window;
+                let meta_win = w.is_attached_dialog() ? w.get_transient_for() : w;
+                if (meta_win) {
+                    if (!meta_win.skip_taskbar || is_valid_minimize_to_tray(meta_win, ext)) {
+                        return meta_win;
                     }
                 }
                 return null;
@@ -2812,10 +2787,8 @@ function _show_skip_taskbar_windows(ext: Ext) {
  *
  */
 function _hide_skip_taskbar_windows() {
-    if (!GNOME_VERSION?.startsWith("4")) {
-        if (default_isoverviewwindow_ws)
-            Workspace.prototype._isOverviewWindow = default_isoverviewwindow_ws;
-    }
+    if (default_isoverviewwindow_ws)
+        Workspace.prototype._isOverviewWindow = default_isoverviewwindow_ws;
 
     if (GNOME_VERSION?.startsWith("3.36")) {
         if (default_getcaption_workspace)
@@ -2840,4 +2813,37 @@ function _hide_skip_taskbar_windows() {
         WindowSwitcherPopup.prototype._getWindowList =
             default_getwindowlist_windowswitcher;
     }
+}
+
+/**
+ * Moved skip task bar checking on this function/method
+ * Synchronized with ShellTracker type checks and watch out for attached dialogs
+ *
+ * Thanks to Bananaman and upstream gnome-shell devs for the information
+ *
+ * https://github.com/pop-os/shell/issues/1251
+ */
+function is_valid_minimize_to_tray(meta_win: Meta.Window, ext: Ext) {
+    let cfg = ext.conf;
+    let valid_min_to_tray = false;
+    switch (meta_win.window_type) {
+        case Meta.WindowType.NORMAL:
+        case Meta.WindowType.DIALOG:
+        case Meta.WindowType.UTILITY:
+        case Meta.WindowType.MODAL_DIALOG:
+            valid_min_to_tray = true;
+            break;
+    }
+
+    let gnome_shell_wm_class = meta_win.get_wm_class() === "Gjs" ||
+        meta_win.get_wm_class() === "Gnome-shell";
+    let show_skiptb = !cfg.skiptaskbar_shall_hide(meta_win);
+
+    valid_min_to_tray = valid_min_to_tray &&
+        !meta_win.is_attached_dialog() &&
+        show_skiptb && meta_win.skip_taskbar &&
+        meta_win.get_wm_class() !== null &&
+        !gnome_shell_wm_class;
+
+    return valid_min_to_tray;
 }
