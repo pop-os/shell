@@ -208,6 +208,7 @@ declare namespace Meta {
         is_client_decorated(): boolean;
         is_fullscreen(): boolean;
         is_on_all_workspaces(): boolean;
+        is_override_redirect(): boolean;
         is_skip_taskbar(): boolean;
         make_above(): void;
         make_fullscreen(): void;
