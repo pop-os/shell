@@ -2718,22 +2718,20 @@ function _show_skip_taskbar_windows(ext: Ext) {
             }
 
             let allWindows = global.display.get_tab_list(Meta.TabList.NORMAL_ALL, workspace);
-            let allRunningSkipTaskbarApps = allWindows.filter((w,i,a) => {
-                if (w) {
-                    let found_idx: any;
-                    // Find the first instance using wm_class
-                    for (let index = 0; index < a.length; index++) {
-                        if (a[index].get_wm_class() === w.get_wm_class()) {
-                            found_idx = index;
-                            break;
-                        }
-                    }
-                    return found_idx == i;
-                }
+            // Remove duplicate app names after including skip task bar windows too
+            // E.g. Extensions instance plus when opening an extensions prefs window
+            // Or Android windows when alt-tabbing (depends on where switch apps is bound)
+            let allWindowsWithSkipTaskBar = allWindows.filter((w,i,a) => {
+                let app: any = windowTracker.get_window_app(w);
+                return i === a.findIndex((wi) => {
+                    let w_app: any = windowTracker.get_window_app(wi);
+                    return app.get_name() === w_app.get_name();
+                });
             });
 
-            for (let i = 0; i < allRunningSkipTaskbarApps.length; i++) {
-                let meta_win = allRunningSkipTaskbarApps[i];
+            // This block collects the windows associated to an app icon
+            for (let i = 0; i < allWindowsWithSkipTaskBar.length; i++) {
+                let meta_win = allWindowsWithSkipTaskBar[i];
                 let show_skiptb = !cfg.skiptaskbar_shall_hide(meta_win);
                 if (meta_win.is_skip_taskbar() && !show_skiptb) continue;
                 let appIcon = new AppIcon(windowTracker.get_window_app(meta_win));
@@ -2787,31 +2785,40 @@ function _show_skip_taskbar_windows(ext: Ext) {
  *
  */
 function _hide_skip_taskbar_windows() {
-    if (default_isoverviewwindow_ws)
+    if (default_isoverviewwindow_ws) {
         Workspace.prototype._isOverviewWindow = default_isoverviewwindow_ws;
+        default_isoverviewwindow_ws = null;
+    }
 
     if (GNOME_VERSION?.startsWith("3.36")) {
-        if (default_getcaption_workspace)
+        if (default_getcaption_workspace) {
             Workspace.prototype._getCaption = default_getcaption_workspace;
+            default_getcaption_workspace = null;
+        }
     } else {
         if (default_getcaption_windowpreview) {
             const { WindowPreview } = imports.ui.windowPreview;
             WindowPreview.prototype._getCaption =
                 default_getcaption_windowpreview;
+            default_getcaption_windowpreview = null;
         }
     }
 
     if (default_isoverviewwindow_ws_thumbnail) {
         WorkspaceThumbnail.prototype._isOverviewWindow =
             default_isoverviewwindow_ws_thumbnail;
+        default_isoverviewwindow_ws_thumbnail = null;
     }
 
-    if (default_init_appswitcher)
+    if (default_init_appswitcher) {
         AppSwitcher.prototype._init = default_init_appswitcher;
+        default_init_appswitcher = null;
+    }
 
     if (default_getwindowlist_windowswitcher) {
         WindowSwitcherPopup.prototype._getWindowList =
             default_getwindowlist_windowswitcher;
+        default_getwindowlist_windowswitcher = null;
     }
 }
 
@@ -2828,10 +2835,10 @@ function is_valid_minimize_to_tray(meta_win: Meta.Window, ext: Ext) {
     let valid_min_to_tray = false;
     switch (meta_win.window_type) {
         case Meta.WindowType.NORMAL:
-        case Meta.WindowType.DIALOG:
-        case Meta.WindowType.UTILITY:
-        case Meta.WindowType.MODAL_DIALOG:
-            valid_min_to_tray = true;
+        case Meta.WindowType.UTILITY: // Gimp (Non-Single Window Mode)
+            // Don't track OR (override redirect)-windows since those are never
+            // allowed to be window managed:
+            valid_min_to_tray = !meta_win.is_override_redirect();
             break;
     }
 
