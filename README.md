@@ -205,7 +205,7 @@ Please install the following as dependencies when developing:
 
 While working on the shell, you can recompile, reconfigure, reinstall, and restart GNOME Shell with logging with `make debug`. Note that this only works reliably in X11 sessions, since Wayland will exit to the login screen on restarting the shell.
 
-[Discussions welcome on Pop Chat](https://chat.pop-os.org/community/channels/dev)
+[Discussions welcome on Pop Chat](https://chat.pop-os.org/pop-os/channels/development)
 
 ## License
 
