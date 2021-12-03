@@ -332,6 +332,7 @@ export class ShellWindow {
             meta.unmaximize(Meta.MaximizeFlags.HORIZONTAL);
             meta.unmaximize(Meta.MaximizeFlags.VERTICAL);
             meta.unmaximize(Meta.MaximizeFlags.HORIZONTAL | Meta.MaximizeFlags.VERTICAL);
+            actor.remove_all_transitions();
 
             const entity_string = String(this.entity);
             ext.movements.insert(this.entity, clone);
