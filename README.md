@@ -18,7 +18,7 @@ Therefore, we see an opportunity here to advance the usability of the GNOME desk
 - The Solution:
   - [Shared Features](#shared-features): Behaviors shared between floating and auto-tiling modes
   - [Floating Mode](#floating-mode): Behaviors specific to the floating mode
-  - [Auto-Tile Mode](#auto-tile-mode): Behaviors specific to the auto-tiling mode
+  - [Tiling Mode](#tiling-mode): Behaviors specific to the auto-tiling mode
   - [Plugins](#plugins): Details about plugins and development
 - [Developers](#developers): Guide for getting started with development
 ---
