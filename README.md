@@ -17,9 +17,8 @@ Therefore, we see an opportunity here to advance the usability of the GNOME desk
 - [Installation](#installation): For those wanting to install this on their distribution
 - The Solution:
   - [Shared Features](#shared-features): Behaviors shared between stacking and auto-tiling modes
-  - [Stacking Mode](#stacking-mode): Behaviors specific to the stacking mode
-  - [Auto-Tile Mode](#auto-tile-mode): Behaviors specific to the auto-tiling mode
-  - [Plugins](#plugins): Details about plugins and development
+  - [Floating Mode](#floating-mode): Behaviors specific to the floating mode
+  - [Tiling Mode](#tiling-mode): Behaviors specific to the auto-tiling mode
 - [Developers](#developers): Guide for getting started with development
 ---
 
