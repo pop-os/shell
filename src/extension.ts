@@ -2725,7 +2725,7 @@ function _show_skip_taskbar_windows(ext: Ext) {
                 let app: any = windowTracker.get_window_app(w);
                 return i === a.findIndex((wi) => {
                     let w_app: any = windowTracker.get_window_app(wi);
-                    return app.get_name() === w_app.get_name();
+                    return (app && w_app) ? app.get_name() === w_app.get_name() : false;
                 });
             });
 
