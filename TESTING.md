@@ -126,5 +126,6 @@ Tasks for a tester to verify when approving a patch. Use complex window layouts 
 
 - [ ] Close all windows-- no icons should be active in the GNOME launcher.
 - [ ] Open a window, enable tiling, stack the window, move to a different workspace, and disable tiling. The window should not become visible on the empty workspace.
+- [ ] With tiling still disabled, minimize the single window. The active hint should go away.
 - [ ] Maximize a window, then open another app with the Activities overview. The newly-opened app should be visible and focused.
 - [ ] Maximize a window, then open another app with the launcher. The newly-opened app should be visible and focused.
