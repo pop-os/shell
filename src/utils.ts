@@ -3,7 +3,7 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 import * as result from 'result';
 import * as error from 'error';
-// import * as log from 'log';
+import * as log from 'log';
 
 const { Gio, GLib, GObject, Meta } = imports.gi;
 const { Ok, Err } = result;
