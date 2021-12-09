@@ -81,7 +81,7 @@ set_keybindings() {
 
     # Toggle maximization state
     # dconf write ${KEYS_GNOME_WM}/toggle-maximized "['<Super>m']"
-    dconf write ${KEYS_GNOME_WM}/toggle-maximized "['<Super>a']"
+    dconf write ${KEYS_GNOME_WM}/toggle-maximized "['<Super>d']"
     # Lock screen
     dconf write ${KEYS_MEDIA}/screensaver "['<Super>Escape']"
     # Home folder
@@ -95,7 +95,7 @@ set_keybindings() {
     dconf write ${KEYS_MEDIA}/www "['<Super>q']"
     # Launch terminal
     # dconf write ${KEYS_MEDIA}/terminal "['<Super>t']"
-    dconf write ${KEYS_MEDIA}/terminal "['<Super>d']"
+    dconf write ${KEYS_MEDIA}/terminal "['<Super>a']"
     # Rotate Video Lock
     dconf write ${KEYS_MEDIA}/rotate-video-lock-static "@as []"
 
