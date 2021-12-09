@@ -80,22 +80,35 @@ set_keybindings() {
     dconf write ${KEYS_MUTTER}/toggle-tiled-right "@as []"
 
     # Toggle maximization state
-    dconf write ${KEYS_GNOME_WM}/toggle-maximized "['<Super>m']"
+    # dconf write ${KEYS_GNOME_WM}/toggle-maximized "['<Super>m']"
+    dconf write ${KEYS_GNOME_WM}/toggle-maximized "['<Super>a']"
     # Lock screen
     dconf write ${KEYS_MEDIA}/screensaver "['<Super>Escape']"
     # Home folder
-    dconf write ${KEYS_MEDIA}/home "['<Super>f']"
+    # dconf write ${KEYS_MEDIA}/home "['<Super>f']"
+    dconf write ${KEYS_MEDIA}/home "@as []"
     # Launch email client
-    dconf write ${KEYS_MEDIA}/email "['<Super>e']"
+    # dconf write ${KEYS_MEDIA}/email "['<Super>e']"
+    dconf write ${KEYS_MEDIA}/email "@as []"
     # Launch web browser
-    dconf write ${KEYS_MEDIA}/www "['<Super>b']"
+    # dconf write ${KEYS_MEDIA}/www "['<Super>b']"
+    dconf write ${KEYS_MEDIA}/www "['<Super>q']"
     # Launch terminal
-    dconf write ${KEYS_MEDIA}/terminal "['<Super>t']"
+    # dconf write ${KEYS_MEDIA}/terminal "['<Super>t']"
+    dconf write ${KEYS_MEDIA}/terminal "['<Super>d']"
     # Rotate Video Lock
     dconf write ${KEYS_MEDIA}/rotate-video-lock-static "@as []"
 
     # Close Window
-    dconf write ${KEYS_GNOME_WM}/close "['<Super>q', '<Alt>F4']"
+    # dconf write ${KEYS_GNOME_WM}/close "['<Super>q', '<Alt>F4']"
+    dconf write ${KEYS_GNOME_WM}/close "['<Alt>grave']"
+
+    # switch windows directly
+    dconf write ${KEYS_GNOME_WM}/switch-windows "@as []"
+    dconf write ${KEYS_GNOME_WM}/cycle-windows "['<Alt>Tab']"
+
+    # disable show desktop
+    dconf write ${KEYS_GNOME_WM}/show-desktop "@as []"    
 }
 
 if ! command -v gnome-extensions >/dev/null; then
