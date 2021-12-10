@@ -39,7 +39,8 @@ set_keybindings() {
     # Restore the keyboard shortcuts: disable <Super>Escape
     dconf write ${KEYS_MUTTER_WAYLAND_RESTORE} "@as []"
     # Hide window: disable <Super>h
-    dconf write ${KEYS_GNOME_WM}/minimize "@as ['<Super>comma']"
+    # dconf write ${KEYS_GNOME_WM}/minimize "@as ['<Super>comma']"
+    dconf write ${KEYS_GNOME_WM}/minimize "@as []"
     # Open the application menu: disable <Super>m
     dconf write ${KEYS_GNOME_SHELL}/open-application-menu "@as []"
     # Toggle message tray: disable <Super>m
@@ -109,6 +110,13 @@ set_keybindings() {
 
     # disable show desktop
     dconf write ${KEYS_GNOME_WM}/show-desktop "@as []"    
+
+    # disable switch-group
+    dconf write ${KEYS_GNOME_WM}/switch-group "@as []"    
+    dconf write ${KEYS_GNOME_WM}/switch-group-backward "@as []"    
+
+    # disable toggle application view
+    dconf write ${KEYS_GNOME_SHELL}/toggle-application-view "@as []"
 }
 
 if ! command -v gnome-extensions >/dev/null; then
