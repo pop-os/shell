@@ -117,6 +117,10 @@ set_keybindings() {
 
     # disable toggle application view
     dconf write ${KEYS_GNOME_SHELL}/toggle-application-view "@as []"
+
+    # volume up down
+    dconf write ${KEYS_MEDIA}/volume-up "['<Super>bracketright']"
+    dconf write ${KEYS_MEDIA}/volume-down "['<Super>bracketleft']"
 }
 
 if ! command -v gnome-extensions >/dev/null; then
