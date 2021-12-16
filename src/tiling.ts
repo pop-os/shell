@@ -819,7 +819,7 @@ export function locate_monitor(win: window.ShellWindow, direction: Meta.DisplayD
         exclude = (rect: Rectangular) => rect.y < ref.y
     } else if (direction === LEFT) {
         origin = [ref.x, ref.y + ref.height / 2]
-        exclude = (rect: Rectangular) => rect.x > ref.y
+        exclude = (rect: Rectangular) => rect.x > ref.x
     } else {
         origin = [ref.x + ref.width, ref.y + ref.height / 2]
         exclude = (rect: Rectangular) => rect.x < ref.x
