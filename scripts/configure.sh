@@ -46,7 +46,8 @@ set_keybindings() {
     # Toggle message tray: disable <Super>m
     dconf write ${KEYS_GNOME_SHELL}/toggle-message-tray "@as ['<Super>v']"
     # Show the activities overview: disable <Super>s
-    dconf write ${KEYS_GNOME_SHELL}/toggle-overview "@as []"
+    # dconf write ${KEYS_GNOME_SHELL}/toggle-overview "@as []"
+    dconf write ${KEYS_GNOME_SHELL}/toggle-overview "['<Super>Tab']"
     # Switch to workspace left: disable <Super>Left
     dconf write ${KEYS_GNOME_WM}/switch-to-workspace-left "@as []"
     # Switch to workspace right: disable <Super>Right
@@ -109,11 +110,11 @@ set_keybindings() {
     dconf write ${KEYS_GNOME_WM}/cycle-windows "['<Alt>Tab']"
 
     # disable show desktop
-    dconf write ${KEYS_GNOME_WM}/show-desktop "@as []"    
+    dconf write ${KEYS_GNOME_WM}/show-desktop "@as []"
 
     # disable switch-group
-    dconf write ${KEYS_GNOME_WM}/switch-group "@as []"    
-    dconf write ${KEYS_GNOME_WM}/switch-group-backward "@as []"    
+    dconf write ${KEYS_GNOME_WM}/switch-group "@as []"
+    dconf write ${KEYS_GNOME_WM}/switch-group-backward "@as []"
 
     # disable toggle application view
     dconf write ${KEYS_GNOME_SHELL}/toggle-application-view "@as []"
@@ -121,6 +122,9 @@ set_keybindings() {
     # volume up down
     dconf write ${KEYS_MEDIA}/volume-up "['<Super>bracketright']"
     dconf write ${KEYS_MEDIA}/volume-down "['<Super>bracketleft']"
+
+    # disable switch-applications since I favor cycling
+    dconf write ${KEYS_GNOME_WM}/switch-applications "@as []"
 }
 
 if ! command -v gnome-extensions >/dev/null; then
