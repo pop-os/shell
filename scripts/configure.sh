@@ -116,8 +116,8 @@ set_keybindings() {
     dconf write ${KEYS_GNOME_WM}/switch-group "@as []"
     dconf write ${KEYS_GNOME_WM}/switch-group-backward "@as []"
 
-    # disable toggle application view
-    dconf write ${KEYS_GNOME_SHELL}/toggle-application-view "@as []"
+    # modify toggle application view
+    dconf write ${KEYS_GNOME_SHELL}/toggle-application-view "['<Super>grave']"
 
     # volume up down
     dconf write ${KEYS_MEDIA}/volume-up "['<Super>bracketright']"
