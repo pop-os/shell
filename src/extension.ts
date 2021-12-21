@@ -262,6 +262,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         this.dbus.WindowQuit = (win: [number, number]) => {
             this.windows.get(win)?.meta.delete(global.get_current_time())
+            this.window_search.close()
         }
     }
 
