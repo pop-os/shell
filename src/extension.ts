@@ -1394,6 +1394,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     /** Handle window maximization notifications */
     on_maximize(win: Window.ShellWindow) {
+        global.log(`on maximize`)
         if (win.is_maximized()) {
             // Raise maximized to top so stacks won't appear over them.
             const actor = win.meta.get_compositor_private();
@@ -1429,6 +1430,14 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     /** Handle window minimization notifications */
     on_minimize(win: Window.ShellWindow) {
+        if (this.focus_window() == win) {
+            if (win.meta.minimized) {
+                win.hide_border()
+            } else {
+                win.show_border()
+            }
+        }
+
         if (this.auto_tiler) {
             if (win.meta.minimized) {
                 const attached = this.auto_tiler.attached.get(win.entity)
