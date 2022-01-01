@@ -8,7 +8,6 @@ import * as Log from 'log';
 import * as Node from 'node';
 import * as Rect from 'rectangle';
 import * as Tags from 'tags';
-import * as Tweener from 'tweener';
 import * as window from 'window';
 import * as geom from 'geom';
 import * as exec from 'executor';
@@ -439,21 +438,17 @@ export class Tiler {
 
                 ext.auto_tiler.forest.arrange(ext, fork.workspace);
 
-                Tweener.on_window_tweened(window, () => {
-                    ext.register_fn(() => ext.set_overlay(window.rect()));
-                });
+                ext.register_fn(() => ext.set_overlay(window.rect()));
             }
         }
     }
 
     overlay_watch(ext: Ext, window: window.ShellWindow) {
-        Tweener.on_window_tweened(window, () => {
-            ext.register_fn(() => {
-                if (window) {
-                    ext.set_overlay(window.rect());
-                    window.activate(false)
-                }
-            });
+        ext.register_fn(() => {
+            if (window) {
+                ext.set_overlay(window.rect());
+                window.activate(false)
+            }
         });
     }
 
