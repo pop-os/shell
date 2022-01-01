@@ -1429,8 +1429,6 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     /** Handle window minimization notifications */
     on_minimize(win: Window.ShellWindow) {
-        win.hide_border()
-
         if (this.auto_tiler) {
             if (win.meta.minimized) {
                 const attached = this.auto_tiler.attached.get(win.entity)
@@ -1818,7 +1816,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                     if (window.entity !== this.prev_focused[1]) {
                         this.on_focused(window)
                     }
-                } else {
+                } else if (this.auto_tiler) {
                     // Re-focus a window that was unfocused.
                     let entity: Ecs.Entity | null = null
                     const [x, y] = this.prev_focused
