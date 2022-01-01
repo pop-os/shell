@@ -17,7 +17,6 @@ export class Keybindings {
         this.global = {
             "activate-launcher": () => {
                 ext.tiler.exit(ext);
-                ext.window_search.load_desktop_files();
                 ext.window_search.open(ext);
             },
             "tile-enter": () => ext.tiler.enter(ext)
