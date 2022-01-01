@@ -154,8 +154,6 @@ export class Ext extends Ecs.System<ExtEvent> {
     /** The window that was focused before the last window */
     private prev_focused: [null | Entity, null | Entity] = [null, null];
 
-    tween_signals: Map<string, [SignalID, any]> = new Map();
-
     /** Initially set to true when the extension is initializing */
     init: boolean = true;
 
@@ -769,13 +767,6 @@ export class Ext extends Ecs.System<ExtEvent> {
             }
         }
 
-        const str = String(win);
-        let value = this.tween_signals.get(str);
-        if (value) {
-            utils.source_remove(value[0]);
-            this.tween_signals.delete(str);
-        }
-
         if (this.auto_tiler) this.auto_tiler.detach_window(this, win);
 
         this.movements.remove(win)
@@ -1150,7 +1141,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                 }
                 this.register(Events.window_move(this, win, rect));
             } else {
-                win.move(this, rect, () => {}, false);
+                win.move(this, rect, () => {});
                 // if the resulting dimensions of rect == next
                 if (rect.width == next_area.width && rect.height == next_area.height) {
                     win.meta.maximize(Meta.MaximizeFlags.BOTH)

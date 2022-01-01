@@ -7,7 +7,6 @@ import * as log from 'log';
 import * as once_cell from 'once_cell';
 import * as Rect from 'rectangle';
 import * as Tags from 'tags';
-import * as Tweener from 'tweener';
 import * as utils from 'utils';
 import * as xprop from 'xprop';
 import type { Entity } from './ecs';
@@ -318,7 +317,7 @@ export class ShellWindow {
         return xid ? xprop.may_decorate(xid) : false;
     }
 
-    move(ext: Ext, rect: Rectangular, on_complete?: () => void, animate: boolean = true) {
+    move(ext: Ext, rect: Rectangular, on_complete?: () => void) {
         if ((!this.same_workspace() && this.is_maximized())) {
             return
         }
@@ -334,48 +333,13 @@ export class ShellWindow {
             meta.unmaximize(Meta.MaximizeFlags.HORIZONTAL | Meta.MaximizeFlags.VERTICAL);
             actor.remove_all_transitions();
 
-            const entity_string = String(this.entity);
             ext.movements.insert(this.entity, clone);
 
-            const onComplete = () => {
-                ext.register({ tag: 2, window: this, kind: { tag: 1 } });
-                if (on_complete) ext.register_fn(on_complete);
-                ext.tween_signals.delete(entity_string);
-                if (meta.appears_focused) {
-                    this.update_border_layout();
-                    this.show_border();
-                }
-            };
-
-            if (animate && ext.animate_windows && !ext.init) {
-                const current = meta.get_frame_rect();
-                const buffer = meta.get_buffer_rect();
-
-                const dx = current.x - buffer.x;
-                const dy = current.y - buffer.y;
-
-                const slot = ext.tween_signals.get(entity_string);
-                if (slot !== undefined) {
-                    const [signal, callback] = slot;
-                    Tweener.remove(actor);
-
-                    utils.source_remove(signal);
-                    callback();
-                }
-
-                const x = clone.x - dx;
-                const y = clone.y - dy;
-
-                const duration = ext.tiler.moving ? 49 : 149;
-
-                Tweener.add(this, { x, y, duration, mode: null });
-
-                ext.tween_signals.set(entity_string, [
-                    Tweener.on_window_tweened(this, onComplete),
-                    onComplete
-                ]);
-            } else {
-                onComplete();
+            ext.register({ tag: 2, window: this, kind: { tag: 1 } });
+            if (on_complete) ext.register_fn(on_complete);
+            if (meta.appears_focused) {
+                this.update_border_layout();
+                this.show_border();
             }
         }
     }
