@@ -1429,6 +1429,8 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     /** Handle window minimization notifications */
     on_minimize(win: Window.ShellWindow) {
+        win.hide_border()
+
         if (this.auto_tiler) {
             if (win.meta.minimized) {
                 const attached = this.auto_tiler.attached.get(win.entity)
