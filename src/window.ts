@@ -628,9 +628,6 @@ export class ShellWindow {
     private window_raised() {
         this.restack(RESTACK_STATE.RAISED);
         this.show_border();
-        if (this.ext.conf.move_pointer_on_switch && !pointer_already_on_window(this.meta)) {
-            place_pointer_on(this.ext.conf.default_pointer_position, this.meta);
-        }
     }
 
     private workspace_changed() {
