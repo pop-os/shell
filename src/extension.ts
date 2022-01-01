@@ -742,6 +742,9 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     on_destroy(win: Entity) {
+        // Exit tiling adjustment mode on window destroy.
+        if (this.tiler.window !== null && win == this.tiler.window) this.tiler.exit(this)
+
         const window = this.windows.get(win);
         if (!window) return;
 
