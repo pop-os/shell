@@ -1815,8 +1815,29 @@ export class Ext extends Ecs.System<ExtEvent> {
             if (screenShield?.locked) this.update_display_configuration(false);
 
             this.connect(display, 'notify::focus-window', () => {
-                const window = this.get_window(display.get_focus_window())
-                if (window) this.on_focused(window)
+                let window = this.focus_window()
+
+                if (window) {
+                    // Avoid re-focusing a window that's already focused.
+                    if (window.entity !== this.prev_focused[1]) {
+                        this.on_focused(window)
+                    }
+                } else {
+                    // Re-focus a window that was unfocused.
+                    let entity: Ecs.Entity | null = null
+                    const [x, y] = this.prev_focused
+                    if (y) {
+                        entity = y
+                    } else if (x) {
+                        entity = x
+                    }
+
+                    if (entity) {
+                        window = this.windows.get(entity)
+                        if (window) window.activate(false)
+                    }
+                }
+
                 return false
             });
 
