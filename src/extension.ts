@@ -1552,9 +1552,13 @@ export class Ext extends Ecs.System<ExtEvent> {
         if (win) {
             const entity = win.entity;
             actor.connect('destroy', () => {
-                if (win && win.border)
-                    win.border.destroy();
+                if (win && win.border) {
+                    win.border.destroy()
+                    win.border = null
+                }
+
                 this.on_destroy(entity);
+
                 return false;
             });
 
