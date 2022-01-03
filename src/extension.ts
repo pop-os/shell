@@ -1560,11 +1560,11 @@ export class Ext extends Ecs.System<ExtEvent> {
 
             if (win.is_tilable(this)) {
                 this.connect_window(win);
-            } else {
-                window.raise();
-                window.unminimize();
-                window.activate(global.get_current_time());
             }
+
+            window.raise();
+            window.unminimize();
+            win.activate(true);
         }
     }
 
