@@ -62,7 +62,7 @@ export class ShellWindow {
     // True if this window is currently smart-gapped
     smart_gapped: boolean = false;
 
-    border: St.Bin = new St.Bin({ style_class: 'pop-shell-active-hint pop-shell-border-normal' });
+    border: null | St.Bin = new St.Bin({ style_class: 'pop-shell-active-hint pop-shell-border-normal' });
 
     prev_rect: null | Rectangular = null;
 
@@ -100,7 +100,7 @@ export class ShellWindow {
         this.bind_window_events();
         this.bind_hint_events();
 
-        global.window_group.add_child(this.border);
+        if (this.border) global.window_group.add_child(this.border);
 
         this.hide_border();
         this.restack();
@@ -131,6 +131,8 @@ export class ShellWindow {
     }
 
     private bind_hint_events() {
+        if (!this.border) return
+
         let settings = this.ext.settings;
         let change_id = settings.ext.connect('changed', (_, key) => {
             if (this.border) {
@@ -349,6 +351,7 @@ export class ShellWindow {
     }
 
     private on_style_changed() {
+        if (!this.border) return
         this.border_size = this.border.get_theme_node().get_border_width(St.Side.TOP);
     }
 
@@ -402,6 +405,8 @@ export class ShellWindow {
     }
 
     show_border() {
+        if (!this.border) return
+
         this.restack();
         if (this.ext.settings.active_hint()) {
             let border = this.border;
