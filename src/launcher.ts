@@ -238,58 +238,12 @@ export class Launcher extends search.Search {
             return;
         }
 
-        const existing_windows = app.get_windows().length
-
         try {
             app.launch(0, -1, gpuPref)
         } catch (why) {
             global.log(`failed to launch application: ${why}`)
             return;
         }
-
-        let attempts = 0
-
-        GLib.timeout_add(GLib.PRIORITY_DEFAULT, 100, () => {
-            if (app.state === Shell.AppState.STOPPED) {
-                if (info) {
-                    const window = this.locate_by_app_info(info);
-                    if (window) {
-                        window.activate(false)
-                        return false;
-                    }
-                }
-            } else if (app.state === Shell.AppState.RUNNING) {
-                const windows: Array<Meta.Window> = app.get_windows();
-
-                if (windows.length > existing_windows) {
-                    let newest_window = null
-                    let newest_time = null
-                    for (const window of windows) {
-                        const this_time = window.get_user_time()
-                        if (newest_time === null || newest_time > this_time) {
-                            newest_window = window
-                            newest_time = this_time
-                        }
-
-                        if (this_time === 0) {
-                            newest_window = window;
-                            break
-                        }
-                    }
-
-                    if (newest_window) {
-                        this.ext.get_window(newest_window)?.activate(true);
-                    }
-
-                    return false
-                }
-            }
-
-            attempts += 1
-            if (attempts === 20) return false
-
-            return true;
-        })
     }
 
     list_workspace(ext: Ext) {
@@ -303,10 +257,13 @@ export class Launcher extends search.Search {
     }
 
     locate_by_app_info(info: any): null | ShellWindow {
+        const workspace = this.ext.active_workspace()
         const exec_info: null | string = info.get_string("Exec")
         const exec = exec_info?.split(' ').shift()?.split('/').pop()
         if (exec) {
             for (const window of this.ext.tab_list(Meta.TabList.NORMAL, null)) {
+                if (window.meta.get_workspace().index() !== workspace) continue
+
                 const pid = window.meta.get_pid()
                 if (pid !== -1) {
                     try {
