@@ -2419,7 +2419,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                     this.windows.with(entity, (window) => {
                         window.meta.raise()
                         window.meta.unminimize()
-                        window.activate(true)
+                        window.activate(false)
                     })
 
                     return false
