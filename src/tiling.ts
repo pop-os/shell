@@ -189,6 +189,10 @@ export class Tiler {
         const win = ext.windows.get(this.window)
         if (!win) return
 
+        const place_pointer = () => {
+            ext.register_fn(() => win.activate(true))
+        }
+
         if (ext.auto_tiler && win.is_tilable(ext)) {
             if (this.queue.length === 2) return;
             this.queue.send(() => {
@@ -208,12 +212,14 @@ export class Tiler {
                         if (s) {
                             this.move_from_stack(ext, s, focused, direction);
                             this.moving = false;
+                            place_pointer()
                             return;
                         }
                     }
 
                     if (move_to !== null) this.move_auto(ext, focused, move_to, direction === Direction.Left);
                     this.moving = false;
+                    place_pointer()
                 }
             })
         } else {
@@ -739,6 +745,8 @@ export class Tiler {
                                 ext.size_signals_unblock(meta_swap);
                             });
                         }
+
+                        ext.register_fn(() => meta.activate(true))
                     }
                 }
 
