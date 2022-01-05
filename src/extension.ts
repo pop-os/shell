@@ -1394,7 +1394,6 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     /** Handle window maximization notifications */
     on_maximize(win: Window.ShellWindow) {
-        global.log(`on maximize`)
         if (win.is_maximized()) {
             // Raise maximized to top so stacks won't appear over them.
             const actor = win.meta.get_compositor_private();
@@ -1565,10 +1564,6 @@ export class Ext extends Ecs.System<ExtEvent> {
             if (win.is_tilable(this)) {
                 this.connect_window(win);
             }
-
-            window.raise();
-            window.unminimize();
-            win.activate(true);
         }
     }
 
@@ -2419,11 +2414,26 @@ export class Ext extends Ecs.System<ExtEvent> {
             this.windows.insert(entity, win);
             this.monitors.insert(entity, [win.meta.get_monitor(), win.workspace_id()]);
 
+            const grab_focus = () => {
+                this.schedule_idle(() => {
+                    this.windows.with(entity, (window) => {
+                        window.meta.raise()
+                        window.meta.unminimize()
+                        window.activate(true)
+                    })
+
+                    return false
+                })
+            }
+
             if (this.auto_tiler && !win.meta.minimized && win.is_tilable(this)) {
                 let id = actor.connect('first-frame', () => {
                     this.auto_tiler?.auto_tile(this, win, this.init);
+                    grab_focus()
                     actor.disconnect(id);
                 });
+            } else {
+                grab_focus()
             }
         }
         return entity;
