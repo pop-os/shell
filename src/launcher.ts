@@ -234,7 +234,7 @@ export class Launcher extends search.Search {
         if (is_gnome_settings && app.state === Shell.AppState.RUNNING) {
             app.activate()
             const window = app.get_windows()[0]
-            if (window) shell_window.activate(true, DefaultPointerPosition.TopLeft, window)
+            if (window) shell_window.activate(false, DefaultPointerPosition.TopLeft, window)
             return;
         }
 
