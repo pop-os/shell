@@ -728,8 +728,15 @@ export class Forest extends Ecs.World {
             if (idx !== null) {
                 let activate = idx > 0 ? idx - 1 : 0;
                 const entity = stack.entities[activate];
+
                 if (entity) {
-                    ext.register_fn(() => ext.windows.get(entity)?.activate())
+                    ext.register_fn(() => {
+                        this.stacks.get(stack.idx)?.activate(entity)
+                        if (!ext.windows.contains(window)) {
+                            ext.windows.with(entity, (win) => win.activate(false))
+                        }
+
+                    })
                 }
             }
 
