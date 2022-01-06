@@ -65,7 +65,10 @@ export class Tiler {
 
     toggle_orientation(ext: Ext) {
         const window = ext.focus_window()
-        if (window) ext.auto_tiler?.toggle_orientation(ext, window)
+        if (window && ext.auto_tiler) {
+            ext.auto_tiler.toggle_orientation(ext, window)
+            ext.register_fn(() => window.activate(true))
+        }
     }
 
     toggle_stacking(ext: Ext) {
