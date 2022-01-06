@@ -2030,12 +2030,6 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     auto_tile_off() {
         this.hide_all_borders();
-        if (this.schedule_idle(() => {
-            this.auto_tile_off()
-            return false
-        })) {
-            return
-        }
 
         if (this.auto_tiler) {
             this.unregister_storage(this.auto_tiler.attached);
@@ -2055,12 +2049,6 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     auto_tile_on() {
         this.hide_all_borders();
-        if (this.schedule_idle(() => {
-            this.auto_tile_on()
-            return false;
-        })) {
-            return
-        }
 
         if (indicator) indicator.toggle_tiled.setToggleState(true)
 
@@ -2096,10 +2084,11 @@ export class Ext extends Ecs.System<ExtEvent> {
     schedule_idle(func: () => boolean): boolean {
         if (!this.movements.is_empty()) {
             GLib.timeout_add(GLib.PRIORITY_DEFAULT, 100, () => {
+                if (!this.movements.is_empty()) return true
                 return func();
             })
-
-            return true
+        } else {
+            func()
         }
         return false
     }
