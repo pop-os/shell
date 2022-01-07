@@ -7,14 +7,11 @@ import * as arena from 'arena'
 import * as log from 'log'
 import * as service from 'launcher_service'
 import * as context from 'context'
-import * as shell_window from 'window'
-import * as config from 'config'
 
 import type { Ext } from 'extension'
 import type { ShellWindow } from 'window'
 import type { JsonIPC } from 'launcher_service'
 
-const { DefaultPointerPosition } = config
 const { Clutter, Gio, GLib, Meta, Shell } = imports.gi
 
 const app_sys = Shell.AppSystem.get_default();
@@ -229,20 +226,26 @@ export class Launcher extends search.Search {
             return
         }
 
-        const is_gnome_settings = info.get_executable() === "gnome-control-center"
-
-        if (is_gnome_settings && app.state === Shell.AppState.RUNNING) {
-            app.activate()
-            const window = app.get_windows()[0]
-            if (window) shell_window.activate(false, DefaultPointerPosition.TopLeft, window)
-            return;
-        }
-
         try {
             app.launch(0, -1, gpuPref)
         } catch (why) {
-            global.log(`failed to launch application: ${why}`)
+            log.error(`failed to launch application: ${why}`)
             return;
+        }
+
+        if (info.get_executable() === "gnome-control-center") {
+            app = app_sys.lookup_app("gnome-control-center.desktop");
+
+            if (!app) return
+
+            app.activate()
+
+            const window: Meta.Window = app.get_windows()[0]
+
+            if (window) {
+                window.get_workspace().activate_with_focus(window, global.get_current_time())
+                return
+            }
         }
     }
 
