@@ -651,10 +651,12 @@ export function place_pointer_on(default_pointer_position: Config.DefaultPointer
 
     const display = Gdk.DisplayManager.get().get_default_display();
 
-    display
-        .get_default_seat()
-        .get_pointer()
-        .warp(display.get_default_screen(), x, y);
+    if (display) {
+        display
+            .get_default_seat()
+            .get_pointer()
+            .warp(display.get_default_screen(), x, y);
+    }
 }
 
 function pointer_already_on_window(meta: Meta.Window): boolean {
