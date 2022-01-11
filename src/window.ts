@@ -12,7 +12,7 @@ import * as xprop from 'xprop';
 import type { Entity } from './ecs';
 import type { Ext } from './extension';
 import type { Rectangle } from './rectangle';
-
+import * as scheduler from 'scheduler';
 
 const { DefaultPointerPosition } = Config;
 const { Gdk, Meta, Shell, St, GLib } = imports.gi;
@@ -608,6 +608,8 @@ export class ShellWindow {
 export function activate(move_mouse: boolean, default_pointer_position: Config.DefaultPointerPosition, win: Meta.Window) {
     const workspace = win.get_workspace()
     if (!workspace) return
+
+    scheduler.setForeground(win)
 
     win.unminimize();
     workspace.activate_with_focus(win, global.get_current_time())
