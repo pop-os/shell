@@ -1817,28 +1817,32 @@ export class Ext extends Ecs.System<ExtEvent> {
             if (screenShield?.locked) this.update_display_configuration(false);
 
             this.connect(display, 'notify::focus-window', () => {
-                let window = this.focus_window()
+                // Delay in case the focused window was not focused yet.
+                // Note: Fixes Intellij IDE windows.
+                this.register_fn(() => {
+                    let window = this.focus_window()
 
-                if (window) {
-                    // Avoid re-focusing a window that's already focused.
-                    if (window.entity !== this.prev_focused[1]) {
-                        this.on_focused(window)
-                    }
-                } else if (this.auto_tiler) {
-                    // Re-focus a window that was unfocused.
-                    let entity: Ecs.Entity | null = null
-                    const [x, y] = this.prev_focused
-                    if (y) {
-                        entity = y
-                    } else if (x) {
-                        entity = x
-                    }
+                    if (window) {
+                        // Avoid re-focusing a window that's already focused.
+                        if (window.entity !== this.prev_focused[1]) {
+                            this.on_focused(window)
+                        }
+                    } else if (this.auto_tiler) {
+                        // Re-focus a window that was unfocused.
+                        let entity: Ecs.Entity | null = null
+                        const [x, y] = this.prev_focused
+                        if (y) {
+                            entity = y
+                        } else if (x) {
+                            entity = x
+                        }
 
-                    if (entity) {
-                        window = this.windows.get(entity)
-                        if (window) window.activate(false)
+                        if (entity) {
+                            window = this.windows.get(entity)
+                            if (window) window.activate(false)
+                        }
                     }
-                }
+                })
 
                 return false
             });
