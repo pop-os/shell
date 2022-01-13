@@ -1820,13 +1820,20 @@ export class Ext extends Ecs.System<ExtEvent> {
                 // Delay in case the focused window was not focused yet.
                 // Note: Fixes Intellij IDE windows.
                 this.register_fn(() => {
-                    let window = this.focus_window()
+                    let meta_window = global.display.get_focus_window()
 
-                    if (window) {
-                        // Avoid re-focusing a window that's already focused.
-                        if (window.entity !== this.prev_focused[1]) {
-                            this.on_focused(window)
-                        }
+                    if (meta_window) {
+                        const shell_window = this.get_window(meta_window)
+
+                        if (shell_window) {
+                            // Avoid re-focusing a window that's already focused.
+                            if (shell_window.entity !== this.prev_focused[1]) {
+                                this.on_focused(shell_window)
+                            }
+                        } else if (!meta_window.is_override_redirect()) {
+                            // This section fixes Steam's sub-menus.
+                            meta_window.activate(global.get_current_time())
+                        }                        
                     } else if (this.auto_tiler) {
                         // Re-focus a window that was unfocused.
                         let entity: Ecs.Entity | null = null
@@ -1838,8 +1845,8 @@ export class Ext extends Ecs.System<ExtEvent> {
                         }
 
                         if (entity) {
-                            window = this.windows.get(entity)
-                            if (window) window.activate(false)
+                            const shell_window = this.windows.get(entity)
+                            if (shell_window) shell_window.activate(false)
                         }
                     }
                 })
