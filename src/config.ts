@@ -49,7 +49,8 @@ export const DEFAULT_FLOAT_RULES: Array<FloatRule> = [
     { class: "Steam", title: "^.*(Guard|Login).*" },
     { class: "krunner" },
     { class: "ibus-.*" },
-    { class: "gjs" }
+    { class: "gjs" },
+    { class: "re.sonny.Junction" }
 ];
 
 export interface WindowRule {
