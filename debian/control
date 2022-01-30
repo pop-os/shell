@@ -14,7 +14,7 @@ Depends:
     pop-launcher,
     pop-shell-shortcuts,
     fd-find
-Recommends: pop-shell-plugin-system76-power
+Recommends: pop-shell-plugin-system76-power, system76-scheduler
 Replaces: gnome-control-center-data (<< 1:3.38.1-2ubuntu1pop1~)
 Breaks: gnome-control-center-data (<< 1:3.38.1-2ubuntu1pop1~)
 Description: Pop!_OS Shell
