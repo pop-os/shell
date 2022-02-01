@@ -24,6 +24,7 @@ import * as stack from 'stack';
 import * as add_exception from 'dialog_add_exception';
 import * as exec from 'executor';
 import * as dbus_service from 'dbus_service';
+import * as scheduler from 'scheduler';
 
 import type { Entity } from 'ecs';
 import type { ExtEvent } from 'events';
@@ -780,6 +781,8 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     /** Triggered when a window has been focused */
     on_focused(win: Window.ShellWindow) {
+        scheduler.setForeground(win.meta)
+
         this.size_signals_unblock(win);
 
         if (this.exception_selecting) {
