@@ -344,7 +344,7 @@ export class Forest extends Ecs.World {
     }
 
     /** Detaches an entity from the a fork, re-arranging the fork's tree as necessary */
-    detach(ext: Ext, fork_entity: Entity, window: Entity, destroy_stack: boolean = false): [Entity, Fork.Fork] | null {
+    detach(ext: Ext, fork_entity: Entity, window: Entity): [Entity, Fork.Fork] | null {
         const fork = this.forks.get(fork_entity);
         if (!fork) return null;
 
@@ -381,11 +381,8 @@ export class Forest extends Ecs.World {
                 ext,
                 fork.left.inner as Node.NodeStack,
                 window,
-                destroy_stack,
-                (window: undefined | Entity) => {
-                    if (window) {
-                        fork.left = Node.Node.window(window)
-                    } else if (fork.right) {
+                () => {
+                    if (fork.right) {
                         fork.left = fork.right
                         fork.right = null
                         if (parent) {
@@ -425,15 +422,9 @@ export class Forest extends Ecs.World {
                     ext,
                     fork.right.inner as Node.NodeStack,
                     window,
-                    destroy_stack,
-                    (window) => {
-                        if (window) {
-                            fork.right = Node.Node.window(window)
-                        } else {
-                            fork.right = null
-                            this.reassign_to_parent(fork, fork.left)
-                        }
-
+                    () => {
+                        fork.right = null
+                        this.reassign_to_parent(fork, fork.left)
                     },
                 );
             }
@@ -717,7 +708,7 @@ export class Forest extends Ecs.World {
     }
 
     /** Removes window from stack, destroying the stack if it was the last window. */
-    private remove_from_stack(ext: Ext, stack: Node.NodeStack, window: Entity, destroy_stack: boolean, on_last: (win?: Entity) => void) {
+    private remove_from_stack(ext: Ext, stack: Node.NodeStack, window: Entity, on_last: () => void) {
         if (stack.entities.length === 1) {
             this.stacks.remove(stack.idx)?.destroy();
             on_last();
@@ -738,11 +729,6 @@ export class Forest extends Ecs.World {
 
                     })
                 }
-            }
-
-            if (destroy_stack && stack.entities.length === 1) {
-                on_last(stack.entities[0])
-                this.stacks.remove(stack.idx)?.destroy()
             }
         }
 

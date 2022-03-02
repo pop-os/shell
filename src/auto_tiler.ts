@@ -232,9 +232,9 @@ export class AutoTiler {
     }
 
     /** Detaches the window from a tiling branch, if it is attached to one. */
-    detach_window(ext: Ext, win: Entity, destroy_stack: boolean = true) {
+    detach_window(ext: Ext, win: Entity) {
         this.attached.take_with(win, (prev_fork: Entity) => {
-            const reflow_fork = this.forest.detach(ext, prev_fork, win, destroy_stack);
+            const reflow_fork = this.forest.detach(ext, prev_fork, win);
 
             if (reflow_fork) {
                 const fork = reflow_fork[1];
