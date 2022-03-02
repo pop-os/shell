@@ -28,6 +28,7 @@ export class Launcher extends search.Search {
     windows: arena.Arena<ShellWindow> = new arena.Arena()
     service: null | service.LauncherService = null
     append_id: null | number = null
+    active_menu: null | any = null
 
     constructor(ext: Ext) {
         super()
@@ -125,7 +126,13 @@ export class Launcher extends search.Search {
                             null,
                         )
 
-                        const menu = context.addMenu(button.widget, (_menu) => {
+                        const menu = context.addMenu(button.widget, (menu) => {
+                            if (this.active_menu) {
+                                this.active_menu.actor.hide()
+                            }
+
+                            this.active_menu = menu
+
                             this.service?.context(item.id);
                         })
 
