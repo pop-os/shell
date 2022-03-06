@@ -26,6 +26,7 @@ export const DEFAULT_FLOAT_RULES: Array<FloatRule> = [
     { class: "Com.github.amezin.ddterm" },
     { class: "Com.github.donadigo.eddy" },
     { class: "Conky" },
+    { title: "Discord Updater" },
     { class: "Enpass", title: "Enpass Assistant" },
     { class: "Floating Window Exceptions" },
     { class: "Gjs", title: "Settings" },
