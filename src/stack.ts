@@ -128,18 +128,14 @@ export class Stack {
         return c.entity;
     }
 
+    activate_prev() {
+        if (this.prev_active) {
+            this.activate(this.prev_active)
+        }
+    }
+
     /** Activates the tab of this entity */
     activate(entity: Entity) {
-        if (this.prev_active && Ecs.entity_eq(entity, this.prev_active)) {
-            this.prev_active = null
-            this.prev_active_id = 0
-        } else if (!Ecs.entity_eq(entity, this.active)) {
-            if (this.prev_active == null || !Ecs.entity_eq(entity, this.prev_active)) {
-                this.prev_active = this.active;
-                this.prev_active_id = this.active_id;
-            }
-        }
-
         const permitted = this.permitted_to_show()
 
         if (this.widgets) this.widgets.tabs.visible = permitted;
@@ -148,6 +144,11 @@ export class Stack {
 
         const win = this.ext.windows.get(entity);
         if (!win) return;
+
+        if (!Ecs.entity_eq(entity, this.active)) {
+            this.prev_active = this.active
+            this.prev_active_id = this.active_id
+        }
 
         this.active_connect(win.meta, entity);
 
