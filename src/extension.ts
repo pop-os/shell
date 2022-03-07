@@ -747,6 +747,8 @@ export class Ext extends Ecs.System<ExtEvent> {
         const window = this.windows.get(win);
         if (!window) return;
 
+        window.destroying = true;
+
         // Disconnect all signals on this window
         this.window_signals.take_with(win, (signals) => {
             for (const signal of signals) {
@@ -1836,7 +1838,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                         } else if (!meta_window.is_override_redirect()) {
                             // This section fixes Steam's sub-menus.
                             meta_window.activate(global.get_current_time())
-                        }                        
+                        }
                     } else if (this.auto_tiler) {
                         // Re-focus a window that was unfocused.
                         let entity: Ecs.Entity | null = null

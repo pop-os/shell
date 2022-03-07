@@ -55,6 +55,7 @@ export class ShellWindow {
     activate_after_move: boolean = false;
     ignore_detach: boolean = false;
     was_attached_to?: [Entity, boolean | number];
+    destroying: boolean = false;
 
     // Awaiting reassignment after a display update
     reassignment: boolean = false
