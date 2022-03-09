@@ -106,6 +106,9 @@ fi
 
 set_keybindings
 
+# Make sure user extensions are enabled
+dconf write /org/gnome/shell/disable-user-extensions false
+
 # Use a window placement behavior which works better for tiling
 
 if gnome-extensions list | grep native-window; then
