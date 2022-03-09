@@ -36,6 +36,7 @@ export const DEFAULT_FLOAT_RULES: Array<FloatRule> = [
     { class: "Io.elementary.sideload" },
     { class: "KotatogramDesktop", title: "Media viewer" },
     { class: "Mozilla VPN" },
+    { class: "update-manager", title: "Software Updater" },
     { class: "Solaar" },
     { class: "Steam", title: "^((?!Steam).)*$" },
     { class: "Steam", title: "^.*(Guard|Login).*" },
