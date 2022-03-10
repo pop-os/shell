@@ -74,6 +74,7 @@ interface Injection {
     func: any;
 }
 
+/** The pop-shell Gnome extension class */
 export class Ext extends Ecs.System<ExtEvent> {
     /** Mechanism for managing keybindings */
     keybindings: Keybindings.Keybindings = new Keybindings.Keybindings(this);
@@ -262,6 +263,14 @@ export class Ext extends Ecs.System<ExtEvent> {
         this.dbus.WindowQuit = (win: [number, number]) => {
             this.windows.get(win)?.meta.delete(global.get_current_time())
             this.window_search.close()
+        }
+
+        this.dbus.onScsvActiveChanged = (params) => {
+            const value = params.get_child_value(0);
+            const locked = value.get_boolean();
+            log.debug(`Screen Locked: ${locked}`);
+            if(!locked)
+                this.on_show_window_titles(); // Window titles on/off is lost after screensaver unlocking, re-apply it
         }
     }
 
