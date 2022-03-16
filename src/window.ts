@@ -607,6 +607,8 @@ export class ShellWindow {
 
 /// Activates a window, and moves the mouse point.
 export function activate(move_mouse: boolean, default_pointer_position: Config.DefaultPointerPosition, win: Meta.Window) {
+    if (win.is_override_redirect()) return
+
     const workspace = win.get_workspace()
     if (!workspace) return
 
