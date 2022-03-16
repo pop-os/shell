@@ -1840,19 +1840,19 @@ export class Ext extends Ecs.System<ExtEvent> {
                             meta_window.activate(global.get_current_time())
                         }
                     } else if (this.auto_tiler) {
-                        // Re-focus a window that was unfocused.
-                        let entity: Ecs.Entity | null = null
-                        const [x, y] = this.prev_focused
-                        if (y) {
-                            entity = y
-                        } else if (x) {
-                            entity = x
-                        }
+                        // // Re-focus a window that was unfocused.
+                        // let entity: Ecs.Entity | null = null
+                        // const [x, y] = this.prev_focused
+                        // if (y) {
+                        //     entity = y
+                        // } else if (x) {
+                        //     entity = x
+                        // }
 
-                        if (entity) {
-                            const shell_window = this.windows.get(entity)
-                            if (shell_window) shell_window.activate(false)
-                        }
+                        // if (entity) {
+                        //     const shell_window = this.windows.get(entity)
+                        //     if (shell_window) shell_window.activate(false)
+                        // }
                     }
                 })
 
