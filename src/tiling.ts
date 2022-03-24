@@ -793,7 +793,7 @@ export class Tiler {
     }
 };
 
-export function locate_monitor(win: window.ShellWindow, direction: Meta.DisplayDirection): number | null {
+export function locate_monitor(win: window.ShellWindow, direction: Meta.DisplayDirection): [number, Rectangular] | null {
     if (!win.actor_exists()) return null
 
     const from = win.meta.get_monitor()
@@ -821,7 +821,7 @@ export function locate_monitor(win: window.ShellWindow, direction: Meta.DisplayD
         exclude = (rect: Rectangular) => rect.x < ref.x
     }
 
-    let next: [number, number] | null = null
+    let next: [number, number, Rectangular] | null = null
 
     for (let mon = 0; mon < n_monitors; mon += 1) {
         if (mon === from) continue
@@ -833,11 +833,11 @@ export function locate_monitor(win: window.ShellWindow, direction: Meta.DisplayD
         const weight = geom.shortest_side(origin, work_area)
 
         if (next === null || next[1] > weight) {
-            next = [mon, weight]
+            next = [mon, weight, work_area]
         }
     }
 
-    return next ? next[0] : null
+    return next ? [next[0], next[2]] : null
 }
 
 function monitor_rect(monitor: Rectangle, columns: number, rows: number): Rectangle {
@@ -863,10 +863,24 @@ function move_window_or_monitor(
     direction: Meta.DisplayDirection
 ): () => window.ShellWindow | number | null {
     return () => {
-        const window = method.call(ext.focus_selector, ext, null);
-        if (window) return window;
+        let next_window = method.call(ext.focus_selector, ext, null)
+        next_window = next_window?.actor_exists() ? next_window : null
+
+        // Check if a display exists between the next window and the focused window.
         const focus = ext.focus_window();
-        return (!focus || !focus.actor_exists()) ? null : locate_monitor(focus, direction)
+        if (focus) {
+            // Return display number if the next window didn't exist.
+            const next_monitor = locate_monitor(focus, direction)
+            if (!next_window) return next_monitor ? next_monitor[0] : null
+
+            // If no monitor found, or next window is on the same display, pick the window.
+            if (!next_monitor || focus.meta.get_monitor() == next_window.meta.get_monitor()) return next_window
+
+            // If the next window is not contained within the next display, return the display.
+            return Rect.Rectangle.from_meta(next_monitor[1]).contains(next_window.rect()) ? next_window : next_monitor[0]
+        }
+
+        return next_window
     };
 }
 

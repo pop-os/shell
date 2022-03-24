@@ -1162,15 +1162,15 @@ export class Ext extends Ecs.System<ExtEvent> {
             win.meta.unmake_fullscreen();
 
         const prev_monitor = win.meta.get_monitor();
-        let next_monitor = Tiling.locate_monitor(win, direction);
+        const next_monitor = Tiling.locate_monitor(win, direction);
 
         if (next_monitor !== null) {
             if (this.auto_tiler && !this.is_floating(win)) {
                 win.ignore_detach = true;
                 this.auto_tiler.detach_window(this, win.entity);
-                this.auto_tiler.attach_to_workspace(this, win, [next_monitor, win.workspace_id()]);
+                this.auto_tiler.attach_to_workspace(this, win, [next_monitor[0], win.workspace_id()]);
             } else {
-                this.workspace_window_move(win, prev_monitor, next_monitor);
+                this.workspace_window_move(win, prev_monitor, next_monitor[0]);
             }
         }
 
