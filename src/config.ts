@@ -50,6 +50,7 @@ export const DEFAULT_FLOAT_RULES: Array<FloatRule> = [
     { class: "jetbrains-webstorm", title: "License Activation" },
     { class: "jetbrains-webstorm", title: "Welcome to WebStorm" },
     { class: "krunner" },
+    { class: "pritunl" },
     { class: "re.sonny.Junction" },
     { class: "system76-driver" },
     { class: "tilda" },
