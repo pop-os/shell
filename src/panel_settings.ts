@@ -202,17 +202,20 @@ function number_entry(
     value: number,
     callback: (a: number) => void,
 ): any {
-    let entry = new St.Entry({ text: String(value) });
-    entry.set_input_purpose(Clutter.InputContentPurpose.NUMBER);
-    entry.set_x_align(Clutter.ActorAlign.END);
-    entry.set_x_expand(false);
-    entry.set_style_class_name('pop-shell-gaps-entry');
+    const entry = new St.Entry({
+        text: String(value),
+        input_purpose: Clutter.InputContentPurpose.NUMBER,
+        x_align: Clutter.ActorAlign.CENTER,
+        x_expand: false
+    });
+
+    entry.set_style('width: 5em')
     entry.connect('button-release-event', () => {
         return true;
     });
 
-    let text = entry.clutter_text;
-    text.set_max_length(3);
+    const text = entry.clutter_text;
+    text.set_max_length(2);
 
     entry.connect('key-release-event', (_: any, event: any) => {
         const symbol = event.get_key_symbol();
@@ -231,30 +234,19 @@ function number_entry(
         }
     });
 
+    const create_icon = (icon_name: string) => {
+        return new St.Icon({ icon_name, icon_size: 16 })
+    }
 
-    let plus_button = new St.Icon();
-    plus_button.set_icon_name('value-increase');
-    plus_button.set_icon_size(16);
-    plus_button.connect('button-press-event', (_: any, event: any) => {
-        event.get_key_symbol();
-        let value = parseInt(text.get_text());
-        value = clamp(value + 1);
-        text.set_text(String(value));
+    entry.set_primary_icon(create_icon('value-decrease'))
+    entry.connect('primary-icon-clicked', () => {
+        text.set_text(String(clamp(parseInt(text.get_text()) - 1)))
     })
 
-    let minus_button = new St.Icon();
-    minus_button.set_icon_name('value-decrease');
-    minus_button.set_icon_size(16);
-    minus_button.connect('button-press-event', (_: any, event: any) => {
-        event.get_key_symbol();
-        let value = parseInt(text.get_text());
-        value = clamp(value - 1);
-        text.set_text(String(value));
+    entry.set_secondary_icon(create_icon('value-increase'))
+    entry.connect('secondary-icon-clicked', () => {
+        text.set_text(String(clamp(parseInt(text.get_text()) + 1)))
     })
-
-    // Secondary is the one on the right, primary on the left.
-    entry.set_secondary_icon(plus_button);
-    entry.set_primary_icon(minus_button);
 
     text.connect('text-changed', () => {
         const input: string = text.get_text();
@@ -268,7 +260,7 @@ function number_entry(
         callback(parsed);
     });
 
-    let item = new PopupMenuItem(label);
+    const item = new PopupMenuItem(label);
     item.label.get_clutter_text().set_x_expand(true);
     item.label.set_y_align(Clutter.ActorAlign.CENTER);
     item.add_child(entry);
