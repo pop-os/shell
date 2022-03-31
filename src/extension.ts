@@ -2409,6 +2409,12 @@ export class Ext extends Ecs.System<ExtEvent> {
                 return null;
             }
 
+            // Only permit normal, dialog, and modal dialogs
+            const window_type = (meta as any).get_window_type();
+            if (window_type !== 0 && window_type !== 3 && window_type !== 4) {
+                return null
+            }
+
             entity = this.create_entity();
 
             this.ids.insert(entity, id);
