@@ -206,7 +206,7 @@ export class Search {
         // Ensure that the width is at least 640 pixels wide.
         this.dialog.contentLayout.width = Math.max(Lib.current_monitor().width / 4, 640);
 
-        const id = global.stage.connect('event', (_actor: any, event: any) => {
+        this.dialog.connect('event', (_actor: any, event: any) => {
             const { width, height } = this.dialog.dialogLayout._dialog;
             const { x, y } = this.dialog.dialogLayout
             const area = new rect.Rectangle([x, y, width, height]);
@@ -225,7 +225,6 @@ export class Search {
         })
 
         this.dialog.connect('closed', () => this.cancel())
-        this.dialog.connect('destroy', () => global.stage.disconnect(id))
     }
 
     cleanup() {
