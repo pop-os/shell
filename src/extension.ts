@@ -170,6 +170,9 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     private size_requests: Map<GObject.Object, SignalID> = new Map();
 
+    /** Stores windows that were focused on a workspace */
+    private workspace_active: Map<number, null | Entity> = new Map()
+
     // Entity-component associations
 
     /** Store for stable sequences of each registered window */
@@ -738,6 +741,28 @@ export class Ext extends Ecs.System<ExtEvent> {
         this.exit_modes();
         this.prev_focused = [null, null]
         this.restack()
+
+        this.register_fn(() => {
+            // Activate the last-active window on workspace.
+            const workspace_id = this.active_workspace()
+            const active = this.workspace_active.get(workspace_id)
+            if (active) {
+                const window = this.windows.get(active)
+                if (window) {
+                    window.activate(true)
+                    return
+                }
+            }
+
+            // If window was not found, activate the first window on workspace.
+            const workspace = wom.get_workspace_by_index(workspace_id)
+            if (workspace) {
+                const window = workspace.list_windows()[0]
+                if (window) {
+                    window.activate(global.get_current_time())
+                }
+            }
+        })
     }
 
     on_destroy(win: Entity) {
@@ -783,6 +808,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     /** Triggered when a window has been focused */
     on_focused(win: Window.ShellWindow) {
+        this.workspace_active.set(this.active_workspace(), win.entity)
         scheduler.setForeground(win.meta)
 
         this.size_signals_unblock(win);
