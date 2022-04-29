@@ -238,6 +238,7 @@ declare namespace Meta {
         get_neighbor(direction: Meta.MotionDirection): null | Workspace;
         get_work_area_for_monitor(monitor: number): null | Rectangular;
         index(): number;
+        list_windows(): Array<Meta.Window>
     }
 
     interface WorkspaceManager extends GObject.Object {
