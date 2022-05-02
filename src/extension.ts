@@ -748,7 +748,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             const active = this.workspace_active.get(workspace_id)
             if (active) {
                 const window = this.windows.get(active)
-                if (window) {
+                if (window && window.meta.get_workspace().index() == workspace_id) {
                     window.activate(true)
                     return
                 }
