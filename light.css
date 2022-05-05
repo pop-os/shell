@@ -1,8 +1,8 @@
 .pop-shell-active-hint {
     border-style: solid;
-    border-color: #FFAD00;
-    border-radius: 5px;
-    box-shadow: inset 0 0 0 1px rgba(200, 200, 200, 0);
+    border-color: #FBB86C;
+    border-radius: 10px;
+    box-shadow: inset 0 0 0 1px rgba(24, 23, 23, 0)
 }
 
 .pop-shell-overlay {
@@ -14,7 +14,7 @@
 }
 
 .pop-shell-border-maximize {
-    border-width: 3px;
+    border-width: 1px;
 }
 
 .pop-shell-search-element:select{
