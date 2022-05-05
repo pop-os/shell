@@ -27,6 +27,11 @@
             <summary>Handle minimized to tray windows</summary>
         </key>
 
+        <key type="b" name="move-cursor-on-switch">
+            <default>true</default>
+            <summary>Move cursor to active window when switching via keyboard shortcuts</summary>
+        </key>
+
         <!-- Tiling Options -->
         <key type="u" name="column-size">
             <default>64</default>
