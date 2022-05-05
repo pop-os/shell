@@ -18,6 +18,7 @@ interface AppWidgets {
     snap_to_grid: any,
     window_titles: any,
     show_skip_taskbar: any,
+    move_cursor_on_switch: any,
 }
 
 // @ts-ignore
@@ -70,6 +71,12 @@ function settings_dialog_new(): Gtk.Container {
         Settings.sync();
     });
 
+    app.move_cursor_on_switch.set_active(ext.move_cursor_on_switch());
+    app.move_cursor_on_switch.connect('state-set', (_widget: any, state: boolean) => {
+        ext.set_move_cursor_on_switch(state);
+        Settings.sync();
+    });
+
     return grid;
 }
 
@@ -103,11 +110,17 @@ function settings_dialog_view(): [AppWidgets, Gtk.Container] {
         label: "Show Minimize to Tray Windows",
         xalign: 0.0
     });
+
+    let move_cursor_on_switch_label = new Gtk.Label({
+        label: "Move Mouse Cursor when Switching",
+        xalign: 0.0
+    });
     
     let window_titles = new Gtk.Switch({ halign: Gtk.Align.END });
     let snap_to_grid = new Gtk.Switch({ halign: Gtk.Align.END });
     let smart_gaps = new Gtk.Switch({ halign: Gtk.Align.END });
     let show_skip_taskbar = new Gtk.Switch({ halign: Gtk.Align.END });
+    let move_cursor_on_switch = new Gtk.Switch({ halign: Gtk.Align.END });
 
     grid.attach(win_label, 0, 0, 1, 1);
     grid.attach(window_titles, 1, 0, 1, 1);
@@ -121,11 +134,14 @@ function settings_dialog_view(): [AppWidgets, Gtk.Container] {
     grid.attach(show_skip_taskbar_label, 0, 3, 1, 1);
     grid.attach(show_skip_taskbar, 1, 3, 1, 1);
 
-    logging_combo(grid, 4);
+    grid.attach(move_cursor_on_switch_label, 0, 4, 1, 1);
+    grid.attach(move_cursor_on_switch, 1, 4, 1, 1);
 
-    let [inner_gap, outer_gap] = gaps_section(grid, 5);
+    logging_combo(grid, 5);
 
-    let settings = { inner_gap, outer_gap, smart_gaps, snap_to_grid, window_titles, show_skip_taskbar };
+    let [inner_gap, outer_gap] = gaps_section(grid, 6);
+
+    let settings = { inner_gap, outer_gap, smart_gaps, snap_to_grid, window_titles, show_skip_taskbar, move_cursor_on_switch };
 
     return [settings, grid];
 }
