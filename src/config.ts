@@ -101,9 +101,6 @@ export class Config {
     /** Logs window details on focus of window */
     log_on_focus: boolean = false;
 
-    /** Move pointer when you switch applications */
-    move_pointer_on_switch: boolean = false;
-
     /** Specify default pointer position when you're switching windows */
     default_pointer_position: DefaultPointerPosition = DefaultPointerPosition.TopLeft;
 
@@ -180,7 +177,6 @@ export class Config {
             this.float = c.float;
             this.log_on_focus = c.log_on_focus;
             this.default_pointer_position = c.default_pointer_position;
-            this.move_pointer_on_switch = c.move_pointer_on_switch;
         } else {
             log(`error loading conf: ${conf.why}`)
         }
