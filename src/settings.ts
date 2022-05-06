@@ -60,7 +60,7 @@ const HINT_COLOR_RGBA = "hint-color-rgba";
 const DEFAULT_RGBA_COLOR = "rgba(251, 184, 108, 1)"; //pop-orange
 const LOG_LEVEL = "log-level";
 const SHOW_SKIPTASKBAR = "show-skip-taskbar";
-const MOVE_CURSOR_ON_SWITCH = "move-cursor-on-switch"
+const MOUSE_CURSOR_FOLLOWS_ACTIVE_WINDOW = "mouse-cursor-follows-active-window"
 
 export class ExtensionSettings {
     ext: Settings = settings_new_schema(Me.metadata["settings-schema"]);
@@ -152,8 +152,8 @@ export class ExtensionSettings {
         return this.ext.get_boolean(SHOW_SKIPTASKBAR);
     }
 
-    move_cursor_on_switch(): boolean {
-        return this.ext.get_boolean(MOVE_CURSOR_ON_SWITCH);
+    mouse_cursor_follows_active_window(): boolean {
+        return this.ext.get_boolean(MOUSE_CURSOR_FOLLOWS_ACTIVE_WINDOW);
     }
 
     // Setters
@@ -212,7 +212,7 @@ export class ExtensionSettings {
         this.ext.set_boolean(SHOW_SKIPTASKBAR, set);
     }
 
-    set_move_cursor_on_switch(set: boolean) {
-        this.ext.set_boolean(MOVE_CURSOR_ON_SWITCH, set);
+    set_mouse_cursor_follows_active_window(set: boolean) {
+        this.ext.set_boolean(MOUSE_CURSOR_FOLLOWS_ACTIVE_WINDOW, set);
     }
 }

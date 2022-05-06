@@ -618,7 +618,7 @@ export function activate(ext: Ext, move_mouse: boolean, default_pointer_position
     workspace.activate_with_focus(win, global.get_current_time())
     win.raise()
 
-    if (ext.settings.move_cursor_on_switch() && move_mouse && !pointer_already_on_window(win)) {
+    if (ext.settings.mouse_cursor_follows_active_window() && move_mouse && !pointer_already_on_window(win)) {
         place_pointer_on(default_pointer_position, win)
     }
 }
