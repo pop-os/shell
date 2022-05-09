@@ -31,6 +31,11 @@ export class LauncherService {
                     this.service.stdout.read_line_async(0, this.cancellable, generator)
                 }
             } catch (why) {
+                // Do not print an error if it was merely cancelled.
+                if ((why as any).matches (Gio.IOErrorEnum, Gio.IOErrorEnum.CANCELLED)){
+                    return
+                }
+
                 log.error(`failed to read response from launcher service: ${why}`)
             }
         }
