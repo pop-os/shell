@@ -1848,6 +1848,22 @@ export class Ext extends Ecs.System<ExtEvent> {
             if (screenShield?.locked) this.update_display_configuration(false);
 
             this.connect(display, 'notify::focus-window', () => {
+                const refocus_tiled_window = () => {
+                    // Re-focus a window that was unfocused.
+                    let entity: Ecs.Entity | null = null
+                    const [x, y] = this.prev_focused
+                    if (y) {
+                        entity = y
+                    } else if (x) {
+                        entity = x
+                    }
+
+                    if (entity) {
+                        const shell_window = this.windows.get(entity)
+                        if (shell_window) shell_window.activate(false)
+                    }
+                }
+
                 // Delay in case the focused window was not focused yet.
                 // Note: Fixes Intellij IDE windows.
                 this.register_fn(() => {
@@ -1862,23 +1878,16 @@ export class Ext extends Ecs.System<ExtEvent> {
                                 this.on_focused(shell_window)
                             }
                         } else if (!meta_window.is_override_redirect()) {
-                            // This section fixes Steam's sub-menus.
-                            meta_window.activate(global.get_current_time())
+                            // Prevent focusing desktop extension in auto-tiler mode
+                            if (this.auto_tiler && meta_window.window_type === Meta.WindowType.DESKTOP) {
+                                refocus_tiled_window()
+                            } else {
+                                // This section fixes Steam's sub-menus.
+                                meta_window.activate(global.get_current_time())
+                            }
                         }
                     } else if (this.auto_tiler) {
-                        // // Re-focus a window that was unfocused.
-                        // let entity: Ecs.Entity | null = null
-                        // const [x, y] = this.prev_focused
-                        // if (y) {
-                        //     entity = y
-                        // } else if (x) {
-                        //     entity = x
-                        // }
-
-                        // if (entity) {
-                        //     const shell_window = this.windows.get(entity)
-                        //     if (shell_window) shell_window.activate(false)
-                        // }
+                        refocus_tiled_window()
                     }
                 })
 
