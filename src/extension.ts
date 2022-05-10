@@ -45,7 +45,8 @@ const GLib: GLib = imports.gi.GLib;
 const { Gio, Meta, St, Shell } = imports.gi;
 const { GlobalEvent, WindowEvent } = Events;
 const { cursor_rect, is_move_op } = Lib;
-const { layoutManager, loadTheme, overview, panel, setThemeStylesheet, screenShield, sessionMode, windowAttentionHandler } = imports.ui.main;
+const Main = imports.ui.main;
+const { layoutManager, loadTheme, overview, panel, setThemeStylesheet, screenShield, sessionMode, windowAttentionHandler } = Main;
 const { ScreenShield } = imports.ui.screenShield;
 const { AppSwitcher, AppIcon, WindowSwitcherPopup } = imports.ui.altTab;
 const { SwitcherList } = imports.ui.switcherPopup;
@@ -768,6 +769,16 @@ export class Ext extends Ecs.System<ExtEvent> {
     on_destroy(win: Entity) {
         // Exit tiling adjustment mode on window destroy.
         if (this.tiler.window !== null && win == this.tiler.window) this.tiler.exit(this)
+
+        const [prev_a, prev_b] = this.prev_focused
+
+        if (prev_a && Ecs.entity_eq(win, prev_a)) {
+            this.prev_focused[0] = null
+        }
+
+        if (prev_b && Ecs.entity_eq(win, prev_b)) {
+            this.prev_focused[1] = null
+        }
 
         const window = this.windows.get(win);
         if (!window) return;
@@ -1848,20 +1859,23 @@ export class Ext extends Ecs.System<ExtEvent> {
             if (screenShield?.locked) this.update_display_configuration(false);
 
             this.connect(display, 'notify::focus-window', () => {
+                // Disallow refocus if a modal window is active
+                if (Main.modalCount !== 0) return
+
                 const refocus_tiled_window = () => {
                     // Re-focus a window that was unfocused.
-                    let entity: Ecs.Entity | null = null
+                    let window: Window.ShellWindow | null = null
                     const [x, y] = this.prev_focused
+
                     if (y) {
-                        entity = y
-                    } else if (x) {
-                        entity = x
+                        window = this.windows.get(y)
                     }
 
-                    if (entity) {
-                        const shell_window = this.windows.get(entity)
-                        if (shell_window) shell_window.activate(false)
+                    if (window === null && x) {
+                        window = this.windows.get(x)
                     }
+
+                    window?.activate(false)
                 }
 
                 // Delay in case the focused window was not focused yet.
