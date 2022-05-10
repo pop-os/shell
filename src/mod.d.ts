@@ -8,6 +8,7 @@ interface Global {
     get_pointer(): [number, number];
     get_window_actors(): Array<Meta.WindowActor>;
     log(msg: string): void;
+    logError(error: any): void
 
     display: Meta.Display;
     run_at_leisure(func: () => void): void;
