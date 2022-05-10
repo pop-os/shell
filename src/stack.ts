@@ -418,6 +418,9 @@ export class Stack {
         for (const c of this.tabs) {
             if (Ecs.entity_eq(c.entity, entity)) {
                 this.remove_tab_component(c, idx)
+                if (this.active_id > idx) {
+                    this.active_id -= 1
+                }
                 return idx;
             }
             idx += 1;

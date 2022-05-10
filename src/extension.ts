@@ -774,14 +774,15 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         if (prev_a && Ecs.entity_eq(win, prev_a)) {
             this.prev_focused[0] = null
-        }
-
-        if (prev_b && Ecs.entity_eq(win, prev_b)) {
-            this.prev_focused[1] = null
+        } else if (prev_b && Ecs.entity_eq(win, prev_b)) {
+            this.prev_focused[1] = this.prev_focused[0]
+            this.prev_focused[0] = null
         }
 
         const window = this.windows.get(win);
         if (!window) return;
+
+        const stack = window.stack
 
         window.destroying = true;
 
@@ -807,6 +808,23 @@ export class Ext extends Ecs.System<ExtEvent> {
         }
 
         if (this.auto_tiler) this.auto_tiler.detach_window(this, win);
+
+        // If destroyed window belonged to a stack, ensure that the next window
+        // to be focused is also a window in the same stack
+        if (this.auto_tiler && stack !== null) {
+            const stack_object = this.auto_tiler.forest.stacks.get(stack)
+            const prev = this.prev_focused[1]
+            if (stack_object && prev) {
+                const prev_window = this.windows.get(prev)
+                if (prev_window) {
+                    if (prev_window.stack !== stack) {
+                        stack_object.auto_activate()
+                        this.prev_focused = [null, stack_object.active]
+                        this.windows.get(stack_object.active)?.activate()
+                    }
+                }
+            }
+        }
 
         this.movements.remove(win)
         this.windows.remove(win)
@@ -1471,11 +1489,11 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     /** Handle window minimization notifications */
     on_minimize(win: Window.ShellWindow) {
-        if (this.focus_window() == win) {
+        if (this.focus_window() == win && this.settings.active_hint()) {
             if (win.meta.minimized) {
                 win.hide_border()
             } else {
-                win.show_border()
+                this.show_border_on_focused()
             }
         }
 
