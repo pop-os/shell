@@ -35,6 +35,9 @@ export class Search {
     private children_to_abandon: any = null;
     private last_trigger: number = 0;
 
+    /** Output of `Main.pushModal`; Input to `Main.popModal()` */
+    private grab_handle: any = null
+
     activate_id: (index: number) => void = () => {}
     cancel: () => void = () => {}
     complete: () => void = () => {}
@@ -243,6 +246,16 @@ export class Search {
     }
 
     close() {
+        try {
+            if (this.grab_handle !== null) {
+                imports.ui.main.popModal(this.grab_handle)
+                this.grab_handle = null
+
+            }
+        } catch (error) {
+            global.logError(error)
+        }
+
         this.reset()
         this.remove_injections()
 
@@ -252,6 +265,7 @@ export class Search {
     }
 
     _open(timestamp: number, on_primary: boolean) {
+        this.grab_handle = imports.ui.main.pushModal(this.dialog.dialogLayout)
         this.dialog.open(timestamp, on_primary)
 
         wm.allowKeybinding('overlay-key', Shell.ActionMode.ALL)
