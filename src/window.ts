@@ -342,7 +342,7 @@ export class ShellWindow {
             if (on_complete) ext.register_fn(on_complete);
             if (meta.appears_focused) {
                 this.update_border_layout();
-                this.show_border();
+                ext.show_border_on_focused();
             }
         }
     }
@@ -592,12 +592,12 @@ export class ShellWindow {
 
     private window_changed() {
         this.update_border_layout();
-        this.show_border();
+        this.ext.show_border_on_focused();
     }
 
     private window_raised() {
         this.restack(RESTACK_STATE.RAISED);
-        this.show_border();
+        this.ext.show_border_on_focused();
     }
 
     private workspace_changed() {

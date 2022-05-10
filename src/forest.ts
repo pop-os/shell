@@ -715,13 +715,6 @@ export class Forest extends Ecs.World {
         } else {
             const s = this.stacks.get(stack.idx)
             if (s) {
-                const win = ext.windows.get(window)
-                if (win && win.destroying) {
-                    s.activate_prev()
-                    ext.windows.get(s.active)?.activate()
-                    ext.register_fn(() => ext.windows.get(s.active)?.activate())
-                }
-
                 Node.stack_remove(this, stack, window)
             }
         }
