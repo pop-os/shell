@@ -739,18 +739,28 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     on_active_workspace_changed() {
-        this.exit_modes();
-        this.prev_focused = [null, null]
-        this.restack()
-
         this.register_fn(() => {
+            this.exit_modes();
+            this.restack()
+
+            const activate_window = (window: Window.ShellWindow) => {
+                window.activate(true)
+                this.prev_focused = [null, window.entity]
+            }
+
+            const focused = this.focus_window()
+            if (focused && focused.same_workspace()) {
+                activate_window(focused)
+                return
+            }
+
             // Activate the last-active window on workspace.
             const workspace_id = this.active_workspace()
             const active = this.workspace_active.get(workspace_id)
             if (active) {
                 const window = this.windows.get(active)
                 if (window && window.meta.get_workspace().index() == workspace_id) {
-                    window.activate(true)
+                    activate_window(window)
                     return
                 }
             }
@@ -758,9 +768,12 @@ export class Ext extends Ecs.System<ExtEvent> {
             // If window was not found, activate the first window on workspace.
             const workspace = wom.get_workspace_by_index(workspace_id)
             if (workspace) {
-                const window = workspace.list_windows()[0]
-                if (window) {
-                    window.activate(global.get_current_time())
+                for (const win of workspace.list_windows()) {
+                    const window = this.get_window(win)
+                    if (window) {
+                        activate_window(window)
+                        return
+                    }
                 }
             }
         })
@@ -858,7 +871,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             ext?.auto_tiler?.forest.stacks.get(win.stack)?.activate(win.entity)
         }
 
-        this.show_border_on_focused();
+        this.show_border_on_focused()
 
         if (this.auto_tiler && win.is_tilable(this) && this.prev_focused[0] !== null) {
             let prev = this.windows.get(this.prev_focused[0]);
@@ -1264,6 +1277,8 @@ export class Ext extends Ecs.System<ExtEvent> {
                 } else {
                     this.workspace_window_move(win, monitor, monitor);
                 }
+
+                this.workspace_active.set(neighbor.index(), win.entity)
 
                 win.activate_after_move = true;
             }
