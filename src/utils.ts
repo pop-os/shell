@@ -113,6 +113,7 @@ export type AsyncIPC = {
     child: any,
     stdout: any,
     stdin: any,
+    cancellable: any
 }
 
 export function async_process_ipc(argv: Array<string>): AsyncIPC | null {
@@ -123,7 +124,9 @@ export function async_process_ipc(argv: Array<string>): AsyncIPC | null {
             | SubprocessFlags.STDOUT_PIPE
     })
 
-    let child
+    let child: any
+
+    let cancellable = new Gio.Cancellable()
 
     try {
         child = launcher.spawnv(argv)
@@ -142,7 +145,12 @@ export function async_process_ipc(argv: Array<string>): AsyncIPC | null {
         close_base_stream: true
     })
 
-    return { child, stdin, stdout }
+    child.wait_async(null, (source: any, res: any) => {
+        source.wait_finish(res)
+        cancellable.cancel()
+    })
+
+    return { child, stdin, stdout, cancellable }
 }
 
 export function map_eq<K, V>(map1: Map<K, V>, map2: Map<K, V>) {
