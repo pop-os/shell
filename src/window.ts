@@ -450,6 +450,10 @@ export class ShellWindow {
         return false;
     }
 
+    same_monitor() {
+        return this.meta.get_monitor() === global.display.get_current_monitor()
+    }
+
     /**
      * Sort the window group/always top group with each window border
      * @param updateState NORMAL, RAISED, WORKSPACE_CHANGED
