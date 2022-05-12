@@ -14,8 +14,6 @@ const { byteArray } = imports;
  */
 export class LauncherService {
     service: utils.AsyncIPC
-    /** When exiting the service */
-    cancellable: any = new Gio.Cancellable()
 
     constructor(service: utils.AsyncIPC, callback: (response: JsonIPC.Response) => void) {
         this.service = service
@@ -28,7 +26,7 @@ export class LauncherService {
                     const string = byteArray.toString(bytes)
                     // log.debug(`received response from launcher service: ${string}`)
                     callback(JSON.parse(string))
-                    this.service.stdout.read_line_async(0, this.cancellable, generator)
+                    this.service.stdout.read_line_async(0, this.service.cancellable, generator)
                 }
             } catch (why) {
                 // Do not print an error if it was merely cancelled.
@@ -40,7 +38,7 @@ export class LauncherService {
             }
         }
 
-        this.service.stdout.read_line_async(0, this.cancellable, generator)
+        this.service.stdout.read_line_async(0, this.service.cancellable, generator)
     }
 
     activate(id: number) {
@@ -61,7 +59,7 @@ export class LauncherService {
 
     exit() {
         this.send('Exit')
-        this.cancellable.cancel()
+        this.service.cancellable.cancel()
         const service = this.service
 
         GLib.timeout_add(GLib.PRIORITY_DEFAULT, 100, () => {
