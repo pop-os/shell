@@ -938,11 +938,8 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     show_border_on_focused() {
         this.hide_all_borders();
-
-        const focus = this.focus_window();
-        if (focus) {
-            focus.show_border();
-        }
+        const focus = this.focus_window()
+        if (focus) focus.show_border()
     }
 
     hide_all_borders() {
@@ -1894,6 +1891,8 @@ export class Ext extends Ecs.System<ExtEvent> {
             this.connect(display, 'notify::focus-window', () => {
                 // Disallow refocus if a modal window is active
                 if (Main.modalCount !== 0) return
+
+                global.log(`refocusing`)
 
                 const refocus_tiled_window = () => {
                     // Re-focus a window that was unfocused.
