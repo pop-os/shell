@@ -1904,7 +1904,11 @@ export class Ext extends Ecs.System<ExtEvent> {
                         window = this.windows.get(x)
                     }
 
-                    window?.activate(false)
+                    if (window && window.same_monitor()) {
+                        window.activate(false)
+                    } else {
+                        this.hide_all_borders()
+                    }
                 }
 
                 // Delay in case the focused window was not focused yet.
