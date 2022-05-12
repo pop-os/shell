@@ -1924,7 +1924,12 @@ export class Ext extends Ecs.System<ExtEvent> {
 
             this.connect(display, 'notify::focus-window', () => {
                 // Disallow refocus if a modal window is active
-                if (Main.modalCount !== 0) return
+                if (Main.modalCount !== 0) {
+                    const { actor } = Main.modalActorFocusStack[0]
+                    if (actor.style_class !== "switcher-popup") {
+                        return
+                    }
+                }
 
                 const refocus_tiled_window = () => {
                     // Re-focus a window that was unfocused.
