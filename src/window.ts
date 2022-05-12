@@ -427,14 +427,14 @@ export class ShellWindow {
                     // Ensure that the border is shown
                     if (ACTIVE_HINT_SHOW_ID !== null) GLib.source_remove(ACTIVE_HINT_SHOW_ID)
                     ACTIVE_HINT_SHOW_ID = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 600, () => {
-                        if (border.visible) {
-                            GLib.source_remove(ACTIVE_HINT_SHOW_ID)
+                        if (!this.same_workspace() || border.visible) {
                             ACTIVE_HINT_SHOW_ID = null
-                            return false
+                            return GLib.SOURCE_REMOVE
                         }
 
                         border.show()
-                        return true
+
+                        return GLib.SOURCE_CONTINUE
                     })
                 }
             }

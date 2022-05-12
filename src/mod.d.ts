@@ -39,6 +39,8 @@ declare type SignalID = number;
 declare interface GLib {
     PRIORITY_DEFAULT: number;
     PRIORITY_LOW: number;
+    SOURCE_REMOVE: boolean;
+    SOURCE_CONTINUE: boolean;
 
     find_program_in_path(prog: string): string | null;
     get_current_dir(): string;
@@ -53,7 +55,7 @@ declare interface GLib {
     spawn_command_line_sync(cmd: string): ProcessResult;
     spawn_command_line_async(cmd: string): boolean;
 
-    timeout_add(priority: number, ms: number, callback: () => Boolean): number;
+    timeout_add(priority: number, ms: number, callback: () => boolean): number;
 }
 
 declare namespace GObject {
