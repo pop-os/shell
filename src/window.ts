@@ -24,6 +24,9 @@ export var window_tracker = Shell.WindowTracker.get_default();
 /** Contains SourceID of a restack operation. Used to prevent multiple restacks. */
 let SCHEDULED_RESTACK: number | null = null
 
+/** Contains SourceID of an active hint operation. */
+let ACTIVE_HINT_SHOW_ID: number | null = null
+
 const WM_TITLE_BLACKLIST: Array<string> = [
     'Firefox',
     'Nightly', // Firefox Nightly
@@ -420,6 +423,19 @@ export class ShellWindow {
                 this.same_workspace()) {
                 if (this.meta.appears_focused) {
                     border.show();
+
+                    // Ensure that the border is shown
+                    if (ACTIVE_HINT_SHOW_ID !== null) GLib.source_remove(ACTIVE_HINT_SHOW_ID)
+                    ACTIVE_HINT_SHOW_ID = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 600, () => {
+                        if (border.visible) {
+                            GLib.source_remove(ACTIVE_HINT_SHOW_ID)
+                            ACTIVE_HINT_SHOW_ID = null
+                            return false
+                        }
+
+                        border.show()
+                        return true
+                    })
                 }
             }
         }
@@ -460,12 +476,22 @@ export class ShellWindow {
                 break;
         }
 
-        const action = () => {
-            if (!this.actor_exists) return true
+        let restacks = 0
 
-            let border = this.border;
-            let actor = this.meta.get_compositor_private();
-            let win_group = global.window_group;
+        const action = () => {
+            const count = restacks;
+            restacks += 1
+
+            if (!this.actor_exists && count === 0) return true
+
+            if (count === 3) {
+                if (SCHEDULED_RESTACK !== null) GLib.source_remove(SCHEDULED_RESTACK)
+                SCHEDULED_RESTACK = null
+            }
+
+            const border = this.border;
+            const actor = this.meta.get_compositor_private();
+            const win_group = global.window_group;
 
             if (actor && border && win_group) {
                 this.update_border_layout();
@@ -499,10 +525,7 @@ export class ShellWindow {
                 }
             }
 
-            if (SCHEDULED_RESTACK !== null) GLib.source_remove(SCHEDULED_RESTACK)
-            SCHEDULED_RESTACK = null
-
-            return false; // make sure it runs once
+            return true
         }
 
         if (SCHEDULED_RESTACK !== null) GLib.source_remove(SCHEDULED_RESTACK)
