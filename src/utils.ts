@@ -88,7 +88,7 @@ export function is_dark(color: string): boolean {
 }
 
 /** Utility function for running a process in the background and fetching its standard output as a string. */
-export function async_process(argv: Array<string>, input = null, cancellable = null): Promise<string> {
+export function async_process(argv: Array<string>, input = null, cancellable: null | any = null): Promise<string> {
     let flags = Gio.SubprocessFlags.STDOUT_PIPE
 
     if (input !== null)
@@ -96,6 +96,13 @@ export function async_process(argv: Array<string>, input = null, cancellable = n
 
     let proc = new Gio.Subprocess({ argv, flags });
     proc.init(cancellable);
+
+    proc.wait_async(null, (source: any, res: any) => {
+        source.wait_finish(res)
+        if (cancellable !== null) {
+            cancellable.cancel()
+        }
+    })
 
     return new Promise((resolve, reject) => {
         proc.communicate_utf8_async(input, cancellable, (proc: any, res: any) => {
