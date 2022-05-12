@@ -522,7 +522,6 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     exception_dialog() {
         let path = Me.dir.get_path() + "/floating_exceptions/main.js";
-        const cancellable = new Gio.Cancellable();
 
         const event_handler = (event: string): boolean => {
             switch (event) {
@@ -548,7 +547,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                     const [bytes,] = stdout.read_line_finish(res)
                     if (bytes) {
                         if (event_handler((imports.byteArray.toString(bytes) as string).trim())) {
-                            ipc.stdout.read_line_async(0, cancellable, generator)
+                            ipc.stdout.read_line_async(0, ipc.cancellable, generator)
                         }
                     }
                 } catch (why) {
@@ -556,7 +555,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                 }
             }
 
-            ipc.stdout.read_line_async(0, cancellable, generator)
+            ipc.stdout.read_line_async(0, ipc.cancellable, generator)
         }
     }
 
