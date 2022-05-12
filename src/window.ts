@@ -21,6 +21,9 @@ const { OnceCell } = once_cell;
 
 export var window_tracker = Shell.WindowTracker.get_default();
 
+/** Contains SourceID of a restack operation. Used to prevent multiple restacks. */
+let SCHEDULED_RESTACK: number | null = null
+
 const WM_TITLE_BLACKLIST: Array<string> = [
     'Firefox',
     'Nightly', // Firefox Nightly
@@ -458,7 +461,7 @@ export class ShellWindow {
         }
 
         const action = () => {
-            if (!this.actor_exists) return
+            if (!this.actor_exists) return true
 
             let border = this.border;
             let actor = this.meta.get_compositor_private();
@@ -496,10 +499,14 @@ export class ShellWindow {
                 }
             }
 
+            if (SCHEDULED_RESTACK !== null) GLib.source_remove(SCHEDULED_RESTACK)
+            SCHEDULED_RESTACK = null
+
             return false; // make sure it runs once
         }
 
-        GLib.timeout_add(GLib.PRIORITY_LOW, restackSpeed, action)
+        if (SCHEDULED_RESTACK !== null) GLib.source_remove(SCHEDULED_RESTACK)
+        SCHEDULED_RESTACK = GLib.timeout_add(GLib.PRIORITY_LOW, restackSpeed, action)
     }
 
     get always_top_windows(): Clutter.Actor[] {
