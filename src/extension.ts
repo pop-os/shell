@@ -1904,7 +1904,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                         window = this.windows.get(x)
                     }
 
-                    if (window && window.same_monitor()) {
+                    if (window && window.same_monitor() && window.same_workspace()) {
                         window.activate(false)
                     } else {
                         this.hide_all_borders()
