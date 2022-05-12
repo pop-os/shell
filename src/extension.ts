@@ -1891,8 +1891,6 @@ export class Ext extends Ecs.System<ExtEvent> {
                 // Disallow refocus if a modal window is active
                 if (Main.modalCount !== 0) return
 
-                global.log(`refocusing`)
-
                 const refocus_tiled_window = () => {
                     // Re-focus a window that was unfocused.
                     let window: Window.ShellWindow | null = null
