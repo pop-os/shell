@@ -627,6 +627,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     focus_left() {
+        this.unmaximize_workspace(null)
         this.stack_select(
             (id, stack) => id === 0 ? null : stack.tabs[id - 1].entity,
             () => this.activate_window(this.focus_selector.left(this, null))
@@ -634,6 +635,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     focus_right() {
+        this.unmaximize_workspace(null)
         this.stack_select(
             (id, stack) => stack.tabs.length > id + 1 ? stack.tabs[id + 1].entity : null,
             () => this.activate_window(this.focus_selector.right(this, null))
@@ -641,10 +643,12 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     focus_down() {
+        this.unmaximize_workspace(null)
         this.activate_window(this.focus_selector.down(this, null))
     }
 
     focus_up() {
+        this.unmaximize_workspace(null)
         this.activate_window(this.focus_selector.up(this, null))
     }
 
@@ -870,6 +874,8 @@ export class Ext extends Ecs.System<ExtEvent> {
             ext?.auto_tiler?.forest.stacks.get(win.stack)?.activate(win.entity)
         }
 
+        this.unmaximize_workspace(win)
+
         this.show_border_on_focused()
 
         if (this.auto_tiler && win.is_tilable(this) && this.prev_focused[0] !== null) {
@@ -982,6 +988,35 @@ export class Ext extends Ecs.System<ExtEvent> {
             }
         } else {
             this.update_snapped();
+        }
+    }
+
+    /** Unmaximize any maximized windows on the same workspace. */
+    unmaximize_workspace(win: Window.ShellWindow | null) {
+        if (this.auto_tiler) {
+            let mon
+            let work
+
+            if (win == null) {
+                [mon, work] = this.workspace_id()
+            } else {
+                mon = win.meta.get_monitor()
+                work = win.meta.get_workspace().index()
+            }
+
+            for (const [_entity, compare] of this.windows.iter()) {
+                const is_same_space = compare.meta.get_monitor() === mon
+                    && compare.meta.get_workspace().index() === work;
+                if (is_same_space) {
+                    if (compare.is_maximized()) {
+                        compare.meta.unmaximize(Meta.MaximizeFlags.BOTH);
+                    }
+
+                    if (compare.meta.is_fullscreen()) {
+                        compare.meta.unmake_fullscreen();
+                    }
+                }
+            }
         }
     }
 
