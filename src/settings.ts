@@ -49,6 +49,7 @@ function settings_new_schema(schema: string): Settings {
 
 const ACTIVE_HINT = "active-hint";
 const COLUMN_SIZE = "column-size";
+const EDGE_TILING = "edge-tiling";
 const GAP_INNER = "gap-inner";
 const GAP_OUTER = "gap-outer";
 const ROW_SIZE = "row-size";
@@ -164,6 +165,10 @@ export class ExtensionSettings {
 
     set_column_size(size: number) {
         this.ext.set_uint(COLUMN_SIZE, size);
+    }
+
+    set_edge_tiling(enable: boolean) {
+        this.mutter?.set_boolean(EDGE_TILING, enable)
     }
 
     set_gap_inner(gap: number) {

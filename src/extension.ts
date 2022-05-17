@@ -2167,6 +2167,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     auto_tile_off() {
+        this.settings.set_edge_tiling(true)
         this.hide_all_borders();
 
         if (this.auto_tiler) {
@@ -2186,6 +2187,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     auto_tile_on() {
+        this.settings.set_edge_tiling(false)
         this.hide_all_borders();
 
         if (indicator) indicator.toggle_tiled.setToggleState(true)
