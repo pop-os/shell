@@ -762,7 +762,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             const active = this.workspace_active.get(workspace_id)
             if (active) {
                 const window = this.windows.get(active)
-                if (window && window.meta.get_workspace().index() == workspace_id) {
+                if (window && window.meta.get_workspace().index() == workspace_id && !window.meta.minimized) {
                     activate_window(window)
                     return
                 }
@@ -773,7 +773,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             if (workspace) {
                 for (const win of workspace.list_windows()) {
                     const window = this.get_window(win)
-                    if (window) {
+                    if (window && !window.meta.minimized) {
                         activate_window(window)
                         return
                     }
