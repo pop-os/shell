@@ -1944,7 +1944,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                         window = this.windows.get(x)
                     }
 
-                    if (window && window.same_monitor() && window.same_workspace()) {
+                    if (window && window.same_monitor() && window.same_workspace() && !window.meta.minimized) {
                         window.activate(false)
                     } else {
                         this.hide_all_borders()
@@ -1961,7 +1961,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
                         if (shell_window) {
                             // Avoid re-focusing a window that's already focused.
-                            if (shell_window.entity !== this.prev_focused[1]) {
+                            if (shell_window.entity !== this.prev_focused[1] && !shell_window.meta.minimized) {
                                 this.on_focused(shell_window)
                             }
                         } else if (!meta_window.is_override_redirect()) {
