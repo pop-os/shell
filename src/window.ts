@@ -417,17 +417,22 @@ export class ShellWindow {
         this.restack();
         if (this.ext.settings.active_hint()) {
             let border = this.border;
-            if (!this.meta.is_fullscreen() &&
-                (!this.is_single_max_screen() || this.is_snap_edge()) &&
-                !this.meta.minimized &&
-                this.same_workspace()) {
+
+            const permitted = () => {
+                return !this.meta.is_fullscreen() &&
+                    (!this.is_single_max_screen() || this.is_snap_edge()) &&
+                    !this.meta.minimized &&
+                    this.same_workspace()
+            }
+
+            if (permitted()) {
                 if (this.meta.appears_focused) {
                     border.show();
 
                     // Ensure that the border is shown
                     if (ACTIVE_HINT_SHOW_ID !== null) GLib.source_remove(ACTIVE_HINT_SHOW_ID)
                     ACTIVE_HINT_SHOW_ID = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 600, () => {
-                        if (!this.same_workspace() || border.visible) {
+                        if (!this.same_workspace() || border.visible || !permitted()) {
                             ACTIVE_HINT_SHOW_ID = null
                             return GLib.SOURCE_REMOVE
                         }
