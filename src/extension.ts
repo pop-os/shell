@@ -741,6 +741,11 @@ export class Ext extends Ecs.System<ExtEvent> {
         return Rect.Rectangle.from_meta(meta as Rectangular);
     }
 
+    monitor_area(monitor: number): Rectangle | null {
+        const rect = global.display.get_monitor_geometry(monitor)
+        return rect ? Rect.Rectangle.from_meta(rect as Rectangular) : null
+    }
+
     on_active_workspace_changed() {
         this.register_fn(() => {
             this.exit_modes();
