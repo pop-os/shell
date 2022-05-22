@@ -5,6 +5,7 @@ import * as Forest from 'forest';
 import * as Ecs from 'ecs';
 import * as Events from 'events';
 import * as Focus from 'focus';
+import * as Geom from 'geom';
 import * as GrabOp from 'grab_op';
 import * as Keybindings from 'keybindings';
 import * as Lib from 'lib';
@@ -28,7 +29,7 @@ import * as scheduler from 'scheduler';
 
 import type { Entity } from 'ecs';
 import type { ExtEvent } from 'events';
-import type { Rectangle } from 'rectangle';
+import { Rectangle } from 'rectangle';
 import type { Indicator } from 'panel_settings';
 import type { Launcher } from 'launcher';
 
@@ -1250,6 +1251,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                     win.meta.unmaximize(Meta.MaximizeFlags.VERTICAL);
                     win.meta.unmaximize(Meta.MaximizeFlags.BOTH);
                 }
+
                 this.register(Events.window_move(this, win, rect));
             } else {
                 win.move(this, rect, () => {});
@@ -1300,12 +1302,45 @@ export class Ext extends Ecs.System<ExtEvent> {
                 return last;
             }
 
+            /** Places window onto the nearest window of a given workspace */
+            const place_on_nearest_window = (auto_tiler: auto_tiler.AutoTiler, ws: Meta.Workspace, monitor: number) => {
+                const src = win.meta.get_frame_rect()
+
+                auto_tiler.detach_window(this, win.entity);
+
+                const index = ws.index()
+                const coord: [number, number] = [src.x, src.y]
+                
+                let nearest_window = null
+                let nearest_distance = null
+
+                for (const [entity, window] of this.windows.iter()) {
+                    const other_monitor = window.meta.get_monitor()
+                    const other_index = window.meta.get_workspace().index()
+                    if (!this.contains_tag(entity, Tags.Floating) && other_monitor == monitor && other_index === index && !Ecs.entity_eq(win.entity, window.entity)) {
+                        const other_rect = window.rect()
+                        const other_coord: [number, number] = [other_rect.x, other_rect.y]
+                        const distance = Geom.distance(coord, other_coord)
+                        if (nearest_distance === null || nearest_distance > distance) {
+                            nearest_window = window
+                            nearest_distance = distance
+                        }
+                    }
+                }
+
+                if (nearest_window === null) {
+                    auto_tiler.attach_to_workspace(this, win, [monitor, index]);
+                } else {
+                    auto_tiler.attach_to_window(this, nearest_window, win, { src }, false)
+                }
+            }
+
             const move_to_neighbor = (neighbor: Meta.Workspace) => {
                 const monitor = win.meta.get_monitor();
                 if (this.auto_tiler && win.is_tilable(this)) {
                     win.ignore_detach = true;
-                    this.auto_tiler.detach_window(this, win.entity);
-                    this.auto_tiler.attach_to_workspace(this, win, [monitor, neighbor.index()]);
+                    
+                    place_on_nearest_window(this.auto_tiler, neighbor, monitor)
 
                     if (win.meta.minimized) {
                         this.size_signals_block(win);
