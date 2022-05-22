@@ -752,6 +752,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             this.restack()
 
             const activate_window = (window: Window.ShellWindow) => {
+                this.on_focused(window)
                 window.activate(true)
                 this.prev_focused = [null, window.entity]
             }
@@ -761,6 +762,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                 activate_window(focused)
                 return
             }
+
 
             // Activate the last-active window on workspace.
             const workspace_id = this.active_workspace()
