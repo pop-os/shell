@@ -659,10 +659,21 @@ export function activate(ext: Ext, move_mouse: boolean, default_pointer_position
         && imports.ui.main.modalCount === 0
         && ext.settings.mouse_cursor_follows_active_window()
         && !pointer_already_on_window(win)
+        && pointer_in_work_area()
 
     if (pointer_placement_permitted) {
         place_pointer_on(default_pointer_position, win)
     }
+}
+
+function pointer_in_work_area(): boolean {
+    const cursor = lib.cursor_rect()
+    const indice = global.display.get_current_monitor()
+    const mon = global.display.get_workspace_manager()
+        .get_active_workspace()
+        .get_work_area_for_monitor(indice)
+
+    return mon ? cursor.intersects(mon) : false
 }
 
 export function place_pointer_on(default_pointer_position: Config.DefaultPointerPosition, win: Meta.Window) {
