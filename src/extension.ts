@@ -1007,7 +1007,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             for (const [_entity, compare] of this.windows.iter()) {
                 const is_same_space = compare.meta.get_monitor() === mon
                     && compare.meta.get_workspace().index() === work;
-                if (is_same_space) {
+                if (is_same_space && !this.contains_tag(compare.entity, Tags.Floating)) {
                     if (compare.is_maximized()) {
                         compare.meta.unmaximize(Meta.MaximizeFlags.BOTH);
                     }
