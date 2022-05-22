@@ -417,7 +417,8 @@ export class ShellWindow {
             let border = this.border;
 
             const permitted = () => {
-                return this.ext.focus_window() == this
+                return this.actor_exists()
+                    && this.ext.focus_window() == this
                     && !this.meta.is_fullscreen()
                     && (!this.is_single_max_screen() || this.is_snap_edge())
                     && !this.meta.minimized
@@ -427,16 +428,19 @@ export class ShellWindow {
                 if (this.meta.appears_focused) {
                     border.show();
 
+                    // Focus will be re-applied to fix windows moving across workspaces
+                    let applications = 0
+
                     // Ensure that the border is shown
                     if (ACTIVE_HINT_SHOW_ID !== null) GLib.source_remove(ACTIVE_HINT_SHOW_ID)
                     ACTIVE_HINT_SHOW_ID = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 600, () => {
-                        if (!this.same_workspace() || border.visible || !permitted()) {
+                        if (applications > 4 && !this.same_workspace() || !permitted()) {
                             ACTIVE_HINT_SHOW_ID = null
                             return GLib.SOURCE_REMOVE
                         }
 
+                        applications += 1
                         border.show()
-
                         return GLib.SOURCE_CONTINUE
                     })
                 }
