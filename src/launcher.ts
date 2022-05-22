@@ -293,7 +293,10 @@ export class Launcher extends search.Search {
     }
 
     open(ext: Ext) {
-        const mon = ext.monitor_work_area(ext.active_monitor())
+        const active_monitor = ext.active_monitor()
+        const mon_work_area = ext.monitor_work_area(active_monitor)
+        const mon_area = ext.monitor_area(active_monitor)
+        const mon_width = mon_area ? mon_area.width : mon_work_area.width
 
         super.cleanup()
 
@@ -302,9 +305,9 @@ export class Launcher extends search.Search {
 
         super._open(global.get_current_time(), false)
 
-        this.dialog.dialogLayout.x = (mon.width / 2) - (this.dialog.dialogLayout.width / 2)
+        this.dialog.dialogLayout.x = (mon_width / 2) - (this.dialog.dialogLayout.width / 2)
 
-        let height = mon.height >= 900 ? mon.height / 2 : mon.height / 3.5
+        let height = mon_work_area.height >= 900 ? mon_work_area.height / 2 : mon_work_area.height / 3.5
         this.dialog.dialogLayout.y = height - (this.dialog.dialogLayout.height / 2)
     }
 
