@@ -247,10 +247,8 @@ export class ShellWindow {
     }
 
     is_maximized(): boolean {
-        let maximized = this.meta.get_maximized() !== 0;
-        return maximized;
+        return this.meta.get_maximized() !== 0
     }
-
 
     /**
      * Window is maximized, 0 gapped or smart gapped
@@ -419,10 +417,10 @@ export class ShellWindow {
             let border = this.border;
 
             const permitted = () => {
-                return !this.meta.is_fullscreen() &&
-                    (!this.is_single_max_screen() || this.is_snap_edge()) &&
-                    !this.meta.minimized &&
-                    this.same_workspace()
+                return this.ext.focus_window() == this
+                    && !this.meta.is_fullscreen()
+                    && (!this.is_single_max_screen() || this.is_snap_edge())
+                    && !this.meta.minimized
             }
 
             if (permitted()) {
