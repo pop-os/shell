@@ -895,13 +895,8 @@ export class Ext extends Ecs.System<ExtEvent> {
                     if (prev.is_maximized()) {
                         prev.meta.unmaximize(Meta.MaximizeFlags.BOTH);
                     }
-
-                    if (prev.meta.is_fullscreen()) {
-                        prev.meta.unmake_fullscreen();
-                    }
                 } else if (prev.stack) {
                     prev.meta.unmaximize(Meta.MaximizeFlags.BOTH)
-                    prev.meta.unmake_fullscreen()
                     this.auto_tiler.forest.stacks.get(prev.stack)?.restack()
                 }
             }
@@ -1018,10 +1013,6 @@ export class Ext extends Ecs.System<ExtEvent> {
                 if (is_same_space && !this.contains_tag(compare.entity, Tags.Floating)) {
                     if (compare.is_maximized()) {
                         compare.meta.unmaximize(Meta.MaximizeFlags.BOTH);
-                    }
-
-                    if (compare.meta.is_fullscreen()) {
-                        compare.meta.unmake_fullscreen();
                     }
                 }
             }
@@ -1266,8 +1257,6 @@ export class Ext extends Ecs.System<ExtEvent> {
     move_monitor(direction: Meta.DisplayDirection) {
         const win = this.focus_window();
         if (!win) return;
-        if (win && win.meta.is_fullscreen())
-            win.meta.unmake_fullscreen();
 
         const prev_monitor = win.meta.get_monitor();
         const next_monitor = Tiling.locate_monitor(win, direction);
@@ -1289,8 +1278,6 @@ export class Ext extends Ecs.System<ExtEvent> {
     move_workspace(direction: Meta.DisplayDirection) {
         const win = this.focus_window();
         if (!win) return;
-        if (win && win.meta.is_fullscreen())
-            win.meta.unmake_fullscreen();
 
         /** Move a window between workspaces */
         const workspace_move = (direction: Meta.MotionDirection) => {
@@ -1546,13 +1533,6 @@ export class Ext extends Ecs.System<ExtEvent> {
             // Raise maximized to top so stacks won't appear over them.
             const actor = win.meta.get_compositor_private();
             if (actor) global.window_group.set_child_above_sibling(actor, null);
-
-            if (win.meta.is_fullscreen()) {
-                this.size_changed_block();
-                win.meta.unmake_fullscreen();
-                win.meta.maximize(Meta.MaximizeFlags.BOTH);
-                this.size_changed_unblock();
-            }
 
             this.on_monitor_changed(win, (_cfrom, cto, workspace) => {
                 if (win) {

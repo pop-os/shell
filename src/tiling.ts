@@ -201,10 +201,6 @@ export class Tiler {
             this.queue.send(() => {
                 const focused = ext.focus_window();
                 if (focused) {
-                    if (focused.meta.is_fullscreen()) {
-                        focused.meta.unmake_fullscreen();
-                    }
-
                     // The window that the focused window is being moved onto
                     const move_to = focus();
 
