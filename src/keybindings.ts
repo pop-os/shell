@@ -16,6 +16,11 @@ export class Keybindings {
         this.ext = ext;
         this.global = {
             "activate-launcher": () => {
+                // Ignore when a fullscreen window is active
+                if (ext.focus_window()?.meta.is_fullscreen()) {
+                    return
+                }
+
                 ext.tiler.exit(ext);
                 ext.window_search.open(ext);
             },
