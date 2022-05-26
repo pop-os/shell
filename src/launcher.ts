@@ -263,7 +263,7 @@ export class Launcher extends search.Search {
     }
 
     load_desktop_files() {
-        log.warn("pop-shell: deprecated function called (dialog_launcher::load_desktop_files)")
+        log.warn("pop-shell: deprecated function called (launcher::load_desktop_files)")
     }
 
     locate_by_app_info(info: any): null | ShellWindow {
@@ -293,10 +293,16 @@ export class Launcher extends search.Search {
     }
 
     open(ext: Ext) {
+        // Do not activate if the focused window is fullscreen
+        if (ext.focus_window()?.meta.is_fullscreen()) {
+            return
+        }
+
         const active_monitor = ext.active_monitor()
         const mon_work_area = ext.monitor_work_area(active_monitor)
         const mon_area = ext.monitor_area(active_monitor)
         const mon_width = mon_area ? mon_area.width : mon_work_area.width
+
 
         super.cleanup()
 
