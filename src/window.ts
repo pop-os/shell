@@ -94,6 +94,11 @@ export class ShellWindow {
 
         this.known_workspace = this.workspace_id()
 
+        // Float fullscreen windows by default, such as Kodi.
+        if (this.meta.is_fullscreen()) {
+            ext.add_tag(entity, Tags.Floating)
+        }
+
         if (this.may_decorate()) {
             if (!window.is_client_decorated()) {
                 if (ext.settings.show_title()) {
@@ -308,7 +313,7 @@ export class ShellWindow {
                 // Transient windows are most likely dialogs
                 && !this.is_transient()
                 // If a window lacks a class, it's probably a web browser dialog
-                && wm_class !== null;
+                && wm_class !== null
         };
 
         return !ext.contains_tag(this.entity, Tags.Floating)
