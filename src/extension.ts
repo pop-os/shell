@@ -1012,7 +1012,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                 work = win.meta.get_workspace().index()
             }
 
-            for (const [_entity, compare] of this.windows.iter()) {
+            for (const [, compare] of this.windows.iter()) {
                 const is_same_space = compare.meta.get_monitor() === mon
                     && compare.meta.get_workspace().index() === work;
                 if (is_same_space && !this.contains_tag(compare.entity, Tags.Floating)) {
@@ -1310,7 +1310,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
                 const index = ws.index()
                 const coord: [number, number] = [src.x, src.y]
-                
+
                 let nearest_window = null
                 let nearest_distance = null
 
@@ -1339,7 +1339,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                 const monitor = win.meta.get_monitor();
                 if (this.auto_tiler && win.is_tilable(this)) {
                     win.ignore_detach = true;
-                    
+
                     place_on_nearest_window(this.auto_tiler, neighbor, monitor)
 
                     if (win.meta.minimized) {
