@@ -310,11 +310,6 @@ export class Launcher extends search.Search {
         const mon_area = ext.monitor_area(active_monitor)
         const mon_width = mon_area ? mon_area.width : mon_work_area.width
 
-        super.cleanup()
-
-        this.start_services()
-        this.search('')
-
         super._open(global.get_current_time(), false)
 
         if (!this.dialog.visible) {
@@ -323,6 +318,10 @@ export class Launcher extends search.Search {
             this.close()
             return
         }
+
+        super.cleanup()
+        this.start_services()
+        this.search('')
 
         this.dialog.dialogLayout.x = (mon_width / 2) - (this.dialog.dialogLayout.width / 2)
 
