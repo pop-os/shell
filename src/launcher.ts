@@ -295,6 +295,8 @@ export class Launcher extends search.Search {
     }
 
     open(ext: Ext) {
+        ext.tiler.exit(ext);
+
         // Do not allow opening twice
         // Do not activate if the focused window is fullscreen
         if (this.opened || ext.focus_window()?.meta.is_fullscreen()) {
@@ -314,6 +316,13 @@ export class Launcher extends search.Search {
         this.search('')
 
         super._open(global.get_current_time(), false)
+
+        if (!this.dialog.visible) {
+            this.clear()
+            this.cancel()
+            this.close()
+            return
+        }
 
         this.dialog.dialogLayout.x = (mon_width / 2) - (this.dialog.dialogLayout.width / 2)
 

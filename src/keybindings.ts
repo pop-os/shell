@@ -15,16 +15,7 @@ export class Keybindings {
     constructor(ext: Ext) {
         this.ext = ext;
         this.global = {
-            "activate-launcher": () => {
-                // Do not allow opening the launcher twice
-                // Ignore when a fullscreen window is active
-                if (ext.window_search.opened || ext.focus_window()?.meta.is_fullscreen()) {
-                    return
-                }
-
-                ext.tiler.exit(ext);
-                ext.window_search.open(ext);
-            },
+            "activate-launcher": () => ext.window_search.open(ext),
             "tile-enter": () => ext.tiler.enter(ext)
         };
 
