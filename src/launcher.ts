@@ -29,6 +29,7 @@ export class Launcher extends search.Search {
     service: null | service.LauncherService = null
     append_id: null | number = null
     active_menu: null | any = null
+    opened: boolean = false
 
     constructor(ext: Ext) {
         super()
@@ -42,6 +43,7 @@ export class Launcher extends search.Search {
         this.cancel = () => {
             ext.overlay.visible = false
             this.stop_services(ext)
+            this.opened = false
         }
 
         this.search = (pat: string) => {
@@ -293,16 +295,18 @@ export class Launcher extends search.Search {
     }
 
     open(ext: Ext) {
+        // Do not allow opening twice
         // Do not activate if the focused window is fullscreen
-        if (ext.focus_window()?.meta.is_fullscreen()) {
+        if (this.opened || ext.focus_window()?.meta.is_fullscreen()) {
             return
         }
+
+        this.opened = true
 
         const active_monitor = ext.active_monitor()
         const mon_work_area = ext.monitor_work_area(active_monitor)
         const mon_area = ext.monitor_area(active_monitor)
         const mon_width = mon_area ? mon_area.width : mon_work_area.width
-
 
         super.cleanup()
 
