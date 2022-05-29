@@ -7,13 +7,12 @@ import * as log from 'log';
 import * as once_cell from 'once_cell';
 import * as Rect from 'rectangle';
 import * as Tags from 'tags';
-import * as Tweener from 'tweener';
 import * as utils from 'utils';
 import * as xprop from 'xprop';
 import type { Entity } from './ecs';
 import type { Ext } from './extension';
 import type { Rectangle } from './rectangle';
-
+import * as scheduler from 'scheduler';
 
 const { DefaultPointerPosition } = Config;
 const { Gdk, Meta, Shell, St, GLib } = imports.gi;
@@ -56,6 +55,7 @@ export class ShellWindow {
     activate_after_move: boolean = false;
     ignore_detach: boolean = false;
     was_attached_to?: [Entity, boolean | number];
+    destroying: boolean = false;
 
     // Awaiting reassignment after a display update
     reassignment: boolean = false
@@ -63,7 +63,7 @@ export class ShellWindow {
     // True if this window is currently smart-gapped
     smart_gapped: boolean = false;
 
-    border: St.Bin = new St.Bin({ style_class: 'pop-shell-active-hint pop-shell-border-normal' });
+    border: null | St.Bin = new St.Bin({ style_class: 'pop-shell-active-hint pop-shell-border-normal' });
 
     prev_rect: null | Rectangular = null;
 
@@ -101,7 +101,7 @@ export class ShellWindow {
         this.bind_window_events();
         this.bind_hint_events();
 
-        global.window_group.add_child(this.border);
+        if (this.border) global.window_group.add_child(this.border);
 
         this.hide_border();
         this.restack();
@@ -132,6 +132,8 @@ export class ShellWindow {
     }
 
     private bind_hint_events() {
+        if (!this.border) return
+
         let settings = this.ext.settings;
         let change_id = settings.ext.connect('changed', (_, key) => {
             if (this.border) {
@@ -318,7 +320,7 @@ export class ShellWindow {
         return xid ? xprop.may_decorate(xid) : false;
     }
 
-    move(ext: Ext, rect: Rectangular, on_complete?: () => void, animate: boolean = true) {
+    move(ext: Ext, rect: Rectangular, on_complete?: () => void) {
         if ((!this.same_workspace() && this.is_maximized())) {
             return
         }
@@ -334,48 +336,13 @@ export class ShellWindow {
             meta.unmaximize(Meta.MaximizeFlags.HORIZONTAL | Meta.MaximizeFlags.VERTICAL);
             actor.remove_all_transitions();
 
-            const entity_string = String(this.entity);
             ext.movements.insert(this.entity, clone);
 
-            const onComplete = () => {
-                ext.register({ tag: 2, window: this, kind: { tag: 1 } });
-                if (on_complete) ext.register_fn(on_complete);
-                ext.tween_signals.delete(entity_string);
-                if (meta.appears_focused) {
-                    this.update_border_layout();
-                    this.show_border();
-                }
-            };
-
-            if (animate && ext.animate_windows && !ext.init) {
-                const current = meta.get_frame_rect();
-                const buffer = meta.get_buffer_rect();
-
-                const dx = current.x - buffer.x;
-                const dy = current.y - buffer.y;
-
-                const slot = ext.tween_signals.get(entity_string);
-                if (slot !== undefined) {
-                    const [signal, callback] = slot;
-                    Tweener.remove(actor);
-
-                    utils.source_remove(signal);
-                    callback();
-                }
-
-                const x = clone.x - dx;
-                const y = clone.y - dy;
-
-                const duration = ext.tiler.moving ? 49 : 149;
-
-                Tweener.add(this, { x, y, duration, mode: null });
-
-                ext.tween_signals.set(entity_string, [
-                    Tweener.on_window_tweened(this, onComplete),
-                    onComplete
-                ]);
-            } else {
-                onComplete();
+            ext.register({ tag: 2, window: this, kind: { tag: 1 } });
+            if (on_complete) ext.register_fn(on_complete);
+            if (meta.appears_focused) {
+                this.update_border_layout();
+                this.show_border();
             }
         }
     }
@@ -385,6 +352,7 @@ export class ShellWindow {
     }
 
     private on_style_changed() {
+        if (!this.border) return
         this.border_size = this.border.get_theme_node().get_border_width(St.Side.TOP);
     }
 
@@ -438,6 +406,8 @@ export class ShellWindow {
     }
 
     show_border() {
+        if (!this.border) return
+
         this.restack();
         if (this.ext.settings.active_hint()) {
             let border = this.border;
@@ -628,9 +598,6 @@ export class ShellWindow {
     private window_raised() {
         this.restack(RESTACK_STATE.RAISED);
         this.show_border();
-        if (this.ext.conf.move_pointer_on_switch && !pointer_already_on_window(this.meta)) {
-            place_pointer_on(this.ext.conf.default_pointer_position, this.meta);
-        }
     }
 
     private workspace_changed() {
@@ -642,6 +609,8 @@ export class ShellWindow {
 export function activate(move_mouse: boolean, default_pointer_position: Config.DefaultPointerPosition, win: Meta.Window) {
     const workspace = win.get_workspace()
     if (!workspace) return
+
+    scheduler.setForeground(win)
 
     win.unminimize();
     workspace.activate_with_focus(win, global.get_current_time())
@@ -685,10 +654,12 @@ export function place_pointer_on(default_pointer_position: Config.DefaultPointer
 
     const display = Gdk.DisplayManager.get().get_default_display();
 
-    display
-        .get_default_seat()
-        .get_pointer()
-        .warp(display.get_default_screen(), x, y);
+    if (display) {
+        display
+            .get_default_seat()
+            .get_pointer()
+            .warp(display.get_default_screen(), x, y);
+    }
 }
 
 function pointer_already_on_window(meta: Meta.Window): boolean {

@@ -232,9 +232,9 @@ export class AutoTiler {
     }
 
     /** Detaches the window from a tiling branch, if it is attached to one. */
-    detach_window(ext: Ext, win: Entity, destroy_stack: boolean = true) {
+    detach_window(ext: Ext, win: Entity) {
         this.attached.take_with(win, (prev_fork: Entity) => {
-            const reflow_fork = this.forest.detach(ext, prev_fork, win, destroy_stack);
+            const reflow_fork = this.forest.detach(ext, prev_fork, win);
 
             if (reflow_fork) {
                 const fork = reflow_fork[1];
@@ -509,18 +509,20 @@ export class AutoTiler {
                 ext.add_tag(focused.entity, Tags.ForceTile);
                 this.auto_tile(ext, focused, false);
             }
-	} else {
-	    if (ext.contains_tag(focused.entity, Tags.Floating)) {
-		ext.delete_tag(focused.entity, Tags.Floating);
-		this.auto_tile(ext, focused, false);
-	    } else {
-		const fork_entity = this.attached.get(focused.entity);
-		if (fork_entity) {
-		    this.detach_window(ext, focused.entity);
-		    ext.add_tag(focused.entity, Tags.Floating);
-		}
-	    }
-	}
+        } else {
+            if (ext.contains_tag(focused.entity, Tags.Floating)) {
+                ext.delete_tag(focused.entity, Tags.Floating);
+                this.auto_tile(ext, focused, false);
+            } else {
+                const fork_entity = this.attached.get(focused.entity);
+                if (fork_entity) {
+                    this.detach_window(ext, focused.entity);
+                    ext.add_tag(focused.entity, Tags.Floating);
+                }
+            }
+        }
+
+        ext.register_fn(() => focused.activate(true))
     }
 
     toggle_orientation(ext: Ext, window: ShellWindow) {

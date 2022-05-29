@@ -344,7 +344,7 @@ export class Forest extends Ecs.World {
     }
 
     /** Detaches an entity from the a fork, re-arranging the fork's tree as necessary */
-    detach(ext: Ext, fork_entity: Entity, window: Entity, destroy_stack: boolean = false): [Entity, Fork.Fork] | null {
+    detach(ext: Ext, fork_entity: Entity, window: Entity): [Entity, Fork.Fork] | null {
         const fork = this.forks.get(fork_entity);
         if (!fork) return null;
 
@@ -381,11 +381,8 @@ export class Forest extends Ecs.World {
                 ext,
                 fork.left.inner as Node.NodeStack,
                 window,
-                destroy_stack,
-                (window: undefined | Entity) => {
-                    if (window) {
-                        fork.left = Node.Node.window(window)
-                    } else if (fork.right) {
+                () => {
+                    if (fork.right) {
                         fork.left = fork.right
                         fork.right = null
                         if (parent) {
@@ -425,15 +422,9 @@ export class Forest extends Ecs.World {
                     ext,
                     fork.right.inner as Node.NodeStack,
                     window,
-                    destroy_stack,
-                    (window) => {
-                        if (window) {
-                            fork.right = Node.Node.window(window)
-                        } else {
-                            fork.right = null
-                            this.reassign_to_parent(fork, fork.left)
-                        }
-
+                    () => {
+                        fork.right = null
+                        this.reassign_to_parent(fork, fork.left)
                     },
                 );
             }
@@ -717,24 +708,21 @@ export class Forest extends Ecs.World {
     }
 
     /** Removes window from stack, destroying the stack if it was the last window. */
-    private remove_from_stack(ext: Ext, stack: Node.NodeStack, window: Entity, destroy_stack: boolean, on_last: (win?: Entity) => void) {
+    private remove_from_stack(ext: Ext, stack: Node.NodeStack, window: Entity, on_last: () => void) {
         if (stack.entities.length === 1) {
             this.stacks.remove(stack.idx)?.destroy();
             on_last();
         } else {
-            const idx = Node.stack_remove(this, stack, window);
-
-            // Activate the next window in the stack if the window was destroyed.
-            if (idx !== null && idx > 0) {
-                const focused = ext.focus_window();
-                if (focused && !focused.meta.get_compositor_private() && Ecs.entity_eq(window, focused.entity)) {
-                    ext.windows.get(stack.entities[idx - 1])?.activate();
+            const s = this.stacks.get(stack.idx)
+            if (s) {
+                const win = ext.windows.get(window)
+                if (win && win.destroying) {
+                    s.activate_prev()
+                    ext.windows.get(s.active)?.activate()
+                    ext.register_fn(() => ext.windows.get(s.active)?.activate())
                 }
-            }
 
-            if (destroy_stack && stack.entities.length === 1) {
-                on_last(stack.entities[0])
-                this.stacks.remove(stack.idx)?.destroy()
+                Node.stack_remove(this, stack, window)
             }
         }
 
@@ -936,5 +924,5 @@ function move_window(ext: Ext, window: ShellWindow, rect: Rectangular, on_comple
     window.move(ext, rect, () => {
         on_complete();
         ext.size_signals_unblock(window);
-    }, false);
+    });
 }

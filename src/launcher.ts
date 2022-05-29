@@ -7,14 +7,11 @@ import * as arena from 'arena'
 import * as log from 'log'
 import * as service from 'launcher_service'
 import * as context from 'context'
-import * as shell_window from 'window'
-import * as config from 'config'
 
 import type { Ext } from 'extension'
 import type { ShellWindow } from 'window'
 import type { JsonIPC } from 'launcher_service'
 
-const { DefaultPointerPosition } = config
 const { Clutter, Gio, GLib, Meta, Shell } = imports.gi
 
 const app_sys = Shell.AppSystem.get_default();
@@ -31,6 +28,7 @@ export class Launcher extends search.Search {
     windows: arena.Arena<ShellWindow> = new arena.Arena()
     service: null | service.LauncherService = null
     append_id: null | number = null
+    active_menu: null | any = null
 
     constructor(ext: Ext) {
         super()
@@ -128,7 +126,13 @@ export class Launcher extends search.Search {
                             null,
                         )
 
-                        const menu = context.addMenu(button.widget, (_menu) => {
+                        const menu = context.addMenu(button.widget, (menu) => {
+                            if (this.active_menu) {
+                                this.active_menu.actor.hide()
+                            }
+
+                            this.active_menu = menu
+
                             this.service?.context(item.id);
                         })
 
@@ -229,67 +233,27 @@ export class Launcher extends search.Search {
             return
         }
 
-        const is_gnome_settings = info.get_executable() === "gnome-control-center"
-
-        if (is_gnome_settings && app.state === Shell.AppState.RUNNING) {
-            app.activate()
-            const window = app.get_windows()[0]
-            if (window) shell_window.activate(true, DefaultPointerPosition.TopLeft, window)
-            return;
-        }
-
-        const existing_windows = app.get_windows().length
-
         try {
             app.launch(0, -1, gpuPref)
         } catch (why) {
-            global.log(`failed to launch application: ${why}`)
+            log.error(`failed to launch application: ${why}`)
             return;
         }
 
-        let attempts = 0
+        if (info.get_executable() === "gnome-control-center") {
+            app = app_sys.lookup_app("gnome-control-center.desktop");
 
-        GLib.timeout_add(GLib.PRIORITY_DEFAULT, 100, () => {
-            if (app.state === Shell.AppState.STOPPED) {
-                if (info) {
-                    const window = this.locate_by_app_info(info);
-                    if (window) {
-                        window.activate(false)
-                        return false;
-                    }
-                }
-            } else if (app.state === Shell.AppState.RUNNING) {
-                const windows: Array<Meta.Window> = app.get_windows();
+            if (!app) return
 
-                if (windows.length > existing_windows) {
-                    let newest_window = null
-                    let newest_time = null
-                    for (const window of windows) {
-                        const this_time = window.get_user_time()
-                        if (newest_time === null || newest_time > this_time) {
-                            newest_window = window
-                            newest_time = this_time
-                        }
+            app.activate()
 
-                        if (this_time === 0) {
-                            newest_window = window;
-                            break
-                        }
-                    }
+            const window: Meta.Window = app.get_windows()[0]
 
-                    if (newest_window) {
-                        this.ext.get_window(newest_window)?.activate(true);
-                    }
-
-                    return false
-                }
+            if (window) {
+                window.get_workspace().activate_with_focus(window, global.get_current_time())
+                return
             }
-
-            attempts += 1
-            if (attempts === 20) return false
-
-            return true;
-        })
+        }
     }
 
     list_workspace(ext: Ext) {
@@ -303,10 +267,13 @@ export class Launcher extends search.Search {
     }
 
     locate_by_app_info(info: any): null | ShellWindow {
+        const workspace = this.ext.active_workspace()
         const exec_info: null | string = info.get_string("Exec")
         const exec = exec_info?.split(' ').shift()?.split('/').pop()
         if (exec) {
             for (const window of this.ext.tab_list(Meta.TabList.NORMAL, null)) {
+                if (window.meta.get_workspace().index() !== workspace) continue
+
                 const pid = window.meta.get_pid()
                 if (pid !== -1) {
                     try {

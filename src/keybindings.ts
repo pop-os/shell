@@ -17,7 +17,6 @@ export class Keybindings {
         this.global = {
             "activate-launcher": () => {
                 ext.tiler.exit(ext);
-                ext.window_search.load_desktop_files();
                 ext.window_search.open(ext);
             },
             "tile-enter": () => ext.tiler.enter(ext)
@@ -34,7 +33,10 @@ export class Keybindings {
 
             "tile-orientation": () => {
                 const win = ext.focus_window();
-                if (win) ext.auto_tiler?.toggle_orientation(ext, win);
+                if (win && ext.auto_tiler) {
+                    ext.auto_tiler.toggle_orientation(ext, win)
+                    ext.register_fn(() => win.activate(true))
+                }
             },
 
             "toggle-floating": () => ext.auto_tiler?.toggle_floating(ext),

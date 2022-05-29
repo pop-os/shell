@@ -24,6 +24,7 @@ import * as stack from 'stack';
 import * as add_exception from 'dialog_add_exception';
 import * as exec from 'executor';
 import * as dbus_service from 'dbus_service';
+import * as scheduler from 'scheduler';
 
 import type { Entity } from 'ecs';
 import type { ExtEvent } from 'events';
@@ -154,8 +155,6 @@ export class Ext extends Ecs.System<ExtEvent> {
     /** The window that was focused before the last window */
     private prev_focused: [null | Entity, null | Entity] = [null, null];
 
-    tween_signals: Map<string, [SignalID, any]> = new Map();
-
     /** Initially set to true when the extension is initializing */
     init: boolean = true;
 
@@ -262,6 +261,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         this.dbus.WindowQuit = (win: [number, number]) => {
             this.windows.get(win)?.meta.delete(global.get_current_time())
+            this.window_search.close()
         }
     }
 
@@ -741,8 +741,13 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     on_destroy(win: Entity) {
+        // Exit tiling adjustment mode on window destroy.
+        if (this.tiler.window !== null && win == this.tiler.window) this.tiler.exit(this)
+
         const window = this.windows.get(win);
         if (!window) return;
+
+        window.destroying = true;
 
         // Disconnect all signals on this window
         this.window_signals.take_with(win, (signals) => {
@@ -765,13 +770,6 @@ export class Ext extends Ecs.System<ExtEvent> {
             }
         }
 
-        const str = String(win);
-        let value = this.tween_signals.get(str);
-        if (value) {
-            utils.source_remove(value[0]);
-            this.tween_signals.delete(str);
-        }
-
         if (this.auto_tiler) this.auto_tiler.detach_window(this, win);
 
         this.movements.remove(win)
@@ -785,6 +783,8 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     /** Triggered when a window has been focused */
     on_focused(win: Window.ShellWindow) {
+        scheduler.setForeground(win.meta)
+
         this.size_signals_unblock(win);
 
         if (this.exception_selecting) {
@@ -1146,7 +1146,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                 }
                 this.register(Events.window_move(this, win, rect));
             } else {
-                win.move(this, rect, () => {}, false);
+                win.move(this, rect, () => {});
                 // if the resulting dimensions of rect == next
                 if (rect.width == next_area.width && rect.height == next_area.height) {
                     win.meta.maximize(Meta.MaximizeFlags.BOTH)
@@ -1162,15 +1162,15 @@ export class Ext extends Ecs.System<ExtEvent> {
             win.meta.unmake_fullscreen();
 
         const prev_monitor = win.meta.get_monitor();
-        let next_monitor = Tiling.locate_monitor(win, direction);
+        const next_monitor = Tiling.locate_monitor(win, direction);
 
         if (next_monitor !== null) {
             if (this.auto_tiler && !this.is_floating(win)) {
                 win.ignore_detach = true;
                 this.auto_tiler.detach_window(this, win.entity);
-                this.auto_tiler.attach_to_workspace(this, win, [next_monitor, win.workspace_id()]);
+                this.auto_tiler.attach_to_workspace(this, win, [next_monitor[0], win.workspace_id()]);
             } else {
-                this.workspace_window_move(win, prev_monitor, next_monitor);
+                this.workspace_window_move(win, prev_monitor, next_monitor[0]);
             }
         }
 
@@ -1434,6 +1434,14 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     /** Handle window minimization notifications */
     on_minimize(win: Window.ShellWindow) {
+        if (this.focus_window() == win) {
+            if (win.meta.minimized) {
+                win.hide_border()
+            } else {
+                win.show_border()
+            }
+        }
+
         if (this.auto_tiler) {
             if (win.meta.minimized) {
                 const attached = this.auto_tiler.attached.get(win.entity)
@@ -1548,18 +1556,18 @@ export class Ext extends Ecs.System<ExtEvent> {
         if (win) {
             const entity = win.entity;
             actor.connect('destroy', () => {
-                if (win && win.border)
-                    win.border.destroy();
+                if (win && win.border) {
+                    win.border.destroy()
+                    win.border = null
+                }
+
                 this.on_destroy(entity);
+
                 return false;
             });
 
             if (win.is_tilable(this)) {
                 this.connect_window(win);
-            } else {
-                window.raise();
-                window.unminimize();
-                window.activate(global.get_current_time());
             }
         }
     }
@@ -1814,8 +1822,40 @@ export class Ext extends Ecs.System<ExtEvent> {
             if (screenShield?.locked) this.update_display_configuration(false);
 
             this.connect(display, 'notify::focus-window', () => {
-                const window = this.get_window(display.get_focus_window())
-                if (window) this.on_focused(window)
+                // Delay in case the focused window was not focused yet.
+                // Note: Fixes Intellij IDE windows.
+                this.register_fn(() => {
+                    let meta_window = global.display.get_focus_window()
+
+                    if (meta_window) {
+                        const shell_window = this.get_window(meta_window)
+
+                        if (shell_window) {
+                            // Avoid re-focusing a window that's already focused.
+                            if (shell_window.entity !== this.prev_focused[1]) {
+                                this.on_focused(shell_window)
+                            }
+                        } else if (!meta_window.is_override_redirect()) {
+                            // This section fixes Steam's sub-menus.
+                            meta_window.activate(global.get_current_time())
+                        }
+                    } else if (this.auto_tiler) {
+                        // Re-focus a window that was unfocused.
+                        let entity: Ecs.Entity | null = null
+                        const [x, y] = this.prev_focused
+                        if (y) {
+                            entity = y
+                        } else if (x) {
+                            entity = x
+                        }
+
+                        if (entity) {
+                            const shell_window = this.windows.get(entity)
+                            if (shell_window) shell_window.activate(false)
+                        }
+                    }
+                })
+
                 return false
             });
 
@@ -2006,12 +2046,6 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     auto_tile_off() {
         this.hide_all_borders();
-        if (this.schedule_idle(() => {
-            this.auto_tile_off()
-            return false
-        })) {
-            return
-        }
 
         if (this.auto_tiler) {
             this.unregister_storage(this.auto_tiler.attached);
@@ -2031,12 +2065,6 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     auto_tile_on() {
         this.hide_all_borders();
-        if (this.schedule_idle(() => {
-            this.auto_tile_on()
-            return false;
-        })) {
-            return
-        }
 
         if (indicator) indicator.toggle_tiled.setToggleState(true)
 
@@ -2072,10 +2100,11 @@ export class Ext extends Ecs.System<ExtEvent> {
     schedule_idle(func: () => boolean): boolean {
         if (!this.movements.is_empty()) {
             GLib.timeout_add(GLib.PRIORITY_DEFAULT, 100, () => {
+                if (!this.movements.is_empty()) return true
                 return func();
             })
-
-            return true
+        } else {
+            func()
         }
         return false
     }
@@ -2390,11 +2419,26 @@ export class Ext extends Ecs.System<ExtEvent> {
             this.windows.insert(entity, win);
             this.monitors.insert(entity, [win.meta.get_monitor(), win.workspace_id()]);
 
+            const grab_focus = () => {
+                this.schedule_idle(() => {
+                    this.windows.with(entity, (window) => {
+                        window.meta.raise()
+                        window.meta.unminimize()
+                        window.activate(false)
+                    })
+
+                    return false
+                })
+            }
+
             if (this.auto_tiler && !win.meta.minimized && win.is_tilable(this)) {
                 let id = actor.connect('first-frame', () => {
                     this.auto_tiler?.auto_tile(this, win, this.init);
+                    grab_focus()
                     actor.disconnect(id);
                 });
+            } else {
+                grab_focus()
             }
         }
         return entity;

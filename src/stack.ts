@@ -51,6 +51,9 @@ export class Stack {
 
     active_id: number = 0
 
+    prev_active: null | Entity = null;
+    prev_active_id: number = 0;
+
     tabs: Array<Tab> = new Array();
 
     monitor: number;
@@ -125,6 +128,12 @@ export class Stack {
         return c.entity;
     }
 
+    activate_prev() {
+        if (this.prev_active) {
+            this.activate(this.prev_active)
+        }
+    }
+
     /** Activates the tab of this entity */
     activate(entity: Entity) {
         const permitted = this.permitted_to_show()
@@ -135,6 +144,11 @@ export class Stack {
 
         const win = this.ext.windows.get(entity);
         if (!win) return;
+
+        if (!Ecs.entity_eq(entity, this.active)) {
+            this.prev_active = this.active
+            this.prev_active_id = this.active_id
+        }
 
         this.active_connect(win.meta, entity);
 
@@ -394,6 +408,11 @@ export class Stack {
     /** Removes the tab associated with the entity */
     remove_tab(entity: Entity): null | number {
         if (!this.widgets) return null;
+
+        if (this.prev_active && Ecs.entity_eq(entity, this.prev_active)) {
+            this.prev_active = null
+            this.prev_active_id = 0
+        }
 
         let idx = 0;
         for (const c of this.tabs) {
