@@ -264,6 +264,12 @@ export class Forest extends Ecs.World {
                 } else {
                     fork.right = right_node;
                     fork.set_ratio(fork.length() / 2);
+
+                    if ("src" in place_by) {
+                        const [left, right] = area_of_halves(fork)
+                        place_by_keyboard(fork, place_by.src, left, right)
+                    }
+
                     return this._attach(onto_entity, new_entity, this.on_attach, entity, fork, null);
                 }
             } else if (fork.left.is_in_stack(onto_entity)) {
@@ -715,13 +721,6 @@ export class Forest extends Ecs.World {
         } else {
             const s = this.stacks.get(stack.idx)
             if (s) {
-                const win = ext.windows.get(window)
-                if (win && win.destroying) {
-                    s.activate_prev()
-                    ext.windows.get(s.active)?.activate()
-                    ext.register_fn(() => ext.windows.get(s.active)?.activate())
-                }
-
                 Node.stack_remove(this, stack, window)
             }
         }

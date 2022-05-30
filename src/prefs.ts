@@ -18,6 +18,7 @@ interface AppWidgets {
     snap_to_grid: any,
     window_titles: any,
     show_skip_taskbar: any,
+    mouse_cursor_follows_active_window: any,
 }
 
 // @ts-ignore
@@ -70,6 +71,12 @@ function settings_dialog_new(): Gtk.Container {
         Settings.sync();
     });
 
+    app.mouse_cursor_follows_active_window.set_active(ext.mouse_cursor_follows_active_window());
+    app.mouse_cursor_follows_active_window.connect('state-set', (_widget: any, state: boolean) => {
+        ext.set_mouse_cursor_follows_active_window(state);
+        Settings.sync();
+    });
+
     return grid;
 }
 
@@ -103,11 +110,17 @@ function settings_dialog_view(): [AppWidgets, Gtk.Container] {
         label: "Show Minimize to Tray Windows",
         xalign: 0.0
     });
+
+    let mouse_cursor_follows_active_window_label = new Gtk.Label({
+        label: "Mouse Cursor Follows Active Window",
+        xalign: 0.0
+    });
     
     let window_titles = new Gtk.Switch({ halign: Gtk.Align.END });
     let snap_to_grid = new Gtk.Switch({ halign: Gtk.Align.END });
     let smart_gaps = new Gtk.Switch({ halign: Gtk.Align.END });
     let show_skip_taskbar = new Gtk.Switch({ halign: Gtk.Align.END });
+    let mouse_cursor_follows_active_window = new Gtk.Switch({ halign: Gtk.Align.END });
 
     grid.attach(win_label, 0, 0, 1, 1);
     grid.attach(window_titles, 1, 0, 1, 1);
@@ -121,11 +134,14 @@ function settings_dialog_view(): [AppWidgets, Gtk.Container] {
     grid.attach(show_skip_taskbar_label, 0, 3, 1, 1);
     grid.attach(show_skip_taskbar, 1, 3, 1, 1);
 
-    logging_combo(grid, 4);
+    grid.attach(mouse_cursor_follows_active_window_label, 0, 4, 1, 1);
+    grid.attach(mouse_cursor_follows_active_window, 1, 4, 1, 1);
 
-    let [inner_gap, outer_gap] = gaps_section(grid, 5);
+    logging_combo(grid, 5);
 
-    let settings = { inner_gap, outer_gap, smart_gaps, snap_to_grid, window_titles, show_skip_taskbar };
+    let [inner_gap, outer_gap] = gaps_section(grid, 6);
+
+    let settings = { inner_gap, outer_gap, smart_gaps, snap_to_grid, window_titles, show_skip_taskbar, mouse_cursor_follows_active_window };
 
     return [settings, grid];
 }

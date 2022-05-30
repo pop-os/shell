@@ -88,7 +88,7 @@ export function is_dark(color: string): boolean {
 }
 
 /** Utility function for running a process in the background and fetching its standard output as a string. */
-export function async_process(argv: Array<string>, input = null, cancellable = null): Promise<string> {
+export function async_process(argv: Array<string>, input = null, cancellable: null | any = null): Promise<string> {
     let flags = Gio.SubprocessFlags.STDOUT_PIPE
 
     if (input !== null)
@@ -96,6 +96,13 @@ export function async_process(argv: Array<string>, input = null, cancellable = n
 
     let proc = new Gio.Subprocess({ argv, flags });
     proc.init(cancellable);
+
+    proc.wait_async(null, (source: any, res: any) => {
+        source.wait_finish(res)
+        if (cancellable !== null) {
+            cancellable.cancel()
+        }
+    })
 
     return new Promise((resolve, reject) => {
         proc.communicate_utf8_async(input, cancellable, (proc: any, res: any) => {
@@ -113,6 +120,7 @@ export type AsyncIPC = {
     child: any,
     stdout: any,
     stdin: any,
+    cancellable: any
 }
 
 export function async_process_ipc(argv: Array<string>): AsyncIPC | null {
@@ -123,7 +131,9 @@ export function async_process_ipc(argv: Array<string>): AsyncIPC | null {
             | SubprocessFlags.STDOUT_PIPE
     })
 
-    let child
+    let child: any
+
+    let cancellable = new Gio.Cancellable()
 
     try {
         child = launcher.spawnv(argv)
@@ -142,7 +152,12 @@ export function async_process_ipc(argv: Array<string>): AsyncIPC | null {
         close_base_stream: true
     })
 
-    return { child, stdin, stdout }
+    child.wait_async(null, (source: any, res: any) => {
+        source.wait_finish(res)
+        cancellable.cancel()
+    })
+
+    return { child, stdin, stdout, cancellable }
 }
 
 export function map_eq<K, V>(map1: Map<K, V>, map2: Map<K, V>) {

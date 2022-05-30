@@ -5,6 +5,7 @@ import * as Forest from 'forest';
 import * as Ecs from 'ecs';
 import * as Events from 'events';
 import * as Focus from 'focus';
+import * as Geom from 'geom';
 import * as GrabOp from 'grab_op';
 import * as Keybindings from 'keybindings';
 import * as Lib from 'lib';
@@ -28,7 +29,7 @@ import * as scheduler from 'scheduler';
 
 import type { Entity } from 'ecs';
 import type { ExtEvent } from 'events';
-import type { Rectangle } from 'rectangle';
+import { Rectangle } from 'rectangle';
 import type { Indicator } from 'panel_settings';
 import type { Launcher } from 'launcher';
 
@@ -45,7 +46,8 @@ const GLib: GLib = imports.gi.GLib;
 const { Gio, Meta, St, Shell } = imports.gi;
 const { GlobalEvent, WindowEvent } = Events;
 const { cursor_rect, is_move_op } = Lib;
-const { layoutManager, loadTheme, overview, panel, setThemeStylesheet, screenShield, sessionMode, windowAttentionHandler } = imports.ui.main;
+const Main = imports.ui.main;
+const { layoutManager, loadTheme, overview, panel, setThemeStylesheet, screenShield, sessionMode, windowAttentionHandler } = Main;
 const { ScreenShield } = imports.ui.screenShield;
 const { AppSwitcher, AppIcon, WindowSwitcherPopup } = imports.ui.altTab;
 const { SwitcherList } = imports.ui.switcherPopup;
@@ -169,6 +171,9 @@ export class Ext extends Ecs.System<ExtEvent> {
     private signals: Map<GObject.Object, Array<SignalID>> = new Map();
 
     private size_requests: Map<GObject.Object, SignalID> = new Map();
+
+    /** Stores windows that were focused on a workspace */
+    private workspace_active: Map<number, null | Entity> = new Map()
 
     // Entity-component associations
 
@@ -518,7 +523,6 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     exception_dialog() {
         let path = Me.dir.get_path() + "/floating_exceptions/main.js";
-        const cancellable = new Gio.Cancellable();
 
         const event_handler = (event: string): boolean => {
             switch (event) {
@@ -544,7 +548,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                     const [bytes,] = stdout.read_line_finish(res)
                     if (bytes) {
                         if (event_handler((imports.byteArray.toString(bytes) as string).trim())) {
-                            ipc.stdout.read_line_async(0, cancellable, generator)
+                            ipc.stdout.read_line_async(0, ipc.cancellable, generator)
                         }
                     }
                 } catch (why) {
@@ -552,7 +556,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                 }
             }
 
-            ipc.stdout.read_line_async(0, cancellable, generator)
+            ipc.stdout.read_line_async(0, ipc.cancellable, generator)
         }
     }
 
@@ -624,6 +628,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     focus_left() {
+        this.unmaximize_workspace(null)
         this.stack_select(
             (id, stack) => id === 0 ? null : stack.tabs[id - 1].entity,
             () => this.activate_window(this.focus_selector.left(this, null))
@@ -631,6 +636,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     focus_right() {
+        this.unmaximize_workspace(null)
         this.stack_select(
             (id, stack) => stack.tabs.length > id + 1 ? stack.tabs[id + 1].entity : null,
             () => this.activate_window(this.focus_selector.right(this, null))
@@ -638,10 +644,12 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     focus_down() {
+        this.unmaximize_workspace(null)
         this.activate_window(this.focus_selector.down(this, null))
     }
 
     focus_up() {
+        this.unmaximize_workspace(null)
         this.activate_window(this.focus_selector.up(this, null))
     }
 
@@ -734,18 +742,71 @@ export class Ext extends Ecs.System<ExtEvent> {
         return Rect.Rectangle.from_meta(meta as Rectangular);
     }
 
+    monitor_area(monitor: number): Rectangle | null {
+        const rect = global.display.get_monitor_geometry(monitor)
+        return rect ? Rect.Rectangle.from_meta(rect as Rectangular) : null
+    }
+
     on_active_workspace_changed() {
-        this.exit_modes();
-        this.prev_focused = [null, null]
-        this.restack()
+        this.register_fn(() => {
+            this.exit_modes();
+            this.restack()
+
+            const activate_window = (window: Window.ShellWindow) => {
+                this.on_focused(window)
+                window.activate(true)
+                this.prev_focused = [null, window.entity]
+            }
+
+            const focused = this.focus_window()
+            if (focused && focused.same_workspace()) {
+                activate_window(focused)
+                return
+            }
+
+
+            // Activate the last-active window on workspace.
+            const workspace_id = this.active_workspace()
+            const active = this.workspace_active.get(workspace_id)
+            if (active) {
+                const window = this.windows.get(active)
+                if (window && window.meta.get_workspace().index() == workspace_id && !window.meta.minimized) {
+                    activate_window(window)
+                    return
+                }
+            }
+
+            // If window was not found, activate the first window on workspace.
+            const workspace = wom.get_workspace_by_index(workspace_id)
+            if (workspace) {
+                for (const win of workspace.list_windows()) {
+                    const window = this.get_window(win)
+                    if (window && !window.meta.minimized) {
+                        activate_window(window)
+                        return
+                    }
+                }
+            }
+        })
     }
 
     on_destroy(win: Entity) {
         // Exit tiling adjustment mode on window destroy.
         if (this.tiler.window !== null && win == this.tiler.window) this.tiler.exit(this)
 
+        const [prev_a, prev_b] = this.prev_focused
+
+        if (prev_a && Ecs.entity_eq(win, prev_a)) {
+            this.prev_focused[0] = null
+        } else if (prev_b && Ecs.entity_eq(win, prev_b)) {
+            this.prev_focused[1] = this.prev_focused[0]
+            this.prev_focused[0] = null
+        }
+
         const window = this.windows.get(win);
         if (!window) return;
+
+        const stack = window.stack
 
         window.destroying = true;
 
@@ -772,6 +833,23 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         if (this.auto_tiler) this.auto_tiler.detach_window(this, win);
 
+        // If destroyed window belonged to a stack, ensure that the next window
+        // to be focused is also a window in the same stack
+        if (this.auto_tiler && stack !== null) {
+            const stack_object = this.auto_tiler.forest.stacks.get(stack)
+            const prev = this.prev_focused[1]
+            if (stack_object && prev) {
+                const prev_window = this.windows.get(prev)
+                if (prev_window) {
+                    if (prev_window.stack !== stack) {
+                        stack_object.auto_activate()
+                        this.prev_focused = [null, stack_object.active]
+                        this.windows.get(stack_object.active)?.activate()
+                    }
+                }
+            }
+        }
+
         this.movements.remove(win)
         this.windows.remove(win)
         this.delete_entity(win);
@@ -783,6 +861,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     /** Triggered when a window has been focused */
     on_focused(win: Window.ShellWindow) {
+        this.workspace_active.set(this.active_workspace(), win.entity)
         scheduler.setForeground(win.meta)
 
         this.size_signals_unblock(win);
@@ -803,7 +882,9 @@ export class Ext extends Ecs.System<ExtEvent> {
             ext?.auto_tiler?.forest.stacks.get(win.stack)?.activate(win.entity)
         }
 
-        this.show_border_on_focused();
+        this.unmaximize_workspace(win)
+
+        this.show_border_on_focused()
 
         if (this.auto_tiler && win.is_tilable(this) && this.prev_focused[0] !== null) {
             let prev = this.windows.get(this.prev_focused[0]);
@@ -814,13 +895,8 @@ export class Ext extends Ecs.System<ExtEvent> {
                     if (prev.is_maximized()) {
                         prev.meta.unmaximize(Meta.MaximizeFlags.BOTH);
                     }
-
-                    if (prev.meta.is_fullscreen()) {
-                        prev.meta.unmake_fullscreen();
-                    }
                 } else if (prev.stack) {
                     prev.meta.unmaximize(Meta.MaximizeFlags.BOTH)
-                    prev.meta.unmake_fullscreen()
                     this.auto_tiler.forest.stacks.get(prev.stack)?.restack()
                 }
             }
@@ -870,11 +946,8 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     show_border_on_focused() {
         this.hide_all_borders();
-
-        const focus = this.focus_window();
-        if (focus) {
-            focus.show_border();
-        }
+        const focus = this.focus_window()
+        if (focus) focus.show_border()
     }
 
     hide_all_borders() {
@@ -918,6 +991,31 @@ export class Ext extends Ecs.System<ExtEvent> {
             }
         } else {
             this.update_snapped();
+        }
+    }
+
+    /** Unmaximize any maximized windows on the same workspace. */
+    unmaximize_workspace(win: Window.ShellWindow | null) {
+        if (this.auto_tiler) {
+            let mon
+            let work
+
+            if (win == null) {
+                [mon, work] = this.workspace_id()
+            } else {
+                mon = win.meta.get_monitor()
+                work = win.meta.get_workspace().index()
+            }
+
+            for (const [, compare] of this.windows.iter()) {
+                const is_same_space = compare.meta.get_monitor() === mon
+                    && compare.meta.get_workspace().index() === work;
+                if (is_same_space && !this.contains_tag(compare.entity, Tags.Floating)) {
+                    if (compare.is_maximized()) {
+                        compare.meta.unmaximize(Meta.MaximizeFlags.BOTH);
+                    }
+                }
+            }
         }
     }
 
@@ -1144,6 +1242,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                     win.meta.unmaximize(Meta.MaximizeFlags.VERTICAL);
                     win.meta.unmaximize(Meta.MaximizeFlags.BOTH);
                 }
+
                 this.register(Events.window_move(this, win, rect));
             } else {
                 win.move(this, rect, () => {});
@@ -1158,8 +1257,6 @@ export class Ext extends Ecs.System<ExtEvent> {
     move_monitor(direction: Meta.DisplayDirection) {
         const win = this.focus_window();
         if (!win) return;
-        if (win && win.meta.is_fullscreen())
-            win.meta.unmake_fullscreen();
 
         const prev_monitor = win.meta.get_monitor();
         const next_monitor = Tiling.locate_monitor(win, direction);
@@ -1181,8 +1278,6 @@ export class Ext extends Ecs.System<ExtEvent> {
     move_workspace(direction: Meta.DisplayDirection) {
         const win = this.focus_window();
         if (!win) return;
-        if (win && win.meta.is_fullscreen())
-            win.meta.unmake_fullscreen();
 
         /** Move a window between workspaces */
         const workspace_move = (direction: Meta.MotionDirection) => {
@@ -1194,12 +1289,45 @@ export class Ext extends Ecs.System<ExtEvent> {
                 return last;
             }
 
+            /** Places window onto the nearest window of a given workspace */
+            const place_on_nearest_window = (auto_tiler: auto_tiler.AutoTiler, ws: Meta.Workspace, monitor: number) => {
+                const src = win.meta.get_frame_rect()
+
+                auto_tiler.detach_window(this, win.entity);
+
+                const index = ws.index()
+                const coord: [number, number] = [src.x, src.y]
+
+                let nearest_window = null
+                let nearest_distance = null
+
+                for (const [entity, window] of this.windows.iter()) {
+                    const other_monitor = window.meta.get_monitor()
+                    const other_index = window.meta.get_workspace().index()
+                    if (!this.contains_tag(entity, Tags.Floating) && other_monitor == monitor && other_index === index && !Ecs.entity_eq(win.entity, window.entity)) {
+                        const other_rect = window.rect()
+                        const other_coord: [number, number] = [other_rect.x, other_rect.y]
+                        const distance = Geom.distance(coord, other_coord)
+                        if (nearest_distance === null || nearest_distance > distance) {
+                            nearest_window = window
+                            nearest_distance = distance
+                        }
+                    }
+                }
+
+                if (nearest_window === null) {
+                    auto_tiler.attach_to_workspace(this, win, [monitor, index]);
+                } else {
+                    auto_tiler.attach_to_window(this, nearest_window, win, { src }, false)
+                }
+            }
+
             const move_to_neighbor = (neighbor: Meta.Workspace) => {
                 const monitor = win.meta.get_monitor();
                 if (this.auto_tiler && win.is_tilable(this)) {
                     win.ignore_detach = true;
-                    this.auto_tiler.detach_window(this, win.entity);
-                    this.auto_tiler.attach_to_workspace(this, win, [monitor, neighbor.index()]);
+
+                    place_on_nearest_window(this.auto_tiler, neighbor, monitor)
 
                     if (win.meta.minimized) {
                         this.size_signals_block(win);
@@ -1209,6 +1337,8 @@ export class Ext extends Ecs.System<ExtEvent> {
                 } else {
                     this.workspace_window_move(win, monitor, monitor);
                 }
+
+                this.workspace_active.set(neighbor.index(), win.entity)
 
                 win.activate_after_move = true;
             }
@@ -1404,13 +1534,6 @@ export class Ext extends Ecs.System<ExtEvent> {
             const actor = win.meta.get_compositor_private();
             if (actor) global.window_group.set_child_above_sibling(actor, null);
 
-            if (win.meta.is_fullscreen()) {
-                this.size_changed_block();
-                win.meta.unmake_fullscreen();
-                win.meta.maximize(Meta.MaximizeFlags.BOTH);
-                this.size_changed_unblock();
-            }
-
             this.on_monitor_changed(win, (_cfrom, cto, workspace) => {
                 if (win) {
                     win.ignore_detach = true;
@@ -1434,11 +1557,11 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     /** Handle window minimization notifications */
     on_minimize(win: Window.ShellWindow) {
-        if (this.focus_window() == win) {
+        if (this.focus_window() == win && this.settings.active_hint()) {
             if (win.meta.minimized) {
                 win.hide_border()
             } else {
-                win.show_border()
+                this.show_border_on_focused()
             }
         }
 
@@ -1822,6 +1945,34 @@ export class Ext extends Ecs.System<ExtEvent> {
             if (screenShield?.locked) this.update_display_configuration(false);
 
             this.connect(display, 'notify::focus-window', () => {
+                // Disallow refocus if a modal window is active
+                if (Main.modalCount !== 0) {
+                    const { actor } = Main.modalActorFocusStack[0]
+                    if (actor.style_class !== "switcher-popup") {
+                        return
+                    }
+                }
+
+                const refocus_tiled_window = () => {
+                    // Re-focus a window that was unfocused.
+                    let window: Window.ShellWindow | null = null
+                    const [x, y] = this.prev_focused
+
+                    if (y) {
+                        window = this.windows.get(y)
+                    }
+
+                    if (window === null && x) {
+                        window = this.windows.get(x)
+                    }
+
+                    if (window && window.same_monitor() && window.same_workspace() && !window.meta.minimized) {
+                        window.activate(false)
+                    } else {
+                        this.hide_all_borders()
+                    }
+                }
+
                 // Delay in case the focused window was not focused yet.
                 // Note: Fixes Intellij IDE windows.
                 this.register_fn(() => {
@@ -1832,27 +1983,20 @@ export class Ext extends Ecs.System<ExtEvent> {
 
                         if (shell_window) {
                             // Avoid re-focusing a window that's already focused.
-                            if (shell_window.entity !== this.prev_focused[1]) {
+                            if (shell_window.entity !== this.prev_focused[1] && !shell_window.meta.minimized) {
                                 this.on_focused(shell_window)
                             }
                         } else if (!meta_window.is_override_redirect()) {
-                            // This section fixes Steam's sub-menus.
-                            meta_window.activate(global.get_current_time())
+                            // Prevent focusing desktop extension in auto-tiler mode
+                            if (this.auto_tiler && meta_window.window_type === Meta.WindowType.DESKTOP) {
+                                refocus_tiled_window()
+                            } else {
+                                // This section fixes Steam's sub-menus.
+                                meta_window.activate(global.get_current_time())
+                            }
                         }
                     } else if (this.auto_tiler) {
-                        // Re-focus a window that was unfocused.
-                        let entity: Ecs.Entity | null = null
-                        const [x, y] = this.prev_focused
-                        if (y) {
-                            entity = y
-                        } else if (x) {
-                            entity = x
-                        }
-
-                        if (entity) {
-                            const shell_window = this.windows.get(entity)
-                            if (shell_window) shell_window.activate(false)
-                        }
+                        refocus_tiled_window()
                     }
                 })
 
@@ -2045,6 +2189,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     auto_tile_off() {
+        this.settings.set_edge_tiling(true)
         this.hide_all_borders();
 
         if (this.auto_tiler) {
@@ -2064,6 +2209,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     auto_tile_on() {
+        this.settings.set_edge_tiling(false)
         this.hide_all_borders();
 
         if (indicator) indicator.toggle_tiled.setToggleState(true)
@@ -2407,6 +2553,12 @@ export class Ext extends Ecs.System<ExtEvent> {
                 name = window_app.get_name().replace(/&/g, "&amp;");
             } catch (e) {
                 return null;
+            }
+
+            // Only permit normal, dialog, and modal dialogs
+            const window_type = (meta as any).get_window_type();
+            if (window_type !== 0 && window_type !== 3 && window_type !== 4) {
+                return null
             }
 
             entity = this.create_entity();

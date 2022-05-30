@@ -38,11 +38,6 @@
     padding-bottom: 6px;
 }
 
-.pop-shell-gaps-entry {
-    /* Seems to get the width just right to fit 3 digits */
-    width: 75px;
-}
-
 .pop-shell-tab {
     border: 1px solid #333;
     color: #000;

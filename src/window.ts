@@ -21,6 +21,12 @@ const { OnceCell } = once_cell;
 
 export var window_tracker = Shell.WindowTracker.get_default();
 
+/** Contains SourceID of a restack operation. Used to prevent multiple restacks. */
+let SCHEDULED_RESTACK: number | null = null
+
+/** Contains SourceID of an active hint operation. */
+let ACTIVE_HINT_SHOW_ID: number | null = null
+
 const WM_TITLE_BLACKLIST: Array<string> = [
     'Firefox',
     'Nightly', // Firefox Nightly
@@ -88,6 +94,11 @@ export class ShellWindow {
 
         this.known_workspace = this.workspace_id()
 
+        // Float fullscreen windows by default, such as Kodi.
+        if (this.meta.is_fullscreen()) {
+            ext.add_tag(entity, Tags.Floating)
+        }
+
         if (this.may_decorate()) {
             if (!window.is_client_decorated()) {
                 if (ext.settings.show_title()) {
@@ -113,7 +124,7 @@ export class ShellWindow {
     }
 
     activate(move_mouse: boolean = true): void {
-        activate(move_mouse, this.ext.conf.default_pointer_position, this.meta);
+        activate(this.ext, move_mouse, this.ext.conf.default_pointer_position, this.meta);
     }
 
     actor_exists(): boolean {
@@ -241,10 +252,8 @@ export class ShellWindow {
     }
 
     is_maximized(): boolean {
-        let maximized = this.meta.get_maximized() !== 0;
-        return maximized;
+        return this.meta.get_maximized() !== 0
     }
-
 
     /**
      * Window is maximized, 0 gapped or smart gapped
@@ -304,7 +313,7 @@ export class ShellWindow {
                 // Transient windows are most likely dialogs
                 && !this.is_transient()
                 // If a window lacks a class, it's probably a web browser dialog
-                && wm_class !== null;
+                && wm_class !== null
         };
 
         return !ext.contains_tag(this.entity, Tags.Floating)
@@ -342,7 +351,7 @@ export class ShellWindow {
             if (on_complete) ext.register_fn(on_complete);
             if (meta.appears_focused) {
                 this.update_border_layout();
-                this.show_border();
+                ext.show_border_on_focused();
             }
         }
     }
@@ -411,12 +420,34 @@ export class ShellWindow {
         this.restack();
         if (this.ext.settings.active_hint()) {
             let border = this.border;
-            if (!this.meta.is_fullscreen() &&
-                (!this.is_single_max_screen() || this.is_snap_edge()) &&
-                !this.meta.minimized &&
-                this.same_workspace()) {
+
+            const permitted = () => {
+                return this.actor_exists()
+                    && this.ext.focus_window() == this
+                    && !this.meta.is_fullscreen()
+                    && (!this.is_single_max_screen() || this.is_snap_edge())
+                    && !this.meta.minimized
+            }
+
+            if (permitted()) {
                 if (this.meta.appears_focused) {
                     border.show();
+
+                    // Focus will be re-applied to fix windows moving across workspaces
+                    let applications = 0
+
+                    // Ensure that the border is shown
+                    if (ACTIVE_HINT_SHOW_ID !== null) GLib.source_remove(ACTIVE_HINT_SHOW_ID)
+                    ACTIVE_HINT_SHOW_ID = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 600, () => {
+                        if (applications > 4 && !this.same_workspace() || !permitted()) {
+                            ACTIVE_HINT_SHOW_ID = null
+                            return GLib.SOURCE_REMOVE
+                        }
+
+                        applications += 1
+                        border.show()
+                        return GLib.SOURCE_CONTINUE
+                    })
                 }
             }
         }
@@ -429,6 +460,10 @@ export class ShellWindow {
             return workspace_id === global.workspace_manager.get_active_workspace_index()
         }
         return false;
+    }
+
+    same_monitor() {
+        return this.meta.get_monitor() === global.display.get_current_monitor()
     }
 
     /**
@@ -457,12 +492,22 @@ export class ShellWindow {
                 break;
         }
 
-        const action = () => {
-            if (!this.actor_exists) return
+        let restacks = 0
 
-            let border = this.border;
-            let actor = this.meta.get_compositor_private();
-            let win_group = global.window_group;
+        const action = () => {
+            const count = restacks;
+            restacks += 1
+
+            if (!this.actor_exists && count === 0) return true
+
+            if (count === 3) {
+                if (SCHEDULED_RESTACK !== null) GLib.source_remove(SCHEDULED_RESTACK)
+                SCHEDULED_RESTACK = null
+            }
+
+            const border = this.border;
+            const actor = this.meta.get_compositor_private();
+            const win_group = global.window_group;
 
             if (actor && border && win_group) {
                 this.update_border_layout();
@@ -496,10 +541,11 @@ export class ShellWindow {
                 }
             }
 
-            return false; // make sure it runs once
+            return true
         }
 
-        GLib.timeout_add(GLib.PRIORITY_LOW, restackSpeed, action)
+        if (SCHEDULED_RESTACK !== null) GLib.source_remove(SCHEDULED_RESTACK)
+        SCHEDULED_RESTACK = GLib.timeout_add(GLib.PRIORITY_LOW, restackSpeed, action)
     }
 
     get always_top_windows(): Clutter.Actor[] {
@@ -592,12 +638,12 @@ export class ShellWindow {
 
     private window_changed() {
         this.update_border_layout();
-        this.show_border();
+        this.ext.show_border_on_focused();
     }
 
     private window_raised() {
         this.restack(RESTACK_STATE.RAISED);
-        this.show_border();
+        this.ext.show_border_on_focused();
     }
 
     private workspace_changed() {
@@ -606,7 +652,9 @@ export class ShellWindow {
 }
 
 /// Activates a window, and moves the mouse point.
-export function activate(move_mouse: boolean, default_pointer_position: Config.DefaultPointerPosition, win: Meta.Window) {
+export function activate(ext: Ext, move_mouse: boolean, default_pointer_position: Config.DefaultPointerPosition, win: Meta.Window) {
+    if (win.is_override_redirect()) return
+
     const workspace = win.get_workspace()
     if (!workspace) return
 
@@ -616,9 +664,25 @@ export function activate(move_mouse: boolean, default_pointer_position: Config.D
     workspace.activate_with_focus(win, global.get_current_time())
     win.raise()
 
-    if (move_mouse && !pointer_already_on_window(win)) {
+    const pointer_placement_permitted = move_mouse
+        && imports.ui.main.modalCount === 0
+        && ext.settings.mouse_cursor_follows_active_window()
+        && !pointer_already_on_window(win)
+        && pointer_in_work_area()
+
+    if (pointer_placement_permitted) {
         place_pointer_on(default_pointer_position, win)
     }
+}
+
+function pointer_in_work_area(): boolean {
+    const cursor = lib.cursor_rect()
+    const indice = global.display.get_current_monitor()
+    const mon = global.display.get_workspace_manager()
+        .get_active_workspace()
+        .get_work_area_for_monitor(indice)
+
+    return mon ? cursor.intersects(mon) : false
 }
 
 export function place_pointer_on(default_pointer_position: Config.DefaultPointerPosition, win: Meta.Window) {

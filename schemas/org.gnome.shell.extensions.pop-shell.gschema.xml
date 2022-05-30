@@ -27,6 +27,11 @@
             <summary>Handle minimized to tray windows</summary>
         </key>
 
+        <key type="b" name="mouse-cursor-follows-active-window">
+            <default>true</default>
+            <summary>Move cursor to active window when navigating with keyboard shortcuts or touchpad gestures</summary>
+        </key>
+
         <!-- Tiling Options -->
         <key type="u" name="column-size">
             <default>64</default>

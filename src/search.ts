@@ -35,6 +35,9 @@ export class Search {
     private children_to_abandon: any = null;
     private last_trigger: number = 0;
 
+    /** Output of `Main.pushModal`; Input to `Main.popModal()` */
+    private grab_handle: any = null
+
     activate_id: (index: number) => void = () => {}
     cancel: () => void = () => {}
     complete: () => void = () => {}
@@ -206,7 +209,7 @@ export class Search {
         // Ensure that the width is at least 640 pixels wide.
         this.dialog.contentLayout.width = Math.max(Lib.current_monitor().width / 4, 640);
 
-        const id = global.stage.connect('event', (_actor: any, event: any) => {
+        this.dialog.connect('event', (_actor: any, event: any) => {
             const { width, height } = this.dialog.dialogLayout._dialog;
             const { x, y } = this.dialog.dialogLayout
             const area = new rect.Rectangle([x, y, width, height]);
@@ -225,7 +228,6 @@ export class Search {
         })
 
         this.dialog.connect('closed', () => this.cancel())
-        this.dialog.connect('destroy', () => global.stage.disconnect(id))
     }
 
     cleanup() {
@@ -244,6 +246,16 @@ export class Search {
     }
 
     close() {
+        try {
+            if (this.grab_handle !== null) {
+                imports.ui.main.popModal(this.grab_handle)
+                this.grab_handle = null
+
+            }
+        } catch (error) {
+            global.logError(error)
+        }
+
         this.reset()
         this.remove_injections()
 
@@ -253,6 +265,7 @@ export class Search {
     }
 
     _open(timestamp: number, on_primary: boolean) {
+        this.grab_handle = imports.ui.main.pushModal(this.dialog.dialogLayout)
         this.dialog.open(timestamp, on_primary)
 
         wm.allowKeybinding('overlay-key', Shell.ActionMode.ALL)

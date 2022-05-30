@@ -235,7 +235,7 @@ class App {
         win.set_default_size(550, 700)
         win.get_content_area().add(this.stack)
         win.show_all()
-        win.connect('delete-event', () => win.close())
+        win.connect('delete-event', () => Gtk.main_quit())
 
         back.hide()
 

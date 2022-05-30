@@ -8,6 +8,7 @@ interface Global {
     get_pointer(): [number, number];
     get_window_actors(): Array<Meta.WindowActor>;
     log(msg: string): void;
+    logError(error: any): void
 
     display: Meta.Display;
     run_at_leisure(func: () => void): void;
@@ -38,6 +39,8 @@ declare type SignalID = number;
 declare interface GLib {
     PRIORITY_DEFAULT: number;
     PRIORITY_LOW: number;
+    SOURCE_REMOVE: boolean;
+    SOURCE_CONTINUE: boolean;
 
     find_program_in_path(prog: string): string | null;
     get_current_dir(): string;
@@ -52,7 +55,7 @@ declare interface GLib {
     spawn_command_line_sync(cmd: string): ProcessResult;
     spawn_command_line_async(cmd: string): boolean;
 
-    timeout_add(priority: number, ms: number, callback: () => Boolean): number;
+    timeout_add(priority: number, ms: number, callback: () => boolean): number;
 }
 
 declare namespace GObject {
@@ -217,7 +220,6 @@ declare namespace Meta {
         move_resize_frame(user_op: boolean, x: number, y: number, w: number, h: number): boolean;
         raise(): void;
         skip_taskbar: boolean;
-        unmake_fullscreen(): void;
         unmaximize(flags: any): void;
         unminimize(): void;
     }
@@ -238,6 +240,7 @@ declare namespace Meta {
         get_neighbor(direction: Meta.MotionDirection): null | Workspace;
         get_work_area_for_monitor(monitor: number): null | Rectangular;
         index(): number;
+        list_windows(): Array<Meta.Window>
     }
 
     interface WorkspaceManager extends GObject.Object {
