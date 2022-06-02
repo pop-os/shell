@@ -34,6 +34,10 @@ clean:
 configure:
 	sh scripts/configure.sh
 
+# Change the switch application workspace keybindings
+switch-application-workspace:
+	bash scripts/switch-applications-workspace.sh
+
 compile: $(sources) clean
 	env PROJECTS="$(PROJECTS)" ./scripts/transpile.sh
 
@@ -57,7 +61,7 @@ disable:
 listen:
 	journalctl -o cat -n 0 -f "$$(which gnome-shell)" | grep -v warning
 
-local-install: depcheck compile install configure restart-shell enable
+local-install: depcheck compile install configure switch-application-workspace restart-shell enable
 
 install:
 	rm -rf $(INSTALLBASE)/$(INSTALLNAME)
