@@ -244,7 +244,11 @@ export class Ext extends Ecs.System<ExtEvent> {
         this.dbus.Launcher = () => this.window_search.open(this)
 
         this.dbus.WindowFocus = (window: [number, number]) => {
-            this.windows.get(window)?.activate()
+            const target_window = this.windows.get(window)
+            if (target_window) {
+                target_window.activate()
+                this.on_focused(target_window)
+            }
             this.window_search.close()
         }
 
@@ -628,7 +632,6 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     focus_left() {
-        this.unmaximize_workspace(null)
         this.stack_select(
             (id, stack) => id === 0 ? null : stack.tabs[id - 1].entity,
             () => this.activate_window(this.focus_selector.left(this, null))
@@ -636,7 +639,6 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     focus_right() {
-        this.unmaximize_workspace(null)
         this.stack_select(
             (id, stack) => stack.tabs.length > id + 1 ? stack.tabs[id + 1].entity : null,
             () => this.activate_window(this.focus_selector.right(this, null))
@@ -644,12 +646,10 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     focus_down() {
-        this.unmaximize_workspace(null)
         this.activate_window(this.focus_selector.down(this, null))
     }
 
     focus_up() {
-        this.unmaximize_workspace(null)
         this.activate_window(this.focus_selector.up(this, null))
     }
 
@@ -890,7 +890,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             let prev = this.windows.get(this.prev_focused[0]);
             let is_attached = this.auto_tiler.attached.contains(this.prev_focused[0]);
 
-            if (prev && prev !== win && is_attached && prev.actor_exists() && prev.name(this) !== win.name(this)) {
+            if (prev && prev !== win && is_attached && prev.actor_exists() && prev.name(this) !== win.name(this) && prev.workspace_id() === win.workspace_id()) {
                 if (prev.rect().contains(win.rect())) {
                     if (prev.is_maximized()) {
                         prev.meta.unmaximize(Meta.MaximizeFlags.BOTH);
@@ -995,25 +995,24 @@ export class Ext extends Ecs.System<ExtEvent> {
     }
 
     /** Unmaximize any maximized windows on the same workspace. */
-    unmaximize_workspace(win: Window.ShellWindow | null) {
+    unmaximize_workspace(win: Window.ShellWindow) {
         if (this.auto_tiler) {
             let mon
             let work
 
-            if (win == null) {
-                [mon, work] = this.workspace_id()
-            } else {
-                mon = win.meta.get_monitor()
-                work = win.meta.get_workspace().index()
+            if (!win.is_tilable(this)) {
+                return
             }
+            
+            mon = win.meta.get_monitor()
+            work = win.meta.get_workspace().index()
 
             for (const [, compare] of this.windows.iter()) {
                 const is_same_space = compare.meta.get_monitor() === mon
-                    && compare.meta.get_workspace().index() === work;
-                if (is_same_space && !this.contains_tag(compare.entity, Tags.Floating)) {
-                    if (compare.is_maximized()) {
+                    && compare.meta.get_workspace().index() === work ;
+
+                if (is_same_space && !this.contains_tag(compare.entity, Tags.Floating) && compare.is_maximized() && win.entity[0] !== compare.entity[0]) {
                         compare.meta.unmaximize(Meta.MaximizeFlags.BOTH);
-                    }
                 }
             }
         }
