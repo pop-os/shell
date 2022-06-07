@@ -298,10 +298,10 @@ export class Launcher extends search.Search {
         ext.tiler.exit(ext);
 
         // Do not allow opening twice
+        if (this.opened) return
+
         // Do not activate if the focused window is fullscreen
-        if (this.opened || ext.focus_window()?.meta.is_fullscreen()) {
-            return
-        }
+        if (!ext.settings.fullscreen_launcher() && ext.focus_window()?.meta.is_fullscreen()) return
 
         this.opened = true
 
