@@ -7,6 +7,11 @@
             <summary>Show a hint around the active window</summary>
         </key>
 
+        <key type="b" name="fullscreen-launcher">
+            <default>false</default>
+            <summary>Allow showing launcher above fullscreen windows</summary>
+        </key>
+
         <key type="u" name="gap-inner">
             <default>2</default>
             <summary>Gap between tiled windows</summary>

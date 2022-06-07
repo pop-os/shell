@@ -12,13 +12,14 @@ import * as settings from 'settings';
 import * as log from 'log';
 
 interface AppWidgets {
+    fullscreen_launcher: any,
     inner_gap: any,
+    mouse_cursor_follows_active_window: any,
     outer_gap: any,
+    show_skip_taskbar: any,
     smart_gaps: any,
     snap_to_grid: any,
     window_titles: any,
-    show_skip_taskbar: any,
-    mouse_cursor_follows_active_window: any,
 }
 
 // @ts-ignore
@@ -77,73 +78,90 @@ function settings_dialog_new(): Gtk.Container {
         Settings.sync();
     });
 
+    app.fullscreen_launcher.set_active(ext.fullscreen_launcher())
+    app.fullscreen_launcher.connect('state-set', (_widget: any, state: boolean) => {
+        ext.set_fullscreen_launcher(state)
+        Settings.sync()
+    })
+
     return grid;
 }
 
 function settings_dialog_view(): [AppWidgets, Gtk.Container] {
-    let grid = new Gtk.Grid({
+    const grid = new Gtk.Grid({
         column_spacing: 12,
         row_spacing: 12,
         margin_start: 10,
         margin_end: 10,
         margin_bottom: 10,
         margin_top: 10,
-    });
+    })
 
-    let win_label = new Gtk.Label({
+    const win_label = new Gtk.Label({
         label: "Show Window Titles",
         xalign: 0.0,
         hexpand: true
-    });
+    })
 
-    let snap_label = new Gtk.Label({
+    const snap_label = new Gtk.Label({
         label: "Snap to Grid (Floating Mode)",
         xalign: 0.0
-    });
+    })
 
-    let smart_label = new Gtk.Label({
+    const smart_label = new Gtk.Label({
         label: "Smart Gaps",
         xalign: 0.0
-    });
+    })
 
-    let show_skip_taskbar_label = new Gtk.Label({
+    const show_skip_taskbar_label = new Gtk.Label({
         label: "Show Minimize to Tray Windows",
         xalign: 0.0
-    });
+    })
 
-    let mouse_cursor_follows_active_window_label = new Gtk.Label({
+    const mouse_cursor_follows_active_window_label = new Gtk.Label({
         label: "Mouse Cursor Follows Active Window",
         xalign: 0.0
-    });
-    
-    let window_titles = new Gtk.Switch({ halign: Gtk.Align.END });
-    let snap_to_grid = new Gtk.Switch({ halign: Gtk.Align.END });
-    let smart_gaps = new Gtk.Switch({ halign: Gtk.Align.END });
-    let show_skip_taskbar = new Gtk.Switch({ halign: Gtk.Align.END });
-    let mouse_cursor_follows_active_window = new Gtk.Switch({ halign: Gtk.Align.END });
+    })
 
-    grid.attach(win_label, 0, 0, 1, 1);
-    grid.attach(window_titles, 1, 0, 1, 1);
+    const fullscreen_launcher_label = new Gtk.Label({
+        label: "Allow launcher over fullscreen window",
+        xalign: 0.0
+    })
 
-    grid.attach(snap_label, 0, 1, 1, 1);
-    grid.attach(snap_to_grid, 1, 1, 1, 1);
+    const [inner_gap, outer_gap] = gaps_section(grid, 7);
 
-    grid.attach(smart_label, 0, 2, 1, 1);
-    grid.attach(smart_gaps, 1, 2, 1, 1);
+    const settings = {
+        inner_gap,
+        outer_gap,
+        fullscreen_launcher: new Gtk.Switch({ halign: Gtk.Align.END }),
+        smart_gaps: new Gtk.Switch({ halign: Gtk.Align.END }),
+        snap_to_grid: new Gtk.Switch({ halign: Gtk.Align.END }),
+        window_titles: new Gtk.Switch({ halign: Gtk.Align.END }),
+        show_skip_taskbar: new Gtk.Switch({ halign: Gtk.Align.END }),
+        mouse_cursor_follows_active_window: new Gtk.Switch({ halign: Gtk.Align.END })
+    }
 
-    grid.attach(show_skip_taskbar_label, 0, 3, 1, 1);
-    grid.attach(show_skip_taskbar, 1, 3, 1, 1);
+    grid.attach(win_label, 0, 0, 1, 1)
+    grid.attach(settings.window_titles, 1, 0, 1, 1)
 
-    grid.attach(mouse_cursor_follows_active_window_label, 0, 4, 1, 1);
-    grid.attach(mouse_cursor_follows_active_window, 1, 4, 1, 1);
+    grid.attach(snap_label, 0, 1, 1, 1)
+    grid.attach(settings.snap_to_grid, 1, 1, 1, 1)
 
-    logging_combo(grid, 5);
+    grid.attach(smart_label, 0, 2, 1, 1)
+    grid.attach(settings.smart_gaps, 1, 2, 1, 1)
 
-    let [inner_gap, outer_gap] = gaps_section(grid, 6);
+    grid.attach(fullscreen_launcher_label, 0, 3, 1, 1)
+    grid.attach(settings.fullscreen_launcher, 1, 3, 1, 1)
 
-    let settings = { inner_gap, outer_gap, smart_gaps, snap_to_grid, window_titles, show_skip_taskbar, mouse_cursor_follows_active_window };
+    grid.attach(show_skip_taskbar_label, 0, 4, 1, 1)
+    grid.attach(settings.show_skip_taskbar, 1, 4, 1, 1)
 
-    return [settings, grid];
+    grid.attach(mouse_cursor_follows_active_window_label, 0, 5, 1, 1)
+    grid.attach(settings.mouse_cursor_follows_active_window, 1, 5, 1, 1)
+
+    logging_combo(grid, 6)
+
+    return [settings, grid]
 }
 
 function gaps_section(grid: any, top: number): [any, any] {
@@ -204,7 +222,7 @@ function logging_combo(grid: any, top_index: number) {
     log_combo.set_active_id(`${current_log_level}`);
     log_combo.connect("changed", () => {
         let activeId = log_combo.get_active_id();
-        
+
         let settings = ExtensionUtils.getSettings();
         settings.set_uint('log-level', activeId);
     });
