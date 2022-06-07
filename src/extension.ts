@@ -2333,6 +2333,14 @@ export class Ext extends Ecs.System<ExtEvent> {
             return
         }
 
+        if (workareas_only) {
+            if (this.workareas_update !== null) {
+                GLib.source_remove(this.workareas_update)
+                this.workareas_update = null
+            }
+            return;
+        }
+
         // Update every tree on each display with the new dimensions
         const update_tiling = () => {
             if (!this.auto_tiler) return
