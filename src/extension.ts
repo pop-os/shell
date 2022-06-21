@@ -1003,7 +1003,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             if (!win.is_tilable(this)) {
                 return
             }
-            
+
             mon = win.meta.get_monitor()
             work = win.meta.get_workspace().index()
 

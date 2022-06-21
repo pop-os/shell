@@ -16,7 +16,8 @@ export class Keybindings {
         this.ext = ext;
         this.global = {
             "activate-launcher": () => ext.window_search.open(ext),
-            "tile-enter": () => ext.tiler.enter(ext)
+            "resize-mode": () => ext.tiler.resize_mode(ext),
+            "tile-enter": () => ext.tiler.enter(ext),
         };
 
         this.window_focus = {

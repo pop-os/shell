@@ -293,7 +293,7 @@ declare namespace St {
         show(): void;
     }
 
-    interface Bin extends St.Widget {
+    interface Bin extends Widget {
         // empty for now
     }
 
@@ -306,9 +306,5 @@ declare namespace St {
 
     interface Icon extends Widget {
         icon_name: string;
-    }
-
-    interface Label extends Widget {
-        text: string;
     }
 }

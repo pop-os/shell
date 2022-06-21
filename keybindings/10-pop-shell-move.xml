@@ -17,13 +17,10 @@
   <KeyListEntry name="pop-monitor-right" description="Move window to rightward monitor"/>
   <KeyListEntry name="pop-monitor-up" description="Move window to upper monitor"/>
   <KeyListEntry name="tile-reject" description="Cancel changes"/>
-  <KeyListEntry name="tile-resize-left" description="Resize window smaller"/>
-  <KeyListEntry name="tile-resize-right" description="Resize window larger"/>
-  <KeyListEntry name="tile-resize-up" description="Resize window shorter"/>
-  <KeyListEntry name="tile-resize-down" description="Resize window taller"/>
   <KeyListEntry name="tile-swap-down" description="Swap window down"/>
   <KeyListEntry name="tile-swap-left" description="Swap window left"/>
   <KeyListEntry name="tile-swap-right" description="Swap window right"/>
   <KeyListEntry name="tile-swap-up" description="Swap window up"/>
   <KeyListEntry name="management-orientation" description="Change current window orientation"/>
+  <KeyListEntry name="resize-mode" description="Toggle resize mode"/>
 </KeyListEntries>
