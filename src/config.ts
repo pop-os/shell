@@ -42,6 +42,7 @@ export const DEFAULT_FLOAT_RULES: Array<FloatRule> = [
     { class: "Steam", title: "^.*(Guard|Login).*" },
     { class: "TelegramDesktop", title: "Media viewer" },
     { class: "Zotero", title: "Quick Format Citation" },
+    { class: "firefox", title: "^(?!.*Mozilla Firefox).*$" },
     { class: "gjs" },
     { class: "gnome-screenshot" },
     { class: "ibus-.*" },
