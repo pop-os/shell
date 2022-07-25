@@ -153,6 +153,26 @@
             <summary>Move window right</summary>
         </key>
 
+        <key type="as" name="tile-move-left-global">
+            <default><![CDATA[[]]]></default>
+            <summary>Move window left</summary>
+        </key>
+
+        <key type="as" name="tile-move-down-global">
+            <default><![CDATA[[]]]></default>
+            <summary>Move window down</summary>
+        </key>
+
+        <key type="as" name="tile-move-up-global">
+            <default><![CDATA[[]]]></default>
+            <summary>Move window up</summary>
+        </key>
+
+        <key type="as" name="tile-move-right-global">
+            <default><![CDATA[[]]]></default>
+            <summary>Move window right</summary>
+        </key>
+
         <key type="as" name="tile-orientation">
             <default><![CDATA[['<Super>o']]]></default>
             <summary>Toggle tiling orientation</summary>
