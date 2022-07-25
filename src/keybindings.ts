@@ -42,6 +42,14 @@ export class Keybindings {
 
             "toggle-stacking-global": () => ext.auto_tiler?.toggle_stacking(ext),
 
+            "tile-move-left-global": () => ext.tiler.move_left(ext, ext.focus_window()?.entity),
+
+            "tile-move-down-global": () => ext.tiler.move_down(ext, ext.focus_window()?.entity),
+
+            "tile-move-up-global": () => ext.tiler.move_up(ext, ext.focus_window()?.entity),
+
+            "tile-move-right-global": () => ext.tiler.move_right(ext, ext.focus_window()?.entity),
+
             "pop-monitor-left": () => ext.move_monitor(Meta.DisplayDirection.LEFT),
 
             "pop-monitor-right": () => ext.move_monitor(Meta.DisplayDirection.RIGHT),

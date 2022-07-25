@@ -6,6 +6,10 @@
   <KeyListEntry name="tile-move-left" description="Move window left"/>
   <KeyListEntry name="tile-move-right" description="Move window right"/>
   <KeyListEntry name="tile-move-up" description="Move window up"/>
+  <KeyListEntry name="tile-move-down-global" description="Move window down outside management mode"/>
+  <KeyListEntry name="tile-move-left-global" description="Move window left outside management mode"/>
+  <KeyListEntry name="tile-move-right-global" description="Move window right outside management mode"/>
+  <KeyListEntry name="tile-move-up-global" description="Move window up outside management mode"/>
   <KeyListEntry name="pop-workspace-down" description="Move window to lower workspace"/>
   <KeyListEntry name="pop-workspace-up" description="Move window to upper workspace"/>
   <KeyListEntry name="pop-monitor-down" description="Move window to lower monitor"/>
