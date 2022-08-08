@@ -293,7 +293,7 @@ declare namespace St {
         show(): void;
     }
 
-    interface Bin extends St.Widget {
+    interface Bin extends Widget {
         // empty for now
     }
 
@@ -302,5 +302,9 @@ declare namespace St {
 
         get_clutter_text(): Clutter.Text;
         set_hint_text(hint: string): void;
+    }
+
+    interface Icon extends Widget {
+        icon_name: string;
     }
 }

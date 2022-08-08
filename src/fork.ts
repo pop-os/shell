@@ -242,7 +242,7 @@ export class Fork {
 
             let region = this.area.clone();
 
-            const half = this.area.array[l] / 2;
+            const half = ~~(this.area.array[l] / 32) * 16
 
             let length;
             if (this.length_left > half - 32 && this.length_left < half + 32) {

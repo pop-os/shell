@@ -419,7 +419,7 @@ export class ShellWindow {
 
         this.restack();
         if (this.ext.settings.active_hint()) {
-            let border = this.border;
+            const border = this.border;
 
             const permitted = () => {
                 return this.actor_exists()

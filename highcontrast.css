@@ -59,3 +59,9 @@
 .pop-shell-entry:indeterminate {
     font-style: italic
 }
+
+.pop-shell-resize-hint {
+    background: #EDEDED;
+    padding: 12px;
+    border-radius: 32px;
+}

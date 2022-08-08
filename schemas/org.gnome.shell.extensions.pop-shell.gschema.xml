@@ -178,25 +178,10 @@
             <summary>Toggle tiling orientation</summary>
         </key>
 
-        <!-- Resize in normal direction -->
-        <key type="as" name="tile-resize-left">
-            <default><![CDATA[['<Shift>Left','<Shift>KP_Left','<Shift>h']]]></default>
-            <summary>Resize window left</summary>
-        </key>
-
-        <key type="as" name="tile-resize-down">
-            <default><![CDATA[['<Shift>Down','<Shift>KP_Down','<Shift>j']]]></default>
-            <summary>Resize window down</summary>
-        </key>
-
-        <key type="as" name="tile-resize-up">
-            <default><![CDATA[['<Shift>Up','<Shift>KP_Up','<Shift>k']]]></default>
-            <summary>Resize window up</summary>
-        </key>
-
-        <key type="as" name="tile-resize-right">
-            <default><![CDATA[['<Shift>Right','<Shift>KP_Right','<Shift>l']]]></default>
-            <summary>Resize window right</summary>
+        <!-- Resize -->
+        <key type="as" name="resize-mode">
+            <default><![CDATA[['<Super>R']]]></default>
+            <summary>Toggle resize mode</summary>
         </key>
 
         <!-- Swap windows -->

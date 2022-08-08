@@ -55,3 +55,9 @@
 .pop-shell-tab-urgent {
     background: #D00;
 }
+
+.pop-shell-resize-hint {
+    background: #EDEDED;
+    padding: 12px;
+    border-radius: 32px;
+}
