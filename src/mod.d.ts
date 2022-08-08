@@ -303,4 +303,12 @@ declare namespace St {
         get_clutter_text(): Clutter.Text;
         set_hint_text(hint: string): void;
     }
+
+    interface Icon extends Widget {
+        icon_name: string;
+    }
+
+    interface Label extends Widget {
+        text: string;
+    }
 }
