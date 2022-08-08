@@ -10,7 +10,7 @@ import * as a from 'arena';
 import * as utils from 'utils';
 
 const Arena = a.Arena;
-const { St } = imports.gi;
+const { Clutter, GObject, St } = imports.gi;
 
 const ACTIVE_TAB = 'pop-shell-tab pop-shell-tab-active';
 const INACTIVE_TAB = 'pop-shell-tab pop-shell-tab-inactive';
@@ -42,6 +42,78 @@ function stack_widgets_new(): StackWidgets {
     return { tabs };
 }
 
+const ContainerButton = GObject.registerClass({
+    Signals: { 'activate': {} },
+}, class ImageButton extends St.Button {
+    _init(icon: St.Icon) {
+        super._init({
+            child: icon,
+            x_expand: true,
+            y_expand: true,
+        })
+    }
+})
+
+interface TabButton extends St.Button {
+    set_title: (title: string) => void;
+}
+
+const TabButton = GObject.registerClass({
+    Signals: { 'activate': {} },
+}, class TabButton extends St.Button {
+    _init(window: ShellWindow) {
+        const icon = window.icon(window.ext, 24)
+        icon.set_x_align(Clutter.ActorAlign.START)
+
+        const label = new St.Label({
+            y_expand: true,
+            x_align: Clutter.ActorAlign.START,
+            y_align: Clutter.ActorAlign.CENTER,
+            style: "padding-left: 8px"
+        })
+
+        label.text = window.title()
+
+        const container = new St.BoxLayout({
+            y_expand: true,
+            y_align: Clutter.ActorAlign.CENTER,
+        })
+
+        const close_button = new ContainerButton(new St.Icon({
+            icon_name: 'window-close-symbolic',
+            icon_size: 24,
+            y_align: Clutter.ActorAlign.CENTER,
+        }))
+
+        close_button.connect('clicked', () => {
+            window.meta.delete(global.get_current_time())
+        })
+
+        close_button.set_x_align(Clutter.ActorAlign.END)
+        close_button.set_y_align(Clutter.ActorAlign.CENTER)
+
+        container.add_actor(icon)
+        container.add_actor(label)
+        container.add_actor(close_button)
+
+        super._init({
+            child: container,
+            x_expand: true,
+            y_expand: true,
+            y_align: Clutter.ActorAlign.CENTER,
+        })
+
+
+        this._title = label
+    }
+
+    set_title(text: string) {
+        if (this._title) {
+            this._title.text = text
+        }
+    }
+})
+
 export class Stack {
     ext: Ext;
 
@@ -60,7 +132,7 @@ export class Stack {
 
     workspace: number;
 
-    buttons: a.Arena<St.Button> = new Arena();
+    buttons: a.Arena<TabButton> = new Arena();
 
     tabs_height: number = TAB_HEIGHT;
 
@@ -95,15 +167,9 @@ export class Stack {
         if (!this.widgets) return;
 
         const entity = window.entity;
-        const label = window.title()
         const active = Ecs.entity_eq(entity, this.active);
 
-        const button: St.Button = new St.Button({
-            label,
-            x_expand: true,
-            style_class: active ? ACTIVE_TAB : INACTIVE_TAB
-        });
-
+        const button = new TabButton(window)
         const id = this.buttons.insert(button);
 
         let tab: Tab = { active, entity, signals: [], button: id, button_signal: null };
@@ -443,7 +509,7 @@ export class Stack {
             }
 
             this.watch_signals(this.active_id, c.button, window);
-            this.buttons.get(c.button)?.set_label(window.title());
+            this.buttons.get(c.button)?.set_title(window.title());
             this.activate(window.entity);
         }
     }
@@ -598,7 +664,7 @@ export class Stack {
         this.tabs[comp].signals = [
             window.meta.connect('notify::title', () => {
                 this.window_exec(comp, entity, (window) => {
-                    this.buttons.get(button)?.set_label(window.title())
+                    this.buttons.get(button)?.set_title(window.title())
                 });
             }),
 
