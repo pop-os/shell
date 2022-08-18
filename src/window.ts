@@ -189,8 +189,7 @@ export class ShellWindow {
             this.ext.overlay.set_style(`background: ${gdk.to_string()}`);
         }
 
-        if (this.border)
-            this.border.set_style(`border-color: ${color_value}`);
+        this.update_border_style()
     }
 
     cmdline(): string | null {
@@ -418,6 +417,7 @@ export class ShellWindow {
         if (!this.border) return
 
         this.restack();
+        this.update_border_style();
         if (this.ext.settings.active_hint()) {
             let border = this.border;
 
@@ -624,6 +624,15 @@ export class ShellWindow {
                 border.set_position(x, y)
                 border.set_size(width, height)
             }
+        }
+    }
+
+    update_border_style() {
+        const { settings } = this.ext
+        const color_value = settings.hint_color_rgba();
+        const radius_value = settings.active_hint_border_radius();
+        if (this.border) {
+            this.border.set_style(`border-color: ${color_value}; border-radius: ${radius_value}px;`);
         }
     }
 

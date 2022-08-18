@@ -7,6 +7,11 @@
             <summary>Show a hint around the active window</summary>
         </key>
 
+        <key type="u" name="active-hint-border-radius">
+            <default>5</default>
+            <summary>Border radius for active window hint, in pixels</summary>
+        </key>
+
         <key type="b" name="fullscreen-launcher">
             <default>false</default>
             <summary>Allow showing launcher above fullscreen windows</summary>

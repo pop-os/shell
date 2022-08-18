@@ -48,6 +48,7 @@ function settings_new_schema(schema: string): Settings {
 }
 
 const ACTIVE_HINT = "active-hint";
+const ACTIVE_HINT_BORDER_RADIUS = "active-hint-border-radius";
 const COLUMN_SIZE = "column-size";
 const EDGE_TILING = "edge-tiling";
 const FULLSCREEN_LAUNCHER = "fullscreen-launcher"
@@ -74,6 +75,10 @@ export class ExtensionSettings {
 
     active_hint(): boolean {
         return this.ext.get_boolean(ACTIVE_HINT);
+    }
+
+    active_hint_border_radius(): number {
+        return this.ext.get_uint(ACTIVE_HINT_BORDER_RADIUS);
     }
 
     column_size(): number {
@@ -166,6 +171,10 @@ export class ExtensionSettings {
 
     set_active_hint(set: boolean) {
         this.ext.set_boolean(ACTIVE_HINT, set);
+    }
+
+    set_active_hint_border_radius(set: number) {
+        this.ext.set_uint(ACTIVE_HINT_BORDER_RADIUS, set);
     }
 
     set_column_size(size: number) {
