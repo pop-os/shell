@@ -67,7 +67,11 @@ export class Indicator {
 
         this.border_radius = number_entry(
             _("Active Border Radius"),
-            ext.settings.active_hint_border_radius(),
+            {
+              value: ext.settings.active_hint_border_radius(),
+              min: 5,
+              max: 30
+            },
             (value) => {
                 ext.settings.set_active_hint_border_radius(value);
             }
@@ -203,15 +207,19 @@ function shortcuts(menu: any): any {
     return item;
 }
 
-function clamp(input: number): number {
-    return Math.min(Math.max(0, input), 128);
+function clamp(input: number, min = 0, max = 128): number {
+    return Math.min(Math.max(min, input), max);
 }
 
 function number_entry(
     label: string,
-    value: number,
+    valueOrOptions: number|{value: number, min: number, max: number},
     callback: (a: number) => void,
 ): any {
+    let value = valueOrOptions, min: number, max: number;
+    if (typeof valueOrOptions !== 'number')
+      ({ value, min, max } = valueOrOptions);
+
     const entry = new St.Entry({
         text: String(value),
         input_purpose: Clutter.InputContentPurpose.NUMBER,
@@ -234,9 +242,9 @@ function number_entry(
             symbol == 65293     // enter key
                 ? parse_number(text.text)
                 : symbol == 65361   // left key
-                    ? clamp(parse_number(text.text) - 1)
+                    ? clamp(parse_number(text.text) - 1, min, max)
                     : symbol == 65363   // right key
-                        ? clamp(parse_number(text.text) + 1)
+                        ? clamp(parse_number(text.text) + 1, min, max)
                         : null;
 
         if (number !== null) {
@@ -250,12 +258,12 @@ function number_entry(
 
     entry.set_primary_icon(create_icon('value-decrease'))
     entry.connect('primary-icon-clicked', () => {
-        text.set_text(String(clamp(parseInt(text.get_text()) - 1)))
+        text.set_text(String(clamp(parseInt(text.get_text()) - 1, min, max)))
     })
 
     entry.set_secondary_icon(create_icon('value-increase'))
     entry.connect('secondary-icon-clicked', () => {
-        text.set_text(String(clamp(parseInt(text.get_text()) + 1)))
+        text.set_text(String(clamp(parseInt(text.get_text()) + 1, min, max)))
     })
 
     text.connect('text-changed', () => {
