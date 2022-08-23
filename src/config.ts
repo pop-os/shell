@@ -34,6 +34,7 @@ export const DEFAULT_FLOAT_RULES: Array<FloatRule> = [
     { class: "Gnome-terminal", title: "Preferences – General" },
     { class: "Guake" },
     { class: "Io.elementary.sideload" },
+    { title: "JavaEmbeddedFrame" },
     { class: "KotatogramDesktop", title: "Media viewer" },
     { class: "Mozilla VPN" },
     { class: "update-manager", title: "Software Updater" },
