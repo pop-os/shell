@@ -33,10 +33,16 @@ export function setForeground(win: Meta.Window) {
         foreground = pid
 
         try {
-            SchedProxy.SetForegroundProcessRemote(pid)
-        } catch (_) {
-            log.warn('system76-scheduler may not be installed and running')
-            failed = true
+            SchedProxy.SetForegroundProcessRemote(pid, (_result: any, error: any, _fds: any) => {
+                if (error !== null) errorHandler(error)
+            })
+        } catch (error) {
+            errorHandler(error)
         }
     }
+}
+
+function errorHandler(error: any) {
+    log.warn(`system76-scheduler may not be installed and running: ${error}`)
+    failed = true
 }
