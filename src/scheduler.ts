@@ -22,16 +22,21 @@ const SchedProxy = new SchedulerProxy(
 )
 
 let foreground: number = 0
+let failed: boolean = false
 
 export function setForeground(win: Meta.Window) {
+    if (failed) return
+
     const pid = win.get_pid()
     if (pid) {
         if (foreground === pid) return
         foreground = pid
 
         try {
-            log.debug(`setting priority for ${win.get_title()}`)
             SchedProxy.SetForegroundProcessRemote(pid)
-        } catch (_) {}
+        } catch (_) {
+            log.warn('system76-scheduler may not be installed and running')
+            failed = true
+        }
     }
 }
