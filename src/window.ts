@@ -662,25 +662,29 @@ export class ShellWindow {
 
 /// Activates a window, and moves the mouse point.
 export function activate(ext: Ext, move_mouse: boolean, default_pointer_position: Config.DefaultPointerPosition, win: Meta.Window) {
-    if (win.is_override_redirect()) return
+    try {
+        if (win.is_override_redirect()) return
 
-    const workspace = win.get_workspace()
-    if (!workspace) return
+        const workspace = win.get_workspace()
+        if (!workspace) return
 
-    scheduler.setForeground(win)
+        scheduler.setForeground(win)
 
-    win.unminimize();
-    workspace.activate_with_focus(win, global.get_current_time())
-    win.raise()
+        win.unminimize();
+        workspace.activate_with_focus(win, global.get_current_time())
+        win.raise()
 
-    const pointer_placement_permitted = move_mouse
-        && imports.ui.main.modalCount === 0
-        && ext.settings.mouse_cursor_follows_active_window()
-        && !pointer_already_on_window(win)
-        && pointer_in_work_area()
+        const pointer_placement_permitted = move_mouse
+            && imports.ui.main.modalCount === 0
+            && ext.settings.mouse_cursor_follows_active_window()
+            && !pointer_already_on_window(win)
+            && pointer_in_work_area()
 
-    if (pointer_placement_permitted) {
-        place_pointer_on(default_pointer_position, win)
+        if (pointer_placement_permitted) {
+            place_pointer_on(default_pointer_position, win)
+        }
+    } catch (error) {
+        log.error(`failed to activate window: ${error}`)
     }
 }
 
