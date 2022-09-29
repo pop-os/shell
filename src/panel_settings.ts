@@ -69,7 +69,7 @@ export class Indicator {
             _("Active Border Radius"),
             {
               value: ext.settings.active_hint_border_radius(),
-              min: 5,
+              min: 0,
               max: 30
             },
             (value) => {
