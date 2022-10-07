@@ -160,8 +160,20 @@ function settings_dialog_view(): [AppWidgets, Gtk.Container] {
     grid.attach(mouse_cursor_follows_active_window_label, 0, 5, 1, 1)
     grid.attach(settings.mouse_cursor_follows_active_window, 1, 5, 1, 1)
 
-    build_combo(grid, 6, config.DefaultPointerPosition, 'Mouse Focus Location', 'mouse-focus-location')
-    build_combo(grid, 7, log.LOG_LEVELS, 'Log Level', 'log-level')
+    build_combo(
+        grid,
+        6,
+        config.DefaultPointerPosition,
+        'Mouse Cursor Focus Position',
+        'mouse-cursor-focus-position',
+    )
+    build_combo(
+        grid,
+        7,
+        log.LOG_LEVELS,
+        'Log Level',
+        'log-level',
+    )
 
     return [settings, grid]
 }

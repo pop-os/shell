@@ -64,7 +64,7 @@ const DEFAULT_RGBA_COLOR = "rgba(251, 184, 108, 1)"; //pop-orange
 const LOG_LEVEL = "log-level";
 const SHOW_SKIPTASKBAR = "show-skip-taskbar";
 const MOUSE_CURSOR_FOLLOWS_ACTIVE_WINDOW = "mouse-cursor-follows-active-window"
-const MOUSE_FOCUS_LOCATION = "mouse-focus-location";
+const MOUSE_FOCUS_LOCATION = "mouse-cursor-focus-position";
 
 export class ExtensionSettings {
     ext: Settings = settings_new_schema(Me.metadata["settings-schema"]);
