@@ -123,7 +123,7 @@ export class ShellWindow {
     }
 
     activate(move_mouse: boolean = true): void {
-        activate(this.ext, move_mouse, this.ext.settings.mouse_focus_location(), this.meta);
+        activate(this.ext, move_mouse, this.meta);
     }
 
     actor_exists(): boolean {
@@ -379,7 +379,9 @@ export class ShellWindow {
         let br = other.rect().clone();
 
         other.move(ext, ar);
-        this.move(ext, br, () => place_pointer_on(this.ext.settings.mouse_focus_location(), this.meta));
+        this.move(ext, br, () => place_pointer_on(
+            this.ext.settings.mouse_cursor_focus_location(), this.meta)
+        );
     }
 
     title(): string {
@@ -660,7 +662,7 @@ export class ShellWindow {
 }
 
 /// Activates a window, and moves the mouse point.
-export function activate(ext: Ext, move_mouse: boolean, mouse_focus_location: number, win: Meta.Window) {
+export function activate(ext: Ext, move_mouse: boolean, win: Meta.Window) {
     try {
         if (win.is_override_redirect()) return
 
@@ -680,7 +682,7 @@ export function activate(ext: Ext, move_mouse: boolean, mouse_focus_location: nu
             && pointer_in_work_area()
 
         if (pointer_placement_permitted) {
-            place_pointer_on(mouse_focus_location, win)
+            place_pointer_on(ext.settings.mouse_cursor_focus_location(), win)
         }
     } catch (error) {
         log.error(`failed to activate window: ${error}`)

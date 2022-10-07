@@ -21,6 +21,8 @@ interface AppWidgets {
     smart_gaps: any,
     snap_to_grid: any,
     window_titles: any,
+    mouse_cursor_focus_position: any,
+    log_level: any,
 }
 
 // @ts-ignore
@@ -67,6 +69,12 @@ function settings_dialog_new(): Gtk.Container {
         }
     });
 
+    app.log_level.set_active(ext.log_level());
+    app.log_level.connect("changed", () => {
+        let active_id = app.log_level.get_active_id();
+        ext.set_log_level(active_id);
+    });
+
     app.show_skip_taskbar.set_active(ext.show_skiptaskbar());
     app.show_skip_taskbar.connect('state-set', (_widget: any, state: boolean) => {
         ext.set_show_skiptaskbar(state);
@@ -77,6 +85,12 @@ function settings_dialog_new(): Gtk.Container {
     app.mouse_cursor_follows_active_window.connect('state-set', (_widget: any, state: boolean) => {
         ext.set_mouse_cursor_follows_active_window(state);
         Settings.sync();
+    });
+
+    app.mouse_cursor_focus_position.set_active(ext.mouse_cursor_focus_location());
+    app.mouse_cursor_focus_position.connect("changed", () => {
+        let active_id = app.mouse_cursor_focus_position.get_active_id();
+        ext.set_mouse_cursor_focus_location(active_id);
     });
 
     app.fullscreen_launcher.set_active(ext.fullscreen_launcher())
@@ -140,6 +154,18 @@ function settings_dialog_view(): [AppWidgets, Gtk.Container] {
         window_titles: new Gtk.Switch({ halign: Gtk.Align.END }),
         show_skip_taskbar: new Gtk.Switch({ halign: Gtk.Align.END }),
         mouse_cursor_follows_active_window: new Gtk.Switch({ halign: Gtk.Align.END }),
+        mouse_cursor_focus_position: build_combo(
+            grid,
+            6,
+            focus.FocusPosition,
+            'Mouse Cursor Focus Position',
+        ),
+        log_level: build_combo(
+            grid,
+            7,
+            log.LOG_LEVELS,
+            'Log Level',
+        )
     }
 
     grid.attach(win_label, 0, 0, 1, 1)
@@ -159,21 +185,6 @@ function settings_dialog_view(): [AppWidgets, Gtk.Container] {
 
     grid.attach(mouse_cursor_follows_active_window_label, 0, 5, 1, 1)
     grid.attach(settings.mouse_cursor_follows_active_window, 1, 5, 1, 1)
-
-    build_combo(
-        grid,
-        6,
-        focus.FocusPosition,
-        'Mouse Cursor Focus Position',
-        'mouse-cursor-focus-position',
-    )
-    build_combo(
-        grid,
-        7,
-        log.LOG_LEVELS,
-        'Log Level',
-        'log-level',
-    )
 
     return [settings, grid]
 }
@@ -218,7 +229,6 @@ function build_combo(
     top_index: number,
     iter_enum: any,
     label: string,
-    unit_label: string,
 ) {
     let label_ = new Gtk.Label({
         label: label,
@@ -234,15 +244,6 @@ function build_combo(
             combo.append(`${index}`, iter_enum[key]);
         }
     }
-
-    combo.set_active_id(`${ExtensionUtils.getSettings().get_uint(unit_label)}`);
-
-    combo.connect("changed", () => {
-        let active_id = combo.get_active_id();
-
-        let settings = ExtensionUtils.getSettings();
-        settings.set_uint(unit_label, active_id);
-    });
 
     grid.attach(combo, 1, top_index, 1, 1);
     return combo

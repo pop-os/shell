@@ -64,7 +64,7 @@ const DEFAULT_RGBA_COLOR = "rgba(251, 184, 108, 1)"; //pop-orange
 const LOG_LEVEL = "log-level";
 const SHOW_SKIPTASKBAR = "show-skip-taskbar";
 const MOUSE_CURSOR_FOLLOWS_ACTIVE_WINDOW = "mouse-cursor-follows-active-window"
-const MOUSE_FOCUS_LOCATION = "mouse-cursor-focus-position";
+const MOUSE_CURSOR_FOCUS_LOCATION = "mouse-cursor-focus-location";
 
 export class ExtensionSettings {
     ext: Settings = settings_new_schema(Me.metadata["settings-schema"]);
@@ -168,8 +168,8 @@ export class ExtensionSettings {
         return this.ext.get_boolean(MOUSE_CURSOR_FOLLOWS_ACTIVE_WINDOW);
     }
 
-    mouse_focus_location(): number {
-        return this.ext.get_uint(MOUSE_FOCUS_LOCATION);
+    mouse_cursor_focus_location(): number {
+        return this.ext.get_uint(MOUSE_CURSOR_FOCUS_LOCATION);
     }
 
     // Setters
@@ -244,7 +244,7 @@ export class ExtensionSettings {
         this.ext.set_boolean(MOUSE_CURSOR_FOLLOWS_ACTIVE_WINDOW, set);
     }
 
-    set_mouse_focus_location(set: number) {
-        this.ext.set_uint(MOUSE_FOCUS_LOCATION, set);
+    set_mouse_cursor_focus_location(set: number) {
+        this.ext.set_uint(MOUSE_CURSOR_FOCUS_LOCATION, set);
     }
 }
