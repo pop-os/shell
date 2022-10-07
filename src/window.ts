@@ -379,8 +379,7 @@ export class ShellWindow {
         let br = other.rect().clone();
 
         other.move(ext, ar);
-        this.move(ext, br, () => place_pointer_on(
-            this.ext.settings.mouse_cursor_focus_location(), this.meta)
+        this.move(ext, br, () => place_pointer_on(this.ext, this.meta)
         );
     }
 
@@ -682,7 +681,7 @@ export function activate(ext: Ext, move_mouse: boolean, win: Meta.Window) {
             && pointer_in_work_area()
 
         if (pointer_placement_permitted) {
-            place_pointer_on(ext.settings.mouse_cursor_focus_location(), win)
+            place_pointer_on(ext, win)
         }
     } catch (error) {
         log.error(`failed to activate window: ${error}`)
@@ -699,14 +698,13 @@ function pointer_in_work_area(): boolean {
     return mon ? cursor.intersects(mon) : false
 }
 
-export function place_pointer_on(pointer_position: number, win: Meta.Window) {
+export function place_pointer_on(ext: Ext, win: Meta.Window) {
     const rect = win.get_frame_rect();
     let x = rect.x;
     let y = rect.y;
 
-    let pointer_position_ = focus.FocusPosition[
-        Object.keys(focus.FocusPosition)[pointer_position] as keyof typeof focus.FocusPosition
-    ]
+    let key = Object.keys(focus.FocusPosition)[ext.settings.mouse_cursor_focus_location()]
+    let pointer_position_ = focus.FocusPosition[key as keyof typeof focus.FocusPosition]
 
     switch (pointer_position_) {
         case focus.FocusPosition.TopLeft:
