@@ -1,7 +1,6 @@
 // @ts-ignore
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
-import * as Config from 'config';
 import * as lib from 'lib';
 import * as log from 'log';
 import * as once_cell from 'once_cell';
@@ -13,8 +12,8 @@ import type { Entity } from './ecs';
 import type { Ext } from './extension';
 import type { Rectangle } from './rectangle';
 import * as scheduler from 'scheduler';
+import * as focus from 'focus';
 
-const { DefaultPointerPosition } = Config;
 const { Gdk, Meta, Shell, St, GLib } = imports.gi;
 
 const { OnceCell } = once_cell;
@@ -703,28 +702,28 @@ export function place_pointer_on(pointer_position: number, win: Meta.Window) {
     let x = rect.x;
     let y = rect.y;
 
-    let pointer_position_ = DefaultPointerPosition[
-        Object.keys(DefaultPointerPosition)[pointer_position] as keyof typeof DefaultPointerPosition
+    let pointer_position_ = focus.FocusPosition[
+        Object.keys(focus.FocusPosition)[pointer_position] as keyof typeof focus.FocusPosition
     ]
 
     switch (pointer_position_) {
-        case DefaultPointerPosition.TopLeft:
+        case focus.FocusPosition.TopLeft:
             x += 8;
             y += 8;
             break;
-        case DefaultPointerPosition.BottomLeft:
+        case focus.FocusPosition.BottomLeft:
             x += 8;
             y += (rect.height - 16);
             break;
-        case DefaultPointerPosition.TopRight:
+        case focus.FocusPosition.TopRight:
             x += (rect.width - 16);
             y += 8;
             break;
-        case DefaultPointerPosition.BottomRight:
+        case focus.FocusPosition.BottomRight:
             x += (rect.width - 16);
             y += (rect.height - 16);
             break;
-        case DefaultPointerPosition.Center:
+        case focus.FocusPosition.Center:
             x += (rect.width / 2) + 8;
             y += (rect.height / 2) + 8;
             break;

@@ -10,7 +10,7 @@ const { Settings } = imports.gi.Gio;
 
 import * as settings from 'settings';
 import * as log from 'log';
-import * as config from 'config';
+import * as focus from 'focus';
 
 interface AppWidgets {
     fullscreen_launcher: any,
@@ -163,7 +163,7 @@ function settings_dialog_view(): [AppWidgets, Gtk.Container] {
     build_combo(
         grid,
         6,
-        config.DefaultPointerPosition,
+        focus.FocusPosition,
         'Mouse Cursor Focus Position',
         'mouse-cursor-focus-position',
     )

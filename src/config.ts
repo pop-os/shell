@@ -83,14 +83,6 @@ export interface FloatRule {
     title?: string;
 };
 
-export enum DefaultPointerPosition {
-    TopLeft = "Top Left",
-    TopRight = "Top Right",
-    BottomLeft = "Bottom Left",
-    BottomRight = "Bottom Right",
-    Center = "Center",
-};
-
 export class Config {
     /** List of windows that should float, regardless of their WM hints */
     float: Array<FloatRule> = [];

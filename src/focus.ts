@@ -6,6 +6,14 @@ import * as Geom from 'geom';
 import type { ShellWindow } from 'window';
 import type { Ext } from './extension';
 
+export enum FocusPosition {
+    TopLeft = "Top Left",
+    TopRight = "Top Right",
+    BottomLeft = "Bottom Left",
+    BottomRight = "Bottom Right",
+    Center = "Center",
+}
+
 export class FocusSelector {
     select(
         ext: Ext,
