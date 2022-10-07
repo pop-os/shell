@@ -10,6 +10,7 @@ const { Settings } = imports.gi.Gio;
 
 import * as settings from 'settings';
 import * as log from 'log';
+import * as config from 'config';
 
 interface AppWidgets {
     fullscreen_launcher: any,
@@ -128,7 +129,7 @@ function settings_dialog_view(): [AppWidgets, Gtk.Container] {
         xalign: 0.0
     })
 
-    const [inner_gap, outer_gap] = gaps_section(grid, 7);
+    const [inner_gap, outer_gap] = gaps_section(grid, 8);
 
     const settings = {
         inner_gap,
@@ -138,7 +139,7 @@ function settings_dialog_view(): [AppWidgets, Gtk.Container] {
         snap_to_grid: new Gtk.Switch({ halign: Gtk.Align.END }),
         window_titles: new Gtk.Switch({ halign: Gtk.Align.END }),
         show_skip_taskbar: new Gtk.Switch({ halign: Gtk.Align.END }),
-        mouse_cursor_follows_active_window: new Gtk.Switch({ halign: Gtk.Align.END })
+        mouse_cursor_follows_active_window: new Gtk.Switch({ halign: Gtk.Align.END }),
     }
 
     grid.attach(win_label, 0, 0, 1, 1)
@@ -159,7 +160,8 @@ function settings_dialog_view(): [AppWidgets, Gtk.Container] {
     grid.attach(mouse_cursor_follows_active_window_label, 0, 5, 1, 1)
     grid.attach(settings.mouse_cursor_follows_active_window, 1, 5, 1, 1)
 
-    logging_combo(grid, 6)
+    build_combo(grid, 6, config.DefaultPointerPosition, 'Mouse Focus Location', 'mouse-focus-location')
+    build_combo(grid, 7, log.LOG_LEVELS, 'Log Level', 'log-level')
 
     return [settings, grid]
 }
@@ -199,35 +201,39 @@ function number_entry(): Gtk.Widget {
     return new Gtk.Entry({ input_purpose: Gtk.InputPurpose.NUMBER });
 }
 
-function logging_combo(grid: any, top_index: number) {
-    let log_label = new Gtk.Label({
-        label: `Log Level`,
+function build_combo(
+    grid: any,
+    top_index: number,
+    iter_enum: any,
+    label: string,
+    unit_label: string,
+) {
+    let label_ = new Gtk.Label({
+        label: label,
         halign: Gtk.Align.START
     });
 
-    grid.attach(log_label, 0, top_index, 1, 1);
+    grid.attach(label_, 0, top_index, 1, 1);
 
-    let log_combo = new Gtk.ComboBoxText();
+    let combo = new Gtk.ComboBoxText();
 
-    for (const key in log.LOG_LEVELS) {
-        // since log level loop will contain key and level,
-        // then cherry-pick the number, key will be the text value
-        if (typeof log.LOG_LEVELS[key] === 'number') {
-            log_combo.append(`${log.LOG_LEVELS[key]}`, key);
+    for (const [index, key] of Object.keys(iter_enum).entries()) {
+        if (typeof iter_enum[key] == 'string') {
+            combo.append(`${index}`, iter_enum[key]);
         }
     }
 
-    let current_log_level = log.log_level();
+    combo.set_active_id(`${ExtensionUtils.getSettings().get_uint(unit_label)}`);
 
-    log_combo.set_active_id(`${current_log_level}`);
-    log_combo.connect("changed", () => {
-        let activeId = log_combo.get_active_id();
+    combo.connect("changed", () => {
+        let active_id = combo.get_active_id();
 
         let settings = ExtensionUtils.getSettings();
-        settings.set_uint('log-level', activeId);
+        settings.set_uint(unit_label, active_id);
     });
 
-    grid.attach(log_combo, 1, top_index, 1, 1);
+    grid.attach(combo, 1, top_index, 1, 1);
+    return combo
 }
 
 // @ts-ignore

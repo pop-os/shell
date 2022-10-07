@@ -84,11 +84,11 @@ export interface FloatRule {
 };
 
 export enum DefaultPointerPosition {
-    TopLeft = "TOP_LEFT",
-    TopRight = "TOP_RIGHT",
-    BottomLeft = "BOTTOM_LEFT",
-    BottomRight = "BOTTOM_RIGHT",
-    Center = "CENTER",
+    TopLeft = "Top Left",
+    TopRight = "Top Right",
+    BottomLeft = "Bottom Left",
+    BottomRight = "Bottom Right",
+    Center = "Center",
 };
 
 export class Config {
@@ -103,9 +103,6 @@ export class Config {
 
     /** Logs window details on focus of window */
     log_on_focus: boolean = false;
-
-    /** Specify default pointer position when you're switching windows */
-    default_pointer_position: DefaultPointerPosition = DefaultPointerPosition.TopLeft;
 
     /** Add a floating exception which matches by wm_class */
     add_app_exception(wmclass: string) {
@@ -179,7 +176,6 @@ export class Config {
             let c = conf.value;
             this.float = c.float;
             this.log_on_focus = c.log_on_focus;
-            this.default_pointer_position = c.default_pointer_position;
         } else {
             log(`error loading conf: ${conf.why}`)
         }

@@ -43,6 +43,11 @@
             <summary>Move cursor to active window when navigating with keyboard shortcuts or touchpad gestures</summary>
         </key>
 
+        <key type="u" name="mouse-focus-location">
+            <default>0</default>
+            <summary>The location the mouse cursor focuses when selecting a window</summary>
+        </key>
+
         <!-- Tiling Options -->
         <key type="u" name="column-size">
             <default>64</default>

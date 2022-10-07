@@ -124,7 +124,7 @@ export class ShellWindow {
     }
 
     activate(move_mouse: boolean = true): void {
-        activate(this.ext, move_mouse, this.ext.conf.default_pointer_position, this.meta);
+        activate(this.ext, move_mouse, this.ext.settings.mouse_focus_location(), this.meta);
     }
 
     actor_exists(): boolean {
@@ -380,7 +380,7 @@ export class ShellWindow {
         let br = other.rect().clone();
 
         other.move(ext, ar);
-        this.move(ext, br, () => place_pointer_on(this.ext.conf.default_pointer_position, this.meta));
+        this.move(ext, br, () => place_pointer_on(this.ext.settings.mouse_focus_location(), this.meta));
     }
 
     title(): string {
@@ -661,7 +661,7 @@ export class ShellWindow {
 }
 
 /// Activates a window, and moves the mouse point.
-export function activate(ext: Ext, move_mouse: boolean, default_pointer_position: Config.DefaultPointerPosition, win: Meta.Window) {
+export function activate(ext: Ext, move_mouse: boolean, mouse_focus_location: number, win: Meta.Window) {
     try {
         if (win.is_override_redirect()) return
 
@@ -681,7 +681,7 @@ export function activate(ext: Ext, move_mouse: boolean, default_pointer_position
             && pointer_in_work_area()
 
         if (pointer_placement_permitted) {
-            place_pointer_on(default_pointer_position, win)
+            place_pointer_on(mouse_focus_location, win)
         }
     } catch (error) {
         log.error(`failed to activate window: ${error}`)
@@ -698,12 +698,16 @@ function pointer_in_work_area(): boolean {
     return mon ? cursor.intersects(mon) : false
 }
 
-export function place_pointer_on(default_pointer_position: Config.DefaultPointerPosition, win: Meta.Window) {
+export function place_pointer_on(pointer_position: number, win: Meta.Window) {
     const rect = win.get_frame_rect();
     let x = rect.x;
     let y = rect.y;
 
-    switch (default_pointer_position) {
+    let pointer_position_ = DefaultPointerPosition[
+        Object.keys(DefaultPointerPosition)[pointer_position] as keyof typeof DefaultPointerPosition
+    ]
+
+    switch (pointer_position_) {
         case DefaultPointerPosition.TopLeft:
             x += 8;
             y += 8;
