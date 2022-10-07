@@ -698,7 +698,7 @@ function pointer_in_work_area(): boolean {
     return mon ? cursor.intersects(mon) : false
 }
 
-export function place_pointer_on(ext: Ext, win: Meta.Window) {
+function place_pointer_on(ext: Ext, win: Meta.Window) {
     const rect = win.get_frame_rect();
     let x = rect.x;
     let y = rect.y;
