@@ -10,6 +10,7 @@ const { Settings } = imports.gi.Gio;
 
 import * as settings from 'settings';
 import * as log from 'log';
+import * as focus from 'focus';
 
 interface AppWidgets {
     fullscreen_launcher: any,
@@ -20,6 +21,8 @@ interface AppWidgets {
     smart_gaps: any,
     snap_to_grid: any,
     window_titles: any,
+    mouse_cursor_focus_position: any,
+    log_level: any,
 }
 
 // @ts-ignore
@@ -66,6 +69,12 @@ function settings_dialog_new(): Gtk.Container {
         }
     });
 
+    app.log_level.set_active(ext.log_level());
+    app.log_level.connect("changed", () => {
+        let active_id = app.log_level.get_active_id();
+        ext.set_log_level(active_id);
+    });
+
     app.show_skip_taskbar.set_active(ext.show_skiptaskbar());
     app.show_skip_taskbar.connect('state-set', (_widget: any, state: boolean) => {
         ext.set_show_skiptaskbar(state);
@@ -76,6 +85,12 @@ function settings_dialog_new(): Gtk.Container {
     app.mouse_cursor_follows_active_window.connect('state-set', (_widget: any, state: boolean) => {
         ext.set_mouse_cursor_follows_active_window(state);
         Settings.sync();
+    });
+
+    app.mouse_cursor_focus_position.set_active(ext.mouse_cursor_focus_location());
+    app.mouse_cursor_focus_position.connect("changed", () => {
+        let active_id = app.mouse_cursor_focus_position.get_active_id();
+        ext.set_mouse_cursor_focus_location(active_id);
     });
 
     app.fullscreen_launcher.set_active(ext.fullscreen_launcher())
@@ -128,7 +143,7 @@ function settings_dialog_view(): [AppWidgets, Gtk.Container] {
         xalign: 0.0
     })
 
-    const [inner_gap, outer_gap] = gaps_section(grid, 7);
+    const [inner_gap, outer_gap] = gaps_section(grid, 8);
 
     const settings = {
         inner_gap,
@@ -138,7 +153,19 @@ function settings_dialog_view(): [AppWidgets, Gtk.Container] {
         snap_to_grid: new Gtk.Switch({ halign: Gtk.Align.END }),
         window_titles: new Gtk.Switch({ halign: Gtk.Align.END }),
         show_skip_taskbar: new Gtk.Switch({ halign: Gtk.Align.END }),
-        mouse_cursor_follows_active_window: new Gtk.Switch({ halign: Gtk.Align.END })
+        mouse_cursor_follows_active_window: new Gtk.Switch({ halign: Gtk.Align.END }),
+        mouse_cursor_focus_position: build_combo(
+            grid,
+            6,
+            focus.FocusPosition,
+            'Mouse Cursor Focus Position',
+        ),
+        log_level: build_combo(
+            grid,
+            7,
+            log.LOG_LEVELS,
+            'Log Level',
+        )
     }
 
     grid.attach(win_label, 0, 0, 1, 1)
@@ -158,8 +185,6 @@ function settings_dialog_view(): [AppWidgets, Gtk.Container] {
 
     grid.attach(mouse_cursor_follows_active_window_label, 0, 5, 1, 1)
     grid.attach(settings.mouse_cursor_follows_active_window, 1, 5, 1, 1)
-
-    logging_combo(grid, 6)
 
     return [settings, grid]
 }
@@ -199,35 +224,29 @@ function number_entry(): Gtk.Widget {
     return new Gtk.Entry({ input_purpose: Gtk.InputPurpose.NUMBER });
 }
 
-function logging_combo(grid: any, top_index: number) {
-    let log_label = new Gtk.Label({
-        label: `Log Level`,
+function build_combo(
+    grid: any,
+    top_index: number,
+    iter_enum: any,
+    label: string,
+) {
+    let label_ = new Gtk.Label({
+        label: label,
         halign: Gtk.Align.START
     });
 
-    grid.attach(log_label, 0, top_index, 1, 1);
+    grid.attach(label_, 0, top_index, 1, 1);
 
-    let log_combo = new Gtk.ComboBoxText();
+    let combo = new Gtk.ComboBoxText();
 
-    for (const key in log.LOG_LEVELS) {
-        // since log level loop will contain key and level,
-        // then cherry-pick the number, key will be the text value
-        if (typeof log.LOG_LEVELS[key] === 'number') {
-            log_combo.append(`${log.LOG_LEVELS[key]}`, key);
+    for (const [index, key] of Object.keys(iter_enum).entries()) {
+        if (typeof iter_enum[key] == 'string') {
+            combo.append(`${index}`, iter_enum[key]);
         }
     }
 
-    let current_log_level = log.log_level();
-
-    log_combo.set_active_id(`${current_log_level}`);
-    log_combo.connect("changed", () => {
-        let activeId = log_combo.get_active_id();
-
-        let settings = ExtensionUtils.getSettings();
-        settings.set_uint('log-level', activeId);
-    });
-
-    grid.attach(log_combo, 1, top_index, 1, 1);
+    grid.attach(combo, 1, top_index, 1, 1);
+    return combo
 }
 
 // @ts-ignore

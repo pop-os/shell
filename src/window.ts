@@ -1,7 +1,6 @@
 // @ts-ignore
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
-import * as Config from 'config';
 import * as lib from 'lib';
 import * as log from 'log';
 import * as once_cell from 'once_cell';
@@ -13,8 +12,8 @@ import type { Entity } from './ecs';
 import type { Ext } from './extension';
 import type { Rectangle } from './rectangle';
 import * as scheduler from 'scheduler';
+import * as focus from 'focus';
 
-const { DefaultPointerPosition } = Config;
 const { Gdk, Meta, Shell, St, GLib } = imports.gi;
 
 const { OnceCell } = once_cell;
@@ -124,7 +123,7 @@ export class ShellWindow {
     }
 
     activate(move_mouse: boolean = true): void {
-        activate(this.ext, move_mouse, this.ext.conf.default_pointer_position, this.meta);
+        activate(this.ext, move_mouse, this.meta);
     }
 
     actor_exists(): boolean {
@@ -380,7 +379,8 @@ export class ShellWindow {
         let br = other.rect().clone();
 
         other.move(ext, ar);
-        this.move(ext, br, () => place_pointer_on(this.ext.conf.default_pointer_position, this.meta));
+        this.move(ext, br, () => place_pointer_on(this.ext, this.meta)
+        );
     }
 
     title(): string {
@@ -661,7 +661,7 @@ export class ShellWindow {
 }
 
 /// Activates a window, and moves the mouse point.
-export function activate(ext: Ext, move_mouse: boolean, default_pointer_position: Config.DefaultPointerPosition, win: Meta.Window) {
+export function activate(ext: Ext, move_mouse: boolean, win: Meta.Window) {
     try {
         if (win.is_override_redirect()) return
 
@@ -681,7 +681,7 @@ export function activate(ext: Ext, move_mouse: boolean, default_pointer_position
             && pointer_in_work_area()
 
         if (pointer_placement_permitted) {
-            place_pointer_on(default_pointer_position, win)
+            place_pointer_on(ext, win)
         }
     } catch (error) {
         log.error(`failed to activate window: ${error}`)
@@ -698,29 +698,32 @@ function pointer_in_work_area(): boolean {
     return mon ? cursor.intersects(mon) : false
 }
 
-export function place_pointer_on(default_pointer_position: Config.DefaultPointerPosition, win: Meta.Window) {
+function place_pointer_on(ext: Ext, win: Meta.Window) {
     const rect = win.get_frame_rect();
     let x = rect.x;
     let y = rect.y;
 
-    switch (default_pointer_position) {
-        case DefaultPointerPosition.TopLeft:
+    let key = Object.keys(focus.FocusPosition)[ext.settings.mouse_cursor_focus_location()]
+    let pointer_position_ = focus.FocusPosition[key as keyof typeof focus.FocusPosition]
+
+    switch (pointer_position_) {
+        case focus.FocusPosition.TopLeft:
             x += 8;
             y += 8;
             break;
-        case DefaultPointerPosition.BottomLeft:
+        case focus.FocusPosition.BottomLeft:
             x += 8;
             y += (rect.height - 16);
             break;
-        case DefaultPointerPosition.TopRight:
+        case focus.FocusPosition.TopRight:
             x += (rect.width - 16);
             y += 8;
             break;
-        case DefaultPointerPosition.BottomRight:
+        case focus.FocusPosition.BottomRight:
             x += (rect.width - 16);
             y += (rect.height - 16);
             break;
-        case DefaultPointerPosition.Center:
+        case focus.FocusPosition.Center:
             x += (rect.width / 2) + 8;
             y += (rect.height / 2) + 8;
             break;
