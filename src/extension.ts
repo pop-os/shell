@@ -878,7 +878,6 @@ export class Ext extends Ecs.System<ExtEvent> {
 
         // Update the active tab in the stack.
         if (null !== this.auto_tiler && null !== win.stack) {
-            win.meta.raise();
             ext?.auto_tiler?.forest.stacks.get(win.stack)?.activate(win.entity)
         }
 
