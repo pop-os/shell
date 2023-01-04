@@ -83,3 +83,5 @@ update-repository:
 
 zip-file: all
 	cd _build && zip -qr "../$(UUID)_$(VERSION).zip" .
+
+.NOTPARALLEL: debug local-install
