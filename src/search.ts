@@ -8,7 +8,7 @@ import type { JsonIPC } from 'launcher_service'
 
 const GLib: GLib = imports.gi.GLib;
 
-const { Clutter, Gio, Pango, Shell, St } = imports.gi;
+const { Clutter, Gio, Pango, Shell, St, Gdk } = imports.gi;
 const { ModalDialog } = imports.ui.modalDialog;
 
 const { overview, wm } = imports.ui.main;
@@ -87,107 +87,109 @@ export class Search {
         });
 
         this.text.connect("key-press-event", (_: any, event: any) => {
-            const c = event.get_key_symbol();
-            const s = event.get_state();
+            const key = Gdk.keyval_name(Gdk.keyval_to_upper(event.get_key_symbol()));
+            const ctrlKey = Boolean(event.get_state() & Clutter.ModifierType.CONTROL_MASK);
 
             const is_down = (): boolean => {
-                return c == 65364 || (s == Clutter.ModifierType.CONTROL_MASK && c == 106)
-                    || (s == Clutter.ModifierType.CONTROL_MASK && c == 110)
+                return key === "Down" ||
+                    (ctrlKey && key === "J") ||
+                    (ctrlKey && key === "N");
             }
 
             const is_up = (): boolean => {
-                return c == 65362 || c == 65056 || (s == Clutter.ModifierType.CONTROL_MASK && c == 107)
-                    || (s == Clutter.ModifierType.CONTROL_MASK && c == 112)
+                return key === "Up" || key === "ISO_Left_Tab" ||
+                    (ctrlKey && key === "K") ||
+                    (ctrlKey && key === "P");
             }
 
             // Up arrow or left tab was pressed
             const up_arrow = () => {
                 if (0 < this.active_id) {
-                    this.select_id(this.active_id - 1)
+                    this.select_id(this.active_id - 1);
                 } else if (this.active_id == 0) {
-                    this.select_id(this.widgets.length - 1)
+                    this.select_id(this.widgets.length - 1);
                 }
             }
 
             // Down arrow or tab was pressed
             const down_arrow = () => {
                 if (this.active_id + 1 < this.widgets.length) {
-                    this.select_id(this.active_id + 1)
+                    this.select_id(this.active_id + 1);
                 } else if (this.active_id + 1 == this.widgets.length) {
-                    this.select_id(0)
+                    this.select_id(0);
                 }
             }
 
             // Delay key repeat events, and handle up/down arrow movements if on repeat.
             if (event.get_flags() != Clutter.EventFlags.NONE) {
-                const now = global.get_current_time()
+                const now = global.get_current_time();
 
                 if (now - this.last_trigger < 100) {
-                    return
+                    return;
                 }
 
                 this.last_trigger = now;
 
                 if (is_up()) {
-                    up_arrow()
+                    up_arrow();
                     this.select(this.active_id);
                 } else if (is_down()) {
-                    down_arrow()
+                    down_arrow();
                     this.select(this.active_id);
                 }
 
                 return;
             }
 
-            this.last_trigger = global.get_current_time()
+            this.last_trigger = global.get_current_time();
 
-            if (c === 65307) {
+            if (key === "Escape") {
                 // Escape key was pressed
                 this.reset();
                 this.close();
                 this.cancel();
                 return;
-            } else if (c === 65289) {
+            } else if (key === "Tab") {
                 // Tab was pressed, check for tab completion
-                this.complete()
+                this.complete();
                 return;
             }
 
             if (is_up()) {
-                up_arrow()
+                up_arrow();
             } else if (is_down()) {
-                down_arrow()
-            } else if (s == Clutter.ModifierType.CONTROL_MASK && c == 49) {
-                this.activate_id(0)
-                return
-            } else if (s == Clutter.ModifierType.CONTROL_MASK && c == 50) {
-                this.activate_id(1)
-                return
-            } else if (s == Clutter.ModifierType.CONTROL_MASK && c == 51) {
-                this.activate_id(2)
-                return
-            } else if (s == Clutter.ModifierType.CONTROL_MASK && c == 52) {
-                this.activate_id(3)
-                return
-            } else if (s == Clutter.ModifierType.CONTROL_MASK && c == 53) {
-                this.activate_id(4)
-                return
-            } else if (s == Clutter.ModifierType.CONTROL_MASK && c == 54) {
-                this.activate_id(5)
-                return
-            } else if (s == Clutter.ModifierType.CONTROL_MASK && c == 55) {
-                this.activate_id(6)
-                return
-            } else if (s == Clutter.ModifierType.CONTROL_MASK && c == 56) {
-                this.activate_id(7)
-                return
-            } else if (s == Clutter.ModifierType.CONTROL_MASK && c == 57) {
-                this.activate_id(8)
-                return
-            } else if (s == Clutter.ModifierType.CONTROL_MASK && c == 113) {
+                down_arrow();
+            } else if (ctrlKey && key === "1") {
+                this.activate_id(0);
+                return;
+            } else if (ctrlKey && key === "2") {
+                this.activate_id(1);
+                return;
+            } else if (ctrlKey && key === "3") {
+                this.activate_id(2);
+                return;
+            } else if (ctrlKey && key === "4") {
+                this.activate_id(3);
+                return;
+            } else if (ctrlKey && key === "5") {
+                this.activate_id(4);
+                return;
+            } else if (ctrlKey && key === "6") {
+                this.activate_id(5);
+                return;
+            } else if (ctrlKey && key === "7") {
+                this.activate_id(6);
+                return;
+            } else if (ctrlKey && key === "8") {
+                this.activate_id(7);
+                return;
+            } else if (ctrlKey && key === "9") {
+                this.activate_id(8);
+                return;
+            } else if (ctrlKey && key === "Q") {
                 // Ctrl + Q shall quit the selected application
-                this.quit(this.active_id)
-                return
+                this.quit(this.active_id);
+                return;
             }
 
             this.select(this.active_id);
