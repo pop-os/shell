@@ -127,7 +127,7 @@ export class ShellWindow {
     }
 
     actor_exists(): boolean {
-        return this.meta.get_compositor_private() !== null;
+        return this.meta.get_compositor_private() !== null || this.destroying;
     }
 
     private bind_window_events() {
@@ -663,6 +663,13 @@ export class ShellWindow {
 /// Activates a window, and moves the mouse point.
 export function activate(ext: Ext, move_mouse: boolean, win: Meta.Window) {
     try {
+        // Return if window was destroyed.
+        if (!win.get_compositor_private()) return
+
+        // Return if window is being destroyed.
+        if (ext.get_window(win)?.destroying) return
+
+        // Return if window has override-redirect set.
         if (win.is_override_redirect()) return
 
         const workspace = win.get_workspace()
