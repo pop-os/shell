@@ -127,7 +127,7 @@ export class ShellWindow {
     }
 
     actor_exists(): boolean {
-        return this.meta.get_compositor_private() !== null || this.destroying;
+        return this.meta.get_compositor_private() !== null || !this.destroying;
     }
 
     private bind_window_events() {
