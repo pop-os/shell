@@ -58,7 +58,7 @@ export class Indicator {
         )
 
         this.toggle_stacking_with_mouse = toggle(
-            _("Allow stacking with mouse"),
+            _("Mouse Stacking"),
             ext.settings.stacking_with_mouse(),
             (toggle) => {
                 ext.settings.set_stacking_with_mouse(toggle.state);
