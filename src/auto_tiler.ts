@@ -408,7 +408,7 @@ export class AutoTiler {
                 ? fork.area
                 : attach_to.meta.get_frame_rect()
 
-        let placement: null | MoveBy = cursor_placement(attach_area, cursor)
+        let placement: null | MoveBy = cursor_placement(ext, attach_area, cursor)
         const stack = ext.auto_tiler?.find_stack(attach_to.entity)
 
         const matching_stack = win.stack !== null && win.stack === attach_to.stack
@@ -733,11 +733,11 @@ export class AutoTiler {
 *
 * A null indicates that the window should be stacked
 */
-export function cursor_placement(area: Rectangular, cursor: Rectangular): null | MoveByCursor {
+export function cursor_placement(ext: Ext, area: Rectangular, cursor: Rectangular): null | MoveByCursor {
     const { LEFT, RIGHT, TOP, BOTTOM } = geom.Side
     const { HORIZONTAL, VERTICAL } = lib.Orientation
 
-    const [, side] = geom.nearest_side([cursor.x, cursor.y], area)
+    const [, side] = geom.nearest_side(ext, [cursor.x, cursor.y], area)
 
     let res: null | [lib.Orientation, boolean] = side === LEFT
         ? [HORIZONTAL, true]
