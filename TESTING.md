@@ -54,6 +54,8 @@ Tasks for a tester to verify when approving a patch. Use complex window layouts 
 - [ ] Stacks can be resized with the mouse.
 - [ ] Lock and unlock the screen-- stacks should still exist and windows should not have moved.
 - [ ] Full-screen an application within the stack, then quit the application-- the remaining tabs should be visible.
+- [ ] Stack can only be created with the keyboard when `Allow Stacking with mouse` is disabled
+- [ ] Stacks can be created with the mouse or keyboard when `Allow Stacking with mouse` is enabled
 
 ### Workspaces
 
