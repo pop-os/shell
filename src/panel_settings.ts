@@ -16,9 +16,7 @@ export class Indicator {
     toggle_tiled : any
     toggle_titles: null | any
     toggle_active: any
-    toggle_stacking_with_mouse: any
     border_radius: any
-
     entry_gaps: any
 
     constructor(ext: Ext) {
@@ -57,14 +55,6 @@ export class Indicator {
             }
         )
 
-        this.toggle_stacking_with_mouse = toggle(
-            _("Mouse Stacking"),
-            ext.settings.stacking_with_mouse(),
-            (toggle) => {
-                ext.settings.set_stacking_with_mouse(toggle.state);
-            }
-        )
-
         this.entry_gaps = number_entry(
             _("Gaps"),
             ext.settings.gap_inner(),
@@ -99,7 +89,6 @@ export class Indicator {
             bm.addMenuItem(this.toggle_titles);
         }
 
-        bm.addMenuItem(this.toggle_stacking_with_mouse);
         bm.addMenuItem(this.toggle_active);
         bm.addMenuItem(this.border_radius);
 
