@@ -17,6 +17,7 @@ export class Indicator {
     toggle_titles: null | any
     toggle_active: any
     border_radius: any
+
     entry_gaps: any
 
     constructor(ext: Ext) {
