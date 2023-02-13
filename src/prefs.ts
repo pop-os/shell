@@ -14,6 +14,7 @@ import * as focus from 'focus';
 
 interface AppWidgets {
     fullscreen_launcher: any,
+    stacking_with_mouse: any,
     inner_gap: any,
     mouse_cursor_follows_active_window: any,
     outer_gap: any,
@@ -97,7 +98,13 @@ function settings_dialog_new(): Gtk.Container {
     app.fullscreen_launcher.connect('state-set', (_widget: any, state: boolean) => {
         ext.set_fullscreen_launcher(state)
         Settings.sync()
-    })
+    });
+
+    app.stacking_with_mouse.set_active(ext.stacking_with_mouse())
+    app.stacking_with_mouse.connect('state-set', (_widget: any, state: boolean) => {
+        ext.set_stacking_with_mouse(state)
+        Settings.sync()
+    });
 
     return grid;
 }
@@ -143,12 +150,18 @@ function settings_dialog_view(): [AppWidgets, Gtk.Container] {
         xalign: 0.0
     })
 
-    const [inner_gap, outer_gap] = gaps_section(grid, 8);
+    const stacking_with_mouse = new Gtk.Label({
+        label: "Allow stacking with mouse",
+        xalign: 0.0
+    })
+
+    const [inner_gap, outer_gap] = gaps_section(grid, 9);
 
     const settings = {
         inner_gap,
         outer_gap,
         fullscreen_launcher: new Gtk.Switch({ halign: Gtk.Align.END }),
+        stacking_with_mouse: new Gtk.Switch({ halign: Gtk.Align.END }),
         smart_gaps: new Gtk.Switch({ halign: Gtk.Align.END }),
         snap_to_grid: new Gtk.Switch({ halign: Gtk.Align.END }),
         window_titles: new Gtk.Switch({ halign: Gtk.Align.END }),
@@ -156,13 +169,13 @@ function settings_dialog_view(): [AppWidgets, Gtk.Container] {
         mouse_cursor_follows_active_window: new Gtk.Switch({ halign: Gtk.Align.END }),
         mouse_cursor_focus_position: build_combo(
             grid,
-            6,
+            7,
             focus.FocusPosition,
             'Mouse Cursor Focus Position',
         ),
         log_level: build_combo(
             grid,
-            7,
+            8,
             log.LOG_LEVELS,
             'Log Level',
         )
@@ -180,11 +193,14 @@ function settings_dialog_view(): [AppWidgets, Gtk.Container] {
     grid.attach(fullscreen_launcher_label, 0, 3, 1, 1)
     grid.attach(settings.fullscreen_launcher, 1, 3, 1, 1)
 
-    grid.attach(show_skip_taskbar_label, 0, 4, 1, 1)
-    grid.attach(settings.show_skip_taskbar, 1, 4, 1, 1)
+    grid.attach(stacking_with_mouse, 0, 4, 1, 1)
+    grid.attach(settings.stacking_with_mouse, 1, 4, 1, 1)
 
-    grid.attach(mouse_cursor_follows_active_window_label, 0, 5, 1, 1)
-    grid.attach(settings.mouse_cursor_follows_active_window, 1, 5, 1, 1)
+    grid.attach(show_skip_taskbar_label, 0, 5, 1, 1)
+    grid.attach(settings.show_skip_taskbar, 1, 5, 1, 1)
+
+    grid.attach(mouse_cursor_follows_active_window_label, 0, 6, 1, 1)
+    grid.attach(settings.mouse_cursor_follows_active_window, 1, 6, 1, 1)
 
     return [settings, grid]
 }

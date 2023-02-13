@@ -74,6 +74,11 @@
             <summary>Tile launched windows by default</summary>
         </key>
 
+        <key type="b" name="stacking-with-mouse">
+            <default>true</default>
+            <summary>Allow for stacking windows as a result of dragging a window with mouse</summary>
+        </key>
+
         <!-- Focus Shifting -->
         <key type="as" name="focus-left">
             <default><![CDATA[['<Super>Left','<Super>KP_Left','<Super>h']]]></default>
