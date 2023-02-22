@@ -12,9 +12,12 @@ import type { Ext } from 'extension'
 import type { ShellWindow } from 'window'
 import type { JsonIPC } from 'launcher_service'
 
-const { Clutter, Gio, GLib, Meta, Shell } = imports.gi
+const { Clutter, Gio, GLib, Meta, Shell, St } = imports.gi
 
 const app_sys = Shell.AppSystem.get_default();
+
+const Clipboard = St.Clipboard.get_default();
+const CLIPBOARD_TYPE = St.ClipboardType.CLIPBOARD;
 
 interface SearchOption {
     result: JsonIPC.SearchResult
@@ -94,6 +97,16 @@ export class Launcher extends search.Search {
             const option = this.options_array[id]
             if (option) {
                 this.service?.quit(option.result.id)
+            }
+        }
+
+        this.copy = (id: number) => {
+            const option = this.options_array[id];
+            if (!option) return;
+            if (option.result.description) {
+                Clipboard.set_text(CLIPBOARD_TYPE, option.result.description);
+            } else if (option.result.name) {
+                Clipboard.set_text(CLIPBOARD_TYPE, option.result.name);
             }
         }
     }

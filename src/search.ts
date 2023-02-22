@@ -44,6 +44,7 @@ export class Search {
     search: (search: string) => void = () => {}
     select: (id: number) => void = () => {}
     quit: (id: number) => void = () => {}
+    copy: (id: number) => void = () => {}
 
     constructor() {
         this.active_id = 0;
@@ -190,6 +191,19 @@ export class Search {
                 // Ctrl + Q shall quit the selected application
                 this.quit(this.active_id);
                 return;
+            } else if (
+                key === "Copy" ||
+                (ctrlKey && (key === "C" || key === "Insert"))
+            ) {
+                if ((this.text as any).get_selection()) {
+                    // If text entry has selected text, behave as normal
+                    return;
+                } else {
+                    // If nothing is selected, copy the active option and close
+                    this.copy(this.active_id);
+                    this.close();
+                    this.cancel();
+                }
             }
 
             this.select(this.active_id);
