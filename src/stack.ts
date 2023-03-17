@@ -169,7 +169,7 @@ export class Stack {
         const entity = window.entity;
         const active = Ecs.entity_eq(entity, this.active);
 
-        const button = new TabButton(window)
+        const button = new TabButton(window);
         const id = this.buttons.insert(button);
 
         let tab: Tab = { active, entity, signals: [], button: id, button_signal: null };
@@ -244,12 +244,19 @@ export class Stack {
                     if (component.active) {
                         let settings = this.ext.settings;
                         let color_value = settings.hint_color_rgba();
-                        tab_color = `background: ${color_value}; color: ${utils.is_dark(color_value) ? 'white' : 'black'}`;
+                        tab_color = `${color_value}; color: ${utils.is_dark(color_value) ? 'white' : 'black'}`;
 
                     } else {
-                        tab_color = `background: ${INACTIVE_TAB_STYLE}`;
+                        tab_color = `${INACTIVE_TAB_STYLE}`;
                     }
-                    button.set_style(tab_color);
+
+                    // the minus 4px is to accomodate the inner radius being tighter
+                    let radius_value = Math.max(0, this.ext.settings.active_hint_border_radius() - 4);
+                    // only allow a radius up to half the tab_height
+                    const max_tab_radius = TAB_HEIGHT / 2;
+                    if (radius_value >= max_tab_radius) radius_value = Math.trunc(max_tab_radius);
+
+                    button.set_style(`background: ${tab_color}; border-radius: ${radius_value}px;`);
                 }
             })
 
