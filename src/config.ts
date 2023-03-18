@@ -39,7 +39,7 @@ export const DEFAULT_FLOAT_RULES: Array<FloatRule> = [
     { class: "Mozilla VPN" },
     { class: "update-manager", title: "Software Updater" },
     { class: "Solaar" },
-    { class: "Steam", title: "^(?!Steam).*$" },
+    { class: "Steam", title: "^((?!Steam).)*$" },
     { class: "Steam", title: "^.*(Guard|Login).*" },
     { class: "TelegramDesktop", title: "Media viewer" },
     { class: "Zotero", title: "Quick Format Citation" },

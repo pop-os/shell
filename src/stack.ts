@@ -170,7 +170,6 @@ export class Stack {
         const active = Ecs.entity_eq(entity, this.active);
 
         const button = new TabButton(window);
-
         const id = this.buttons.insert(button);
 
         let tab: Tab = { active, entity, signals: [], button: id, button_signal: null };
@@ -250,17 +249,7 @@ export class Stack {
                         tab_color = `${INACTIVE_TAB_STYLE}`;
                     }
 
-                    // the minus 4px is to accomodate the inner radius being tighter
-                    let radius = Math.max(0, this.ext.settings.active_hint_border_radius() - 4);
-                    // only allow a radius up to half the tab_height
-                    const max_radius = Math.trunc(this.tabs_height / 2);
-                    if (radius >= max_radius) radius = max_radius;
-                    let border_radius = `0px 0px 0px 0px`;
-                    if (this.tabs.length === 1) border_radius = `${radius}px`;
-                    else if (idx === 0) border_radius = `${radius}px 0px 0px ${radius}px`;
-                    else if (idx === this.tabs.length - 1) border_radius = `0px ${radius}px ${radius}px 0px`;
-
-                    button.set_style(`background: ${tab_color}; border-radius: ${border_radius};`);
+                    button.set_style(`background: ${tab_color}; border-radius: ${this.get_tab_border_radius()};`);
                 }
             })
 
@@ -268,6 +257,23 @@ export class Stack {
         }
 
         this.reset_visibility(permitted)
+    }
+
+    // returns the tab button border radius based on it's order. 
+    // Only curving the corners on the edges.
+    private get_tab_border_radius(idx: Number): string {
+        let result = `0px 0px 0px 0px`;
+
+        // the minus 4px is to accomodate the inner radius being tighter
+        let radius = Math.max(0, this.ext.settings.active_hint_border_radius() - 4);
+        // only allow a radius up to half the tab_height
+        radius = Math.min(radius, Math.trunc(this.tabs_height / 2));
+        // set each corner's radius based on it's order
+        if (this.tabs.length === 1) result = `${radius}px`;
+        else if (idx === 0) result = `${radius}px 0px 0px ${radius}px`;
+        else if (idx === this.tabs.length - 1) result = `0px ${radius}px ${radius}px 0px`;
+
+        return result;
     }
 
     /** Connects `on_window_changed` callbacks to the newly-active window */
