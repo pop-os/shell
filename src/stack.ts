@@ -179,25 +179,6 @@ export class Stack {
         this.tabs.push(tab);
         this.watch_signals(comp, id, window);
         this.widgets.tabs.add(button);
-        this.update_tab_rounded_corners();
-    }
-
-    update_tab_rounded_corners() {
-        for (const [idx, component] of this.tabs.entries()) {
-            let button = this.buttons.get(component.button);
-            if (button) {
-                // the minus 4px is to accomodate the inner radius being tighter
-                let btn_radius = Math.max(0, this.ext.settings.active_hint_border_radius() - 4);
-                // only allow a radius up to half the tab_height
-                const max_tab_radius = this.tabs_height / 2;
-                if (btn_radius >= max_tab_radius) btn_radius = Math.trunc(max_tab_radius);
-                let border_radius = `0 0 0 0`;
-                if (this.tabs.length === 1) border_radius = `border-radius: ${btn_radius};`;
-                else if (idx === 0) border_radius = `border-radius: ${btn_radius} 0 0 ${btn_radius};`;
-                else if (idx === this.tabs.length - 1) border_radius = `border-radius: 0 ${btn_radius} ${btn_radius} 0;`;
-                button.set_style(border_radius);
-            }
-        }
     }
 
     /** Activates a tab based on the previously active entry */
@@ -240,7 +221,7 @@ export class Stack {
 
         let id = 0;
 
-        for (const component of this.tabs) {
+        for (const [idx, component] of this.tabs.entries()) {
             let name;
 
             this.window_exec(id, component.entity, (window) => {
@@ -269,7 +250,17 @@ export class Stack {
                         tab_color = `${INACTIVE_TAB_STYLE}`;
                     }
 
-                    button.set_style(`background: ${tab_color};`);
+                    // the minus 4px is to accomodate the inner radius being tighter
+                    let radius = Math.max(0, this.ext.settings.active_hint_border_radius() - 4);
+                    // only allow a radius up to half the tab_height
+                    const max_radius = Math.trunc(this.tabs_height / 2);
+                    if (radius >= max_radius) radius = max_radius;
+                    let border_radius = `0px 0px 0px 0px`;
+                    if (this.tabs.length === 1) border_radius = `${radius}px`;
+                    else if (idx === 0) border_radius = `${radius}px 0px 0px ${radius}px`;
+                    else if (idx === this.tabs.length - 1) border_radius = `0px ${radius}px ${radius}px 0px`;
+
+                    button.set_style(`background: ${tab_color}; border-radius: ${border_radius};`);
                 }
             })
 
