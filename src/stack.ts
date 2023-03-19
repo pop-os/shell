@@ -249,7 +249,8 @@ export class Stack {
                         tab_color = `${INACTIVE_TAB_STYLE}`;
                     }
 
-                    button.set_style(`background: ${tab_color}; border-radius: ${this.get_tab_border_radius()};`);
+                    const tab_border_radius = this.get_tab_border_radius(idx);
+                    button.set_style(`background: ${tab_color}; border-radius: ${tab_border_radius};`);
                 }
             })
 
