@@ -169,7 +169,7 @@ export class Stack {
         const entity = window.entity;
         const active = Ecs.entity_eq(entity, this.active);
 
-        const button = new TabButton(window)
+        const button = new TabButton(window);
         const id = this.buttons.insert(button);
 
         let tab: Tab = { active, entity, signals: [], button: id, button_signal: null };
@@ -220,7 +220,7 @@ export class Stack {
 
         let id = 0;
 
-        for (const component of this.tabs) {
+        for (const [idx, component] of this.tabs.entries()) {
             let name;
 
             this.window_exec(id, component.entity, (window) => {
@@ -244,12 +244,13 @@ export class Stack {
                     if (component.active) {
                         let settings = this.ext.settings;
                         let color_value = settings.hint_color_rgba();
-                        tab_color = `background: ${color_value}; color: ${utils.is_dark(color_value) ? 'white' : 'black'}`;
-
+                        tab_color = `${color_value}; color: ${utils.is_dark(color_value) ? 'white' : 'black'}`;
                     } else {
-                        tab_color = `background: ${INACTIVE_TAB_STYLE}`;
+                        tab_color = `${INACTIVE_TAB_STYLE}`;
                     }
-                    button.set_style(tab_color);
+
+                    const tab_border_radius = this.get_tab_border_radius(idx);
+                    button.set_style(`background: ${tab_color}; border-radius: ${tab_border_radius};`);
                 }
             })
 
@@ -257,6 +258,23 @@ export class Stack {
         }
 
         this.reset_visibility(permitted)
+    }
+
+    // returns the tab button border radius based on it's order. 
+    // Only curving the corners on the edges.
+    private get_tab_border_radius(idx: Number): string {
+        let result = `0px 0px 0px 0px`;
+
+        // the minus 4px is to accomodate the inner radius being tighter
+        let radius = Math.max(0, this.ext.settings.active_hint_border_radius() - 4);
+        // only allow a radius up to half the tab_height
+        radius = Math.min(radius, Math.trunc(this.tabs_height / 2));
+        // set each corner's radius based on it's order
+        if (this.tabs.length === 1) result = `${radius}px`;
+        else if (idx === 0) result = `${radius}px 0px 0px ${radius}px`;
+        else if (idx === this.tabs.length - 1) result = `0px ${radius}px ${radius}px 0px`;
+
+        return result;
     }
 
     /** Connects `on_window_changed` callbacks to the newly-active window */
