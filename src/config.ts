@@ -44,7 +44,6 @@ export const DEFAULT_FLOAT_RULES: Array<FloatRule> = [
     { class: "TelegramDesktop", title: "Media viewer" },
     { class: "Zotero", title: "Quick Format Citation" },
     { class: "firefox", title: "^(?!.*Mozilla Firefox).*$" },
-    { class: "gjs" },
     { class: "gnome-screenshot" },
     { class: "ibus-.*" },
     { class: "jetbrains-toolbox" },
@@ -73,6 +72,7 @@ export interface WindowRule {
  */
 export const SKIPTASKBAR_EXCEPTIONS: Array<WindowRule> = [
     { class: "Conky", },
+    { class: "gjs" },
     { class: "Guake", },
     { class: "Com.github.amezin.ddterm", },
     { class: "plank", },
