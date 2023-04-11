@@ -56,7 +56,8 @@ export const DEFAULT_FLOAT_RULES: Array<FloatRule> = [
     { class: "system76-driver" },
     { class: "tilda" },
     { class: "zoom" },
-    { class: "^.*action=join.*$"}
+    { class: "^.*action=join.*$"},
+    { class: "gjs" }
 
 ];
 
