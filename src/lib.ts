@@ -86,17 +86,18 @@ export function join<T>(iterator: IterableIterator<T>, next_func: (arg: T) => vo
     });
 }
 
-export function ignore_unconstrained_bit(op: number): number {
-    const unconstrained_bit = Meta.GrabOp.MOVING ^ Meta.GrabOp.MOVING_UNCONSTRAINED;
-    return op & ~unconstrained_bit;
+export function is_keyboard_op(op: number): boolean {
+    const window_flag_keyboard = Meta.GrabOp.KEYBOARD_MOVING & ~Meta.GrabOp.WINDOW_BASE;
+    return (op & window_flag_keyboard) != 0;
+}
+
+export function is_resize_op(op: number): boolean {
+    const window_dir_mask = (Meta.GrabOp.RESIZING_N | Meta.GrabOp.RESIZING_E | Meta.GrabOp.RESIZING_S | Meta.GrabOp.RESIZING_W) & ~Meta.GrabOp.WINDOW_BASE;
+    return (op & window_dir_mask) != 0 || (op & Meta.GrabOp.KEYBOARD_RESIZING_UNKNOWN) == Meta.GrabOp.KEYBOARD_RESIZING_UNKNOWN;
 }
 
 export function is_move_op(op: number): boolean {
-    return [
-        Meta.GrabOp.WINDOW_BASE,
-        Meta.GrabOp.MOVING,
-        Meta.GrabOp.KEYBOARD_MOVING
-    ].indexOf(op) > -1;
+    return !is_resize_op(op)
 }
 
 export function orientation_as_str(value: number): string {
