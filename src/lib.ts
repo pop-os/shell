@@ -86,6 +86,11 @@ export function join<T>(iterator: IterableIterator<T>, next_func: (arg: T) => vo
     });
 }
 
+export function ignore_unconstrained_bit(op: number): number {
+    const unconstrained_bit = Meta.GrabOp.MOVING ^ Meta.GrabOp.MOVING_UNCONSTRAINED;
+    return op & ~unconstrained_bit;
+}
+
 export function is_move_op(op: number): boolean {
     return [
         Meta.GrabOp.WINDOW_BASE,

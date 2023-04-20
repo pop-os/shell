@@ -45,7 +45,7 @@ const GLib: GLib = imports.gi.GLib;
 
 const { Gio, Meta, St, Shell } = imports.gi;
 const { GlobalEvent, WindowEvent } = Events;
-const { cursor_rect, is_move_op } = Lib;
+const { cursor_rect, ignore_unconstrained_bit, is_move_op } = Lib;
 const Main = imports.ui.main;
 const { layoutManager, loadTheme, overview, panel, setThemeStylesheet, screenShield, sessionMode, windowAttentionHandler } = Main;
 const { ScreenShield } = imports.ui.screenShield;
@@ -1110,7 +1110,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         if (this.auto_tiler) {
             let crect = win.rect()
             const rect = grab_op.rect;
-            if (is_move_op(op)) {
+            if (is_move_op(ignore_unconstrained_bit(op))) {
                 const cmon = win.meta.get_monitor()
                 const prev_mon = this.monitors.get(win.entity)
                 const mon_drop = prev_mon ? prev_mon[0] !== cmon : false
@@ -1411,7 +1411,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
                 /** Display an overlay indicating where the window will be placed if dropped */
 
-                if (overview.visible || !win || op !== 1) return
+                if (overview.visible || !win || ignore_unconstrained_bit(op) !== 1) return
 
                 const workspace = this.active_workspace();
 
