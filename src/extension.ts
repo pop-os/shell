@@ -45,7 +45,7 @@ const GLib: GLib = imports.gi.GLib;
 
 const { Gio, Meta, St, Shell } = imports.gi;
 const { GlobalEvent, WindowEvent } = Events;
-const { cursor_rect, is_move_op } = Lib;
+const { cursor_rect, is_keyboard_op, is_resize_op, is_move_op } = Lib;
 const Main = imports.ui.main;
 const { layoutManager, loadTheme, overview, panel, setThemeStylesheet, screenShield, sessionMode, windowAttentionHandler } = Main;
 const { ScreenShield } = imports.ui.screenShield;
@@ -1411,7 +1411,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
                 /** Display an overlay indicating where the window will be placed if dropped */
 
-                if (overview.visible || !win || op !== 1) return
+                if (overview.visible || !win || is_keyboard_op(op) || is_resize_op(op)) return
 
                 const workspace = this.active_workspace();
 
