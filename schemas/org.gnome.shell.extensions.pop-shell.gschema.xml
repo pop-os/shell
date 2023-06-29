@@ -13,6 +13,13 @@
             <summary>Border radius for active window hint, in pixels</summary>
         </key>
 
+
+        <key type="u" name="active-hint-border-width">
+            <default>3</default>
+            <range min="1" max="15"/>
+            <summary>Border width for active window hint, in pixels</summary>
+        </key>
+
         <key type="b" name="fullscreen-launcher">
             <default>false</default>
             <summary>Allow showing launcher above fullscreen windows</summary>
