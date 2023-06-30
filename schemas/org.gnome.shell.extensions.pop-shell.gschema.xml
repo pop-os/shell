@@ -13,7 +13,6 @@
             <summary>Border radius for active window hint, in pixels</summary>
         </key>
 
-
         <key type="u" name="active-hint-border-width">
             <default>3</default>
             <range min="1" max="15"/>
