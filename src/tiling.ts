@@ -2,6 +2,8 @@
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 // import * as Ecs from 'ecs';
+import * as exec from 'executor';
+import * as geom from 'geom';
 import * as GrabOp from 'grab_op';
 import * as Lib from 'lib';
 import * as Log from 'log';
@@ -9,15 +11,13 @@ import * as Node from 'node';
 import * as Rect from 'rectangle';
 import * as Tags from 'tags';
 import * as window from 'window';
-import * as geom from 'geom';
-import * as exec from 'executor';
 
-import type { Entity } from './ecs';
-import type { Rectangle } from './rectangle';
-import type { Ext } from './extension';
-import type { NodeStack } from './node';
 import { AutoTiler } from './auto_tiler';
+import type { Entity } from './ecs';
+import type { Ext } from './extension';
 import { Fork } from './fork';
+import type { NodeStack } from './node';
+import type { Rectangle } from './rectangle';
 
 const { Meta } = imports.gi;
 const Main = imports.ui.main;
@@ -391,6 +391,15 @@ export class Tiler {
                 Node.stack_remove(forest, inner, fentity)
                 detach(Lib.Orientation.VERTICAL, true)
                 break
+        }
+        if (ext.moved_by_mouse && inner.entities.length === 1 && ext.settings.auto_unstack()) {
+            const ent = inner.entities[0]
+            const win = ext.windows.get(ent)
+            const fork = ext.auto_tiler.get_parent_fork(ent)
+            if (fork && win) {
+                ext.auto_tiler.unstack(ext, fork, win)
+                ext.auto_tiler.tile(ext, fork, fork.area)
+            }
         }
     }
 

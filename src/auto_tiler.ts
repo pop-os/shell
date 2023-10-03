@@ -1,12 +1,12 @@
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 import * as ecs from 'ecs';
+import * as geom from 'geom';
 import * as lib from 'lib';
 import * as log from 'log';
 import * as node from 'node';
 import * as result from 'result';
 import * as stack from 'stack';
-import * as geom from 'geom';
 import * as tiling from 'tiling';
 
 import type { Entity } from 'ecs';
@@ -232,9 +232,9 @@ export class AutoTiler {
     }
 
     /** Detaches the window from a tiling branch, if it is attached to one. */
-    detach_window(ext: Ext, win: Entity) {
+    detach_window(ext: Ext, win: Entity, destroy_stack: boolean = true) {
         this.attached.take_with(win, (prev_fork: Entity) => {
-            const reflow_fork = this.forest.detach(ext, prev_fork, win);
+            const reflow_fork = this.forest.detach(ext, prev_fork, win, destroy_stack);
 
             if (reflow_fork) {
                 const fork = reflow_fork[1];
