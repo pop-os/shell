@@ -81,9 +81,7 @@ export class ExtensionSettings {
     ext: Settings = settings_new_schema(Me.metadata["settings-schema"]);
     int: Settings | null = settings_new_id("org.gnome.desktop.interface");
     mutter: Settings | null = settings_new_id("org.gnome.mutter");
-    shell: Settings | null = settings_new_id(
-        "org.gnome.shell.extensions.user-theme"
-    );
+    shell: Settings | null = settings_new_id("org.gnome.shell.extensions.user-theme");
 
     // Getters
 
