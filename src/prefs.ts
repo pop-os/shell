@@ -1,4 +1,4 @@
-export { };
+export { }
 
 const ExtensionUtils = imports.misc.extensionUtils;
 // @ts-ignore
@@ -8,23 +8,23 @@ const { Gtk } = imports.gi;
 
 const { Settings } = imports.gi.Gio;
 
-import * as focus from "focus";
-import * as log from "log";
-import * as settings from "settings";
+import * as settings from 'settings';
+import * as log from 'log';
+import * as focus from 'focus';
 
 interface AppWidgets {
-    fullscreen_launcher: any;
-    stacking_with_mouse: any;
-    inner_gap: any;
-    mouse_cursor_follows_active_window: any;
-    outer_gap: any;
-    show_skip_taskbar: any;
-    smart_gaps: any;
-    auto_unstack: any;
-    snap_to_grid: any;
-    window_titles: any;
-    mouse_cursor_focus_position: any;
-    log_level: any;
+    fullscreen_launcher: any,
+    stacking_with_mouse: any,
+    inner_gap: any,
+    mouse_cursor_follows_active_window: any,
+    outer_gap: any,
+    show_skip_taskbar: any,
+    smart_gaps: any,
+    auto_unstack: any,
+    snap_to_grid: any,
+    window_titles: any,
+    mouse_cursor_focus_position: any,
+    log_level: any,
 }
 
 // @ts-ignore
@@ -36,31 +36,31 @@ function settings_dialog_new(): Gtk.Container {
     let ext = new settings.ExtensionSettings();
 
     app.window_titles.set_active(ext.show_title());
-    app.window_titles.connect("state-set", (_widget: any, state: boolean) => {
+    app.window_titles.connect('state-set', (_widget: any, state: boolean) => {
         ext.set_show_title(state);
         Settings.sync();
     });
 
     app.snap_to_grid.set_active(ext.snap_to_grid());
-    app.snap_to_grid.connect("state-set", (_widget: any, state: boolean) => {
+    app.snap_to_grid.connect('state-set', (_widget: any, state: boolean) => {
         ext.set_snap_to_grid(state);
         Settings.sync();
     });
 
     app.smart_gaps.set_active(ext.smart_gaps());
-    app.smart_gaps.connect("state-set", (_widget: any, state: boolean) => {
+    app.smart_gaps.connect('state-set', (_widget: any, state: boolean) => {
         ext.set_smart_gaps(state);
         Settings.sync();
     });
 
     app.auto_unstack.set_active(ext.auto_unstack());
-    app.auto_unstack.connect("state-set", (_widget: any, state: boolean) => {
+    app.auto_unstack.connect('state-set', (_widget: any, state: boolean) => {
         ext.set_auto_unstack(state);
         Settings.sync();
     });
 
     app.outer_gap.set_text(String(ext.gap_outer()));
-    app.outer_gap.connect("activate", (widget: any) => {
+    app.outer_gap.connect('activate', (widget: any) => {
         let parsed = parseInt((widget.get_text() as string).trim());
         if (!isNaN(parsed)) {
             ext.set_gap_outer(parsed);
@@ -69,7 +69,7 @@ function settings_dialog_new(): Gtk.Container {
     });
 
     app.inner_gap.set_text(String(ext.gap_inner()));
-    app.inner_gap.connect("activate", (widget: any) => {
+    app.inner_gap.connect('activate', (widget: any) => {
         let parsed = parseInt((widget.get_text() as string).trim());
         if (!isNaN(parsed)) {
             ext.set_gap_inner(parsed);
@@ -78,22 +78,20 @@ function settings_dialog_new(): Gtk.Container {
     });
 
     app.log_level.set_active(ext.log_level());
-    app.log_level.connect("changed", () => {
+    app.log_level.connect('changed', () => {
         let active_id = app.log_level.get_active_id();
         ext.set_log_level(active_id);
     });
 
     app.show_skip_taskbar.set_active(ext.show_skiptaskbar());
-    app.show_skip_taskbar.connect("state-set", (_widget: any, state: boolean) => {
+    app.show_skip_taskbar.connect('state-set', (_widget: any, state: boolean) => {
         ext.set_show_skiptaskbar(state);
         Settings.sync();
     });
 
-    app.mouse_cursor_follows_active_window.set_active(
-        ext.mouse_cursor_follows_active_window()
-    );
+    app.mouse_cursor_follows_active_window.set_active(ext.mouse_cursor_follows_active_window());
     app.mouse_cursor_follows_active_window.connect(
-        "state-set",
+        'state-set',
         (_widget: any, state: boolean) => {
             ext.set_mouse_cursor_follows_active_window(state);
             Settings.sync();
@@ -101,14 +99,14 @@ function settings_dialog_new(): Gtk.Container {
     );
 
     app.mouse_cursor_focus_position.set_active(ext.mouse_cursor_focus_location());
-    app.mouse_cursor_focus_position.connect("changed", () => {
+    app.mouse_cursor_focus_position.connect('changed', () => {
         let active_id = app.mouse_cursor_focus_position.get_active_id();
         ext.set_mouse_cursor_focus_location(active_id);
     });
 
     app.fullscreen_launcher.set_active(ext.fullscreen_launcher());
     app.fullscreen_launcher.connect(
-        "state-set",
+        'state-set',
         (_widget: any, state: boolean) => {
             ext.set_fullscreen_launcher(state);
             Settings.sync();
@@ -117,7 +115,7 @@ function settings_dialog_new(): Gtk.Container {
 
     app.stacking_with_mouse.set_active(ext.stacking_with_mouse());
     app.stacking_with_mouse.connect(
-        "state-set",
+        'state-set',
         (_widget: any, state: boolean) => {
             ext.set_stacking_with_mouse(state);
             Settings.sync();
@@ -190,16 +188,19 @@ function settings_dialog_view(): [AppWidgets, Gtk.Container] {
         snap_to_grid: new Gtk.Switch({ halign: Gtk.Align.END }),
         window_titles: new Gtk.Switch({ halign: Gtk.Align.END }),
         show_skip_taskbar: new Gtk.Switch({ halign: Gtk.Align.END }),
-        mouse_cursor_follows_active_window: new Gtk.Switch({
-            halign: Gtk.Align.END,
-        }),
+        mouse_cursor_follows_active_window: new Gtk.Switch({halign: Gtk.Align.END,}),
         mouse_cursor_focus_position: build_combo(
             grid,
             8,
             focus.FocusPosition,
             "Mouse Cursor Focus Position"
         ),
-        log_level: build_combo(grid, 9, log.LOG_LEVELS, "Log Level"),
+        log_level: build_combo(
+            grid, 
+            9, 
+            log.LOG_LEVELS, 
+            "Log Level"
+        ),
     };
 
     grid.attach(win_label, 0, 0, 1, 1);
@@ -280,7 +281,7 @@ function build_combo(
     let combo = new Gtk.ComboBoxText();
 
     for (const [index, key] of Object.keys(iter_enum).entries()) {
-        if (typeof iter_enum[key] == "string") {
+        if (typeof iter_enum[key] == 'string') {
             combo.append(`${index}`, iter_enum[key]);
         }
     }
