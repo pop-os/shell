@@ -45,11 +45,7 @@ function settings_new_schema(schema: string): Settings {
 
     if (!schemaObj) {
         throw new Error(
-            "Schema " +
-            schema +
-            " could not be found for extension " +
-            Me.metadata.uuid +
-            ". Please check your installation."
+            "Schema " + schema + " could not be found for extension " + Me.metadata.uuid + ". Please check your installation."
         );
     }
 
