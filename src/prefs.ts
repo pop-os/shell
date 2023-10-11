@@ -1,9 +1,8 @@
-export {};
-
 import Gtk from 'gi://Gtk';
 
 import Gio from 'gi://Gio';
 const Settings = Gio.Settings;
+import { ExtensionPreferences } from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
 import * as settings from './settings.js';
 import * as log from './log.js';
@@ -23,8 +22,11 @@ interface AppWidgets {
     log_level: any;
 }
 
-// @ts-ignore
-function init() {}
+export default class PopSellPrefs extends ExtensionPreferences {
+    getPreferencesWidget() {
+        return buildPrefsWidget();
+    }
+}
 
 function settings_dialog_new(): Gtk.Container {
     let [app, grid] = settings_dialog_view();
