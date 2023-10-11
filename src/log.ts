@@ -23,8 +23,8 @@ export function log_level() {
     return LOG_LEVELS.DEBUG;
 }
 
-export function log(_text: string) {
-    // global.log('pop-shell: ' + text);
+export function log(text: string) {
+    (globalThis as any).log('pop-shell: ' + text);
 }
 
 export function error(text: string) {
