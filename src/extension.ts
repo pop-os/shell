@@ -69,7 +69,7 @@ import { WorkspaceThumbnail } from 'resource:///org/gnome/shell/ui/workspaceThum
 import { WindowPreview } from 'resource:///org/gnome/shell/ui/windowPreview.js';
 import { PACKAGE_VERSION } from 'resource:///org/gnome/shell/misc/config.js';
 import * as Tags from './tags.js';
-import { get_current_path } from './utils.js';
+import { get_current_path } from './paths.js';
 
 const STYLESHEET_PATHS = ['light', 'dark', 'highcontrast'].map(stylesheet_path);
 const STYLESHEETS = STYLESHEET_PATHS.map((path) => Gio.File.new_for_path(path));

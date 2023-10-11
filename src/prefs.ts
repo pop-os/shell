@@ -30,6 +30,7 @@ export default class PopShellPreferences extends ExtensionPreferences {
         } else {
             dialog.show();
         }
+        log.debug(JSON.stringify(dialog));
         return dialog;
     }
 }

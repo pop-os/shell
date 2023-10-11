@@ -1,8 +1,7 @@
 // const Me = imports.misc.extensionUtils.getCurrentExtension();
 import Gio from 'gi://Gio';
 import Gdk from 'gi://Gdk';
-import { get_current_path } from './utils.js';
-// import { get_current_path } from './utils.js';
+import { get_current_path } from './paths.js';
 
 const DARK = ['dark', 'adapta', 'plata', 'dracula'];
 

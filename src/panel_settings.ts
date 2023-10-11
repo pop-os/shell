@@ -15,6 +15,7 @@ import {
 import { Button } from 'resource:///org/gnome/shell/ui/panelMenu.js';
 import GLib from 'gi://GLib';
 import { spawn } from 'resource:///org/gnome/shell/misc/util.js';
+import { get_current_path } from './paths.js';
 // import * as Settings from './settings.js';
 
 export class Indicator {
@@ -31,7 +32,7 @@ export class Indicator {
     constructor(ext: Ext) {
         this.button = new Button(0.0, _('Pop Shell Settings'));
 
-        const path = Utils.get_current_path();
+        const path = get_current_path();
         ext.button = this.button;
         ext.button_gio_icon_auto_on = Gio.icon_new_for_string(`${path}/icons/pop-shell-auto-on-symbolic.svg`);
         ext.button_gio_icon_auto_off = Gio.icon_new_for_string(`${path}/icons/pop-shell-auto-off-symbolic.svg`);
@@ -350,7 +351,7 @@ function color_selector(ext: Ext, menu: any) {
 
     color_selector_item.add_child(color_button);
     color_button.connect('button-press-event', () => {
-        let path = Utils.get_current_path() + '/color_dialog/main.js';
+        let path = get_current_path() + '/color_dialog/main.js';
         let resp = GLib.spawn_command_line_async(`gjs --module ${path}`);
         if (!resp) {
             return null;
