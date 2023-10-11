@@ -1,5 +1,3 @@
-//@ts-ignore
-
 import * as search from './search.js';
 import * as utils from './utils.js';
 import * as arena from './arena.js';

@@ -22,9 +22,15 @@ interface AppWidgets {
     log_level: any;
 }
 
-export default class PopSellPrefs extends ExtensionPreferences {
+export default class PopShellPreferences extends ExtensionPreferences {
     getPreferencesWidget() {
-        return buildPrefsWidget();
+        let dialog = settings_dialog_new();
+        if (dialog.show_all) {
+            dialog.show_all();
+        } else {
+            dialog.show();
+        }
+        return dialog;
     }
 }
 
@@ -247,15 +253,4 @@ function build_combo(grid: any, top_index: number, iter_enum: any, label: string
 
     grid.attach(combo, 1, top_index, 1, 1);
     return combo;
-}
-
-// @ts-ignore
-function buildPrefsWidget() {
-    let dialog = settings_dialog_new();
-    if (dialog.show_all) {
-        dialog.show_all();
-    } else {
-        dialog.show();
-    }
-    return dialog;
 }

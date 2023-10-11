@@ -325,7 +325,6 @@ function tiled(ext: Ext): any {
     return t;
 }
 
-// @ts-ignore
 function color_selector(ext: Ext, menu: any) {
     let color_selector_item = new PopupMenuItem('Active Hint Color');
     let color_button = new St.Button();

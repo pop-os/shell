@@ -1,5 +1,3 @@
-//@ts-ignore
-
 import * as ecs from './ecs.js';
 import * as lib from './lib.js';
 import * as log from './log.js';

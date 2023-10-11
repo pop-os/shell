@@ -1,5 +1,3 @@
-//@ts-ignore
-
 import * as Config from './config.js';
 import * as Forest from './forest.js';
 import * as Ecs from './ecs.js';
@@ -26,7 +24,7 @@ import * as add_exception from './dialog_add_exception.js';
 import * as exec from './executor.js';
 import * as dbus_service from './dbus_service.js';
 import * as scheduler from './scheduler.js';
-
+import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
 import type { Entity } from './ecs.js';
 import type { ExtEvent } from './events.js';
 import { Rectangle } from './rectangle.js';
@@ -2666,99 +2664,86 @@ export class Ext extends Ecs.System<ExtEvent> {
 let ext: Ext | null = null;
 let indicator: Indicator | null = null;
 
-export default class PopShellExtension {
-    init() {
-        init();
+export default class PopShellExtension extends Extension {
+    constructor() {
+        super();
+        log.info('init');
     }
     enable() {
-        enable();
-    }
-    disable() {
-        disable();
-    }
-}
-// @ts-ignore
-function init() {
-    log.info('init');
-}
+        log.info('enable');
 
-// @ts-ignore
-function enable() {
-    log.info('enable');
+        if (!ext) {
+            ext = new Ext();
 
-    if (!ext) {
-        ext = new Ext();
+            ext.register_fn(() => {
+                if (ext?.auto_tiler) ext.snap_windows();
+            });
+        }
 
-        ext.register_fn(() => {
-            if (ext?.auto_tiler) ext.snap_windows();
-        });
-    }
+        if (ext.settings.show_skiptaskbar()) {
+            _show_skip_taskbar_windows(ext);
+        } else {
+            _hide_skip_taskbar_windows();
+        }
 
-    if (ext.settings.show_skiptaskbar()) {
-        _show_skip_taskbar_windows(ext);
-    } else {
-        _hide_skip_taskbar_windows();
-    }
-
-    if (ext.was_locked) {
-        ext.was_locked = false;
-        return;
-    }
-
-    ext.injections_add();
-    ext.signals_attach();
-
-    disable_window_attention_handler();
-
-    layoutManager.addChrome(ext.overlay);
-
-    if (!indicator) {
-        indicator = new PanelSettings.Indicator(ext);
-        panel.addToStatusArea('pop-shell', indicator.button);
-    }
-
-    ext.keybindings.enable(ext.keybindings.global).enable(ext.keybindings.window_focus);
-
-    if (ext.settings.tile_by_default()) {
-        ext.auto_tile_on();
-    }
-}
-
-// @ts-ignore
-function disable() {
-    log.info('disable');
-
-    if (ext) {
-        if (sessionMode.isLocked) {
-            ext.was_locked = true;
+        if (ext.was_locked) {
+            ext.was_locked = false;
             return;
         }
 
-        ext.injections_remove();
-        ext.signals_remove();
-        ext.exit_modes();
-        ext.stop_launcher_services();
-        ext.hide_all_borders();
-        ext.window_search.remove_injections();
+        ext.injections_add();
+        ext.signals_attach();
 
-        layoutManager.removeChrome(ext.overlay);
+        disable_window_attention_handler();
 
-        ext.keybindings.disable(ext.keybindings.global).disable(ext.keybindings.window_focus);
+        layoutManager.addChrome(ext.overlay);
 
-        if (ext.auto_tiler) {
-            ext.auto_tiler.destroy(ext);
-            ext.auto_tiler = null;
+        if (!indicator) {
+            indicator = new PanelSettings.Indicator(ext);
+            panel.addToStatusArea('pop-shell', indicator.button);
         }
 
-        _hide_skip_taskbar_windows();
-    }
+        ext.keybindings.enable(ext.keybindings.global).enable(ext.keybindings.window_focus);
 
-    if (indicator) {
-        indicator.destroy();
-        indicator = null;
+        if (ext.settings.tile_by_default()) {
+            ext.auto_tile_on();
+        }
     }
+    disable() {
+        log.info('disable');
 
-    enable_window_attention_handler();
+        if (ext) {
+            if (sessionMode.isLocked) {
+                ext.was_locked = true;
+                return;
+            }
+
+            ext.injections_remove();
+            ext.signals_remove();
+            ext.exit_modes();
+            ext.stop_launcher_services();
+            ext.hide_all_borders();
+            ext.window_search.remove_injections();
+
+            layoutManager.removeChrome(ext.overlay);
+
+            ext.keybindings.disable(ext.keybindings.global).disable(ext.keybindings.window_focus);
+
+            if (ext.auto_tiler) {
+                ext.auto_tiler.destroy(ext);
+                ext.auto_tiler = null;
+            }
+
+            _hide_skip_taskbar_windows();
+        }
+
+        if (indicator) {
+            indicator.destroy();
+            indicator = null;
+        }
+
+        enable_window_attention_handler();
+    }
 }
 
 const handler = windowAttentionHandler;

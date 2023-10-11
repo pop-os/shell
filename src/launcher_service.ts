@@ -1,5 +1,3 @@
-//@ts-ignore
-
 import * as utils from './utils.js';
 import * as log from './log.js';
 
