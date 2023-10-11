@@ -2665,10 +2665,6 @@ let ext: Ext | null = null;
 let indicator: Indicator | null = null;
 
 export default class PopShellExtension extends Extension {
-    constructor() {
-        super();
-        log.info('init');
-    }
     enable() {
         log.info('enable');
 
