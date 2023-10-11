@@ -1,33 +1,30 @@
-// @ts-ignore
-const Me = imports.misc.extensionUtils.getCurrentExtension();
+// import * as Ecs from './ecs.js';
+import * as GrabOp from './grab_op.js';
+import * as Lib from './lib.js';
+import * as Log from './log.js';
+import * as Node from './node.js';
+import * as Rect from './rectangle.js';
+import * as Tags from './tags.js';
+import * as window from './window.js';
+import * as geom from './geom.js';
+import * as exec from './executor.js';
 
-// import * as Ecs from 'ecs';
-import * as GrabOp from 'grab_op';
-import * as Lib from 'lib';
-import * as Log from 'log';
-import * as Node from 'node';
-import * as Rect from 'rectangle';
-import * as Tags from 'tags';
-import * as window from 'window';
-import * as geom from 'geom';
-import * as exec from 'executor';
+import type { Entity } from './ecs.js';
+import type { Rectangle } from './rectangle.js';
+import type { Ext } from './extension.js';
+import type { NodeStack } from './node.js';
+import { AutoTiler } from './auto_tiler.js';
+import { Fork } from './fork.js';
 
-import type { Entity } from './ecs';
-import type { Rectangle } from './rectangle';
-import type { Ext } from './extension';
-import type { NodeStack } from './node';
-import { AutoTiler } from './auto_tiler';
-import { Fork } from './fork';
-
-const { Meta } = imports.gi;
-const Main = imports.ui.main;
+import Meta from 'gi://Meta';
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 const { ShellWindow } = window;
 
 export enum Direction {
     Left,
     Up,
     Right,
-    Down
+    Down,
 }
 
 export class Tiler {
@@ -40,34 +37,34 @@ export class Tiler {
 
     private swap_window: Entity | null = null;
 
-    queue: exec.ChannelExecutor<() => void> = new exec.ChannelExecutor()
+    queue: exec.ChannelExecutor<() => void> = new exec.ChannelExecutor();
 
     constructor(ext: Ext) {
         this.keybindings = {
-            "management-orientation": () => this.toggle_orientation(ext),
-            "tile-move-left": () => this.move_left(ext),
-            "tile-move-down": () => this.move_down(ext),
-            "tile-move-up": () => this.move_up(ext),
-            "tile-move-right": () => this.move_right(ext),
-            "tile-resize-left": () => this.resize(ext, Direction.Left),
-            "tile-resize-down": () => this.resize(ext, Direction.Down),
-            "tile-resize-up": () => this.resize(ext, Direction.Up),
-            "tile-resize-right": () => this.resize(ext, Direction.Right),
-            "tile-swap-left": () => this.swap_left(ext),
-            "tile-swap-down": () => this.swap_down(ext),
-            "tile-swap-up": () => this.swap_up(ext),
-            "tile-swap-right": () => this.swap_right(ext),
-            "tile-accept": () => this.accept(ext),
-            "tile-reject": () => this.exit(ext),
-            "toggle-stacking": () => this.toggle_stacking(ext),
+            'management-orientation': () => this.toggle_orientation(ext),
+            'tile-move-left': () => this.move_left(ext),
+            'tile-move-down': () => this.move_down(ext),
+            'tile-move-up': () => this.move_up(ext),
+            'tile-move-right': () => this.move_right(ext),
+            'tile-resize-left': () => this.resize(ext, Direction.Left),
+            'tile-resize-down': () => this.resize(ext, Direction.Down),
+            'tile-resize-up': () => this.resize(ext, Direction.Up),
+            'tile-resize-right': () => this.resize(ext, Direction.Right),
+            'tile-swap-left': () => this.swap_left(ext),
+            'tile-swap-down': () => this.swap_down(ext),
+            'tile-swap-up': () => this.swap_up(ext),
+            'tile-swap-right': () => this.swap_right(ext),
+            'tile-accept': () => this.accept(ext),
+            'tile-reject': () => this.exit(ext),
+            'toggle-stacking': () => this.toggle_stacking(ext),
         };
     }
 
     toggle_orientation(ext: Ext) {
-        const window = ext.focus_window()
+        const window = ext.focus_window();
         if (window && ext.auto_tiler) {
-            ext.auto_tiler.toggle_orientation(ext, window)
-            ext.register_fn(() => window.activate(true))
+            ext.auto_tiler.toggle_orientation(ext, window);
+            ext.register_fn(() => window.activate(true));
         }
     }
 
@@ -128,26 +125,30 @@ export class Tiler {
             if (min_y === null || monitor.y < min_y) {
                 min_y = monitor.y;
             }
-            if (max_x === null || (monitor.x + monitor.width) > max_x) {
+            if (max_x === null || monitor.x + monitor.width > max_x) {
                 max_x = monitor.x + monitor.width;
             }
-            if (max_y === null || (monitor.y + monitor.height) < max_y) {
+            if (max_y === null || monitor.y + monitor.height < max_y) {
                 max_y = monitor.y + monitor.height;
             }
         }
 
         if (
             // Do not use change if maxima cannot be found
-            (min_x === null || min_y === null || max_x === null || max_y === null)
+            min_x === null ||
+            min_y === null ||
+            max_x === null ||
+            max_y === null ||
             // Prevent moving too far left
-            || changed.x < min_x
+            changed.x < min_x ||
             // Prevent moving too far right
-            || (changed.x + changed.width) > max_x
+            changed.x + changed.width > max_x ||
             // Prevent moving too far up
-            || changed.y < min_y
+            changed.y < min_y ||
             // Prevent moving too far down
-            || (changed.y + changed.height) > max_y
-        ) return this;
+            changed.y + changed.height > max_y
+        )
+            return this;
 
         overlay.x = changed.x;
         overlay.y = changed.y;
@@ -157,17 +158,19 @@ export class Tiler {
         return this;
     }
 
-    unstack_from_fork(ext: Ext, stack: NodeStack, focused: window.ShellWindow, fork: Fork, left: Node.Node, right: Node.Node, is_left: boolean): null | Fork {
+    unstack_from_fork(
+        ext: Ext,
+        stack: NodeStack,
+        focused: window.ShellWindow,
+        fork: Fork,
+        left: Node.Node,
+        right: Node.Node,
+        is_left: boolean,
+    ): null | Fork {
         if (!ext.auto_tiler) return null;
 
         const forest = ext.auto_tiler.forest;
-        const new_fork = forest.create_fork(
-            left,
-            right,
-            fork.area,
-            fork.workspace,
-            fork.monitor
-        );
+        const new_fork = forest.create_fork(left, right, fork.area, fork.workspace, fork.monitor);
 
         if (is_left) {
             fork.left = Node.Node.fork(new_fork[0]);
@@ -187,14 +190,23 @@ export class Tiler {
         return new_fork[1];
     }
 
-    move(ext: Ext, window: Entity | null, x: number, y: number, w: number, h: number, direction: Direction, focus: () => window.ShellWindow | number | null) {
-        if (!window) return
+    move(
+        ext: Ext,
+        window: Entity | null,
+        x: number,
+        y: number,
+        w: number,
+        h: number,
+        direction: Direction,
+        focus: () => window.ShellWindow | number | null,
+    ) {
+        if (!window) return;
         const win = ext.windows.get(window);
-        if (!win) return
+        if (!win) return;
 
         const place_pointer = () => {
-            ext.register_fn(() => win.activate(true))
-        }
+            ext.register_fn(() => win.activate(true));
+        };
 
         if (ext.auto_tiler && win.is_tilable(ext)) {
             if (this.queue.length === 2) return;
@@ -211,26 +223,30 @@ export class Tiler {
                         if (s) {
                             this.move_from_stack(ext, s, focused, direction);
                             this.moving = false;
-                            place_pointer()
+                            place_pointer();
                             return;
                         }
                     }
 
                     if (move_to !== null) this.move_auto(ext, focused, move_to, direction === Direction.Left);
                     this.moving = false;
-                    place_pointer()
+                    place_pointer();
                 }
-            })
+            });
         } else {
             this.swap_window = null;
             this.rect_by_active_area(ext, (_monitor, rect) => {
-                this.change(ext.overlay, rect, x, y, w, h)
-                    .change(ext.overlay, rect, 0, 0, 0, 0);
+                this.change(ext.overlay, rect, x, y, w, h).change(ext.overlay, rect, 0, 0, 0, 0);
             });
         }
     }
 
-    move_alongside_stack(ext: Ext, [fork, branch, is_left]: [Fork, Node.Node, boolean], focused: window.ShellWindow, direction: Direction) {
+    move_alongside_stack(
+        ext: Ext,
+        [fork, branch, is_left]: [Fork, Node.Node, boolean],
+        focused: window.ShellWindow,
+        direction: Direction,
+    ) {
         let new_fork: null | Fork = null;
 
         if (fork.is_toplevel && fork.smart_gapped) {
@@ -245,33 +261,33 @@ export class Tiler {
             fork.set_area(rect);
         }
 
-        let orientation: Lib.Orientation, reverse: boolean
+        let orientation: Lib.Orientation, reverse: boolean;
 
-        const { HORIZONTAL, VERTICAL } = Lib.Orientation
+        const { HORIZONTAL, VERTICAL } = Lib.Orientation;
 
         switch (direction) {
             case Direction.Left:
-                orientation = HORIZONTAL
-                reverse = false
-                break
+                orientation = HORIZONTAL;
+                reverse = false;
+                break;
             case Direction.Right:
-                orientation = HORIZONTAL
-                reverse = true
-                break
+                orientation = HORIZONTAL;
+                reverse = true;
+                break;
             case Direction.Up:
-                orientation = VERTICAL
-                reverse = false
-                break
+                orientation = VERTICAL;
+                reverse = false;
+                break;
             default:
-                orientation = VERTICAL
-                reverse = true
+                orientation = VERTICAL;
+                reverse = true;
         }
 
         if (!ext.auto_tiler) return;
 
         const inner = branch.inner as NodeStack;
-        Node.stack_remove(ext.auto_tiler.forest, inner, focused.entity)
-        ext.auto_tiler.detach_window(ext, focused.entity)
+        Node.stack_remove(ext.auto_tiler.forest, inner, focused.entity);
+        ext.auto_tiler.detach_window(ext, focused.entity);
 
         focused.stack = null;
 
@@ -295,14 +311,20 @@ export class Tiler {
             fork.left = Node.Node.window(focused.entity);
         }
 
-        let modifier = (new_fork ?? fork);
+        let modifier = new_fork ?? fork;
         modifier.set_orientation(orientation);
         ext.auto_tiler.forest.on_attach(modifier.entity, focused.entity);
         ext.auto_tiler.tile(ext, fork, fork.area);
         this.overlay_watch(ext, focused);
     }
 
-    move_from_stack(ext: Ext, [fork, branch, is_left]: [Fork, Node.Node, boolean], focused: window.ShellWindow, direction: Direction, force_detach: boolean = false) {
+    move_from_stack(
+        ext: Ext,
+        [fork, branch, is_left]: [Fork, Node.Node, boolean],
+        focused: window.ShellWindow,
+        direction: Direction,
+        force_detach: boolean = false,
+    ) {
         if (!ext.auto_tiler) return;
 
         const inner = branch.inner as NodeStack;
@@ -327,8 +349,8 @@ export class Tiler {
             fork.set_area(rect);
         }
 
-        const forest = ext.auto_tiler.forest
-        const fentity = focused.entity
+        const forest = ext.auto_tiler.forest;
+        const fentity = focused.entity;
 
         const detach = (orient: Lib.Orientation, reverse: boolean) => {
             if (!ext.auto_tiler) return;
@@ -352,49 +374,54 @@ export class Tiler {
                 fork.left = Node.Node.window(fentity);
             }
 
-            let modifier = (new_fork ?? fork);
+            let modifier = new_fork ?? fork;
             modifier.set_orientation(orient);
-            forest.on_attach(modifier.entity, fentity)
+            forest.on_attach(modifier.entity, fentity);
             ext.auto_tiler.tile(ext, fork, fork.area);
             this.overlay_watch(ext, focused);
-        }
+        };
 
         switch (direction) {
             case Direction.Left:
                 if (force_detach) {
-                    Node.stack_remove(forest, inner, fentity)
-                    detach(Lib.Orientation.HORIZONTAL, false)
+                    Node.stack_remove(forest, inner, fentity);
+                    detach(Lib.Orientation.HORIZONTAL, false);
                 } else if (!Node.stack_move_left(ext, forest, inner, fentity)) {
-                    detach(Lib.Orientation.HORIZONTAL, false)
+                    detach(Lib.Orientation.HORIZONTAL, false);
                 }
 
-                ext.auto_tiler.update_stack(ext, inner)
-                break
+                ext.auto_tiler.update_stack(ext, inner);
+                break;
 
             case Direction.Right:
                 if (force_detach) {
-                    Node.stack_remove(forest, inner, fentity)
-                    detach(Lib.Orientation.HORIZONTAL, true)
+                    Node.stack_remove(forest, inner, fentity);
+                    detach(Lib.Orientation.HORIZONTAL, true);
                 } else if (!Node.stack_move_right(ext, forest, inner, fentity)) {
-                    detach(Lib.Orientation.HORIZONTAL, true)
+                    detach(Lib.Orientation.HORIZONTAL, true);
                 }
 
-                ext.auto_tiler.update_stack(ext, inner)
-                break
+                ext.auto_tiler.update_stack(ext, inner);
+                break;
 
             case Direction.Up:
-                Node.stack_remove(forest, inner, fentity)
-                detach(Lib.Orientation.VERTICAL, false)
-                break
+                Node.stack_remove(forest, inner, fentity);
+                detach(Lib.Orientation.VERTICAL, false);
+                break;
 
             case Direction.Down:
-                Node.stack_remove(forest, inner, fentity)
-                detach(Lib.Orientation.VERTICAL, true)
-                break
+                Node.stack_remove(forest, inner, fentity);
+                detach(Lib.Orientation.VERTICAL, true);
+                break;
         }
     }
 
-    move_auto_(ext: Ext, mov1: Rectangle, mov2: Rectangle, callback: (m: Rectangle, a: Rectangle, mov: Rectangle) => boolean) {
+    move_auto_(
+        ext: Ext,
+        mov1: Rectangle,
+        mov2: Rectangle,
+        callback: (m: Rectangle, a: Rectangle, mov: Rectangle) => boolean,
+    ) {
         if (ext.auto_tiler && this.window) {
             const entity = ext.auto_tiler.attached.get(this.window);
             if (entity) {
@@ -417,14 +444,21 @@ export class Tiler {
 
                 const before = window.rect();
 
-                const grab_op = new GrabOp.GrabOp((this.window as Entity), before);
+                const grab_op = new GrabOp.GrabOp(this.window as Entity, before);
 
                 let crect = grab_op.rect.clone();
 
                 let resize = (mov: Rectangle, func: (m: Rectangle, a: Rectangle, mov: Rectangle) => boolean) => {
                     if (func(toparea, crect, mov) || crect.eq(grab_op.rect)) return;
 
-                    (ext.auto_tiler as AutoTiler).forest.resize(ext, entity, fork, (this.window as Entity), grab_op.operation(crect), crect);
+                    (ext.auto_tiler as AutoTiler).forest.resize(
+                        ext,
+                        entity,
+                        fork,
+                        this.window as Entity,
+                        grab_op.operation(crect),
+                        crect,
+                    );
                     grab_op.rect = crect.clone();
                 };
 
@@ -442,7 +476,7 @@ export class Tiler {
         ext.register_fn(() => {
             if (window) {
                 ext.set_overlay(window.rect());
-                window.activate(false)
+                window.activate(false);
             }
         });
     }
@@ -455,7 +489,7 @@ export class Tiler {
                 let rect = this.rect(ext, monitor);
 
                 if (rect) {
-                    callback(monitor, rect)
+                    callback(monitor, rect);
                 }
             }
         }
@@ -485,22 +519,22 @@ export class Tiler {
                 mov2 = [0, -hcolumn, 0, hcolumn];
         }
 
-        this.move_auto_(
-            ext,
-            new Rect.Rectangle(mov1),
-            new Rect.Rectangle(mov2),
-            (work_area, crect, mov) => {
-                crect.apply(mov);
-                let before = crect.clone();
-                crect.clamp(work_area);
-                const diff = before.diff(crect);
-                crect.apply(new Rect.Rectangle([0, 0, -diff.x, -diff.y]));
-                return false;
-            },
-        );
+        this.move_auto_(ext, new Rect.Rectangle(mov1), new Rect.Rectangle(mov2), (work_area, crect, mov) => {
+            crect.apply(mov);
+            let before = crect.clone();
+            crect.clamp(work_area);
+            const diff = before.diff(crect);
+            crect.apply(new Rect.Rectangle([0, 0, -diff.x, -diff.y]));
+            return false;
+        });
     }
 
-    move_auto(ext: Ext, focused: window.ShellWindow, move_to: window.ShellWindow | number, stack_from_left: boolean = true) {
+    move_auto(
+        ext: Ext,
+        focused: window.ShellWindow,
+        move_to: window.ShellWindow | number,
+        stack_from_left: boolean = true,
+    ) {
         let watching: null | window.ShellWindow = null;
 
         const at = ext.auto_tiler;
@@ -509,10 +543,10 @@ export class Tiler {
                 // Check if we are moving onto a stack, and if so, move into the stack.
                 const stack_info = at.find_stack(move_to.entity);
                 if (stack_info) {
-                    const [stack_fork, branch,] = stack_info;
+                    const [stack_fork, branch] = stack_info;
                     const stack = branch.inner as NodeStack;
 
-                    const placement = { auto: 0 }
+                    const placement = { auto: 0 };
 
                     focused.ignore_detach = true;
                     at.detach_window(ext, focused.entity);
@@ -552,7 +586,7 @@ export class Tiler {
                     }
 
                     if (!watching) {
-                        let movement = { src: focused.meta.get_frame_rect()}
+                        let movement = { src: focused.meta.get_frame_rect() };
 
                         focused.ignore_detach = true;
                         at.detach_window(ext, focused.entity);
@@ -576,40 +610,60 @@ export class Tiler {
     }
 
     move_left(ext: Ext, window?: Entity) {
-        this.move(ext, window ?? this.window, -1, 0, 0, 0, Direction.Left, move_window_or_monitor(
+        this.move(
             ext,
-            ext.focus_selector.left,
-            Meta.DisplayDirection.LEFT
-        ));
+            window ?? this.window,
+            -1,
+            0,
+            0,
+            0,
+            Direction.Left,
+            move_window_or_monitor(ext, ext.focus_selector.left, Meta.DisplayDirection.LEFT),
+        );
     }
 
     move_down(ext: Ext, window?: Entity) {
-        this.move(ext, window ?? this.window, 0, 1, 0, 0, Direction.Down, move_window_or_monitor(
+        this.move(
             ext,
-            ext.focus_selector.down,
-            Meta.DisplayDirection.DOWN
-        ));
+            window ?? this.window,
+            0,
+            1,
+            0,
+            0,
+            Direction.Down,
+            move_window_or_monitor(ext, ext.focus_selector.down, Meta.DisplayDirection.DOWN),
+        );
     }
- 
+
     move_up(ext: Ext, window?: Entity) {
-        this.move(ext, window ?? this.window, 0, -1, 0, 0, Direction.Up, move_window_or_monitor(
+        this.move(
             ext,
-            ext.focus_selector.up,
-            Meta.DisplayDirection.UP
-        ));
+            window ?? this.window,
+            0,
+            -1,
+            0,
+            0,
+            Direction.Up,
+            move_window_or_monitor(ext, ext.focus_selector.up, Meta.DisplayDirection.UP),
+        );
     }
 
     move_right(ext: Ext, window?: Entity) {
-        this.move(ext, window ?? this.window, 1, 0, 0, 0, Direction.Right, move_window_or_monitor(
+        this.move(
             ext,
-            ext.focus_selector.right,
-            Meta.DisplayDirection.RIGHT
-        ));
+            window ?? this.window,
+            1,
+            0,
+            0,
+            0,
+            Direction.Right,
+            move_window_or_monitor(ext, ext.focus_selector.right, Meta.DisplayDirection.RIGHT),
+        );
     }
 
     resize(ext: Ext, direction: Direction) {
         if (!this.window) return;
-        this.resizing_window = true
+        this.resizing_window = true;
 
         if (ext.auto_tiler && !ext.contains_tag(this.window, Tags.Floating)) {
             this.resize_auto(ext, direction);
@@ -618,13 +672,13 @@ export class Tiler {
             switch (direction) {
                 case Direction.Down:
                     array = [0, 0, 0, 1];
-                    break
+                    break;
                 case Direction.Left:
                     array = [0, 0, -1, 0];
-                    break
+                    break;
                 case Direction.Up:
                     array = [0, 0, 0, -1];
-                    break
+                    break;
                 default:
                     array = [0, 0, 1, 0];
             }
@@ -633,12 +687,11 @@ export class Tiler {
 
             this.swap_window = null;
             this.rect_by_active_area(ext, (_monitor, rect) => {
-                this.change(ext.overlay, rect, x, y, w, h)
-                    .change(ext.overlay, rect, 0, 0, 0, 0);
+                this.change(ext.overlay, rect, x, y, w, h).change(ext.overlay, rect, 0, 0, 0, 0);
             });
         }
 
-        this.resizing_window = false
+        this.resizing_window = false;
     }
 
     swap(ext: Ext, selector: window.ShellWindow | null) {
@@ -672,7 +725,7 @@ export class Tiler {
         if (this.swap_window) {
             ext.windows.with(this.swap_window, (window) => {
                 this.swap(ext, ext.focus_selector.up(ext, window));
-            })
+            });
         } else {
             this.swap(ext, ext.focus_selector.up(ext, null));
         }
@@ -710,8 +763,7 @@ export class Tiler {
                 });
             }
 
-            ext.keybindings.disable(ext.keybindings.window_focus)
-                .enable(this.keybindings);
+            ext.keybindings.disable(ext.keybindings.window_focus).enable(this.keybindings);
         }
     }
 
@@ -735,7 +787,7 @@ export class Tiler {
                             });
                         }
 
-                        ext.register_fn(() => meta.activate(true))
+                        ext.register_fn(() => meta.activate(true));
                     }
                 }
 
@@ -756,7 +808,7 @@ export class Tiler {
     }
 
     exit(ext: Ext) {
-        this.queue.clear()
+        this.queue.clear();
 
         if (this.window) {
             this.window = null;
@@ -765,8 +817,7 @@ export class Tiler {
             ext.overlay.visible = false;
 
             // Disable tiling keybindings
-            ext.keybindings.disable(this.keybindings)
-                .enable(ext.keybindings.window_focus);
+            ext.keybindings.disable(this.keybindings).enable(ext.keybindings.window_focus);
         }
     }
 
@@ -776,64 +827,63 @@ export class Tiler {
             let rect = win.rect();
             const columns = Math.floor(mon_geom.width / ext.column_size);
             const rows = Math.floor(mon_geom.height / ext.row_size);
-            this.change(
-                rect,
-                monitor_rect(mon_geom, columns, rows),
-                0, 0, 0, 0
-            );
+            this.change(rect, monitor_rect(mon_geom, columns, rows), 0, 0, 0, 0);
 
             win.move(ext, rect);
 
             ext.snapped.insert(win.entity, true);
         }
     }
-};
+}
 
-export function locate_monitor(win: window.ShellWindow, direction: Meta.DisplayDirection): [number, Rectangular] | null {
-    if (!win.actor_exists()) return null
+export function locate_monitor(
+    win: window.ShellWindow,
+    direction: Meta.DisplayDirection,
+): [number, Rectangular] | null {
+    if (!win.actor_exists()) return null;
 
-    const from = win.meta.get_monitor()
-    const ref = win.meta.get_work_area_for_monitor(from) as any
-    const n_monitors = global.display.get_n_monitors()
+    const from = win.meta.get_monitor();
+    const ref = win.meta.get_work_area_for_monitor(from) as any;
+    const n_monitors = global.display.get_n_monitors();
 
-    const { UP, DOWN, LEFT } = Meta.DisplayDirection
+    const { UP, DOWN, LEFT } = Meta.DisplayDirection;
 
-    let origin: [number, number]
-    let exclude: (rect: Rectangular) => boolean
+    let origin: [number, number];
+    let exclude: (rect: Rectangular) => boolean;
 
     if (direction === UP) {
-        origin = [ref.x + ref.width / 2, ref.y]
+        origin = [ref.x + ref.width / 2, ref.y];
         exclude = (rect: Rectangular) => {
-            return rect.y > ref.y
-        }
+            return rect.y > ref.y;
+        };
     } else if (direction === DOWN) {
-        origin = [ref.x + ref.width / 2, ref.y + ref.height]
-        exclude = (rect: Rectangular) => rect.y < ref.y
+        origin = [ref.x + ref.width / 2, ref.y + ref.height];
+        exclude = (rect: Rectangular) => rect.y < ref.y;
     } else if (direction === LEFT) {
-        origin = [ref.x, ref.y + ref.height / 2]
-        exclude = (rect: Rectangular) => rect.x > ref.x
+        origin = [ref.x, ref.y + ref.height / 2];
+        exclude = (rect: Rectangular) => rect.x > ref.x;
     } else {
-        origin = [ref.x + ref.width, ref.y + ref.height / 2]
-        exclude = (rect: Rectangular) => rect.x < ref.x
+        origin = [ref.x + ref.width, ref.y + ref.height / 2];
+        exclude = (rect: Rectangular) => rect.x < ref.x;
     }
 
-    let next: [number, number, Rectangular] | null = null
+    let next: [number, number, Rectangular] | null = null;
 
     for (let mon = 0; mon < n_monitors; mon += 1) {
-        if (mon === from) continue
+        if (mon === from) continue;
 
-        const work_area = win.meta.get_work_area_for_monitor(mon)
+        const work_area = win.meta.get_work_area_for_monitor(mon);
 
-        if (!work_area || exclude(work_area)) continue
+        if (!work_area || exclude(work_area)) continue;
 
-        const weight = geom.shortest_side(origin, work_area)
+        const weight = geom.shortest_side(origin, work_area);
 
         if (next === null || next[1] > weight) {
-            next = [mon, weight, work_area]
+            next = [mon, weight, work_area];
         }
     }
 
-    return next ? [next[0], next[2]] : null
+    return next ? [next[0], next[2]] : null;
 }
 
 function monitor_rect(monitor: Rectangle, columns: number, rows: number): Rectangle {
@@ -856,41 +906,45 @@ function monitor_rect(monitor: Rectangle, columns: number, rows: number): Rectan
 function move_window_or_monitor(
     ext: Ext,
     method: (ext: Ext, window: window.ShellWindow | null) => window.ShellWindow | null,
-    direction: Meta.DisplayDirection
+    direction: Meta.DisplayDirection,
 ): () => window.ShellWindow | number | null {
     return () => {
-        let next_window = method.call(ext.focus_selector, ext, null)
-        next_window = next_window?.actor_exists() ? next_window : null
+        let next_window = method.call(ext.focus_selector, ext, null);
+        next_window = next_window?.actor_exists() ? next_window : null;
 
         // Check if a display exists between the next window and the focused window.
         const focus = ext.focus_window();
         if (focus) {
             // Return display number if the next window didn't exist.
-            const next_monitor = locate_monitor(focus, direction)
-            if (!next_window) return next_monitor ? next_monitor[0] : null
+            const next_monitor = locate_monitor(focus, direction);
+            if (!next_window) return next_monitor ? next_monitor[0] : null;
 
             // If no monitor found, or next window is on the same display, pick the window.
-            if (!next_monitor || focus.meta.get_monitor() == next_window.meta.get_monitor()) return next_window
+            if (!next_monitor || focus.meta.get_monitor() == next_window.meta.get_monitor()) return next_window;
 
             // If the next window is not contained within the next display, return the display.
-            return Rect.Rectangle.from_meta(next_monitor[1]).contains(next_window.rect()) ? next_window : next_monitor[0]
+            return Rect.Rectangle.from_meta(next_monitor[1]).contains(next_window.rect())
+                ? next_window
+                : next_monitor[0];
         }
 
-        return next_window
+        return next_window;
     };
 }
 
 function tile_monitors(rect: Rectangle): Array<Rectangle> {
-    let total_size = (a: Rectangle, b: Rectangle): number => (a.width * a.height) - (b.width * b.height);
+    let total_size = (a: Rectangle, b: Rectangle): number => a.width * a.height - b.width * b.height;
 
     let workspace = global.workspace_manager.get_active_workspace();
     return Main.layoutManager.monitors
         .map((_monitor: Rectangle, i: number) => workspace.get_work_area_for_monitor(i))
         .filter((monitor: Rectangle) => {
-            return (rect.x + rect.width) > monitor.x &&
-                (rect.y + rect.height) > monitor.y &&
-                rect.x < (monitor.x + monitor.width) &&
-                rect.y < (monitor.y + monitor.height);
+            return (
+                rect.x + rect.width > monitor.x &&
+                rect.y + rect.height > monitor.y &&
+                rect.x < monitor.x + monitor.width &&
+                rect.y < monitor.y + monitor.height
+            );
         })
         .sort(total_size);
 }

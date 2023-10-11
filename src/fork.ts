@@ -1,17 +1,14 @@
-// @ts-ignore
-const Me = imports.misc.extensionUtils.getCurrentExtension();
+import type { Forest } from './forest.js';
+import type { Entity } from './ecs.js';
+import type { Ext } from './extension.js';
+import type { Rectangle } from './rectangle.js';
+import type { Node } from './node.js';
 
-import type { Forest } from './forest';
-import type { Entity } from 'ecs';
-import type { Ext } from 'extension';
-import type { Rectangle } from 'rectangle';
-import type { Node } from 'node';
-
-import * as Ecs from 'ecs';
-import * as Lib from 'lib';
-import * as node from 'node';
-import * as Rect from 'rectangle';
-import { ShellWindow } from './window';
+import * as Ecs from './ecs.js';
+import * as Lib from './lib.js';
+import * as node from './node.js';
+import * as Rect from './rectangle.js';
+import { ShellWindow } from './window.js';
 
 const XPOS = 0;
 const YPOS = 1;
@@ -44,15 +41,21 @@ export class Fork {
     /** Tracks toggle count so that we may swap branches when toggled twice */
     private n_toggled: number = 0;
 
-    constructor(entity: Entity, left: Node, right: Node | null, area: Rectangle, workspace: WorkspaceID, monitor: MonitorID, orient: Lib.Orientation) {
-        this.on_primary_display = global.display.get_primary_monitor() === monitor
+    constructor(
+        entity: Entity,
+        left: Node,
+        right: Node | null,
+        area: Rectangle,
+        workspace: WorkspaceID,
+        monitor: MonitorID,
+        orient: Lib.Orientation,
+    ) {
+        this.on_primary_display = global.display.get_primary_monitor() === monitor;
         this.area = area;
         this.left = left;
         this.right = right;
         this.workspace = workspace;
-        this.length_left = orient === Lib.Orientation.HORIZONTAL
-            ? this.area.width / 2
-            : this.area.height / 2;
+        this.length_left = orient === Lib.Orientation.HORIZONTAL ? this.area.width / 2 : this.area.height / 2;
         this.prev_length_left = this.length_left;
         this.entity = entity;
         this.orientation = orient;
@@ -64,7 +67,7 @@ export class Fork {
         return new Rect.Rectangle(
             this.is_horizontal()
                 ? [this.area.x, this.area.y, this.length_left - ext.gap_inner_half, this.area.height]
-                : [this.area.x, this.area.y, this.area.width, this.length_left - ext.gap_inner_half]
+                : [this.area.x, this.area.y, this.area.width, this.length_left - ext.gap_inner_half],
         );
     }
 
@@ -95,7 +98,7 @@ export class Fork {
                         return branch;
                     }
 
-                    break
+                    break;
                 case 3:
                     for (const e of branch.inner.entities) {
                         if (Ecs.entity_eq(e, entity)) {
@@ -105,7 +108,7 @@ export class Fork {
             }
 
             return null;
-        }
+        };
 
         const node = locate(this.left);
         if (node) return node;
@@ -146,7 +149,7 @@ export class Fork {
                     };
                 }
             }
-        }
+        };
 
         switch (this.left.inner.kind) {
             case 1:
@@ -157,12 +160,12 @@ export class Fork {
                 if (Ecs.entity_eq(inner.entity, a.entity)) {
                     closure = () => {
                         inner.entity = b.entity;
-                    }
+                    };
                 } else {
                     check_right();
                 }
 
-                break
+                break;
             case 3:
                 const inner_s = this.left.inner as node.NodeStack;
                 let idx = node.stack_find(inner_s, a.entity);
@@ -171,7 +174,7 @@ export class Fork {
                     closure = () => {
                         node.stack_replace(ext, inner_s, b);
                         inner_s.entities[id] = b.entity;
-                    }
+                    };
                 } else {
                     check_right();
                 }
@@ -206,15 +209,10 @@ export class Fork {
     }
 
     /** Calculates the future arrangement of windows in this fork */
-    measure(
-        tiler: Forest,
-        ext: Ext,
-        area: Rectangle,
-        record: (win: Entity, parent: Entity, area: Rectangle) => void
-    ) {
-        let ratio = null
+    measure(tiler: Forest, ext: Ext, area: Rectangle, record: (win: Entity, parent: Entity, area: Rectangle) => void) {
+        let ratio = null;
 
-        let manually_moved = ext.grab_op !== null || ext.tiler.resizing_window
+        let manually_moved = ext.grab_op !== null || ext.tiler.resizing_window;
 
         if (!this.is_toplevel) {
             if (this.orientation_changed) {
@@ -231,10 +229,10 @@ export class Fork {
         }
 
         if (ratio) {
-            this.length_left = Math.round(ratio * this.length())
-            if (manually_moved) this.prev_ratio = ratio
+            this.length_left = Math.round(ratio * this.length());
+            if (manually_moved) this.prev_ratio = ratio;
         } else if (manually_moved) {
-            this.prev_ratio = this.length_left / this.length()
+            this.prev_ratio = this.length_left / this.length();
         }
 
         if (this.right) {
@@ -262,19 +260,19 @@ export class Fork {
 
             this.right.measure(tiler, ext, this.entity, region, record);
         } else {
-            this.left.measure(tiler, ext, this.entity, this.area, record)
+            this.left.measure(tiler, ext, this.entity, this.area, record);
         }
     }
 
     migrate(ext: Ext, forest: Forest, area: Rectangle, monitor: number, workspace: number) {
         if (ext.auto_tiler && this.is_toplevel) {
-            const primary = global.display.get_primary_monitor() === monitor
+            const primary = global.display.get_primary_monitor() === monitor;
 
-            this.monitor = monitor
-            this.workspace = workspace
-            this.on_primary_display = primary
+            this.monitor = monitor;
+            this.workspace = workspace;
+            this.on_primary_display = primary;
 
-            let blocked = new Array()
+            let blocked = new Array();
 
             forest.toplevel.set(forest.string_reps.get(this.entity) as string, [this.entity, [monitor, workspace]]);
 
@@ -285,33 +283,33 @@ export class Fork {
                         if (!cfork) continue;
                         cfork.workspace = workspace;
                         cfork.monitor = monitor;
-                        cfork.on_primary_display = primary
-                        break
+                        cfork.on_primary_display = primary;
+                        break;
                     case 2:
                         let window = ext.windows.get(child.inner.entity);
                         if (window) {
                             ext.size_signals_block(window);
-                            window.reassignment = false
-                            window.known_workspace = workspace
-                            window.meta.change_workspace_by_index(workspace, true)
-                            ext.monitors.insert(window.entity, [monitor, workspace])
+                            window.reassignment = false;
+                            window.known_workspace = workspace;
+                            window.meta.change_workspace_by_index(workspace, true);
+                            ext.monitors.insert(window.entity, [monitor, workspace]);
                             blocked.push(window);
                         }
-                        break
+                        break;
                     case 3:
                         for (const entity of child.inner.entities) {
                             let stack = ext.auto_tiler.forest.stacks.get(child.inner.idx);
                             if (stack) {
-                                stack.workspace = workspace
+                                stack.workspace = workspace;
                             }
 
                             let window = ext.windows.get(entity);
 
                             if (window) {
                                 ext.size_signals_block(window);
-                                window.known_workspace = workspace
-                                window.meta.change_workspace_by_index(workspace, true)
-                                ext.monitors.insert(window.entity, [monitor, workspace])
+                                window.known_workspace = workspace;
+                                window.meta.change_workspace_by_index(workspace, true);
+                                ext.monitors.insert(window.entity, [monitor, workspace]);
                                 blocked.push(window);
                             }
                         }
@@ -334,9 +332,9 @@ export class Fork {
     }
 
     rebalance_orientation() {
-        this.set_orientation(this.area.height > this.area.width
-            ? Lib.Orientation.VERTICAL
-            : Lib.Orientation.HORIZONTAL)
+        this.set_orientation(
+            this.area.height > this.area.width ? Lib.Orientation.VERTICAL : Lib.Orientation.HORIZONTAL,
+        );
     }
 
     set_orientation(o: Lib.Orientation) {
@@ -349,17 +347,16 @@ export class Fork {
     /** Swaps the left branch with the right branch, if there is a right branch */
     swap_branches() {
         if (this.right) {
-            const temp = this.left
-            this.left = this.right
-            this.right = temp
+            const temp = this.left;
+            this.left = this.right;
+            this.right = temp;
         }
     }
 
     /** Toggles the orientation of this fork */
     toggle_orientation() {
-        this.orientation = Lib.Orientation.HORIZONTAL === this.orientation
-            ? Lib.Orientation.VERTICAL
-            : Lib.Orientation.HORIZONTAL;
+        this.orientation =
+            Lib.Orientation.HORIZONTAL === this.orientation ? Lib.Orientation.VERTICAL : Lib.Orientation.HORIZONTAL;
 
         this.orientation_changed = true;
         if (this.n_toggled === 1) {

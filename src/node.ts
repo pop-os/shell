@@ -1,14 +1,11 @@
-// @ts-ignore
-const Me = imports.misc.extensionUtils.getCurrentExtension();
+import * as Ecs from './ecs.js';
 
-import * as Ecs from 'ecs';
-
-import type { Forest } from './forest';
-import type { Entity } from 'ecs';
-import type { Ext } from 'extension';
-import type { Rectangle } from 'rectangle';
-import type { Stack } from 'stack';
-import { ShellWindow } from './window';
+import type { Forest } from './forest.js';
+import type { Entity } from './ecs.js';
+import type { Ext } from './extension.js';
+import type { Rectangle } from './rectangle.js';
+import type { Stack } from './stack.js';
+import { ShellWindow } from './window.js';
 
 /** A node is either a fork a window */
 export enum NodeKind {
@@ -19,7 +16,7 @@ export enum NodeKind {
 
 /** Fetch the string representation of this value */
 function node_variant_as_string(value: NodeKind): string {
-    return value == NodeKind.FORK ? "NodeVariant::Fork" : "NodeVariant::Window";
+    return value == NodeKind.FORK ? 'NodeVariant::Fork' : 'NodeVariant::Window';
 }
 
 /** Identifies this node as a fork */
@@ -52,7 +49,7 @@ export function stack_find(node: NodeStack, entity: Entity): null | number {
         if (Ecs.entity_eq(entity, node.entities[idx])) {
             return idx;
         }
-        idx += 1
+        idx += 1;
     }
 
     return null;
@@ -72,7 +69,7 @@ export function stack_move_left(ext: Ext, forest: Forest, node: NodeStack, entit
                 return false;
             } else {
                 // Swap tabs in the stack
-                stack_swap(node, idx - 1, idx)
+                stack_swap(node, idx - 1, idx);
                 stack.active_id -= 1;
                 ext.auto_tiler?.update_stack(ext, node);
                 return true;
@@ -104,7 +101,7 @@ export function stack_move_right(ext: Ext, forest: Forest, node: NodeStack, enti
                 ext.auto_tiler?.update_stack(ext, node);
                 moved = true;
             }
-            break
+            break;
         }
 
         idx += 1;
@@ -119,7 +116,7 @@ export function stack_replace(ext: Ext, node: NodeStack, window: ShellWindow) {
     const stack = ext.auto_tiler.forest.stacks.get(node.idx);
     if (!stack) return;
 
-    stack.replace(window)
+    stack.replace(window);
 }
 
 /** Removes a window from a stack */
@@ -163,7 +160,7 @@ export class Node {
             kind: NodeKind.STACK,
             entities: [window],
             idx,
-            rect: null
+            rect: null,
         });
 
         return node;
@@ -184,8 +181,6 @@ export class Node {
                 fmt += `entities: ${this.inner.entities}\n  }`;
                 return fmt;
         }
-
-
     }
 
     /** Check if the entity exists as a child of this stack */
@@ -215,22 +210,22 @@ export class Node {
         ext: Ext,
         parent: Entity,
         area: Rectangle,
-        record: (win: Entity, parent: Entity, area: Rectangle) => void
+        record: (win: Entity, parent: Entity, area: Rectangle) => void,
     ) {
         switch (this.inner.kind) {
             // Fork
             case 1:
                 const fork = tiler.forks.get(this.inner.entity);
                 if (fork) {
-                    record
+                    record;
                     fork.measure(tiler, ext, area, record);
                 }
 
-                break
+                break;
             // Window
             case 2:
                 record(this.inner.entity, parent, area.clone());
-                break
+                break;
             // Stack
             case 3:
                 const size = ext.dpi * 4;

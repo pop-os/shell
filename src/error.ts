@@ -13,7 +13,7 @@ export class Error {
         return error;
     }
 
-    * chain(): IterableIterator<Error> {
+    *chain(): IterableIterator<Error> {
         let current: Error | null = this;
 
         while (current != null) {

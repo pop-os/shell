@@ -6,14 +6,10 @@
         "outDir": "../../target/floating_exceptions",
         "forceConsistentCasingInFileNames": true,
         "downlevelIteration": true,
-        "lib": [
-            "es2015"
-        ],
+        "lib": ["es2015"],
         "pretty": true,
         "removeComments": true,
-        "incremental": true,
+        "incremental": true
     },
-    "include": [
-        "src/*.ts",
-    ]
+    "include": ["src/*.ts"]
 }

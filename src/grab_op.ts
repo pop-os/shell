@@ -1,10 +1,7 @@
-// @ts-ignore
-const Me = imports.misc.extensionUtils.getCurrentExtension();
+import * as Movement from './movement.js';
 
-import * as Movement from 'movement';
-
-import type { Entity } from 'ecs';
-import type { Rectangle } from 'rectangle';
+import type { Entity } from './ecs.js';
+import type { Rectangle } from './rectangle.js';
 
 export class GrabOp {
     entity: Entity;

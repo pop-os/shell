@@ -1,11 +1,11 @@
-// @ts-ignore
-const Me = imports.misc.extensionUtils.getCurrentExtension();
+import * as result from './result.js';
+import * as error from './error.js';
+import * as log from './log.js';
 
-import * as result from 'result';
-import * as error from 'error';
-import * as log from 'log';
-
-const { Gio, GLib, GObject, Meta } = imports.gi;
+import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
+import GObject from 'gi://GObject';
+import Meta from 'gi://Meta';
 const { Ok, Err } = result;
 const { Error } = error;
 
@@ -24,22 +24,19 @@ export function unblock_signal(object: GObject.Object, signal: SignalID) {
 export function read_to_string(path: string): result.Result<string, error.Error> {
     const file = Gio.File.new_for_path(path);
     try {
-        const [ok, contents,] = file.load_contents(null);
+        const [ok, contents] = file.load_contents(null);
         if (ok) {
             return Ok(imports.byteArray.toString(contents));
         } else {
             return Err(new Error(`failed to load contents of ${path}`));
         }
     } catch (e) {
-        return Err(
-            new Error(String(e))
-                .context(`failed to load contents of ${path}`)
-        );
+        return Err(new Error(String(e)).context(`failed to load contents of ${path}`));
     }
 }
 
 export function source_remove(id: SignalID): boolean {
-    return GLib.source_remove(id);
+    return GLib.source_remove(id) as any;
 }
 
 export function exists(path: string): boolean {
@@ -53,7 +50,7 @@ export function exists(path: string): boolean {
  */
 export function is_dark(color: string): boolean {
     // 'rgba(251, 184, 108, 1)' - pop orange!
-    let color_val = "";
+    let color_val = '';
     let r = 255;
     let g = 255;
     let b = 255;
@@ -61,9 +58,7 @@ export function is_dark(color: string): boolean {
     // handle rgba(255,255,255,1.0) format
     if (color.indexOf('rgb') >= 0) {
         // starts with parsed value from Gdk.RGBA
-        color = color.replace('rgba', 'rgb')
-            .replace('rgb(', '')
-            .replace(')', ''); // make it 255, 255, 255, 1
+        color = color.replace('rgba', 'rgb').replace('rgb(', '').replace(')', ''); // make it 255, 255, 255, 1
         // log.debug(`util color: ${color}`);
         let colors = color.split(',');
         r = parseInt(colors[0].trim());
@@ -83,26 +78,25 @@ export function is_dark(color: string): boolean {
         }
         return Math.pow((col + 0.055) / 1.055, 2.4);
     });
-    let L = (0.2126 * c[0]) + (0.7152 * c[1]) + (0.0722 * c[2]);
-    return (L <= 0.179);
+    let L = 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+    return L <= 0.179;
 }
 
 /** Utility function for running a process in the background and fetching its standard output as a string. */
 export function async_process(argv: Array<string>, input = null, cancellable: null | any = null): Promise<string> {
-    let flags = Gio.SubprocessFlags.STDOUT_PIPE
+    let flags = Gio.SubprocessFlags.STDOUT_PIPE;
 
-    if (input !== null)
-        flags |= Gio.SubprocessFlags.STDIN_PIPE;
+    if (input !== null) flags |= Gio.SubprocessFlags.STDIN_PIPE;
 
     let proc = new Gio.Subprocess({ argv, flags });
     proc.init(cancellable);
 
     proc.wait_async(null, (source: any, res: any) => {
-        source.wait_finish(res)
+        source.wait_finish(res);
         if (cancellable !== null) {
-            cancellable.cancel()
+            cancellable.cancel();
         }
-    })
+    });
 
     return new Promise((resolve, reject) => {
         proc.communicate_utf8_async(input, cancellable, (proc: any, res: any) => {
@@ -117,76 +111,79 @@ export function async_process(argv: Array<string>, input = null, cancellable: nu
 }
 
 export type AsyncIPC = {
-    child: any,
-    stdout: any,
-    stdin: any,
-    cancellable: any
-}
+    child: any;
+    stdout: any;
+    stdin: any;
+    cancellable: any;
+};
 
 export function async_process_ipc(argv: Array<string>): AsyncIPC | null {
     const { SubprocessLauncher, SubprocessFlags } = Gio;
 
     const launcher = new SubprocessLauncher({
-        flags: SubprocessFlags.STDIN_PIPE
-            | SubprocessFlags.STDOUT_PIPE
-    })
+        flags: SubprocessFlags.STDIN_PIPE | SubprocessFlags.STDOUT_PIPE,
+    });
 
-    let child: any
+    let child: any;
 
-    let cancellable = new Gio.Cancellable()
+    let cancellable = new Gio.Cancellable();
 
     try {
-        child = launcher.spawnv(argv)
+        child = launcher.spawnv(argv);
     } catch (why) {
-        log.error(`failed to spawn ${argv}: ${why}`)
-        return null
+        log.error(`failed to spawn ${argv}: ${why}`);
+        return null;
     }
 
     let stdin = new Gio.DataOutputStream({
         base_stream: child.get_stdin_pipe(),
-        close_base_stream: true
-    })
+        close_base_stream: true,
+    });
 
     let stdout = new Gio.DataInputStream({
         base_stream: child.get_stdout_pipe(),
-        close_base_stream: true
-    })
+        close_base_stream: true,
+    });
 
     child.wait_async(null, (source: any, res: any) => {
-        source.wait_finish(res)
-        cancellable.cancel()
-    })
+        source.wait_finish(res);
+        cancellable.cancel();
+    });
 
-    return { child, stdin, stdout, cancellable }
+    return { child, stdin, stdout, cancellable };
 }
 
 export function map_eq<K, V>(map1: Map<K, V>, map2: Map<K, V>) {
     if (map1.size !== map2.size) {
-        return false
+        return false;
     }
 
-    let cmp
+    let cmp;
 
     for (let [key, val] of map1) {
-        cmp = map2.get(key)
+        cmp = map2.get(key);
         if (cmp !== val || (cmp === undefined && !map2.has(key))) {
-            return false
+            return false;
         }
     }
 
-    return true
+    return true;
 }
 
 export function os_release(): null | string {
-    const [ok, bytes] = GLib.file_get_contents("/etc/os-release")
-    if (! ok) return null
+    const [ok, bytes] = GLib.file_get_contents('/etc/os-release');
+    if (!ok) return null;
 
-    const contents: string = imports.byteArray.toString(bytes)
+    const contents: string = imports.byteArray.toString(bytes);
     for (const line of contents.split('\n')) {
-        if (line.startsWith("VERSION_ID")) {
-            return line.split('"')[1]
+        if (line.startsWith('VERSION_ID')) {
+            return line.split('"')[1];
         }
     }
 
-    return null
+    return null;
+}
+
+export function get_current_path(): string {
+    return import.meta.url.split('://')[1].split('/').slice(0, -1).join('/');
 }

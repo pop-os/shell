@@ -9,7 +9,7 @@
 /// - The first 32-bit integer is the index.
 /// - The second 32-bit integer is the generation.
 
-import { Executor } from "./executor";
+import { Executor } from './executor.js';
 
 export type Entity = [number, number];
 
@@ -37,7 +37,7 @@ export class Storage<T> {
     }
 
     /// Private method for iterating across allocated slots
-    * _iter(): IterableIterator<[number, [number, T]]> {
+    *_iter(): IterableIterator<[number, [number, T]]> {
         let idx = 0;
         for (const slot of this.store) {
             if (slot) yield [idx, slot];
@@ -46,21 +46,21 @@ export class Storage<T> {
     }
 
     /// Iterates across each stored component, and their entities
-    * iter(): IterableIterator<[Entity, T]> {
+    *iter(): IterableIterator<[Entity, T]> {
         for (const [idx, [gen, value]] of this._iter()) {
             yield [entity_new(idx, gen), value];
         }
     }
 
     /// Finds values with the matching component
-    * find(func: (value: T) => boolean): IterableIterator<Entity> {
+    *find(func: (value: T) => boolean): IterableIterator<Entity> {
         for (const [idx, [gen, value]] of this._iter()) {
             if (func(value)) yield entity_new(idx, gen);
         }
     }
 
     /// Iterates across each stored component
-    * values(): IterableIterator<T> {
+    *values(): IterableIterator<T> {
         for (const [, [, value]] of this._iter()) {
             yield value;
         }
@@ -79,7 +79,7 @@ export class Storage<T> {
     get(entity: Entity): T | null {
         let [id, gen] = entity;
         const val = this.store[id];
-        return (val && val[0] == gen) ? val[1] : null;
+        return val && val[0] == gen ? val[1] : null;
     }
 
     /// Fetches the component, and initializing it if it is missing
@@ -117,7 +117,7 @@ export class Storage<T> {
         const comp = this.get(entity);
         if (comp) {
             this.store[entity[0]] = null;
-        };
+        }
         return comp;
     }
 
@@ -135,7 +135,7 @@ export class Storage<T> {
     /// Apply a function to the component when it exists
     with<X>(entity: Entity, func: (component: T) => X): X | null {
         const component = this.get(entity);
-        return component ? func(component) : null
+        return component ? func(component) : null;
     }
 }
 
@@ -185,7 +185,7 @@ export class World {
     }
 
     /// Iterates across entities in the world
-    * entities(): IterableIterator<Entity> {
+    *entities(): IterableIterator<Entity> {
         for (const entity of this.entities_.values()) {
             if (!(this.free_slots.indexOf(entity[0]) > -1)) yield entity;
         }
@@ -263,7 +263,7 @@ function swap_remove<T>(array: Array<T>, index: number): T | undefined {
  *
  * An executor must be provided for registering events onto.
  *
-*/
+ */
 export class System<T> extends World {
     #executor: Executor<T>;
 
@@ -279,5 +279,5 @@ export class System<T> extends World {
     }
 
     /** Executs an event on the system */
-    run(_event: T): void { }
+    run(_event: T): void {}
 }

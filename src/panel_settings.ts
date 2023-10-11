@@ -1,39 +1,48 @@
-const Me = imports.misc.extensionUtils.getCurrentExtension();
+import * as Utils from './utils.js';
 
-import * as Utils from 'utils';
+import type { Ext } from './extension.js';
 
-import type { Ext } from './extension';
+import Clutter from 'gi://Clutter';
+import Gio from 'gi://Gio';
+import St from 'gi://St';
 
-const { Clutter, Gio, St } = imports.gi;
-const { PopupBaseMenuItem, PopupMenuItem, PopupSwitchMenuItem, PopupSeparatorMenuItem } = imports.ui.popupMenu;
-const { Button } = imports.ui.panelMenu;
-const GLib: GLib = imports.gi.GLib;
+import {
+    PopupBaseMenuItem,
+    PopupMenuItem,
+    PopupSwitchMenuItem,
+    PopupSeparatorMenuItem,
+} from 'resource:///org/gnome/shell/ui/popupMenu.js';
+import { Button } from 'resource:///org/gnome/shell/ui/panelMenu.js';
+import GLib from 'gi://GLib';
+import { spawn } from 'resource:///org/gnome/shell/misc/util.js';
+// import * as Settings from './settings.js';
 
 export class Indicator {
     button: any;
     appearances: any;
 
-    toggle_tiled : any
-    toggle_titles: null | any
-    toggle_active: any
-    border_radius: any
+    toggle_tiled: any;
+    toggle_titles: null | any;
+    toggle_active: any;
+    border_radius: any;
 
-    entry_gaps: any
+    entry_gaps: any;
 
     constructor(ext: Ext) {
-        this.button = new Button(0.0, _("Pop Shell Settings"));
+        this.button = new Button(0.0, _('Pop Shell Settings'));
 
+        const path = Utils.get_current_path();
         ext.button = this.button;
-        ext.button_gio_icon_auto_on = Gio.icon_new_for_string(`${Me.path}/icons/pop-shell-auto-on-symbolic.svg`);
-        ext.button_gio_icon_auto_off = Gio.icon_new_for_string(`${Me.path}/icons/pop-shell-auto-off-symbolic.svg`);
+        ext.button_gio_icon_auto_on = Gio.icon_new_for_string(`${path}/icons/pop-shell-auto-on-symbolic.svg`);
+        ext.button_gio_icon_auto_off = Gio.icon_new_for_string(`${path}/icons/pop-shell-auto-off-symbolic.svg`);
 
         let button_icon_auto_on = new St.Icon({
             gicon: ext.button_gio_icon_auto_on,
-            style_class: "system-status-icon",
+            style_class: 'system-status-icon',
         });
         let button_icon_auto_off = new St.Icon({
             gicon: ext.button_gio_icon_auto_off,
-            style_class: "system-status-icon",
+            style_class: 'system-status-icon',
         });
 
         if (ext.settings.tile_by_default()) {
@@ -46,36 +55,28 @@ export class Indicator {
 
         let bm = this.button.menu;
 
-        this.toggle_tiled = tiled(ext)
+        this.toggle_tiled = tiled(ext);
 
-        this.toggle_active = toggle(
-            _("Show Active Hint"),
-            ext.settings.active_hint(),
-            (toggle) => {
-                ext.settings.set_active_hint(toggle.state);
-            }
-        )
+        this.toggle_active = toggle(_('Show Active Hint'), ext.settings.active_hint(), (toggle) => {
+            ext.settings.set_active_hint(toggle.state);
+        });
 
-        this.entry_gaps = number_entry(
-            _("Gaps"),
-            ext.settings.gap_inner(),
-            (value) => {
-                ext.settings.set_gap_inner(value);
-                ext.settings.set_gap_outer(value);
-            }
-        )
+        this.entry_gaps = number_entry(_('Gaps'), ext.settings.gap_inner(), (value) => {
+            ext.settings.set_gap_inner(value);
+            ext.settings.set_gap_outer(value);
+        });
 
         this.border_radius = number_entry(
-            _("Active Border Radius"),
+            _('Active Border Radius'),
             {
-              value: ext.settings.active_hint_border_radius(),
-              min: 0,
-              max: 30
+                value: ext.settings.active_hint_border_radius(),
+                min: 0,
+                max: 30,
             },
             (value) => {
                 ext.settings.set_active_hint_border_radius(value);
-            }
-        )
+            },
+        );
 
         bm.addMenuItem(this.toggle_tiled);
         bm.addMenuItem(floating_window_exceptions(ext, bm));
@@ -86,7 +87,7 @@ export class Indicator {
         bm.addMenuItem(menu_separator(''));
 
         if (!Utils.is_wayland()) {
-            this.toggle_titles = show_title(ext)
+            this.toggle_titles = show_title(ext);
             bm.addMenuItem(this.toggle_titles);
         }
 
@@ -94,9 +95,9 @@ export class Indicator {
         bm.addMenuItem(this.border_radius);
 
         // CSS Selector
-        bm.addMenuItem(color_selector(ext, bm),);
+        bm.addMenuItem(color_selector(ext, bm));
 
-        bm.addMenuItem(this.entry_gaps)
+        bm.addMenuItem(this.entry_gaps);
     }
 
     destroy() {
@@ -113,13 +114,13 @@ function settings_button(menu: any): any {
     item.connect('activate', () => {
         let path: string | null = GLib.find_program_in_path('pop-shell-shortcuts');
         if (path) {
-            imports.misc.util.spawn([path]);
+            spawn([path]);
         } else {
-            imports.misc.util.spawn(['xdg-open', 'https://support.system76.com/articles/pop-keyboard-shortcuts/']);
+            spawn(['xdg-open', 'https://support.system76.com/articles/pop-keyboard-shortcuts/']);
         }
 
         menu.close();
-    })
+    });
 
     item.label.get_clutter_text().set_margin_left(12);
 
@@ -127,15 +128,15 @@ function settings_button(menu: any): any {
 }
 
 function floating_window_exceptions(ext: Ext, menu: any): any {
-    let label = new St.Label({ text: "Floating Window Exceptions" })
-    label.set_x_expand(true)
+    let label = new St.Label({ text: 'Floating Window Exceptions' });
+    label.set_x_expand(true);
 
-    let icon = new St.Icon({ icon_name: "go-next-symbolic", icon_size: 16 })
+    let icon = new St.Icon({ icon_name: 'go-next-symbolic', icon_size: 16 });
 
-    let widget = new St.BoxLayout({ vertical: false })
+    let widget = new St.BoxLayout({ vertical: false });
     widget.add(label);
     widget.add(icon);
-    widget.set_x_expand(true)
+    widget.set_x_expand(true);
 
     let base = new PopupBaseMenuItem();
     base.add_child(widget);
@@ -160,13 +161,13 @@ function shortcuts(menu: any): any {
     item.connect('activate', () => {
         let path: string | null = GLib.find_program_in_path('pop-shell-shortcuts');
         if (path) {
-            imports.misc.util.spawn([path]);
+            spawn([path]);
         } else {
-            imports.misc.util.spawn(['xdg-open', 'https://support.system76.com/articles/pop-keyboard-shortcuts/']);
+            spawn(['xdg-open', 'https://support.system76.com/articles/pop-keyboard-shortcuts/']);
         }
 
         menu.close();
-    })
+    });
 
     function create_label(text: string): any {
         return new St.Label({ text });
@@ -182,13 +183,15 @@ function shortcuts(menu: any): any {
     layout_manager.set_column_spacing(30);
     layout_manager.attach(create_label(_('Shortcuts')), 0, 0, 2, 1);
 
-    let launcher_shortcut = _("Super + /")
-    const cosmic_settings = Me.imports.settings.settings_new_id('org.gnome.shell.extensions.pop-cosmic')
-    if (cosmic_settings) {
-        if (cosmic_settings.get_enum('overlay-key-action') === 2) {
-            launcher_shortcut = _("Super")
-        }
-    }
+    let launcher_shortcut = _('Super + /');
+    // const cosmic_settings = Settings.settings_new_id(
+    //   'org.gnome.shell.extensions.pop-cosmic'
+    // );
+    // if (cosmic_settings) {
+    //   if (cosmic_settings.get_enum('overlay-key-action') === 2) {
+    //     launcher_shortcut = _('Super');
+    //   }
+    // }
 
     [
         [_('Launcher'), launcher_shortcut],
@@ -213,21 +216,22 @@ function clamp(input: number, min = 0, max = 128): number {
 
 function number_entry(
     label: string,
-    valueOrOptions: number|{value: number, min: number, max: number},
+    valueOrOptions: number | { value: number; min: number; max: number },
     callback: (a: number) => void,
 ): any {
-    let value = valueOrOptions, min: number, max: number;
-    if (typeof valueOrOptions !== 'number')
-      ({ value, min, max } = valueOrOptions);
+    let value = valueOrOptions,
+        min: number,
+        max: number;
+    if (typeof valueOrOptions !== 'number') ({ value, min, max } = valueOrOptions);
 
     const entry = new St.Entry({
         text: String(value),
         input_purpose: Clutter.InputContentPurpose.NUMBER,
         x_align: Clutter.ActorAlign.CENTER,
-        x_expand: false
+        x_expand: false,
     });
 
-    entry.set_style('width: 5em')
+    entry.set_style('width: 5em');
     entry.connect('button-release-event', () => {
         return true;
     });
@@ -239,13 +243,13 @@ function number_entry(
         const symbol = event.get_key_symbol();
 
         const number: number | null =
-            symbol == 65293     // enter key
+            symbol == 65293 // enter key
                 ? parse_number(text.text)
-                : symbol == 65361   // left key
-                    ? clamp(parse_number(text.text) - 1, min, max)
-                    : symbol == 65363   // right key
-                        ? clamp(parse_number(text.text) + 1, min, max)
-                        : null;
+                : symbol == 65361 // left key
+                ? clamp(parse_number(text.text) - 1, min, max)
+                : symbol == 65363 // right key
+                ? clamp(parse_number(text.text) + 1, min, max)
+                : null;
 
         if (number !== null) {
             text.set_text(String(number));
@@ -253,18 +257,18 @@ function number_entry(
     });
 
     const create_icon = (icon_name: string) => {
-        return new St.Icon({ icon_name, icon_size: 16 })
-    }
+        return new St.Icon({ icon_name, icon_size: 16 });
+    };
 
-    entry.set_primary_icon(create_icon('value-decrease'))
+    entry.set_primary_icon(create_icon('value-decrease'));
     entry.connect('primary-icon-clicked', () => {
-        text.set_text(String(clamp(parseInt(text.get_text()) - 1, min, max)))
-    })
+        text.set_text(String(clamp(parseInt(text.get_text()) - 1, min, max)));
+    });
 
-    entry.set_secondary_icon(create_icon('value-increase'))
+    entry.set_secondary_icon(create_icon('value-increase'));
     entry.connect('secondary-icon-clicked', () => {
-        text.set_text(String(clamp(parseInt(text.get_text()) + 1, min, max)))
-    })
+        text.set_text(String(clamp(parseInt(text.get_text()) + 1, min, max)));
+    });
 
     text.connect('text-changed', () => {
         const input: string = text.get_text();
@@ -296,7 +300,7 @@ function parse_number(text: string): number {
 }
 
 function show_title(ext: Ext): any {
-    const t = toggle(_("Show Window Titles"), ext.settings.show_title(), (toggle: any) => {
+    const t = toggle(_('Show Window Titles'), ext.settings.show_title(), (toggle: any) => {
         ext.settings.set_show_title(toggle.state);
     });
 
@@ -317,7 +321,7 @@ function toggle(desc: string, active: boolean, connect: (toggle: any) => void): 
 }
 
 function tiled(ext: Ext): any {
-    let t = toggle(_("Tile Windows"), null != ext.auto_tiler, () => ext.toggle_tiling());
+    let t = toggle(_('Tile Windows'), null != ext.auto_tiler, () => ext.toggle_tiling());
     return t;
 }
 
@@ -329,7 +333,7 @@ function color_selector(ext: Ext, menu: any) {
     let selected_color = settings.hint_color_rgba();
 
     // TODO, find a way to expand the button text, :)
-    color_button.label = "           "; // blank for now
+    color_button.label = '           '; // blank for now
     color_button.set_style(`background-color: ${selected_color}; border: 2px solid lightgray; border-radius: 2px`);
 
     settings.ext.connect('changed', (_, key) => {
@@ -347,10 +351,9 @@ function color_selector(ext: Ext, menu: any) {
 
     color_selector_item.add_child(color_button);
     color_button.connect('button-press-event', () => {
-        let path = Me.dir.get_path() + "/color_dialog/main.js";
+        let path = Utils.get_current_path() + '/color_dialog/main.js';
         let resp = GLib.spawn_command_line_async(`gjs ${path}`);
         if (!resp) {
-
             return null;
         }
 
@@ -359,7 +362,6 @@ function color_selector(ext: Ext, menu: any) {
             menu.close();
             return false;
         });
-
     });
 
     return color_selector_item;
