@@ -1,6 +1,6 @@
 #!/usr/bin/gjs --module
 
-import data from 'gi://Gio';
+import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import Gtk from 'gi://Gtk?version=3.0';
 import Gdk from 'gi://Gdk';
@@ -17,7 +17,7 @@ function getExtensionPath(uuid: string) {
 
     for (let i = 0; i < EXT_PATH_DEFAULTS.length; i++) {
         let path = EXT_PATH_DEFAULTS[i];
-        let file = data.File.new_for_path(path + uuid);
+        let file = Gio.File.new_for_path(path + uuid);
         log(file.get_path());
         if (file.query_exists(null)) {
             ext_path = file;
@@ -33,7 +33,7 @@ function getSettings(schema: string) {
     if (!extensionPath) throw new Error('getSettings() can only be called when extension is available');
 
     // The following will load a custom path for a user defined gsettings/schemas folder
-    const GioSSS = data.SettingsSchemaSource;
+    const GioSSS = Gio.SettingsSchemaSource;
     const schemaDir = extensionPath.get_child('schemas');
 
     let schemaSource = schemaDir.query_exists(null)
@@ -45,7 +45,7 @@ function getSettings(schema: string) {
     if (!schemaObj) {
         throw new Error('Schema ' + schema + ' could not be found for extension ');
     }
-    return new data.Settings({ settings_schema: schemaObj });
+    return new Gio.Settings({ settings_schema: schemaObj });
 }
 /**
  * Launch a Gtk.ColorChooserDialog. And then save the color RGBA/alpha values in GSettings of Pop-Shell.
@@ -77,7 +77,7 @@ function launch_color_dialog() {
         // save the selected RGBA to GSettings
         // TODO, save alpha instead of always 1.0
         popshell_settings.set_string('hint-color-rgba', color_dialog.get_rgba().to_string());
-        data.Settings.sync();
+        Gio.Settings.sync();
         color_dialog.destroy();
     }
 }
