@@ -1,9 +1,9 @@
-#!/usr/bin/gjs
+#!/usr/bin/gjs --module
 
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import Gtk from 'gi://Gtk?version=3.0';
-import data from 'gi://Pango';
+import Pango from 'gi://Pango';
 
 /** The directory that this script is executed from. */
 const SCRIPT_DIR = GLib.path_get_dirname(new Error().stack.split(':')[0].slice(1));
@@ -12,8 +12,6 @@ const SCRIPT_DIR = GLib.path_get_dirname(new Error().stack.split(':')[0].slice(1
 imports.searchPath.push(SCRIPT_DIR);
 
 import * as config from './config.js';
-
-const { DEFAULT_FLOAT_RULES, Config } = imports.config;
 
 const WM_CLASS_ID = 'pop-shell-exceptions';
 
@@ -127,7 +125,7 @@ export class MainView implements View {
         let label = Gtk.Label.new(wmtitle === undefined ? wmclass : `${wmclass} / ${wmtitle}`);
         label.set_xalign(0);
         label.set_hexpand(true);
-        label.set_ellipsize(data.EllipsizeMode.END);
+        label.set_ellipsize(Pango.EllipsizeMode.END);
 
         let button = Gtk.Button.new_from_icon_name('edit-delete', Gtk.IconSize.BUTTON);
         button.set_valign(Gtk.Align.CENTER);
@@ -186,7 +184,7 @@ export class ExceptionsView implements View {
         let label = Gtk.Label.new(wmtitle === undefined ? wmclass : `${wmclass} / ${wmtitle}`);
         label.set_xalign(0);
         label.set_hexpand(true);
-        label.set_ellipsize(data.EllipsizeMode.END);
+        label.set_ellipsize(Pango.EllipsizeMode.END);
 
         let button = Gtk.Switch.new();
         button.set_valign(Gtk.Align.CENTER);
@@ -211,7 +209,7 @@ class App {
 
     stack: any = Gtk.Stack.new();
     window: any;
-    config: config.Config = new Config();
+    config: config.Config = new config.Config();
 
     constructor() {
         this.stack.set_border_width(16);
@@ -241,7 +239,7 @@ class App {
 
         this.config.reload();
 
-        for (const value of DEFAULT_FLOAT_RULES.values()) {
+        for (const value of config.DEFAULT_FLOAT_RULES.values()) {
             let wmtitle = value.title ?? undefined;
             let wmclass = value.class ?? undefined;
 

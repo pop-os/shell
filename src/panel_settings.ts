@@ -351,7 +351,7 @@ function color_selector(ext: Ext, menu: any) {
     color_selector_item.add_child(color_button);
     color_button.connect('button-press-event', () => {
         let path = Utils.get_current_path() + '/color_dialog/main.js';
-        let resp = GLib.spawn_command_line_async(`gjs ${path}`);
+        let resp = GLib.spawn_command_line_async(`gjs --module ${path}`);
         if (!resp) {
             return null;
         }

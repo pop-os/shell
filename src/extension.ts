@@ -556,7 +556,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             return true;
         };
 
-        const ipc = utils.async_process_ipc(['gjs', path]);
+        const ipc = utils.async_process_ipc(['gjs', '--module', path]);
 
         if (ipc) {
             const generator = (stdout: any, res: any) => {

@@ -1,4 +1,4 @@
-#!/usr/bin/gjs
+#!/usr/bin/gjs --module
 
 import data from 'gi://Gio';
 import GLib from 'gi://GLib';
