@@ -1,7 +1,8 @@
-const { Gio, GLib } = imports.gi;
+import GLib from 'gi://GLib';
+import Gio from 'gi://Gio';
 
-const CONF_DIR: string = GLib.get_user_config_dir() + "/pop-shell"
-export var CONF_FILE: string = CONF_DIR + "/config.json"
+const CONF_DIR: string = GLib.get_user_config_dir() + '/pop-shell';
+export var CONF_FILE: string = CONF_DIR + '/config.json';
 
 export interface FloatRule {
     class?: string;
@@ -10,55 +11,54 @@ export interface FloatRule {
 }
 
 interface Ok<T> {
-    tag: 0
-    value: T
+    tag: 0;
+    value: T;
 }
 
 interface Error {
-    tag: 1
-    why: string
+    tag: 1;
+    why: string;
 }
 
 type Result<T> = Ok<T> | Error;
 
 export const DEFAULT_FLOAT_RULES: Array<FloatRule> = [
-    { class: "Authy Desktop" },
-    { class: "Com.github.amezin.ddterm" },
-    { class: "Com.github.donadigo.eddy" },
-    { class: "Conky" },
-    { title: "Discord Updater" },
-    { class: "Enpass", title: "Enpass Assistant" },
-    { class: "Floating Window Exceptions" },
-    { class: "Gjs", title: "Settings" },
-    { class: "Gnome-initial-setup" },
-    { class: "Gnome-terminal", title: "Preferences – General" },
-    { class: "Guake" },
-    { class: "Io.elementary.sideload" },
-    { title: "JavaEmbeddedFrame" },
-    { class: "KotatogramDesktop", title: "Media viewer" },
-    { class: "Mozilla VPN" },
-    { class: "update-manager", title: "Software Updater" },
-    { class: "Solaar" },
-    { class: "Steam", title: "^((?!Steam).)*$" },
-    { class: "Steam", title: "^.*(Guard|Login).*" },
-    { class: "TelegramDesktop", title: "Media viewer" },
-    { class: "Zotero", title: "Quick Format Citation" },
-    { class: "firefox", title: "^(?!.*Mozilla Firefox).*$" },
-    { class: "gnome-screenshot" },
-    { class: "ibus-.*" },
-    { class: "jetbrains-toolbox" },
-    { class: "jetbrains-webstorm", title: "Customize WebStorm" },
-    { class: "jetbrains-webstorm", title: "License Activation" },
-    { class: "jetbrains-webstorm", title: "Welcome to WebStorm" },
-    { class: "krunner" },
-    { class: "pritunl" },
-    { class: "re.sonny.Junction" },
-    { class: "system76-driver" },
-    { class: "tilda" },
-    { class: "zoom" },
-    { class: "^.*action=join.*$"},
-    { class: "gjs" }
-
+    { class: 'Authy Desktop' },
+    { class: 'Com.github.amezin.ddterm' },
+    { class: 'Com.github.donadigo.eddy' },
+    { class: 'Conky' },
+    { title: 'Discord Updater' },
+    { class: 'Enpass', title: 'Enpass Assistant' },
+    { class: 'Floating Window Exceptions' },
+    { class: 'Gjs', title: 'Settings' },
+    { class: 'Gnome-initial-setup' },
+    { class: 'Gnome-terminal', title: 'Preferences – General' },
+    { class: 'Guake' },
+    { class: 'Io.elementary.sideload' },
+    { title: 'JavaEmbeddedFrame' },
+    { class: 'KotatogramDesktop', title: 'Media viewer' },
+    { class: 'Mozilla VPN' },
+    { class: 'update-manager', title: 'Software Updater' },
+    { class: 'Solaar' },
+    { class: 'Steam', title: '^((?!Steam).)*$' },
+    { class: 'Steam', title: '^.*(Guard|Login).*' },
+    { class: 'TelegramDesktop', title: 'Media viewer' },
+    { class: 'Zotero', title: 'Quick Format Citation' },
+    { class: 'firefox', title: '^(?!.*Mozilla Firefox).*$' },
+    { class: 'gnome-screenshot' },
+    { class: 'ibus-.*' },
+    { class: 'jetbrains-toolbox' },
+    { class: 'jetbrains-webstorm', title: 'Customize WebStorm' },
+    { class: 'jetbrains-webstorm', title: 'License Activation' },
+    { class: 'jetbrains-webstorm', title: 'Welcome to WebStorm' },
+    { class: 'krunner' },
+    { class: 'pritunl' },
+    { class: 're.sonny.Junction' },
+    { class: 'system76-driver' },
+    { class: 'tilda' },
+    { class: 'zoom' },
+    { class: '^.*action=join.*$' },
+    { class: 'gjs' },
 ];
 
 export interface WindowRule {
@@ -72,17 +72,17 @@ export interface WindowRule {
  * And any rule here should be added on the DEFAULT_RULES above
  */
 export const SKIPTASKBAR_EXCEPTIONS: Array<WindowRule> = [
-    { class: "Conky", },
-    { class: "gjs" },
-    { class: "Guake", },
-    { class: "Com.github.amezin.ddterm", },
-    { class: "plank", },
+    { class: 'Conky' },
+    { class: 'gjs' },
+    { class: 'Guake' },
+    { class: 'Com.github.amezin.ddterm' },
+    { class: 'plank' },
 ];
 
 export interface FloatRule {
     class?: string;
     title?: string;
-};
+}
 
 export class Config {
     /** List of windows that should float, regardless of their WM hints */
@@ -121,13 +121,13 @@ export class Config {
         for (const rule of this.float.concat(DEFAULT_FLOAT_RULES)) {
             if (rule.class) {
                 if (!new RegExp(rule.class, 'i').test(wclass)) {
-                    continue
+                    continue;
                 }
             }
 
             if (rule.title) {
                 if (!new RegExp(rule.title, 'i').test(title)) {
-                    continue
+                    continue;
                 }
             }
 
@@ -146,13 +146,13 @@ export class Config {
         for (const rule of this.skiptaskbarhidden.concat(SKIPTASKBAR_EXCEPTIONS)) {
             if (rule.class) {
                 if (!new RegExp(rule.class, 'i').test(wmclass)) {
-                    continue
+                    continue;
                 }
             }
 
             if (rule.title) {
                 if (!new RegExp(rule.title, 'i').test(wmtitle)) {
-                    continue
+                    continue;
                 }
             }
 
@@ -170,14 +170,14 @@ export class Config {
             this.float = c.float;
             this.log_on_focus = c.log_on_focus;
         } else {
-            log(`error loading conf: ${conf.why}`)
+            log(`error loading conf: ${conf.why}`);
         }
     }
 
     rule_disabled(rule: FloatRule): boolean {
         for (const value of this.float.values()) {
             if (value.disabled && rule.class === value.class && value.title === rule.title) {
-                return true
+                return true;
             }
         }
 
@@ -205,31 +205,31 @@ export class Config {
         for (const value of this.float) {
             if (value.class === wmclass && value.title === wmtitle) {
                 found = true;
-                break
+                break;
             }
             index += 1;
         }
 
-        if (found) swap_remove(this.float, index)
+        if (found) swap_remove(this.float, index);
 
         this.sync_to_disk();
     }
 
     remove_user_exception(wmclass: string | undefined, wmtitle: string | undefined) {
-        let index = 0
+        let index = 0;
         let found = new Array();
         for (const value of this.float.values()) {
             if (value.class === wmclass && value.title === wmtitle) {
-                found.push(index)
+                found.push(index);
             }
 
-            index += 1
+            index += 1;
         }
 
         if (found.length !== 0) {
-            for (const idx of found) swap_remove(this.float, idx)
+            for (const idx of found) swap_remove(this.float, idx);
 
-            this.sync_to_disk()
+            this.sync_to_disk();
         }
     }
 
@@ -244,8 +244,8 @@ export class Config {
     private static from_config(): Result<Config> {
         const stream = Config.read();
         if (stream.tag === 1) return stream;
-        let value = Config.from_json(stream.value)
-        return { tag: 0, value }
+        let value = Config.from_json(stream.value);
+        return { tag: 0, value };
     }
 
     private static gio_file(): Result<any> {
@@ -255,19 +255,18 @@ export class Config {
             if (!conf.query_exists(null)) {
                 const dir = Gio.File.new_for_path(CONF_DIR);
                 if (!dir.query_exists(null) && !dir.make_directory(null)) {
-                    return { tag: 1, why: 'failed to create pop-shell config directory' }
+                    return { tag: 1, why: 'failed to create pop-shell config directory' };
                 }
 
                 const example = new Config();
-                example.float.push({ class: "pop-shell-example", title: "pop-shell-example" });
+                example.float.push({ class: 'pop-shell-example', title: 'pop-shell-example' });
 
-                conf.create(Gio.FileCreateFlags.NONE, null)
-                    .write_all(JSON.stringify(example, undefined, 2), null);
+                conf.create(Gio.FileCreateFlags.NONE, null).write_all(JSON.stringify(example, undefined, 2), null);
             }
 
             return { tag: 0, value: conf };
         } catch (why) {
-            return { tag: 1, why: `Gio.File I/O error: ${why}` }
+            return { tag: 1, why: `Gio.File I/O error: ${why}` };
         }
     }
 
@@ -278,7 +277,7 @@ export class Config {
 
             const [, buffer] = file.value.load_contents(null);
 
-            return { tag: 0, value: imports.byteArray.toString(buffer) }
+            return { tag: 0, value: imports.byteArray.toString(buffer) };
         } catch (why) {
             return { tag: 1, why: `failed to read pop-shell config: ${why}` };
         }
@@ -289,9 +288,9 @@ export class Config {
             const file = Config.gio_file();
             if (file.tag === 1) return file;
 
-            file.value.replace_contents(data, null, false, Gio.FileCreateFlags.NONE, null)
+            file.value.replace_contents(data, null, false, Gio.FileCreateFlags.NONE, null);
 
-            return { tag: 0, value: file.value }
+            return { tag: 0, value: file.value };
         } catch (why) {
             return { tag: 1, why: `failed to write to config: ${why}` };
         }

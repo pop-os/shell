@@ -1,18 +1,20 @@
-//@ts-ignore
-const Me = imports.misc.extensionUtils.getCurrentExtension()
+import * as search from './search.js';
+import * as utils from './utils.js';
+import * as arena from './arena.js';
+import * as log from './log.js';
+import * as service from './launcher_service.js';
+import * as context from './context.js';
 
-import * as search from 'search'
-import * as utils from 'utils'
-import * as arena from 'arena'
-import * as log from 'log'
-import * as service from 'launcher_service'
-import * as context from 'context'
+import type { Ext } from './extension.js';
+import type { ShellWindow } from './window.js';
+import type { JsonIPC } from './launcher_service.js';
 
-import type { Ext } from 'extension'
-import type { ShellWindow } from 'window'
-import type { JsonIPC } from 'launcher_service'
-
-const { Clutter, Gio, GLib, Meta, Shell, St } = imports.gi
+import Clutter from 'gi://Clutter';
+import GLib from 'gi://GLib';
+import Meta from 'gi://Meta';
+import Gio from 'gi://Gio';
+import Shell from 'gi://Shell';
+import St from 'gi://St';
 
 const app_sys = Shell.AppSystem.get_default();
 
@@ -20,85 +22,85 @@ const Clipboard = St.Clipboard.get_default();
 const CLIPBOARD_TYPE = St.ClipboardType.CLIPBOARD;
 
 interface SearchOption {
-    result: JsonIPC.SearchResult
-    menu: St.Widget
+    result: JsonIPC.SearchResult;
+    menu: St.Widget;
 }
 
 export class Launcher extends search.Search {
-    ext: Ext
-    options: Map<number, SearchOption> = new Map()
-    options_array: Array<SearchOption> = new Array()
-    windows: arena.Arena<ShellWindow> = new arena.Arena()
-    service: null | service.LauncherService = null
-    append_id: null | number = null
-    active_menu: null | any = null
-    opened: boolean = false
+    ext: Ext;
+    options: Map<number, SearchOption> = new Map();
+    options_array: Array<SearchOption> = new Array();
+    windows: arena.Arena<ShellWindow> = new arena.Arena();
+    service: null | service.LauncherService = null;
+    append_id: null | number = null;
+    active_menu: null | any = null;
+    opened: boolean = false;
 
     constructor(ext: Ext) {
-        super()
+        super();
 
-        this.ext = ext
+        this.ext = ext;
 
-        this.dialog.dialogLayout._dialog.y_align = Clutter.ActorAlign.START
-        this.dialog.dialogLayout._dialog.x_align = Clutter.ActorAlign.START
-        this.dialog.dialogLayout.y = 48
+        this.dialog.dialogLayout._dialog.y_align = Clutter.ActorAlign.START;
+        this.dialog.dialogLayout._dialog.x_align = Clutter.ActorAlign.START;
+        this.dialog.dialogLayout.y = 48;
 
         this.cancel = () => {
-            ext.overlay.visible = false
-            this.stop_services(ext)
-            this.opened = false
-        }
+            ext.overlay.visible = false;
+            this.stop_services(ext);
+            this.opened = false;
+        };
 
         this.search = (pat: string) => {
             if (this.service !== null) {
-                this.service.query(pat)
+                this.service.query(pat);
             }
-        }
+        };
 
         this.select = (id: number) => {
-            ext.overlay.visible = false
+            ext.overlay.visible = false;
 
-            if (id >= this.options.size) return
+            if (id >= this.options.size) return;
 
-            const option = this.options_array[id]
+            const option = this.options_array[id];
             if (option && option.result.window) {
-                const win = this.ext.windows.get(option.result.window)
-                if (!win) return
+                const win = this.ext.windows.get(option.result.window);
+                if (!win) return;
 
                 if (win.workspace_id() == ext.active_workspace()) {
-                    const { x, y, width, height } = win.rect()
-                    ext.overlay.x = x
-                    ext.overlay.y = y
-                    ext.overlay.width = width
-                    ext.overlay.height = height
-                    ext.overlay.visible = true
+                    const { x, y, width, height } = win.rect();
+                    ext.overlay.x = x;
+                    ext.overlay.y = y;
+                    ext.overlay.width = width;
+                    ext.overlay.height = height;
+                    ext.overlay.visible = true;
                 }
             }
-        }
+        };
 
         this.activate_id = (id: number) => {
-            ext.overlay.visible = false
+            ext.overlay.visible = false;
 
-            const selected = this.options_array[id]
+            const selected = this.options_array[id];
 
             if (selected) {
-                this.service?.activate(selected.result.id)
+                this.service?.activate(selected.result.id);
             }
-        }
+        };
 
         this.complete = () => {
-            const option = this.options_array[this.active_id]
+            const option = this.options_array[this.active_id];
             if (option) {
-                this.service?.complete(option.result.id)
+                this.service?.complete(option.result.id);
             }
-        }
+        };
 
         this.quit = (id: number) => {
-            const option = this.options_array[id]
+            const option = this.options_array[id];
             if (option) {
-                this.service?.quit(option.result.id)
+                this.service?.quit(option.result.id);
             }
-        }
+        };
 
         this.copy = (id: number) => {
             const option = this.options_array[id];
@@ -108,27 +110,27 @@ export class Launcher extends search.Search {
             } else if (option.result.name) {
                 Clipboard.set_text(CLIPBOARD_TYPE, option.result.name);
             }
-        }
+        };
     }
 
     on_response(response: JsonIPC.Response) {
-        if ("Close" === response) {
-            this.close()
-        } else if ("Update" in response) {
-            this.clear()
+        if ('Close' === response) {
+            this.close();
+        } else if ('Update' in response) {
+            this.clear();
 
             if (this.append_id !== null) {
-                GLib.source_remove(this.append_id)
-                this.append_id = null
+                GLib.source_remove(this.append_id);
+                this.append_id = null;
             }
 
             if (response.Update.length === 0) {
-                this.cleanup()
+                this.cleanup();
                 return;
             }
 
             this.append_id = GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
-                const item = response.Update.shift()
+                const item = response.Update.shift();
                 if (item) {
                     try {
                         const button = new search.SearchOption(
@@ -139,95 +141,93 @@ export class Launcher extends search.Search {
                             this.icon_size(),
                             null,
                             null,
-                        )
+                        );
 
                         const menu = context.addMenu(button.widget, (menu) => {
                             if (this.active_menu) {
-                                this.active_menu.actor.hide()
+                                this.active_menu.actor.hide();
                             }
 
-                            this.active_menu = menu
+                            this.active_menu = menu;
 
                             this.service?.context(item.id);
-                        })
+                        });
 
-                        this.append_search_option(button)
-                        const result = { result: item, menu }
-                        this.options.set(item.id, result)
-                        this.options_array.push(result)
+                        this.append_search_option(button);
+                        const result = { result: item, menu };
+                        this.options.set(item.id, result);
+                        this.options_array.push(result);
                     } catch (error) {
-                        log.error(`failed to create SearchOption: ${error}`)
+                        log.error(`failed to create SearchOption: ${error}`);
                     }
                 }
 
                 if (response.Update.length === 0) {
-                    this.append_id = null
-                    return false
+                    this.append_id = null;
+                    return false;
                 }
 
-                return true
-            })
-        } else if ("Fill" in response) {
-            this.set_text(response.Fill)
-        } else if ("DesktopEntry" in response) {
-            this.launch_desktop_entry(response.DesktopEntry)
-            this.close()
-        } else if ("Context" in response) {
-            const { id, options } = response.Context
+                return true;
+            });
+        } else if ('Fill' in response) {
+            this.set_text(response.Fill);
+        } else if ('DesktopEntry' in response) {
+            this.launch_desktop_entry(response.DesktopEntry);
+            this.close();
+        } else if ('Context' in response) {
+            const { id, options } = response.Context;
 
-            const option = this.options.get(id)
+            const option = this.options.get(id);
             if (option) {
-                (option.menu as any).removeAll()
+                (option.menu as any).removeAll();
                 for (const opt of options) {
                     context.addContext(option.menu, opt.name, () => {
                         this.service?.activate_context(id, opt.id);
                     });
 
-                    (option.menu as any).toggle()
+                    (option.menu as any).toggle();
                 }
             } else {
-                log.error(`did not find id: ${id}`)
+                log.error(`did not find id: ${id}`);
             }
         } else {
-            log.error(`unknown response: ${JSON.stringify(response)}`)
+            log.error(`unknown response: ${JSON.stringify(response)}`);
         }
     }
 
     clear() {
-        this.options.clear()
-        this.options_array.splice(0)
-        super.clear()
+        this.options.clear();
+        this.options_array.splice(0);
+        super.clear();
     }
 
     launch_desktop_app(app: any, path: string) {
         try {
             app.launch([], null);
         } catch (why) {
-            log.error(`${path}: could not launch by app info: ${why}`)
+            log.error(`${path}: could not launch by app info: ${why}`);
         }
     }
 
     launch_desktop_entry(entry: JsonIPC.DesktopEntry) {
         const basename = (name: string): string => {
-            return name.substr(name.indexOf('/applications/') + 14).replace('/', '-')
-        }
+            return name.substr(name.indexOf('/applications/') + 14).replace('/', '-');
+        };
 
-        const desktop_entry_id = basename(entry.path)
+        const desktop_entry_id = basename(entry.path);
 
-        const gpuPref = entry.gpu_preference === "Default"
-                ? Shell.AppLaunchGpu.DEFAULT
-                : Shell.AppLaunchGpu.DISCRETE;
+        const gpuPref = entry.gpu_preference === 'Default' ? Shell.AppLaunchGpu.DEFAULT : Shell.AppLaunchGpu.DISCRETE;
 
-        log.debug(`launching desktop entry: ${desktop_entry_id}`)
+        log.debug(`launching desktop entry: ${desktop_entry_id}`);
 
-        let app = app_sys.lookup_desktop_wmclass(desktop_entry_id)
+        let app = app_sys.lookup_desktop_wmclass(desktop_entry_id);
 
         if (!app) {
-            app = app_sys.lookup_app(desktop_entry_id)
+            app = app_sys.lookup_app(desktop_entry_id);
         }
 
         if (!app) {
-            log.error(`GNOME Shell cannot find desktop entry for ${desktop_entry_id}`)
+            log.error(`GNOME Shell cannot find desktop entry for ${desktop_entry_id}`);
             log.error(`pop-launcher will use Gio.DesktopAppInfo instead`);
 
             const dapp = Gio.DesktopAppInfo.new_from_filename(entry.path);
@@ -241,32 +241,32 @@ export class Launcher extends search.Search {
             return;
         }
 
-        const info = app.get_app_info()
+        const info = app.get_app_info();
 
         if (!info) {
-            log.error(`cannot find app info for ${desktop_entry_id}`)
-            return
-        }
-
-        try {
-            app.launch(0, -1, gpuPref)
-        } catch (why) {
-            log.error(`failed to launch application: ${why}`)
+            log.error(`cannot find app info for ${desktop_entry_id}`);
             return;
         }
 
-        if (info.get_executable() === "gnome-control-center") {
-            app = app_sys.lookup_app("gnome-control-center.desktop");
+        try {
+            app.launch(0, -1, gpuPref);
+        } catch (why) {
+            log.error(`failed to launch application: ${why}`);
+            return;
+        }
 
-            if (!app) return
+        if (info.get_executable() === 'gnome-control-center') {
+            app = app_sys.lookup_app('gnome-control-center.desktop');
 
-            app.activate()
+            if (!app) return;
 
-            const window: Meta.Window = app.get_windows()[0]
+            app.activate();
+
+            const window: Meta.Window = app.get_windows()[0];
 
             if (window) {
-                window.get_workspace().activate_with_focus(window, global.get_current_time())
-                return
+                window.get_workspace().activate_with_focus(window, global.get_current_time());
+                return;
             }
         }
     }
@@ -278,83 +278,81 @@ export class Launcher extends search.Search {
     }
 
     load_desktop_files() {
-        log.warn("pop-shell: deprecated function called (launcher::load_desktop_files)")
+        log.warn('pop-shell: deprecated function called (launcher::load_desktop_files)');
     }
 
     locate_by_app_info(info: any): null | ShellWindow {
-        const workspace = this.ext.active_workspace()
-        const exec_info: null | string = info.get_string("Exec")
-        const exec = exec_info?.split(' ').shift()?.split('/').pop()
+        const workspace = this.ext.active_workspace();
+        const exec_info: null | string = info.get_string('Exec');
+        const exec = exec_info?.split(' ').shift()?.split('/').pop();
         if (exec) {
             for (const window of this.ext.tab_list(Meta.TabList.NORMAL, null)) {
-                if (window.meta.get_workspace().index() !== workspace) continue
+                if (window.meta.get_workspace().index() !== workspace) continue;
 
-                const pid = window.meta.get_pid()
+                const pid = window.meta.get_pid();
                 if (pid !== -1) {
                     try {
-                        let f = Gio.File.new_for_path(`/proc/${pid}/cmdline`)
-                        const [,bytes] = f.load_contents(null)
-                        const output: string = imports.byteArray.toString(bytes)
-                        const cmd = output.split(' ').shift()?.split('/').pop()
-                        if (cmd === exec) return window
-                    } catch (_) {
-
-                    }
+                        let f = Gio.File.new_for_path(`/proc/${pid}/cmdline`);
+                        const [, bytes] = f.load_contents(null);
+                        const output: string = imports.byteArray.toString(bytes);
+                        const cmd = output.split(' ').shift()?.split('/').pop();
+                        if (cmd === exec) return window;
+                    } catch (_) {}
                 }
             }
         }
 
-        return null
+        return null;
     }
 
     open(ext: Ext) {
         ext.tiler.exit(ext);
 
         // Do not allow opening twice
-        if (this.opened) return
+        if (this.opened) return;
 
         // Do not activate if the focused window is fullscreen
-        if (!ext.settings.fullscreen_launcher() && ext.focus_window()?.meta.is_fullscreen()) return
+        if (!ext.settings.fullscreen_launcher() && ext.focus_window()?.meta.is_fullscreen()) return;
 
-        this.opened = true
+        this.opened = true;
 
-        const active_monitor = ext.active_monitor()
-        const mon_work_area = ext.monitor_work_area(active_monitor)
-        const mon_area = ext.monitor_area(active_monitor)
-        const mon_width = mon_area ? mon_area.width : mon_work_area.width
+        const active_monitor = ext.active_monitor();
+        const mon_work_area = ext.monitor_work_area(active_monitor);
+        const mon_area = ext.monitor_area(active_monitor);
+        const mon_width = mon_area ? mon_area.width : mon_work_area.width;
 
-        super._open(global.get_current_time(), false)
+        super._open(global.get_current_time(), false);
 
         if (!this.dialog.visible) {
-            this.clear()
-            this.cancel()
-            this.close()
-            return
+            this.clear();
+            this.cancel();
+            this.close();
+            return;
         }
 
-        super.cleanup()
-        this.start_services()
-        this.search('')
+        super.cleanup();
+        this.start_services();
+        this.search('');
 
-        this.dialog.dialogLayout.x = (mon_width / 2) - (this.dialog.dialogLayout.width / 2)
+        this.dialog.dialogLayout.x = mon_width / 2 - this.dialog.dialogLayout.width / 2;
 
-        let height = mon_work_area.height >= 900 ? mon_work_area.height / 2 : mon_work_area.height / 3.5
-        this.dialog.dialogLayout.y = height - (this.dialog.dialogLayout.height / 2)
+        let height = mon_work_area.height >= 900 ? mon_work_area.height / 2 : mon_work_area.height / 3.5;
+        this.dialog.dialogLayout.y = height - this.dialog.dialogLayout.height / 2;
     }
 
     start_services() {
         if (this.service === null) {
-            log.debug("starting pop-launcher service")
-            const ipc = utils.async_process_ipc(['pop-launcher'])
-            this.service = ipc ? new service.LauncherService(ipc, (resp) => this.on_response(resp)) : null
+            log.debug('starting pop-launcher service');
+            const ipc = utils.async_process_ipc(['pop-launcher']);
+            this.service = ipc ? new service.LauncherService(ipc, (resp) => this.on_response(resp)) : null;
         }
     }
 
     stop_services(_ext: Ext) {
         if (this.service !== null) {
-            log.info(`stopping pop-launcher services`)
-            this.service.exit()
-            this.service = null
+            log.info(`stopping pop-launcher services`);
+            this.service.exit();
+            this.service = null;
         }
     }
 }

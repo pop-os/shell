@@ -1,14 +1,11 @@
-declare const global: Global,
-    imports: any,
-    log: any,
-    _: (arg: string) => string;
+declare const global: Global, imports: any, log: any, _: (arg: string) => string;
 
 interface Global {
     get_current_time(): number;
     get_pointer(): [number, number];
     get_window_actors(): Array<Meta.WindowActor>;
     log(msg: string): void;
-    logError(error: any): void
+    logError(error: any): void;
 
     display: Meta.Display;
     run_at_leisure(func: () => void): void;
@@ -17,6 +14,10 @@ interface Global {
     window_group: Clutter.Actor;
     window_manager: Meta.WindowManager;
     workspace_manager: Meta.WorkspaceManager;
+}
+
+interface ImportMeta {
+    url: string;
 }
 
 interface Rectangular {
@@ -35,6 +36,82 @@ interface DialogButtonAction {
 
 declare type ProcessResult = [boolean, any, any, number];
 declare type SignalID = number;
+
+declare module 'resource://*';
+
+declare module 'gi://Gio' {
+    let Gio: any;
+    export default Gio;
+}
+
+declare module 'gi://St' {
+    let St: any;
+    export default St;
+}
+
+declare module 'gi://Clutter' {
+    let Clutter: any;
+    export default Clutter;
+}
+
+declare module 'gi://Shell' {
+    let Shell: any;
+    export default Shell;
+}
+
+declare module 'gi://Meta' {
+    let Meta: any;
+    export default Meta;
+}
+
+declare module 'gi://Gtk' {
+    let Gtk: any;
+    export default Gtk;
+}
+
+declare module 'gi://Gdk' {
+    let Gdk: any;
+    export default Gdk;
+}
+
+declare module 'gi://GObject' {
+    let GObject: any;
+    export default GObject;
+}
+
+declare module 'gi://Pango' {
+    let Pango: any;
+    export default Pango;
+}
+
+declare module 'gi://GLib' {
+    class GLib {
+        PRIORITY_DEFAULT: number;
+        PRIORITY_LOW: number;
+        SOURCE_REMOVE: boolean;
+        SOURCE_CONTINUE: boolean;
+
+        find_program_in_path(prog: string): string | null;
+        get_current_dir(): string;
+        get_monotonic_time(): number;
+
+        idle_add(priority: any, callback: () => boolean): number;
+
+        signal_handler_block(object: GObject.Object, signal: SignalID): void;
+        signal_handler_unblock(object: GObject.Object, signal: SignalID): void;
+
+        source_remove(id: SignalID): void;
+        spawn_command_line_sync(cmd: string): ProcessResult;
+        spawn_command_line_async(cmd: string): boolean;
+
+        timeout_add(priority: number, ms: number, callback: () => boolean): number;
+
+        get_user_config_dir(): string;
+        file_get_contents(filename: string): string;
+    }
+    let gLib: GLib;
+    export default gLib;
+}
 
 declare interface GLib {
     PRIORITY_DEFAULT: number;
@@ -95,7 +172,7 @@ declare namespace Clutter {
         FILL = 0,
         START = 1,
         CENTER = 3,
-        END = 3
+        END = 3,
     }
 
     enum AnimationMode {
@@ -138,7 +215,7 @@ declare namespace Clutter {
     }
 
     interface ActorBox {
-        new(x: number, y: number, width: number, height: number): ActorBox;
+        new (x: number, y: number, width: number, height: number): ActorBox;
     }
 
     interface Text extends Actor {
@@ -158,14 +235,14 @@ declare namespace Meta {
     enum MaximizeFlags {
         HORIZONTAL = 1,
         VERTICAL = 2,
-        BOTH = 3
+        BOTH = 3,
     }
 
     enum MotionDirection {
         UP,
         DOWN,
         LEFT,
-        RIGHT
+        RIGHT,
     }
 
     interface Display extends GObject.Object {
@@ -228,9 +305,7 @@ declare namespace Meta {
         get_meta_window(): Meta.Window;
     }
 
-    interface WindowManager extends GObject.Object {
-
-    }
+    interface WindowManager extends GObject.Object {}
 
     interface Workspace extends GObject.Object {
         n_windows: number;
@@ -240,7 +315,7 @@ declare namespace Meta {
         get_neighbor(direction: Meta.MotionDirection): null | Workspace;
         get_work_area_for_monitor(monitor: number): null | Rectangular;
         index(): number;
-        list_windows(): Array<Meta.Window>
+        list_windows(): Array<Meta.Window>;
     }
 
     interface WorkspaceManager extends GObject.Object {
@@ -279,13 +354,13 @@ declare namespace St {
     }
 
     interface Widget extends Clutter.Actor {
-        add_style_class_name(name: string): void
+        add_style_class_name(name: string): void;
         add_style_pseudo_class(name: string): void;
         add(child: St.Widget): void;
-        get_theme_node(): any
+        get_theme_node(): any;
         hide(): void;
         remove_style_class_name(name: string): void;
-        remove_style_pseudo_class(name: string): void
+        remove_style_pseudo_class(name: string): void;
         set_style(inlinecss: string): boolean;
         set_style_class_name(name: string): void;
         set_style_pseudo_class(name: string): void;

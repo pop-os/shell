@@ -1,13 +1,10 @@
+import * as log from './log.js';
+import * as rectangle from './rectangle.js';
 
-// @ts-ignore
-const Me = imports.misc.extensionUtils.getCurrentExtension();
+import type { Rectangle } from './rectangle.js';
 
-import * as log from 'log';
-import * as rectangle from 'rectangle';
-
-import type { Rectangle } from 'rectangle';
-
-const { Meta, St } = imports.gi;
+import Meta from 'gi://Meta';
+import St from 'gi://St';
 
 export interface SizeHint {
     minimum: [number, number];
@@ -48,7 +45,7 @@ export function bench<T>(name: string, callback: () => T): T {
 
 export function current_monitor(): Rectangle {
     return rectangle.Rectangle.from_meta(
-        global.display.get_monitor_geometry(global.display.get_current_monitor()) as Rectangular
+        global.display.get_monitor_geometry(global.display.get_current_monitor()) as Rectangular,
     );
 }
 
@@ -92,16 +89,21 @@ export function is_keyboard_op(op: number): boolean {
 }
 
 export function is_resize_op(op: number): boolean {
-    const window_dir_mask = (Meta.GrabOp.RESIZING_N | Meta.GrabOp.RESIZING_E | Meta.GrabOp.RESIZING_S | Meta.GrabOp.RESIZING_W) & ~Meta.GrabOp.WINDOW_BASE;
-    return (op & window_dir_mask) != 0 || (op & Meta.GrabOp.KEYBOARD_RESIZING_UNKNOWN) == Meta.GrabOp.KEYBOARD_RESIZING_UNKNOWN;
+    const window_dir_mask =
+        (Meta.GrabOp.RESIZING_N | Meta.GrabOp.RESIZING_E | Meta.GrabOp.RESIZING_S | Meta.GrabOp.RESIZING_W) &
+        ~Meta.GrabOp.WINDOW_BASE;
+    return (
+        (op & window_dir_mask) != 0 ||
+        (op & Meta.GrabOp.KEYBOARD_RESIZING_UNKNOWN) == Meta.GrabOp.KEYBOARD_RESIZING_UNKNOWN
+    );
 }
 
 export function is_move_op(op: number): boolean {
-    return !is_resize_op(op)
+    return !is_resize_op(op);
 }
 
 export function orientation_as_str(value: number): string {
-    return value == 0 ? "Orientation::Horizontal" : "Orientation::Vertical";
+    return value == 0 ? 'Orientation::Horizontal' : 'Orientation::Vertical';
 }
 
 /// Useful in the event that you want to reuse an actor in the future

@@ -6,16 +6,12 @@
         "outDir": "../../target/color_dialog",
         "forceConsistentCasingInFileNames": true,
         "downlevelIteration": true,
-        "lib": [
-            "es2015"
-        ],
+        "lib": ["es2015"],
         "pretty": true,
         "removeComments": true,
         "incremental": true,
         "noUnusedLocals": true,
         "noUnusedParameters": true
     },
-    "include": [
-        "src/*.ts",
-    ]
+    "include": ["src/*.ts"]
 }

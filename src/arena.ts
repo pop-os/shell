@@ -2,7 +2,7 @@
 export class Arena<T> {
     private slots: Array<null | T> = new Array();
 
-    private unused: Array<number> = new Array()
+    private unused: Array<number> = new Array();
 
     truncate(n: number) {
         this.slots.splice(n);
@@ -35,7 +35,7 @@ export class Arena<T> {
         return v;
     }
 
-    * values(): IterableIterator<T> {
+    *values(): IterableIterator<T> {
         for (const v of this.slots) {
             if (v !== null) yield v;
         }

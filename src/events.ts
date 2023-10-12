@@ -1,15 +1,9 @@
-// @ts-ignore
-const Me = imports.misc.extensionUtils.getCurrentExtension();
+import * as Window from './window.js';
 
-import * as Window from 'window';
-
-import type { Ext } from 'extension';
+import type { Ext } from './extension.js';
 
 /** Type representing all possible events handled by the extension's system. */
-export type ExtEvent = GenericCallback
-    | ManagedWindow
-    | CreateWindow
-    | GlobalEventTag;
+export type ExtEvent = GenericCallback | ManagedWindow | CreateWindow | GlobalEventTag;
 
 /** Eevnt with generic callback */
 export interface GenericCallback {
@@ -50,7 +44,7 @@ export interface Movement {
 
 export interface Basic {
     tag: 2;
-    event: WindowEvent
+    event: WindowEvent;
 }
 
 /** The type of event triggered on a window */
@@ -73,5 +67,5 @@ export function window_move(ext: Ext, window: Window.ShellWindow, rect: Rectangu
 
 /** Utility function for creating the an ExtEvent */
 export function window_event(window: Window.ShellWindow, event: WindowEvent): ManagedWindow {
-    return { tag: 2, window, kind: { tag: 2, event } }
+    return { tag: 2, window, kind: { tag: 2, event } };
 }

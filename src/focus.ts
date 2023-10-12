@@ -1,24 +1,21 @@
-// @ts-ignore
-const Me = imports.misc.extensionUtils.getCurrentExtension();
+import * as Geom from './geom.js';
 
-import * as Geom from 'geom';
-
-import type { ShellWindow } from 'window';
-import type { Ext } from './extension';
+import type { ShellWindow } from './window.js';
+import type { Ext } from './extension.js';
 
 export enum FocusPosition {
-    TopLeft = "Top Left",
-    TopRight = "Top Right",
-    BottomLeft = "Bottom Left",
-    BottomRight = "Bottom Right",
-    Center = "Center",
+    TopLeft = 'Top Left',
+    TopRight = 'Top Right',
+    BottomLeft = 'Bottom Left',
+    BottomRight = 'Bottom Right',
+    Center = 'Center',
 }
 
 export class FocusSelector {
     select(
         ext: Ext,
         direction: (a: ShellWindow, b: Array<ShellWindow>) => Array<ShellWindow>,
-        window: ShellWindow | null
+        window: ShellWindow | null,
     ): ShellWindow | null {
         window = window ?? ext.focus_window();
         if (window) {
@@ -49,7 +46,7 @@ export class FocusSelector {
 function select(
     windows: (a: ShellWindow, b: Array<ShellWindow>) => Array<ShellWindow>,
     focused: ShellWindow,
-    window_list: Array<ShellWindow>
+    window_list: Array<ShellWindow>,
 ): ShellWindow | null {
     const array = windows(focused, window_list);
     return array.length > 0 ? array[0] : null;

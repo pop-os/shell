@@ -2,19 +2,21 @@
     "version": "1.2.0",
     "compileOnSave": true,
     "compilerOptions": {
-        "target": "es2015",
+        "target": "es2020",
         "strict": true,
         "outDir": "./target",
         "forceConsistentCasingInFileNames": true,
         "downlevelIteration": true,
         "lib": [
-            "es2015"
+            "es2020"
         ],
         "pretty": true,
         "removeComments": true,
         "incremental": true,
         "noUnusedLocals": true,
-        "noUnusedParameters": true
+        "noUnusedParameters": true,
+        "moduleResolution": "NodeNext",
+        "module": "NodeNext"
     },
     "include": [
         "src/*.ts"
