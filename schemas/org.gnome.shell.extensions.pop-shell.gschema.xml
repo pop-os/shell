@@ -66,7 +66,7 @@
 
         <key type="b" name="auto-unstack">
             <default>false</default>
-            <summary>Destroy a window stack when it contains only one window</summary>
+            <summary>Destroy stacks when separated by the mouse</summary>
         </key>
 
         <key type="b" name="snap-to-grid">
