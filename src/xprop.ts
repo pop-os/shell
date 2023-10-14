@@ -77,7 +77,7 @@ export function get_xid(meta: Meta.Window): string | null {
 
 export function may_decorate(xid: string): boolean {
     const hints = motif_hints(xid);
-    return Array.isArray(hints);
+    return hints ? hints[2] == '0x0' || hints[2] == '0x1' : true;
 }
 
 export function motif_hints(xid: string): Array<string> | null {
