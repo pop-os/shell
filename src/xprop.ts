@@ -7,7 +7,7 @@ const GLib: GLib = imports.gi.GLib;
 const { spawn } = imports.misc.util;
 
 export var MOTIF_HINTS: string = '_MOTIF_WM_HINTS';
-export var HIDE_FLAGS: string[] = ['0x2', '0x0', '0x2', '0x0', '0x0'];
+export var HIDE_FLAGS: string[] = ['0x2', '0x0', '0x0', '0x0', '0x0'];
 export var SHOW_FLAGS: string[] = ['0x2', '0x0', '0x1', '0x0', '0x0'];
 
 export function get_window_role(xid: string): string | null {
@@ -77,7 +77,7 @@ export function get_xid(meta: Meta.Window): string | null {
 
 export function may_decorate(xid: string): boolean {
     const hints = motif_hints(xid);
-    return hints ? hints[2] != '0x0' : true;
+    return Array.isArray(hints);
 }
 
 export function motif_hints(xid: string): Array<string> | null {
