@@ -2,8 +2,6 @@
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 // import * as Ecs from 'ecs';
-import * as exec from 'executor';
-import * as geom from 'geom';
 import * as GrabOp from 'grab_op';
 import * as Lib from 'lib';
 import * as Log from 'log';
@@ -11,13 +9,15 @@ import * as Node from 'node';
 import * as Rect from 'rectangle';
 import * as Tags from 'tags';
 import * as window from 'window';
+import * as geom from 'geom';
+import * as exec from 'executor';
 
-import { AutoTiler } from './auto_tiler';
 import type { Entity } from './ecs';
-import type { Ext } from './extension';
-import { Fork } from './fork';
-import type { NodeStack } from './node';
 import type { Rectangle } from './rectangle';
+import type { Ext } from './extension';
+import type { NodeStack } from './node';
+import { AutoTiler } from './auto_tiler';
+import { Fork } from './fork';
 
 const { Meta } = imports.gi;
 const Main = imports.ui.main;

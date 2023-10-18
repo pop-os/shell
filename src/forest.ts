@@ -3,19 +3,19 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 import * as arena from 'arena';
 import * as Ecs from 'ecs';
-import * as Fork from 'fork';
-import * as geom from 'geom';
 import * as Lib from 'lib';
 import * as log from 'log';
 import * as movement from 'movement';
-import * as Node from 'node';
 import * as Rect from 'rectangle';
+import * as Node from 'node';
+import * as Fork from 'fork';
+import * as geom from 'geom';
 
 import type { Entity } from 'ecs';
-import type { Ext } from './extension';
 import type { Rectangle } from './rectangle';
-import { Stack } from './stack';
 import type { ShellWindow } from './window';
+import type { Ext } from './extension';
+import { Stack } from './stack';
 
 const { Arena } = arena;
 const { Meta } = imports.gi;

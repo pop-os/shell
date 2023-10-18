@@ -1,12 +1,12 @@
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 import * as ecs from 'ecs';
-import * as geom from 'geom';
 import * as lib from 'lib';
 import * as log from 'log';
 import * as node from 'node';
 import * as result from 'result';
 import * as stack from 'stack';
+import * as geom from 'geom';
 import * as tiling from 'tiling';
 
 import type { Entity } from 'ecs';

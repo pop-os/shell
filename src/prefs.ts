@@ -1,4 +1,4 @@
-export { }
+export { };
 
 const ExtensionUtils = imports.misc.extensionUtils;
 // @ts-ignore
@@ -8,9 +8,9 @@ const { Gtk } = imports.gi;
 
 const { Settings } = imports.gi.Gio;
 
-import * as settings from 'settings';
-import * as log from 'log';
 import * as focus from 'focus';
+import * as log from 'log';
+import * as settings from 'settings';
 
 interface AppWidgets {
     fullscreen_launcher: any,
@@ -51,7 +51,7 @@ function settings_dialog_new(): Gtk.Container {
     app.smart_gaps.connect('state-set', (_widget: any, state: boolean) => {
         ext.set_smart_gaps(state);
         Settings.sync();
-    });
+    })
 
     app.auto_unstack.set_active(ext.auto_unstack());
     app.auto_unstack.connect('state-set', (_widget: any, state: boolean) => {
@@ -65,7 +65,7 @@ function settings_dialog_new(): Gtk.Container {
         if (!isNaN(parsed)) {
             ext.set_gap_outer(parsed);
             Settings.sync();
-        }
+        };
     });
 
     app.inner_gap.set_text(String(ext.gap_inner()));
@@ -90,13 +90,10 @@ function settings_dialog_new(): Gtk.Container {
     });
 
     app.mouse_cursor_follows_active_window.set_active(ext.mouse_cursor_follows_active_window());
-    app.mouse_cursor_follows_active_window.connect(
-        'state-set',
-        (_widget: any, state: boolean) => {
-            ext.set_mouse_cursor_follows_active_window(state);
-            Settings.sync();
-        }
-    );
+    app.mouse_cursor_follows_active_window.connect('state-set', (_widget: any, state: boolean) => {
+        ext.set_mouse_cursor_follows_active_window(state);
+        Settings.sync();
+    });
 
     app.mouse_cursor_focus_position.set_active(ext.mouse_cursor_focus_location());
     app.mouse_cursor_focus_position.connect('changed', () => {
@@ -105,22 +102,16 @@ function settings_dialog_new(): Gtk.Container {
     });
 
     app.fullscreen_launcher.set_active(ext.fullscreen_launcher());
-    app.fullscreen_launcher.connect(
-        'state-set',
-        (_widget: any, state: boolean) => {
-            ext.set_fullscreen_launcher(state);
-            Settings.sync();
-        }
-    );
+    app.fullscreen_launcher.connect('state-set',(_widget: any, state: boolean) => {
+        ext.set_fullscreen_launcher(state);
+        Settings.sync()
+    });
 
     app.stacking_with_mouse.set_active(ext.stacking_with_mouse());
-    app.stacking_with_mouse.connect(
-        'state-set',
-        (_widget: any, state: boolean) => {
-            ext.set_stacking_with_mouse(state);
-            Settings.sync();
-        }
-    );
+    app.stacking_with_mouse.connect('state-set', (_widget: any, state: boolean) => {
+        ext.set_stacking_with_mouse(state);
+        Settings.sync()
+    });
 
     return grid;
 }
@@ -133,48 +124,48 @@ function settings_dialog_view(): [AppWidgets, Gtk.Container] {
         margin_end: 10,
         margin_bottom: 10,
         margin_top: 10,
-    });
+    })
 
     const win_label = new Gtk.Label({
         label: "Show Window Titles",
         xalign: 0.0,
-        hexpand: true,
-    });
+        hexpand: true
+    })
 
     const snap_label = new Gtk.Label({
         label: "Snap to Grid (Floating Mode)",
-        xalign: 0.0,
-    });
+        xalign: 0.0
+    })
 
     const smart_label = new Gtk.Label({
         label: "Smart Gaps",
-        xalign: 0.0,
-    });
+        xalign: 0.0
+    })
 
     const unstack_label = new Gtk.Label({
-        label: "Automatically destroy single-window stacks",
-        xalign: 0.0,
-    });
+        label: "Destroy stacks when separated by the mouse",
+        xalign: 0.0
+    })
 
     const show_skip_taskbar_label = new Gtk.Label({
         label: "Show Minimize to Tray Windows",
-        xalign: 0.0,
-    });
+        xalign: 0.0
+    })
 
     const mouse_cursor_follows_active_window_label = new Gtk.Label({
         label: "Mouse Cursor Follows Active Window",
-        xalign: 0.0,
-    });
+        xalign: 0.0
+    })
 
     const fullscreen_launcher_label = new Gtk.Label({
         label: "Allow launcher over fullscreen window",
-        xalign: 0.0,
-    });
+        xalign: 0.0
+    })
 
     const stacking_with_mouse = new Gtk.Label({
         label: "Allow stacking with mouse",
-        xalign: 0.0,
-    });
+        xalign: 0.0
+    })
 
     const [inner_gap, outer_gap] = gaps_section(grid, 10);
 
@@ -188,7 +179,7 @@ function settings_dialog_view(): [AppWidgets, Gtk.Container] {
         snap_to_grid: new Gtk.Switch({ halign: Gtk.Align.END }),
         window_titles: new Gtk.Switch({ halign: Gtk.Align.END }),
         show_skip_taskbar: new Gtk.Switch({ halign: Gtk.Align.END }),
-        mouse_cursor_follows_active_window: new Gtk.Switch({halign: Gtk.Align.END,}),
+        mouse_cursor_follows_active_window: new Gtk.Switch({ halign: Gtk.Align.END }),
         mouse_cursor_focus_position: build_combo(
             grid,
             8,
@@ -203,29 +194,29 @@ function settings_dialog_view(): [AppWidgets, Gtk.Container] {
         ),
     };
 
-    grid.attach(win_label, 0, 0, 1, 1);
-    grid.attach(settings.window_titles, 1, 0, 1, 1);
+    grid.attach(win_label, 0, 0, 1, 1)
+    grid.attach(settings.window_titles, 1, 0, 1, 1)
 
-    grid.attach(snap_label, 0, 1, 1, 1);
-    grid.attach(settings.snap_to_grid, 1, 1, 1, 1);
+    grid.attach(snap_label, 0, 1, 1, 1)
+    grid.attach(settings.snap_to_grid, 1, 1, 1, 1)
 
-    grid.attach(smart_label, 0, 2, 1, 1);
-    grid.attach(settings.smart_gaps, 1, 2, 1, 1);
+    grid.attach(smart_label, 0, 2, 1, 1)
+    grid.attach(settings.smart_gaps, 1, 2, 1, 1)
 
-    grid.attach(unstack_label, 0, 3, 1, 1);
-    grid.attach(settings.auto_unstack, 1, 3, 1, 1);
+    grid.attach(unstack_label, 0, 3, 1, 1)
+    grid.attach(settings.auto_unstack, 1, 3, 1, 1)
 
-    grid.attach(fullscreen_launcher_label, 0, 4, 1, 1);
-    grid.attach(settings.fullscreen_launcher, 1, 4, 1, 1);
+    grid.attach(fullscreen_launcher_label, 0, 4, 1, 1)
+    grid.attach(settings.fullscreen_launcher, 1, 4, 1, 1)
 
-    grid.attach(stacking_with_mouse, 0, 5, 1, 1);
-    grid.attach(settings.stacking_with_mouse, 1, 5, 1, 1);
+    grid.attach(stacking_with_mouse, 0, 5, 1, 1)
+    grid.attach(settings.stacking_with_mouse, 1, 5, 1, 1)
 
-    grid.attach(show_skip_taskbar_label, 0, 6, 1, 1);
-    grid.attach(settings.show_skip_taskbar, 1, 6, 1, 1);
+    grid.attach(show_skip_taskbar_label, 0, 6, 1, 1)
+    grid.attach(settings.show_skip_taskbar, 1, 6, 1, 1)
 
-    grid.attach(mouse_cursor_follows_active_window_label, 0, 7, 1, 1);
-    grid.attach(settings.mouse_cursor_follows_active_window, 1, 7, 1, 1);
+    grid.attach(mouse_cursor_follows_active_window_label, 0, 7, 1, 1)
+    grid.attach(settings.mouse_cursor_follows_active_window, 1, 7, 1, 1)
 
     return [settings, grid];
 }
@@ -234,7 +225,7 @@ function gaps_section(grid: any, top: number): [any, any] {
     let outer_label = new Gtk.Label({
         label: "Outer",
         xalign: 0.0,
-        margin_start: 24,
+        margin_start: 24
     });
 
     let outer_entry = number_entry();
@@ -242,14 +233,14 @@ function gaps_section(grid: any, top: number): [any, any] {
     let inner_label = new Gtk.Label({
         label: "Inner",
         xalign: 0.0,
-        margin_start: 24,
+        margin_start: 24
     });
 
     let inner_entry = number_entry();
 
     let section_label = new Gtk.Label({
         label: "Gaps",
-        xalign: 0.0,
+        xalign: 0.0
     });
 
     grid.attach(section_label, 0, top, 1, 1);
@@ -269,11 +260,11 @@ function build_combo(
     grid: any,
     top_index: number,
     iter_enum: any,
-    label: string
+    label: string,
 ) {
     let label_ = new Gtk.Label({
         label: label,
-        halign: Gtk.Align.START,
+        halign: Gtk.Align.START
     });
 
     grid.attach(label_, 0, top_index, 1, 1);
@@ -287,14 +278,14 @@ function build_combo(
     }
 
     grid.attach(combo, 1, top_index, 1, 1);
-    return combo;
+    return combo
 }
 
 // @ts-ignore
 function buildPrefsWidget() {
     let dialog = settings_dialog_new();
     if (dialog.show_all) {
-        dialog.show_all();
+        dialog.show_all()
     } else {
         dialog.show();
     }
