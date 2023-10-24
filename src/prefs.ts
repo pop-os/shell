@@ -1,4 +1,4 @@
-export { }
+export { };
 
 const ExtensionUtils = imports.misc.extensionUtils;
 // @ts-ignore
@@ -8,9 +8,9 @@ const { Gtk } = imports.gi;
 
 const { Settings } = imports.gi.Gio;
 
-import * as settings from 'settings';
-import * as log from 'log';
 import * as focus from 'focus';
+import * as log from 'log';
+import * as settings from 'settings';
 
 interface AppWidgets {
     fullscreen_launcher: any,
@@ -20,6 +20,7 @@ interface AppWidgets {
     outer_gap: any,
     show_skip_taskbar: any,
     smart_gaps: any,
+    auto_unstack: any,
     snap_to_grid: any,
     window_titles: any,
     mouse_cursor_focus_position: any,
@@ -52,6 +53,12 @@ function settings_dialog_new(): Gtk.Container {
         Settings.sync();
     })
 
+    app.auto_unstack.set_active(ext.auto_unstack());
+    app.auto_unstack.connect('state-set', (_widget: any, state: boolean) => {
+        ext.set_auto_unstack(state);
+        Settings.sync();
+    });
+
     app.outer_gap.set_text(String(ext.gap_outer()));
     app.outer_gap.connect('activate', (widget: any) => {
         let parsed = parseInt((widget.get_text() as string).trim());
@@ -71,7 +78,7 @@ function settings_dialog_new(): Gtk.Container {
     });
 
     app.log_level.set_active(ext.log_level());
-    app.log_level.connect("changed", () => {
+    app.log_level.connect('changed', () => {
         let active_id = app.log_level.get_active_id();
         ext.set_log_level(active_id);
     });
@@ -89,20 +96,20 @@ function settings_dialog_new(): Gtk.Container {
     });
 
     app.mouse_cursor_focus_position.set_active(ext.mouse_cursor_focus_location());
-    app.mouse_cursor_focus_position.connect("changed", () => {
+    app.mouse_cursor_focus_position.connect('changed', () => {
         let active_id = app.mouse_cursor_focus_position.get_active_id();
         ext.set_mouse_cursor_focus_location(active_id);
     });
 
-    app.fullscreen_launcher.set_active(ext.fullscreen_launcher())
-    app.fullscreen_launcher.connect('state-set', (_widget: any, state: boolean) => {
-        ext.set_fullscreen_launcher(state)
+    app.fullscreen_launcher.set_active(ext.fullscreen_launcher());
+    app.fullscreen_launcher.connect('state-set',(_widget: any, state: boolean) => {
+        ext.set_fullscreen_launcher(state);
         Settings.sync()
     });
 
-    app.stacking_with_mouse.set_active(ext.stacking_with_mouse())
+    app.stacking_with_mouse.set_active(ext.stacking_with_mouse());
     app.stacking_with_mouse.connect('state-set', (_widget: any, state: boolean) => {
-        ext.set_stacking_with_mouse(state)
+        ext.set_stacking_with_mouse(state);
         Settings.sync()
     });
 
@@ -135,6 +142,11 @@ function settings_dialog_view(): [AppWidgets, Gtk.Container] {
         xalign: 0.0
     })
 
+    const unstack_label = new Gtk.Label({
+        label: "Destroy stacks when separated by the mouse",
+        xalign: 0.0
+    })
+
     const show_skip_taskbar_label = new Gtk.Label({
         label: "Show Minimize to Tray Windows",
         xalign: 0.0
@@ -155,7 +167,7 @@ function settings_dialog_view(): [AppWidgets, Gtk.Container] {
         xalign: 0.0
     })
 
-    const [inner_gap, outer_gap] = gaps_section(grid, 9);
+    const [inner_gap, outer_gap] = gaps_section(grid, 10);
 
     const settings = {
         inner_gap,
@@ -163,23 +175,24 @@ function settings_dialog_view(): [AppWidgets, Gtk.Container] {
         fullscreen_launcher: new Gtk.Switch({ halign: Gtk.Align.END }),
         stacking_with_mouse: new Gtk.Switch({ halign: Gtk.Align.END }),
         smart_gaps: new Gtk.Switch({ halign: Gtk.Align.END }),
+        auto_unstack: new Gtk.Switch({ halign: Gtk.Align.END }),
         snap_to_grid: new Gtk.Switch({ halign: Gtk.Align.END }),
         window_titles: new Gtk.Switch({ halign: Gtk.Align.END }),
         show_skip_taskbar: new Gtk.Switch({ halign: Gtk.Align.END }),
         mouse_cursor_follows_active_window: new Gtk.Switch({ halign: Gtk.Align.END }),
         mouse_cursor_focus_position: build_combo(
             grid,
-            7,
+            8,
             focus.FocusPosition,
-            'Mouse Cursor Focus Position',
+            "Mouse Cursor Focus Position"
         ),
         log_level: build_combo(
-            grid,
-            8,
-            log.LOG_LEVELS,
-            'Log Level',
-        )
-    }
+            grid, 
+            9, 
+            log.LOG_LEVELS, 
+            "Log Level"
+        ),
+    };
 
     grid.attach(win_label, 0, 0, 1, 1)
     grid.attach(settings.window_titles, 1, 0, 1, 1)
@@ -190,19 +203,22 @@ function settings_dialog_view(): [AppWidgets, Gtk.Container] {
     grid.attach(smart_label, 0, 2, 1, 1)
     grid.attach(settings.smart_gaps, 1, 2, 1, 1)
 
-    grid.attach(fullscreen_launcher_label, 0, 3, 1, 1)
-    grid.attach(settings.fullscreen_launcher, 1, 3, 1, 1)
+    grid.attach(unstack_label, 0, 3, 1, 1)
+    grid.attach(settings.auto_unstack, 1, 3, 1, 1)
 
-    grid.attach(stacking_with_mouse, 0, 4, 1, 1)
-    grid.attach(settings.stacking_with_mouse, 1, 4, 1, 1)
+    grid.attach(fullscreen_launcher_label, 0, 4, 1, 1)
+    grid.attach(settings.fullscreen_launcher, 1, 4, 1, 1)
 
-    grid.attach(show_skip_taskbar_label, 0, 5, 1, 1)
-    grid.attach(settings.show_skip_taskbar, 1, 5, 1, 1)
+    grid.attach(stacking_with_mouse, 0, 5, 1, 1)
+    grid.attach(settings.stacking_with_mouse, 1, 5, 1, 1)
 
-    grid.attach(mouse_cursor_follows_active_window_label, 0, 6, 1, 1)
-    grid.attach(settings.mouse_cursor_follows_active_window, 1, 6, 1, 1)
+    grid.attach(show_skip_taskbar_label, 0, 6, 1, 1)
+    grid.attach(settings.show_skip_taskbar, 1, 6, 1, 1)
 
-    return [settings, grid]
+    grid.attach(mouse_cursor_follows_active_window_label, 0, 7, 1, 1)
+    grid.attach(settings.mouse_cursor_follows_active_window, 1, 7, 1, 1)
+
+    return [settings, grid];
 }
 
 function gaps_section(grid: any, top: number): [any, any] {

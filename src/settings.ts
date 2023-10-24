@@ -2,7 +2,7 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 const { Gio, Gdk } = imports.gi;
 
-const DARK = ["dark", "adapta", "plata", "dracula"]
+const DARK = ["dark", "adapta", "plata", "dracula"];
 
 interface Settings extends GObject.Object {
     get_boolean(key: string): boolean;
@@ -14,7 +14,7 @@ interface Settings extends GObject.Object {
     get_string(key: string): string;
     set_string(key: string, value: string): void;
 
-    bind(key: string, object: GObject.Object, property: string, flags: any): void
+    bind(key: string, object: GObject.Object, property: string, flags: any): void;
 }
 
 function settings_new_id(schema_id: string): Settings | null {
@@ -22,10 +22,10 @@ function settings_new_id(schema_id: string): Settings | null {
         return new Gio.Settings({ schema_id });
     } catch (why) {
         if (schema_id !== "org.gnome.shell.extensions.user-theme") {
-            global.log(`failed to get settings for ${schema_id}: ${why}`)
+            global.log(`failed to get settings for ${schema_id}: ${why}`);
         }
 
-        return null
+        return null;
     }
 }
 
@@ -33,15 +33,15 @@ function settings_new_schema(schema: string): Settings {
     const GioSSS = Gio.SettingsSchemaSource;
     const schemaDir = Me.dir.get_child("schemas");
 
-    let schemaSource = schemaDir.query_exists(null) ?
-        GioSSS.new_from_directory(schemaDir.get_path(), GioSSS.get_default(), false) :
+    let schemaSource = schemaDir.query_exists(null)
+        ? GioSSS.new_from_directory(schemaDir.get_path(), GioSSS.get_default(), false) :
         GioSSS.get_default();
 
     const schemaObj = schemaSource.lookup(schema, true);
 
     if (!schemaObj) {
         throw new Error("Schema " + schema + " could not be found for extension "
-            + Me.metadata.uuid + ". Please check your installation.")
+            + Me.metadata.uuid + ". Please check your installation.");
     }
 
     return new Gio.Settings({ settings_schema: schemaObj });
@@ -52,19 +52,20 @@ const ACTIVE_HINT_BORDER_RADIUS = "active-hint-border-radius";
 const STACKING_WITH_MOUSE = "stacking-with-mouse";
 const COLUMN_SIZE = "column-size";
 const EDGE_TILING = "edge-tiling";
-const FULLSCREEN_LAUNCHER = "fullscreen-launcher"
+const FULLSCREEN_LAUNCHER = "fullscreen-launcher";
 const GAP_INNER = "gap-inner";
 const GAP_OUTER = "gap-outer";
 const ROW_SIZE = "row-size";
 const SHOW_TITLE = "show-title";
 const SMART_GAPS = "smart-gaps";
+const AUTO_UNSTACK = "auto-unstack";
 const SNAP_TO_GRID = "snap-to-grid";
 const TILE_BY_DEFAULT = "tile-by-default";
 const HINT_COLOR_RGBA = "hint-color-rgba";
 const DEFAULT_RGBA_COLOR = "rgba(251, 184, 108, 1)"; //pop-orange
 const LOG_LEVEL = "log-level";
 const SHOW_SKIPTASKBAR = "show-skip-taskbar";
-const MOUSE_CURSOR_FOLLOWS_ACTIVE_WINDOW = "mouse-cursor-follows-active-window"
+const MOUSE_CURSOR_FOLLOWS_ACTIVE_WINDOW = "mouse-cursor-follows-active-window";
 const MOUSE_CURSOR_FOCUS_LOCATION = "mouse-cursor-focus-location";
 
 export class ExtensionSettings {
@@ -96,7 +97,7 @@ export class ExtensionSettings {
     }
 
     fullscreen_launcher(): boolean {
-        return this.ext.get_boolean(FULLSCREEN_LAUNCHER)
+        return this.ext.get_boolean(FULLSCREEN_LAUNCHER);
     }
 
     gap_inner(): number {
@@ -120,19 +121,19 @@ export class ExtensionSettings {
 
     theme(): string {
         return this.shell
-            ? this.shell.get_string("name")
-            : this.int
-                ? this.int.get_string("gtk-theme")
-                : "Adwaita"
+        ? this.shell.get_string("name")
+        : this.int
+        ? this.int.get_string("gtk-theme")
+        : "Adwaita"
     }
 
     is_dark(): boolean {
-        const theme = this.theme().toLowerCase()
-        return DARK.some(dark => theme.includes(dark))
+        const theme = this.theme().toLowerCase();
+        return DARK.some(dark => theme.includes(dark));
     }
 
     is_high_contrast(): boolean {
-        return this.theme().toLowerCase() === "highcontrast"
+        return this.theme().toLowerCase() === "highcontrast";
     }
 
     row_size(): number {
@@ -145,6 +146,10 @@ export class ExtensionSettings {
 
     smart_gaps(): boolean {
         return this.ext.get_boolean(SMART_GAPS);
+    }
+
+    auto_unstack(): boolean {
+        return this.ext.get_boolean(AUTO_UNSTACK);
     }
 
     snap_to_grid(): boolean {
@@ -196,11 +201,11 @@ export class ExtensionSettings {
     }
 
     set_edge_tiling(enable: boolean) {
-        this.mutter?.set_boolean(EDGE_TILING, enable)
+        this.mutter?.set_boolean(EDGE_TILING, enable);
     }
 
     set_fullscreen_launcher(enable: boolean) {
-        this.ext.set_boolean(FULLSCREEN_LAUNCHER, enable)
+        this.ext.set_boolean(FULLSCREEN_LAUNCHER, enable);
     }
 
     set_gap_inner(gap: number) {
@@ -231,6 +236,10 @@ export class ExtensionSettings {
 
     set_smart_gaps(set: boolean) {
         this.ext.set_boolean(SMART_GAPS, set);
+    }
+
+    set_auto_unstack(set: boolean) {
+        this.ext.set_boolean(AUTO_UNSTACK, set);
     }
 
     set_snap_to_grid(set: boolean) {
