@@ -2664,8 +2664,13 @@ export class Ext extends Ecs.System<ExtEvent> {
 let ext: Ext | null = null;
 let indicator: Indicator | null = null;
 
+declare global {
+  var popShellExtension: any;
+}
+
 export default class PopShellExtension extends Extension {
     enable() {
+        globalThis.popShellExtension  = this;
         log.info('enable');
 
         if (!ext) {
@@ -2714,6 +2719,7 @@ export default class PopShellExtension extends Extension {
                 return;
             }
 
+            delete globalThis.popShellExtension;
             ext.injections_remove();
             ext.signals_remove();
             ext.exit_modes();
