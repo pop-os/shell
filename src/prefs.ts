@@ -24,6 +24,7 @@ interface AppWidgets {
 
 export default class PopShellPreferences extends ExtensionPreferences {
     getPreferencesWidget() {
+        globalThis.popShellExtension = this;
         let dialog = settings_dialog_new();
         if (dialog.show_all) {
             dialog.show_all();
