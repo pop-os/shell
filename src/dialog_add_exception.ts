@@ -5,7 +5,7 @@ import Clutter from 'gi://Clutter';
 import * as ModalDialog from 'resource:///org/gnome/shell/ui/modalDialog.js';
 
 export class AddExceptionDialog {
-    dialog: Shell.ModalDialog = new ModalDialog({
+    dialog: Shell.ModalDialog = new ModalDialog.ModalDialog({
         styleClass: 'pop-shell-search modal-dialog',
         destroyOnClose: false,
         shellReactive: true,
