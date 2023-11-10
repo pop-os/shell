@@ -70,6 +70,8 @@ To install this GNOME Shell extension, you MUST have the following:
 
 Proper functionality of the shell requires modifying GNOME's default keyboard shortcuts. For a local installation, run `make local-install`.
 
+The git branch master_mantic corresponds to Ubuntu 23.10 and supports GNOME 45+. For GNOME 3.36 through 44 support, use the git branch master_jammy
+
 If you want to uninstall the extension, you may invoke `make uninstall`, and then open the "Keyboard Shortcuts" panel in GNOME Settings to select the "Reset All.." button in the header bar.
 
 > Note that if you are packaging for your Linux distribution, many features in Pop Shell will not work out of the box because they require changes to GNOME's default keyboard shortcuts. A local install is necessary if you aren't packaging your GNOME session with these default keyboard shortcuts unset or changed.
