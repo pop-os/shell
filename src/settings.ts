@@ -32,15 +32,11 @@ function settings_new_id(schema_id: string): Settings | null {
 
 function settings_new_schema(schema: string): Settings {
     const GioSSS = Gio.SettingsSchemaSource;
-    // const schemaDir = Me.dir.get_child('schemas');
+    const schemaDir = Gio.File.new_for_path(get_current_path()).get_child('schemas');
 
-    // let schemaSource = schemaDir.query_exists(null)
-    //   ? GioSSS.new_from_directory(get_current_path(), GioSSS.get_default(), false)
-    //   : GioSSS.get_default();
-
-    // get_current_path()
-
-    let schemaSource = GioSSS.new_from_directory(`${get_current_path()}/schemas/`, GioSSS.get_default(), false);
+    let schemaSource = schemaDir.query_exists(null)
+        ? GioSSS.new_from_directory(schemaDir.get_path(), GioSSS.get_default(), false)
+        : GioSSS.get_default();
 
     const schemaObj = schemaSource.lookup(schema, true);
 
