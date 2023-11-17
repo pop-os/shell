@@ -1135,7 +1135,7 @@ export class Ext extends Ecs.System<ExtEvent> {
                     const fork = forest.forks.get(fork_entity);
                     if (fork) {
                         if (win.stack) {
-                            const tab_dimension = this.dpi * stack.TAB_HEIGHT;
+                            const tab_dimension = stack.calculate_tabs_height(this);
                             crect.height += tab_dimension;
                             crect.y -= tab_dimension;
                         }
@@ -1892,6 +1892,16 @@ export class Ext extends Ecs.System<ExtEvent> {
                     break;
                 case 'show-title':
                     this.on_show_window_titles();
+                    break;
+                case 'show-stack-tab-buttons':
+                    if (!this.auto_tiler) break;
+                    
+                    for (const [window] of this.auto_tiler.attached.iter()) {
+                        const win = this.windows.get(window)
+                        if (win)
+                            this.on_grab_end_(win);
+                    }
+
                     break;
                 case 'smart-gaps':
                     this.on_smart_gap();

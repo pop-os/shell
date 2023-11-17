@@ -7,7 +7,7 @@ import type { Forest } from './forest';
 import type { Entity } from 'ecs';
 import type { Ext } from 'extension';
 import type { Rectangle } from 'rectangle';
-import type { Stack } from 'stack';
+import * as stack from 'stack';
 import { ShellWindow } from './window';
 
 /** A node is either a fork a window */
@@ -41,7 +41,7 @@ export interface NodeStack {
     rect: Rectangle | null;
 }
 
-function stack_detach(node: NodeStack, stack: Stack, idx: number) {
+function stack_detach(node: NodeStack, stack: stack.Stack, idx: number) {
     node.entities.splice(idx, 1);
     stack.remove_by_pos(idx);
 }
@@ -233,11 +233,11 @@ export class Node {
                 break
             // Stack
             case 3:
-                const size = ext.dpi * 4;
+                const size = stack.calculate_tabs_height(ext);
 
                 this.inner.rect = area.clone();
-                this.inner.rect.y += size * 6;
-                this.inner.rect.height -= size * 6;
+                this.inner.rect.y += size;
+                this.inner.rect.height -= size;
 
                 for (const entity of this.inner.entities) {
                     record(entity, parent, this.inner.rect);

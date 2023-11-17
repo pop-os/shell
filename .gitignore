@@ -12,4 +12,5 @@ debian/*
 !debian/*install
 .confirm_shortcut_change
 .vscode
+*.vim
 node_modules
