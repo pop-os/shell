@@ -17,7 +17,11 @@ const INACTIVE_TAB = 'pop-shell-tab pop-shell-tab-inactive';
 const URGENT_TAB = 'pop-shell-tab pop-shell-tab-urgent';
 const INACTIVE_TAB_STYLE = '#9B8E8A';
 
-export var TAB_HEIGHT: number = 24
+export var DEFAULT_TAB_HEIGHT: number = 24
+
+export function calculate_tabs_height(ext: Ext): number  {
+    return ext.settings.show_stack_tab_buttons() ? DEFAULT_TAB_HEIGHT * ext.dpi : 0;
+}
 
 interface Tab {
     active: boolean;
@@ -134,7 +138,7 @@ export class Stack {
 
     buttons: a.Arena<TabButton> = new Arena();
 
-    tabs_height: number = TAB_HEIGHT;
+    tabs_height: number = 0;
 
     stack_rect: Rectangular = { width: 0, height: 0, x: 0, y: 0 };
 
@@ -151,7 +155,7 @@ export class Stack {
         this.active = active;
         this.monitor = monitor;
         this.workspace = workspace;
-        this.tabs_height = TAB_HEIGHT * this.ext.dpi;
+        this.tabs_height = calculate_tabs_height(ext);
 
         this.widgets = stack_widgets_new();
 
@@ -251,6 +255,7 @@ export class Stack {
 
                     const tab_border_radius = this.get_tab_border_radius(idx);
                     button.set_style(`background: ${tab_color}; border-radius: ${tab_border_radius};`);
+                    button.visible = this.ext.settings.show_stack_tab_buttons();
                 }
             })
 
@@ -628,7 +633,7 @@ export class Stack {
 
         this.rect = rect;
 
-        this.tabs_height = TAB_HEIGHT * this.ext.dpi;
+        this.tabs_height = calculate_tabs_height(this.ext);
 
         this.stack_rect = {
             x: rect.x,

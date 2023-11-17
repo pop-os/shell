@@ -33,6 +33,11 @@
             <summary>Show title bars on windows with server-side decorations</summary>
         </key>
 
+        <key type="b" name="show-stack-tab-buttons">
+            <default>true</default>
+            <summary>Show tabs for stacked windows</summary>
+        </key>
+
         <key type="b" name="show-skip-taskbar">
             <default>true</default>
             <summary>Handle minimized to tray windows</summary>
