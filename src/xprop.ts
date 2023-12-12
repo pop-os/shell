@@ -1,5 +1,6 @@
 // @ts-ignore
 const Me = imports.misc.extensionUtils.getCurrentExtension();
+const GNOME_VERSION = imports.misc.config.PACKAGE_VERSION;
 
 import * as lib from 'lib';
 
@@ -7,7 +8,9 @@ const GLib: GLib = imports.gi.GLib;
 const { spawn } = imports.misc.util;
 
 export var MOTIF_HINTS: string = '_MOTIF_WM_HINTS';
-export var HIDE_FLAGS: string[] = ['0x2', '0x0', '0x0', '0x0', '0x0'];
+export var HIDE_FLAGS: string[] = (Number(GNOME_VERSION) < 43) ?
+                                  ['0x2', '0x0', '0x2', '0x0', '0x0'] :
+                                  ['0x2', '0x0', '0x0', '0x0', '0x0'];
 export var SHOW_FLAGS: string[] = ['0x2', '0x0', '0x1', '0x0', '0x0'];
 
 export function get_window_role(xid: string): string | null {
@@ -77,7 +80,11 @@ export function get_xid(meta: Meta.Window): string | null {
 
 export function may_decorate(xid: string): boolean {
     const hints = motif_hints(xid);
-    return hints ? hints[2] == '0x0' || hints[2] == '0x1' : true;
+    if (Number(GNOME_VERSION) < 43) {
+        return hints ? hints[2] != '0x0' : true;
+    } else {
+        return hints ? hints[2] == '0x0' || hints[2] == '0x1' : true;
+    }
 }
 
 export function motif_hints(xid: string): Array<string> | null {
