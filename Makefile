@@ -25,6 +25,12 @@ $(info UUID is "$(UUID)")
 
 sources = src/*.ts *.css
 
+ifeq ($(XDG_SESSION_TYPE),wayland)
+RESTART_COMMAND = killall -u $(USER)
+else
+RESTART_COMMAND = pkill -HUP gnome-shell
+endif
+
 all: depcheck compile
 
 clean:
@@ -70,7 +76,7 @@ uninstall:
 restart-shell:
 	echo "Restart shell!"
 	if bash -c 'xprop -root &> /dev/null'; then \
-		pkill -HUP gnome-shell; \
+		$(RESTART_COMMAND); \
 	else \
 		gnome-session-quit --logout; \
 	fi
