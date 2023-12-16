@@ -127,6 +127,9 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     drag_signal: null | SignalID = null
 
+    /** Minimum amount of time for a window to be dragged to apply updates */
+    min_drag_ms: number = 100;
+
     /** If set, the user is currently selecting a window to add to floating exceptions */
     exception_selecting: boolean = false;
 
@@ -147,6 +150,9 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     /** Information about a current possible grab operation */
     grab_op: GrabOp.GrabOp | null = null;
+
+    /** Timestamp of most recent window grab by mouse */
+    private grab_time: number = 0;
 
     /** A display config update is triggered on a workspace addition */
     ignore_display_update: boolean = false;
@@ -1064,6 +1070,11 @@ export class Ext extends Ecs.System<ExtEvent> {
             return;
         }
 
+        // Prevent accidental mouse drag
+        if ((+new Date()) - this.grab_time < this.min_drag_ms) {
+            op = undefined;  // reflow without updating tree
+        }
+
         this.on_grab_end_(win, op);
         this.unset_grab_op()
     }
@@ -1395,6 +1406,7 @@ export class Ext extends Ecs.System<ExtEvent> {
     /** Triggered when a grab operation has been started */
     on_grab_start(meta: null | Meta.Window, op: any) {
         if (!meta) return
+        this.grab_time = +new Date();  // timestamp
         let win = this.get_window(meta);
         if (win) {
             win.grab = true;
