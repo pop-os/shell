@@ -68,13 +68,17 @@ uninstall:
 	rm -rf $(INSTALLBASE)/$(INSTALLNAME)
 
 restart-shell:
-	echo "Restart shell!"
+	@echo "Restart shell!"
+ifneq ($(WAYLAND_DISPLAY),) # Don't restart if WAYLAND_DISPLAY is set
+	@echo "WAYLAND_DISPLAY is set, not restarting shell";
+else
 	if bash -c 'xprop -root &> /dev/null'; then \
 		pkill -HUP gnome-shell; \
 	else \
 		gnome-session-quit --logout; \
 	fi
 	sleep 3
+endif
 
 update-repository:
 	git fetch origin
