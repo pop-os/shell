@@ -5,7 +5,7 @@ import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 
 export function addMenu(widget: any, request: (menu: St.Widget) => void): St.Widget {
     const menu = new PopupMenu.PopupMenu(widget, 0.0, St.Side.TOP, 0);
-    Main.uiGroup.add_actor(menu.actor);
+    Main.uiGroup.add_child(menu.actor);
     menu.actor.hide();
     menu.actor.add_style_class_name('panel-menu');
 

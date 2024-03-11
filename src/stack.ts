@@ -98,9 +98,9 @@ const TabButton = GObject.registerClass(
             close_button.set_x_align(Clutter.ActorAlign.END);
             close_button.set_y_align(Clutter.ActorAlign.CENTER);
 
-            container.add_actor(icon);
-            container.add_actor(label);
-            container.add_actor(close_button);
+            container.add_child(icon);
+            container.add_child(label);
+            container.add_child(close_button);
 
             super._init({
                 child: container,

@@ -211,10 +211,10 @@ export class Search {
         });
 
         const scroller = new St.ScrollView();
-        scroller.add_actor(this.list);
+        scroller.add_child(this.list);
 
-        this.dialog.contentLayout.add(this.entry);
-        this.dialog.contentLayout.add(scroller);
+        this.dialog.contentLayout.add_child(this.entry);
+        this.dialog.contentLayout.add_child(scroller);
 
         this.scroller = scroller;
 
@@ -453,7 +453,7 @@ export class SearchOption {
         layout.add_child(this.shortcut);
 
         this.widget = new St.Button({ style_class: 'pop-shell-search-element' });
-        (this.widget as any).add_actor(layout);
+        (this.widget as any).add_child(layout);
     }
 }
 

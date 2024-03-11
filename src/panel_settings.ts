@@ -52,7 +52,7 @@ export class Indicator {
             this.button.icon = button_icon_auto_off;
         }
 
-        this.button.add_actor(this.button.icon);
+        this.button.add_child(this.button.icon);
 
         let bm = this.button.menu;
 
@@ -135,8 +135,8 @@ function floating_window_exceptions(ext: Ext, menu: any): any {
     let icon = new St.Icon({ icon_name: 'go-next-symbolic', icon_size: 16 });
 
     let widget = new St.BoxLayout({ vertical: false });
-    widget.add(label);
-    widget.add(icon);
+    widget.add_child(label);
+    widget.add_child(icon);
     widget.set_x_expand(true);
 
     let base = new PopupBaseMenuItem();
