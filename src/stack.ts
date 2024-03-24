@@ -183,7 +183,7 @@ export class Stack {
         this.bind_hint_events(tab);
         this.tabs.push(tab);
         this.watch_signals(comp, id, window);
-        this.widgets.tabs.add(button);
+        this.widgets.tabs.add_child(button);
     }
 
     /** Activates a tab based on the previously active entry */

@@ -344,7 +344,7 @@ export class Search {
         const id = this.widgets.length;
 
         if (id !== 0) {
-            this.list.add(Lib.separator());
+            this.list.add_child(Lib.separator());
         }
 
         const { widget, shortcut } = option;
@@ -367,7 +367,7 @@ export class Search {
         });
 
         this.widgets.push(widget);
-        this.list.add(widget);
+        this.list.add_child(widget);
 
         this.cleanup();
 
