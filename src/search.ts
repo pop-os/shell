@@ -429,7 +429,7 @@ export class SearchOption {
         this.exec = exec;
         this.keywords = keywords;
 
-        const layout = new St.BoxLayout({});
+        const layout = new St.BoxLayout({ x_expand: true });
 
         attach_icon(layout, category_icon, icon_size / 2);
 
