@@ -23,8 +23,8 @@ export class AddExceptionDialog {
 
         let l = this.dialog.contentLayout;
 
-        l.add(title);
-        l.add(desc);
+        l.add_child(title);
+        l.add_child(desc);
 
         this.dialog.contentLayout.width = Math.max(Lib.current_monitor().width / 4, 640);
 
