@@ -6,6 +6,7 @@
     "settings-schema": "org.gnome.shell.extensions.pop-shell",
     "shell-version": [
         "45",
-        "46"
+        "46",
+        "47"
     ]
 }
