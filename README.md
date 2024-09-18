@@ -62,11 +62,14 @@ There are additionally those who do want the traditional stacking window managem
 
 ## Installation
 
-To install this GNOME Shell extension, you MUST have the following:
+Use the branch corresponding to your GNOME Shell version (`git checkout branch_name`):
 
-- GNOME Shell 3.36
-- TypeScript 3.8
-- GNU Make
+- **GNOME 3.36 through 41:** Use the `master_focal` branch.
+- **GNOME 42 through 44:** Use the `master_jammy` branch.
+- **GNOME 45:** Use the `master_mantic` branch.
+- **GNOME 46+:** Use the `master_noble` branch.
+
+GNU Make and TypeScript are also required to build the project.
 
 Proper functionality of the shell requires modifying GNOME's default keyboard shortcuts. For a local installation, run `make local-install`.
 
