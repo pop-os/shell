@@ -103,7 +103,7 @@ export class ShellWindow {
         }
 
         if (this.may_decorate()) {
-            if (!window.is_client_decorated()) {
+            if (!window.decorated) {
                 if (ext.settings.show_title()) {
                     this.decoration_show(ext);
                 } else {
