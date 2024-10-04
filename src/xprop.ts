@@ -7,12 +7,22 @@ export var MOTIF_HINTS: string = '_MOTIF_WM_HINTS';
 export var HIDE_FLAGS: string[] = ['0x2', '0x0', '0x0', '0x0', '0x0'];
 export var SHOW_FLAGS: string[] = ['0x2', '0x0', '0x1', '0x0', '0x0'];
 
+//export var FRAME_EXTENTS: string = "_GTK_FRAME_EXTENTS"
+
 export function get_window_role(xid: string): string | null {
     let out = xprop_cmd(xid, 'WM_WINDOW_ROLE');
 
     if (!out) return null;
 
     return parse_string(out);
+}
+
+export function get_frame_extents(xid: string): string | null {
+    let out = xprop_cmd(xid, "_GTK_FRAME_EXTENTS");
+
+    if (!out) return null;
+
+    return parse_string(out)
 }
 
 export function get_hint(xid: string, hint: string): Array<string> | null {

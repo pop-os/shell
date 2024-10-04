@@ -63,7 +63,7 @@ export class ShellWindow {
     ignore_detach: boolean = false;
     was_attached_to?: [Entity, boolean | number];
     destroying: boolean = false;
-
+    
     // Awaiting reassignment after a display update
     reassignment: boolean = false;
 
@@ -103,7 +103,7 @@ export class ShellWindow {
         }
 
         if (this.may_decorate()) {
-            if (!window.decorated) {
+            if (!this.is_client_decorated()) {
                 if (ext.settings.show_title()) {
                     this.decoration_show(ext);
                 } else {
@@ -263,6 +263,16 @@ export class ShellWindow {
         const name = this.meta.get_wm_class();
         if (name === null) return true;
         return WM_TITLE_BLACKLIST.findIndex((n) => name.startsWith(n)) !== -1;
+    }
+
+    is_client_decorated(): boolean {
+        // look I guess I'll hack something together in here if at all possible
+        // Because Meta.Window.is_client_decorated() was removed in Meta 15, using it breaks the extension in gnome 47 or higher
+        //return this.meta.window_type == Meta.WindowType.META_WINDOW_OVERRIDE_OTHER;
+        const xid = this.xid()
+        const extents = xid ? xprop.get_frame_extents(xid) : false;
+        if (!extents) return false;
+        return true;
     }
 
     is_maximized(): boolean {
