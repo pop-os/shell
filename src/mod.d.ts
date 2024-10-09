@@ -261,6 +261,7 @@ declare namespace Meta {
         appears_focused: Readonly<boolean>;
         minimized: Readonly<boolean>;
         window_type: Readonly<any>;
+        decorated: Readonly<boolean>;
 
         activate(time: number): void;
         change_workspace_by_index(workspace: number, append: boolean): void;
@@ -285,7 +286,6 @@ declare namespace Meta {
         has_focus(): boolean;
         is_above(): boolean;
         is_attached_dialog(): boolean;
-        is_client_decorated(): boolean;
         is_fullscreen(): boolean;
         is_on_all_workspaces(): boolean;
         is_override_redirect(): boolean;

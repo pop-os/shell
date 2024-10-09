@@ -1671,7 +1671,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         }
 
         for (const window of this.windows.values()) {
-            if (window.meta.is_client_decorated()) continue;
+            if (window.is_client_decorated()) continue;
 
             if (show_title) {
                 window.decoration_show(this);
