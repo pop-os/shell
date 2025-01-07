@@ -11,7 +11,7 @@ export type ExtEvent = GenericCallback
     | CreateWindow
     | GlobalEventTag;
 
-/** Eevnt with generic callback */
+/** Event with generic callback */
 export interface GenericCallback {
     tag: 1;
     callback: () => void;
