@@ -79,6 +79,11 @@
             <summary>Allow for stacking windows as a result of dragging a window with mouse</summary>
         </key>
 
+        <key type="u" name="max-window-width">
+            <default>0</default>
+            <summary>Maximum size of tiled windows (0 to disable)</summary>
+        </key>
+
         <!-- Focus Shifting -->
         <key type="as" name="focus-left">
             <default><![CDATA[['<Super>Left','<Super>KP_Left','<Super>h']]]></default>

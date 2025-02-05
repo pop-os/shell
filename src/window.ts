@@ -63,7 +63,7 @@ export class ShellWindow {
     ignore_detach: boolean = false;
     was_attached_to?: [Entity, boolean | number];
     destroying: boolean = false;
-    
+
     // Awaiting reassignment after a display update
     reassignment: boolean = false;
 
@@ -269,7 +269,7 @@ export class ShellWindow {
         // look I guess I'll hack something together in here if at all possible
         // Because Meta.Window.is_client_decorated() was removed in Meta 15, using it breaks the extension in gnome 47 or higher
         //return this.meta.window_type == Meta.WindowType.META_WINDOW_OVERRIDE_OTHER;
-        const xid = this.xid()
+        const xid = this.xid();
         const extents = xid ? xprop.get_frame_extents(xid) : false;
         if (!extents) return false;
         return true;
@@ -360,6 +360,13 @@ export class ShellWindow {
         }
 
         this.hide_border();
+
+        const max_width = ext.settings.max_window_width();
+        if (max_width > 0 && rect.width > max_width) {
+            rect.x += (rect.width - max_width) / 2;
+            rect.width = max_width;
+        }
+
         const clone = Rect.Rectangle.from_meta(rect);
         const meta = this.meta;
         const actor = meta.get_compositor_private();

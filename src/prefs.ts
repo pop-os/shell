@@ -20,6 +20,7 @@ interface AppWidgets {
     window_titles: any;
     mouse_cursor_focus_position: any;
     log_level: any;
+    max_window_width: any;
 }
 
 export default class PopShellPreferences extends ExtensionPreferences {
@@ -113,6 +114,15 @@ function settings_dialog_new(): Gtk.Container {
         Settings.sync();
     });
 
+    app.max_window_width.set_text(String(ext.max_window_width()));
+    app.max_window_width.connect('activate', (widget: any) => {
+        let parsed = parseInt((widget.get_text() as string).trim());
+        if (!isNaN(parsed)) {
+            ext.set_max_window_width(parsed);
+            Settings.sync();
+        }
+    });
+
     return grid;
 }
 
@@ -162,6 +172,11 @@ function settings_dialog_view(): [AppWidgets, Gtk.Container] {
         xalign: 0.0,
     });
 
+    const max_window_width_label = new Gtk.Label({
+        label: 'Max window width (0 to disable)',
+        xalign: 0.0,
+    });
+
     const [inner_gap, outer_gap] = gaps_section(grid, 9);
 
     const settings = {
@@ -176,6 +191,7 @@ function settings_dialog_view(): [AppWidgets, Gtk.Container] {
         mouse_cursor_follows_active_window: new Gtk.Switch({ halign: Gtk.Align.END }),
         mouse_cursor_focus_position: build_combo(grid, 7, focus.FocusPosition, 'Mouse Cursor Focus Position'),
         log_level: build_combo(grid, 8, log.LOG_LEVELS, 'Log Level'),
+        max_window_width: number_entry(),
     };
 
     grid.attach(win_label, 0, 0, 1, 1);
@@ -198,6 +214,9 @@ function settings_dialog_view(): [AppWidgets, Gtk.Container] {
 
     grid.attach(mouse_cursor_follows_active_window_label, 0, 6, 1, 1);
     grid.attach(settings.mouse_cursor_follows_active_window, 1, 6, 1, 1);
+
+    grid.attach(max_window_width_label, 0, 12, 1, 1);
+    grid.attach(settings.max_window_width, 1, 12, 1, 1);
 
     return [settings, grid];
 }
