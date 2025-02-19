@@ -20,12 +20,12 @@
 
         <key type="u" name="gap-inner">
             <default>2</default>
-            <summary>Gap between tiled windows</summary>
+            <summary>Gap between tiled windows, in pixels</summary>
         </key>
 
         <key type="u" name="gap-outer">
             <default>2</default>
-            <summary>Gap surrounding tiled windows</summary>
+            <summary>Gap surrounding tiled windows, in pixels</summary>
         </key>
 
         <key type="b" name="show-title">
@@ -81,7 +81,7 @@
 
         <key type="u" name="max-window-width">
             <default>0</default>
-            <summary>Maximum size of tiled windows (0 to disable)</summary>
+            <summary>Maximum width of tiled windows, in pixels (0 to disable)</summary>
         </key>
 
         <!-- Focus Shifting -->

@@ -173,7 +173,7 @@ function settings_dialog_view(): [AppWidgets, Gtk.Container] {
     });
 
     const max_window_width_label = new Gtk.Label({
-        label: 'Max window width (0 to disable)',
+        label: 'Max window width (in pixels); 0 to disable',
         xalign: 0.0,
     });
 
@@ -239,7 +239,7 @@ function gaps_section(grid: any, top: number): [any, any] {
     let inner_entry = number_entry();
 
     let section_label = new Gtk.Label({
-        label: 'Gaps',
+        label: 'Gaps (in pixels)',
         xalign: 0.0,
     });
 
