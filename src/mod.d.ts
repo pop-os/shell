@@ -212,6 +212,7 @@ declare namespace Clutter {
         set_position(x: number, y: number): void;
         set_size(width: number, height: number): void;
         show(): void;
+        get_context(): Clutter.Context;
     }
 
     interface ActorBox {
@@ -221,6 +222,18 @@ declare namespace Clutter {
     interface Text extends Actor {
         get_text(): Readonly<string>;
         set_text(text: string | null): void;
+    }
+
+    interface Seat extends GObject.Object {
+        warp_pointer(x: number, y: number): void;
+    }
+
+    interface Backend extends GObject.Object {
+        get_default_seat(): Seat;
+    }
+
+    interface Context extends GObject.Object {
+        get_backend(): Backend;
     }
 }
 

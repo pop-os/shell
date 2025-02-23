@@ -764,11 +764,7 @@ function place_pointer_on(ext: Ext, win: Meta.Window) {
             y += 8;
     }
 
-    const display = Gdk.DisplayManager.get().get_default_display();
-
-    if (display) {
-        display.get_default_seat().get_pointer().warp(display.get_default_screen(), x, y);
-    }
+    global.stage.get_context().get_backend().get_default_seat().warp_pointer(x, y);
 }
 
 function pointer_already_on_window(meta: Meta.Window): boolean {
