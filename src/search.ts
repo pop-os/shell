@@ -373,12 +373,7 @@ export class Search {
 
         this.list.show();
 
-        const vscroll = (this.scroller as any).get_vscroll_bar();
-        if ((this.scroller as any).vscrollbar_visible) {
-            vscroll.show();
-        } else {
-            vscroll.hide();
-        }
+        (this.scroller as any).set_policy(St.PolicyType.NEVER, St.PolicyType.AUTOMATIC);
 
         if (id === 0) {
             GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
