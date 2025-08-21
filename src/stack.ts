@@ -14,7 +14,7 @@ import St from 'gi://St';
 const ACTIVE_TAB = 'pop-shell-tab pop-shell-tab-active';
 const INACTIVE_TAB = 'pop-shell-tab pop-shell-tab-inactive';
 const URGENT_TAB = 'pop-shell-tab pop-shell-tab-urgent';
-const INACTIVE_TAB_STYLE = '#9B8E8A';
+const INACTIVE_DARKEN_AMOUNT = -0.2;
 
 export var TAB_HEIGHT: number = 24;
 
@@ -246,17 +246,20 @@ export class Stack {
                 let button = this.buttons.get(component.button);
                 if (button) {
                     button.set_style_class_name(name);
-                    let tab_color = '';
+
+                    let settings = this.ext.settings;
+                    let color_value = settings.hint_color_rgba();
+
+                    let tab_style = '';
                     if (component.active) {
-                        let settings = this.ext.settings;
-                        let color_value = settings.hint_color_rgba();
-                        tab_color = `${color_value}; color: ${utils.is_dark(color_value) ? 'white' : 'black'}`;
+                        tab_style = `background: ${color_value}; color: ${utils.is_dark(color_value) ? 'white' : 'black'};`;
                     } else {
-                        tab_color = `${INACTIVE_TAB_STYLE}`;
+                        tab_style = `background: ${utils.shadeRGBA(color_value, INACTIVE_DARKEN_AMOUNT)}; ` + 
+                            `color: ${utils.is_dark(color_value) ? '#858585' : 'black'}`;
                     }
 
                     const tab_border_radius = this.get_tab_border_radius(idx);
-                    button.set_style(`background: ${tab_color}; border-radius: ${tab_border_radius};`);
+                    button.set_style(`${tab_style} border-radius: ${tab_border_radius};`);
                 }
             });
 
@@ -349,14 +352,15 @@ export class Stack {
         let settings = this.ext.settings;
         let button = this.buttons.get(tab.button);
         if (button) {
-            let tab_color = '';
+            let tab_style = '';
+            let color_value = settings.hint_color_rgba();
             if (Ecs.entity_eq(tab.entity, this.active)) {
-                let color_value = settings.hint_color_rgba();
-                tab_color = `background: ${color_value}; color: ${utils.is_dark(color_value) ? 'white' : 'black'}`;
+                tab_style = `background: ${color_value}; color: ${utils.is_dark(color_value) ? 'white' : 'black'};`;
             } else {
-                tab_color = `background: ${INACTIVE_TAB_STYLE}`;
+                tab_style = `background: ${utils.shadeRGBA(color_value, INACTIVE_DARKEN_AMOUNT)}; ` + 
+                    `color: ${utils.is_dark(color_value) ? '#858585' : 'black'};`;
             }
-            button.set_style(tab_color);
+            button.set_style(tab_style);
         }
     }
 
