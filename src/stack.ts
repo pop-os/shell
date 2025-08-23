@@ -255,7 +255,7 @@ export class Stack {
                         tab_style = `background: ${color_value}; color: ${utils.is_dark(color_value) ? 'white' : 'black'};`;
                     } else {
                         tab_style = `background: ${utils.shadeRGBA(color_value, INACTIVE_DARKEN_AMOUNT)}; ` + 
-                            `color: ${utils.is_dark(color_value) ? '#858585' : 'black'};`;
+                            `color: ${utils.is_dark(color_value) ? '#858585' : '#3d3d3d'};`;
                     }
 
                     const tab_border_radius = this.get_tab_border_radius(idx);
@@ -358,7 +358,7 @@ export class Stack {
                 tab_style = `background: ${color_value}; color: ${utils.is_dark(color_value) ? 'white' : 'black'};`;
             } else {
                 tab_style = `background: ${utils.shadeRGBA(color_value, INACTIVE_DARKEN_AMOUNT)}; ` + 
-                    `color: ${utils.is_dark(color_value) ? '#858585' : 'black'};`;
+                    `color: ${utils.is_dark(color_value) ? '#858585' : '#3d3d3d'};`;
             }
             button.set_style(tab_style);
         }
