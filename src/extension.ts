@@ -44,6 +44,13 @@ import Gio from 'gi://Gio';
 import St from 'gi://St';
 import Shell from 'gi://Shell';
 import Meta from 'gi://Meta';
+// Try to import Mtk for newer GNOME versions, fallback to Meta for older versions
+let Mtk: any;
+try {
+    Mtk = imports.gi.Mtk;
+} catch (e) {
+    Mtk = null;
+}
 const { GlobalEvent, WindowEvent } = Events;
 const { cursor_rect, is_keyboard_op, is_resize_op, is_move_op } = Lib;
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
@@ -480,7 +487,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             if (old) {
                 try {
                     GLib.source_remove(old);
-                } catch (_) {}
+                } catch (_) { }
             }
 
             const new_s = GLib.timeout_add(GLib.PRIORITY_LOW, 500, () => {
@@ -1258,7 +1265,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
                 this.register(Events.window_move(this, win, rect));
             } else {
-                win.move(this, rect, () => {});
+                win.move(this, rect, () => { });
                 // if the resulting dimensions of rect == next
                 if (rect.width == next_area.width && rect.height == next_area.height) {
                     win.meta.maximize(Meta.MaximizeFlags.BOTH);
@@ -1481,7 +1488,7 @@ export class Ext extends Ecs.System<ExtEvent> {
 
                         [area, monitor_attachment] =
                             (win.stack === null && attach_to.stack === null && is_sibling) ||
-                            (win.stack === null && is_sibling)
+                                (win.stack === null && is_sibling)
                                 ? [fork.area, false]
                                 : [attach_to.meta.get_frame_rect(), false];
                     } else {
@@ -1512,8 +1519,8 @@ export class Ext extends Ecs.System<ExtEvent> {
                                 ? [area.x, area.y, half_width, area.height]
                                 : [area.x + half_width, area.y, half_width, area.height]
                             : swap
-                            ? [area.x, area.y, area.width, half_height]
-                            : [area.x, area.y + half_height, area.width, half_height];
+                                ? [area.x, area.y, area.width, half_height]
+                                : [area.x, area.y + half_height, area.width, half_height];
 
                     this.overlay.x = new_area[0];
                     this.overlay.y = new_area[1];
@@ -1542,8 +1549,8 @@ export class Ext extends Ecs.System<ExtEvent> {
         this.current_style = this.settings.is_dark()
             ? Style.Dark
             : this.settings.is_high_contrast()
-            ? Style.HighContrast
-            : Style.Light;
+                ? Style.HighContrast
+                : Style.Light;
     }
 
     /** Handle window maximization notifications */
@@ -2292,7 +2299,7 @@ export class Ext extends Ecs.System<ExtEvent> {
         this.moved_by_mouse = false;
     }
 
-    update_display_configuration_before() {}
+    update_display_configuration_before() { }
 
     update_display_configuration(workareas_only: boolean) {
         if (!this.auto_tiler || sessionMode.isLocked) return;
@@ -2623,7 +2630,10 @@ export class Ext extends Ecs.System<ExtEvent> {
 
     cursor_status(): [Rectangle, number] {
         const cursor = cursor_rect();
-        const rect = new Meta.Rectangle({ x: cursor.x, y: cursor.y, width: 1, height: 1 });
+        // Use Mtk.Rectangle if available (newer GNOME), otherwise fallback to Meta.Rectangle
+        const rect = Mtk ?
+            new Mtk.Rectangle({ x: cursor.x, y: cursor.y, width: 1, height: 1 }) :
+            new Meta.Rectangle({ x: cursor.x, y: cursor.y, width: 1, height: 1 });
         const monitor = display.get_monitor_index_for_rect(rect);
         return [cursor, monitor];
     }
@@ -2665,12 +2675,12 @@ let ext: Ext | null = null;
 let indicator: Indicator | null = null;
 
 declare global {
-  var popShellExtension: any;
+    var popShellExtension: any;
 }
 
 export default class PopShellExtension extends Extension {
     enable() {
-        globalThis.popShellExtension  = this;
+        globalThis.popShellExtension = this;
         log.info('enable');
 
         if (!ext) {
