@@ -275,6 +275,8 @@ declare namespace Meta {
         minimized: Readonly<boolean>;
         window_type: Readonly<any>;
         decorated: Readonly<boolean>;
+        maximized_horizontally: Readonly<boolean>;
+        maximized_vertically: Readonly<boolean>;
 
         activate(time: number): void;
         change_workspace_by_index(workspace: number, append: boolean): void;
@@ -284,7 +286,6 @@ declare namespace Meta {
         get_display(): Meta.Display | null;
         get_description(): string;
         get_frame_rect(): Rectangular;
-        get_maximized(): number;
         get_monitor(): number;
         get_pid(): number;
         get_role(): null | string;
