@@ -2962,7 +2962,9 @@ function _show_skip_taskbar_windows(ext: Ext) {
         WindowSwitcherPopup.prototype._getWindowList = function () {
             let workspace = null;
 
-            if (this._settings.get_boolean('current-workspace-only')) {
+            // Use local settings instance since this._settings may be null in GNOME 49+
+            let settings = new Gio.Settings({ schema_id: 'org.gnome.shell.app-switcher' });
+            if (settings.get_boolean('current-workspace-only')) {
                 let workspaceManager = global.workspace_manager;
                 workspace = workspaceManager.get_active_workspace();
             }
