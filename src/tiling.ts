@@ -235,7 +235,7 @@ export class Tiler {
 
         if (fork.is_toplevel && fork.smart_gapped) {
             fork.smart_gapped = false;
-            let rect = ext.monitor_work_area(fork.monitor);
+            let rect = ext.monitor_work_area(fork.monitor, fork.workspace);
 
             rect.x += ext.gap_outer;
             rect.y += ext.gap_outer;
@@ -317,7 +317,7 @@ export class Tiler {
 
         if (fork.is_toplevel && fork.smart_gapped) {
             fork.smart_gapped = false;
-            let rect = ext.monitor_work_area(fork.monitor);
+            let rect = ext.monitor_work_area(fork.monitor, fork.workspace);
 
             rect.x += ext.gap_outer;
             rect.y += ext.gap_outer;
@@ -451,7 +451,7 @@ export class Tiler {
         if (this.window) {
             const monitor_id = ext.monitors.get(this.window);
             if (monitor_id) {
-                const monitor = ext.monitor_work_area(monitor_id[0]);
+                const monitor = ext.monitor_work_area(monitor_id[0], monitor_id[1]);
                 let rect = this.rect(ext, monitor);
 
                 if (rect) {

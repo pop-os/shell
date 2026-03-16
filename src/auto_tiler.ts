@@ -96,7 +96,7 @@ export class AutoTiler {
     }
 
     update_toplevel(ext: Ext, fork: Fork, monitor: number, smart_gaps: boolean) {
-        let rect = ext.monitor_work_area(monitor);
+        let rect = ext.monitor_work_area(monitor, fork.workspace);
 
         fork.smart_gapped = smart_gaps && fork.right === null;
 
@@ -121,7 +121,7 @@ export class AutoTiler {
 
     /** Attaches `win` to an optionally-given monitor */
     attach_to_monitor(ext: Ext, win: ShellWindow, workspace_id: [number, number], smart_gaps: boolean) {
-        let rect = ext.monitor_work_area(workspace_id[0]);
+        let rect = ext.monitor_work_area(workspace_id[0], workspace_id[1]);
 
         if (!smart_gaps) {
             rect.x += ext.gap_outer;
@@ -148,7 +148,7 @@ export class AutoTiler {
             if (monitor) {
                 if (fork.is_toplevel && fork.smart_gapped && fork.right) {
                     fork.smart_gapped = false;
-                    let rect = ext.monitor_work_area(fork.monitor);
+                    let rect = ext.monitor_work_area(fork.monitor, fork.workspace);
 
                     rect.x += ext.gap_outer;
                     rect.y += ext.gap_outer;
@@ -239,7 +239,7 @@ export class AutoTiler {
             if (reflow_fork) {
                 const fork = reflow_fork[1];
                 if (fork.is_toplevel && ext.settings.smart_gaps() && fork.right === null) {
-                    let rect = ext.monitor_work_area(fork.monitor);
+                    let rect = ext.monitor_work_area(fork.monitor, fork.workspace);
                     fork.set_area(rect);
                     fork.smart_gapped = true;
                 }

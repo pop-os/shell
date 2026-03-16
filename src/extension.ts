@@ -734,10 +734,11 @@ export class Ext extends Ecs.System<ExtEvent> {
         this.row_size = this.settings.row_size() * this.dpi;
     }
 
-    monitor_work_area(monitor: number): Rectangle {
-        const meta = wom
-            .get_active_workspace()
-            .get_work_area_for_monitor(monitor);
+    monitor_work_area(monitor: number, workspace_idx?: number): Rectangle {
+        const ws = workspace_idx !== undefined && workspace_idx !== null
+            ? wom.get_workspace_by_index(workspace_idx) ?? wom.get_active_workspace()
+            : wom.get_active_workspace();
+        const meta = ws.get_work_area_for_monitor(monitor);
 
         return Rect.Rectangle.from_meta(meta as Rectangular);
     }
@@ -2349,7 +2350,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             for (const f of this.auto_tiler.forest.forks.values()) {
                 if (!f.is_toplevel) continue
 
-                const display = this.monitor_work_area(f.monitor)
+                const display = this.monitor_work_area(f.monitor, f.workspace)
 
                 if (display) {
                     const area = new Rect.Rectangle([display.x, display.y, display.width, display.height])
