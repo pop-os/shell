@@ -86,6 +86,34 @@ export function is_dark(color: string): boolean {
     return L <= 0.179;
 }
 
+/**
+ * Shades an rgba string.
+ * @param rgba format: 'rgba(255,255,255,1.0)'
+ * @param percent -0.2 to make 20% darker, 0.3 to make 30% lighter
+ * @returns the shaded rgba string
+ */
+export function shadeRGBA(rgba: string, percent: number): string {
+
+    // handle rgba(255,255,255,1.0) format
+    const match = rgba.match(/rgba?\((\d+),\s*(\d+),\s*(\d+),?\s*([0-9.]+)?\)/);
+    if (!match) return rgba;
+
+    let [, r, g, b, a] = match;
+    let rNum = parseInt(r, 10);
+    let gNum = parseInt(g, 10);
+    let bNum = parseInt(b, 10);
+    let aNum = a !== undefined ? parseFloat(a) : 1;
+
+    // adjust brightness: percent > 0 lighten, percent < 0 darken
+    const adjust = (c: number) => Math.min(255, Math.max(0, Math.round(c + c * percent)));
+
+    rNum = adjust(rNum);
+    gNum = adjust(gNum);
+    bNum = adjust(bNum);
+
+    return `rgba(${rNum}, ${gNum}, ${bNum}, ${aNum})`;
+}
+
 /** Utility function for running a process in the background and fetching its standard output as a string. */
 export function async_process(argv: Array<string>, input = null, cancellable: null | any = null): Promise<string> {
     let flags = Gio.SubprocessFlags.STDOUT_PIPE;
