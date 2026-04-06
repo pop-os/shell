@@ -311,7 +311,7 @@ declare namespace Meta {
         move_resize_frame(user_op: boolean, x: number, y: number, w: number, h: number): boolean;
         raise(): void;
         skip_taskbar: boolean;
-        unmaximize(flags: any): void;
+        unmaximize(flags?: any): void;
         unminimize(): void;
     }
 
