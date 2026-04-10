@@ -10,7 +10,7 @@
 }
 
 .pop-shell-border-normal {
-    border-width: 3px;
+    border-width: var(--active-hint-border-width, 3px);
 }
 
 .pop-shell-border-maximize {

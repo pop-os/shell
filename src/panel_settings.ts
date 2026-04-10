@@ -17,6 +17,7 @@ export class Indicator {
     toggle_titles: null | any
     toggle_active: any
     border_radius: any
+    border_width: any
 
     entry_gaps: any
 
@@ -77,6 +78,18 @@ export class Indicator {
             }
         )
 
+        this.border_width = number_entry(
+            _("Active Border Width"),
+            {
+              value: ext.settings.active_hint_border_width(),
+              min: 1,
+              max: 15
+            },
+            (value) => {
+                ext.settings.set_active_hint_border_width(value);
+            }
+        )
+
         bm.addMenuItem(this.toggle_tiled);
         bm.addMenuItem(floating_window_exceptions(ext, bm));
 
@@ -92,6 +105,7 @@ export class Indicator {
 
         bm.addMenuItem(this.toggle_active);
         bm.addMenuItem(this.border_radius);
+        bm.addMenuItem(this.border_width);
 
         // CSS Selector
         bm.addMenuItem(color_selector(ext, bm),);
