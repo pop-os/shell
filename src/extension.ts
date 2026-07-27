@@ -2004,6 +2004,16 @@ export class Ext extends Ecs.System<ExtEvent> {
                     let meta_window = global.display.get_focus_window();
 
                     if (meta_window) {
+                        // Desktop icon extensions initially map their desktop surface as a
+                        // normal window and only mark it as a desktop afterwards. It may
+                        // therefore already have a ShellWindow entry by the time it receives
+                        // focus, so check for desktop surfaces before consulting our window
+                        // table.
+                        if (this.auto_tiler && is_desktop_window(meta_window)) {
+                            refocus_tiled_window();
+                            return;
+                        }
+
                         const shell_window = this.get_window(meta_window);
 
                         if (shell_window) {
@@ -2012,13 +2022,8 @@ export class Ext extends Ecs.System<ExtEvent> {
                                 this.on_focused(shell_window);
                             }
                         } else if (!meta_window.is_override_redirect()) {
-                            // Prevent focusing desktop extension in auto-tiler mode
-                            if (this.auto_tiler && meta_window.window_type === Meta.WindowType.DESKTOP) {
-                                refocus_tiled_window();
-                            } else {
-                                // This section fixes Steam's sub-menus.
-                                meta_window.activate(global.get_current_time());
-                            }
+                            // This section fixes Steam's sub-menus.
+                            meta_window.activate(global.get_current_time());
                         }
                     } else if (this.auto_tiler) {
                         refocus_tiled_window();
@@ -2551,6 +2556,8 @@ export class Ext extends Ecs.System<ExtEvent> {
     window_entity(meta: Meta.Window | null): Entity | null {
         if (!meta) return null;
 
+        if (is_desktop_window(meta)) return null;
+
         let id: number;
 
         try {
@@ -3060,4 +3067,17 @@ function is_valid_minimize_to_tray(meta_win: Meta.Window, ext: Ext) {
         !gnome_shell_wm_class;
 
     return valid_min_to_tray;
+}
+
+/** Detect desktop surfaces, including DING's Wayland desktop emulation. */
+function is_desktop_window(meta_win: Meta.Window): boolean {
+    const is_ding_desktop =
+        !meta_win.decorated &&
+        (meta_win as any).get_gtk_application_id?.() === 'com.rastersoft.ding';
+
+    return (
+        meta_win.window_type === Meta.WindowType.DESKTOP ||
+        (meta_win as any).customJS_ding?.keepAtBottom === true ||
+        is_ding_desktop
+    );
 }
