@@ -15,7 +15,7 @@ export function calculate(from: Rectangular, change: Rectangular): Movement {
 
     if (xpos && ypos) {
         if (from.width == change.width) {
-            if (from.height == change.width) {
+            if (from.height == change.height) {
                 return Movement.NONE;
             } else if (from.height < change.height) {
                 return Movement.GROW | Movement.DOWN;
