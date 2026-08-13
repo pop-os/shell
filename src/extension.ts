@@ -1157,6 +1157,12 @@ export class Ext extends Ecs.System<ExtEvent> {
                     const forest = this.auto_tiler.forest;
                     const fork = forest.forks.get(fork_entity);
                     if (fork) {
+                        const movement = grab_op.operation(crect);
+
+                        // A click on a resize edge can begin and end a grab without
+                        // changing the window. Do not turn that into a tree resize.
+                        if (movement === Movement.NONE) return;
+
                         if (win.stack) {
                             const tab_dimension = this.dpi * stack.TAB_HEIGHT;
                             crect.height += tab_dimension;
@@ -1167,8 +1173,6 @@ export class Ext extends Ecs.System<ExtEvent> {
                         if (top_level) {
                             crect.clamp((forest.forks.get(top_level) as Fork).area);
                         }
-
-                        const movement = grab_op.operation(crect);
 
                         if (this.movement_is_valid(win, movement)) {
                             forest.resize(this, fork_entity, fork, win.entity, movement, crect);
