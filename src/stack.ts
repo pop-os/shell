@@ -212,10 +212,11 @@ export class Stack {
 
         if (this.widgets) this.widgets.tabs.visible = permitted;
 
-        this.reset_visibility(permitted);
-
         const win = this.ext.windows.get(entity);
-        if (!win) return;
+        if (!win) {
+            this.reset_visibility(permitted);
+            return;
+        }
 
         if (!Ecs.entity_eq(entity, this.active)) {
             this.prev_active = this.active;
@@ -662,20 +663,13 @@ export class Stack {
 
         // Connect tab-clicked signal
         c.button_signal = widget.connect('clicked', () => {
-            this.activate(entity);
             this.window_exec(comp, entity, (window) => {
                 const actor = window.meta.get_compositor_private();
                 if (actor) {
                     actor.show();
                     window.activate(false);
-
+                    this.activate(entity);
                     this.reposition();
-
-                    for (const comp of this.tabs) {
-                        this.buttons.get(comp.button)?.set_style_class_name(INACTIVE_TAB);
-                    }
-
-                    widget.set_style_class_name(ACTIVE_TAB);
                 }
             });
         });

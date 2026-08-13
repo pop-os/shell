@@ -705,7 +705,6 @@ export function activate(ext: Ext, move_mouse: boolean, win: Meta.Window) {
 
         win.unminimize();
         workspace.activate_with_focus(win, global.get_current_time());
-        win.raise();
 
         const pointer_placement_permitted =
             move_mouse &&
