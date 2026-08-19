@@ -730,7 +730,7 @@ export class AutoTiler {
     }
 
     private toggle_orientation_(ext: Ext, focused: ShellWindow): Result<void, string> {
-        if (focused.meta.get_maximized()) {
+        if (focused.is_maximized()) {
             return Err('cannot toggle maximized window');
         }
 
