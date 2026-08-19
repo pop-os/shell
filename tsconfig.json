@@ -5,8 +5,8 @@
         "target": "es2020",
         "strict": true,
         "outDir": "./target",
+        "rootDir": "./src",
         "forceConsistentCasingInFileNames": true,
-        "downlevelIteration": true,
         "lib": [
             "es2020"
         ],

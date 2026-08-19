@@ -13,3 +13,4 @@ debian/*
 .confirm_shortcut_change
 .vscode
 node_modules
+tsconfig.tsbuildinfo

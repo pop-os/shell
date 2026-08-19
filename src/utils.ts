@@ -10,7 +10,11 @@ const { Ok, Err } = result;
 const { Error } = error;
 
 export function is_wayland(): boolean {
-    return Meta.is_wayland_compositor();
+    if (typeof Meta.is_wayland_compositor === 'function') {
+        return Meta.is_wayland_compositor();
+    }
+    // GNOME 50+ removed X11 support; always Wayland
+    return true;
 }
 
 export function block_signal(object: GObject.Object, signal: SignalID) {

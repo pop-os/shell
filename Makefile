@@ -28,7 +28,7 @@ sources = src/*.ts *.css
 all: depcheck compile
 
 clean:
-	rm -rf _build target
+	rm -rf _build target tsconfig.tsbuildinfo
 
 # Configure local settings on system
 configure:
