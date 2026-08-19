@@ -91,8 +91,14 @@ const TabButton = GObject.registerClass(
                 }),
             );
 
-            close_button.connect('clicked', () => {
-                window.meta.delete(global.get_current_time());
+           this._running_close = false;
+
+           close_button.connect('clicked', () => {
+               if (!this._running_close) {
+                   this._running_close = true;
+                   window.meta.delete(global.get_current_time());
+                   this._running_close = false;
+               }
             });
 
             close_button.set_x_align(Clutter.ActorAlign.END);

@@ -29,6 +29,43 @@ export class AutoTiler {
         this.attached = attached;
     }
 
+    private sync_smart_gapped(ext: Ext, fork: Fork) {
+        let toplevel = fork;
+        let parent = this.forest.parents.get(toplevel.entity);
+
+        /* Walk upwards to get the actual top-level root from the fork. */
+        while (parent) {
+            const next = this.forest.forks.get(parent);
+            if (!next)
+                break;
+
+            toplevel = next;
+            parent = this.forest.parents.get(toplevel.entity);
+        }
+
+        const smart_gapped = (
+            toplevel.is_toplevel &&
+            toplevel.smart_gapped &&
+            toplevel.right === null
+        );
+
+        /* Set smart_gapped for each window. */
+        for (const branch of this.forest.iter(toplevel.entity)) {
+            let entities: Entity[] = [];
+
+            if (branch.inner.kind === NodeKind.WINDOW)
+                entities = [branch.inner.entity];
+            else if (branch.inner.kind === NodeKind.STACK)
+                entities = branch.inner.entities;
+
+            for (const entity of entities) {
+                const win = ext.windows.get(entity);
+                if (win)
+                    win.smart_gapped = smart_gapped;
+            }
+        }
+    }
+
     /** Swap window associations in the auto-tiler
      *
      * Call this when a window has swapped positions with another, so that we
@@ -106,13 +143,6 @@ export class AutoTiler {
             rect.height -= ext.gap_outer * 2;
         }
 
-        if (fork.left.inner.kind === 2) {
-            const win = ext.windows.get(fork.left.inner.entity);
-            if (win) {
-                win.smart_gapped = fork.smart_gapped;
-            }
-        }
-
         fork.area = fork.set_area(rect.clone());
         fork.length_left = Math.round(fork.prev_ratio * fork.length());
         this.tile(ext, fork, fork.area);
@@ -132,7 +162,6 @@ export class AutoTiler {
         const [entity, fork] = this.forest.create_toplevel(win.entity, rect.clone(), workspace_id);
         this.forest.on_attach(entity, win.entity);
         fork.smart_gapped = smart_gaps;
-        win.smart_gapped = smart_gaps;
 
         this.tile(ext, fork, rect);
     }
@@ -490,6 +519,7 @@ export class AutoTiler {
     }
 
     tile(ext: Ext, fork: Fork, area: Rectangle) {
+        this.sync_smart_gapped(ext, fork);
         this.forest.tile(ext, fork, area);
     }
 
