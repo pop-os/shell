@@ -8,6 +8,8 @@ export class Keybindings {
     global: Object;
     window_focus: Object;
 
+    private active: Set<string> = new Set();
+
     private ext: Ext;
 
     constructor(ext: Ext) {
@@ -62,15 +64,22 @@ export class Keybindings {
         };
     }
 
-    enable(keybindings: any) {
+    enable(keybindings: any, modes: number = Shell.ActionMode.NORMAL) {
         for (const name in keybindings) {
+            if (this.active.has(name)) {
+                wm.allowKeybinding(name, modes);
+                continue;
+            }
+
             wm.addKeybinding(
                 name,
                 this.ext.settings.ext,
                 Meta.KeyBindingFlags.NONE,
-                Shell.ActionMode.NORMAL,
+                modes,
                 keybindings[name],
             );
+
+            this.active.add(name);
         }
 
         return this;
@@ -78,7 +87,20 @@ export class Keybindings {
 
     disable(keybindings: Object) {
         for (const name in keybindings) {
+            if (!this.active.has(name))
+                continue;
+
             wm.removeKeybinding(name);
+            this.active.delete(name);
+        }
+
+        return this;
+    }
+
+    allow(keybindings: Object, modes: number) {
+        for (const name in keybindings) {
+            if (this.active.has(name))
+                wm.allowKeybinding(name, modes);
         }
 
         return this;

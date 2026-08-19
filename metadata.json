@@ -5,11 +5,8 @@
     "uuid": "pop-shell@system76.com",
     "settings-schema": "org.gnome.shell.extensions.pop-shell",
     "shell-version": [
-        "45",
         "46",
         "47",
-        "48",
-        "49",
-        "50"
+        "48"
     ]
 }

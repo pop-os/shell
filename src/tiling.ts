@@ -17,6 +17,7 @@ import { AutoTiler } from './auto_tiler.js';
 import { Fork } from './fork.js';
 
 import Meta from 'gi://Meta';
+import Shell from 'gi://Shell';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 const { ShellWindow } = window;
 
@@ -58,6 +59,14 @@ export class Tiler {
             'tile-reject': () => this.exit(ext),
             'toggle-stacking': () => this.toggle_stacking(ext),
         };
+    }
+
+    enable_keybindings(ext: Ext) {
+        ext.keybindings.enable(this.keybindings, Shell.ActionMode.NONE);
+    }
+
+    disable_keybindings(ext: Ext) {
+        ext.keybindings.disable(this.keybindings);
     }
 
     toggle_orientation(ext: Ext) {
@@ -763,7 +772,9 @@ export class Tiler {
                 });
             }
 
-            ext.keybindings.disable(ext.keybindings.window_focus).enable(this.keybindings);
+            ext.keybindings
+                .allow(ext.keybindings.window_focus, Shell.ActionMode.NONE)
+                .allow(this.keybindings, Shell.ActionMode.NORMAL);
         }
     }
 
@@ -817,7 +828,9 @@ export class Tiler {
             ext.overlay.visible = false;
 
             // Disable tiling keybindings
-            ext.keybindings.disable(this.keybindings).enable(ext.keybindings.window_focus);
+            ext.keybindings
+                .allow(this.keybindings, Shell.ActionMode.NONE)
+                .allow(ext.keybindings.window_focus, Shell.ActionMode.NORMAL);
         }
     }
 
