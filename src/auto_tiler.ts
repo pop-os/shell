@@ -560,14 +560,56 @@ export class AutoTiler {
     }
 
     unstack(ext: Ext, fork: Fork, win: ShellWindow, toggled: boolean = false) {
-        const stack_toggle = (fork: Fork, branch: node.Node) => {
-            // If the stack contains 1 item, unstack it
+        const stack_toggle = (fork: Fork, branch: node.Node, is_left: boolean) => {
             const stack = branch.inner as node.NodeStack;
             if (stack.entities.length === 1) {
                 win.stack = null;
                 this.forest.stacks.remove(stack.idx)?.destroy();
                 fork.measure(this.forest, ext, fork.area, this.forest.on_record());
                 return node.Node.window(win.entity);
+            }
+
+            const container = this.forest.stacks.get(stack.idx);
+            if (!container) return null;
+
+            container.deactivate(win);
+
+            if (node.stack_remove(this.forest, stack, win.entity) === null) return null;
+            win.stack = null;
+            win.smart_gapped = false;
+
+            if (container.workspace === ext.active_workspace()) {
+                win.meta.get_compositor_private()?.show();
+            }
+
+            const win_node = node.Node.window(win.entity);
+
+            if (!fork.right) {
+                fork.right = win_node;
+                fork.set_ratio(fork.length() / 2);
+                fork.rebalance_orientation();
+                if (fork.is_toplevel && fork.smart_gapped) {
+                    fork.smart_gapped = false;
+                    for (const e of stack.entities) {
+                        ext.windows.with(e, (w) => { w.smart_gapped = false; });
+                    }
+                    this.update_toplevel(ext, fork, fork.monitor, ext.settings.smart_gaps());
+                }
+                this.forest.on_attach(fork.entity, win.entity);
+            } else {
+                const area = is_left ? fork.area_of_left(ext) : fork.area_of_right(ext);
+                const [left_child, right_child] = is_left ? [win_node, branch] : [branch, win_node];
+                const [new_fork_entity] = this.forest.create_fork(left_child, right_child, area, fork.workspace, fork.monitor);
+                if (is_left) {
+                    fork.left = node.Node.fork(new_fork_entity);
+                } else {
+                    fork.right = node.Node.fork(new_fork_entity);
+                }
+                this.forest.parents.insert(new_fork_entity, fork.entity);
+                this.forest.on_attach(new_fork_entity, win.entity);
+                for (const e of stack.entities) {
+                    this.forest.on_attach(new_fork_entity, e);
+                }
             }
 
             return null;
@@ -579,12 +621,11 @@ export class AutoTiler {
             fork.left = node.Node.stacked(win.entity, win.stack);
             fork.measure(this.forest, ext, fork.area, this.forest.on_record());
         } else if (fork.left.is_in_stack(win.entity)) {
-            const node = stack_toggle(fork, fork.left);
-            if (node) {
-                fork.left = node;
-
+            const n = stack_toggle(fork, fork.left, true);
+            if (n) {
+                fork.left = n;
                 if (!fork.right) {
-                    this.forest.reassign_to_parent(fork, node);
+                    this.forest.reassign_to_parent(fork, n);
                 }
             }
         } else if (toggled && fork.right?.is_window(win.entity)) {
@@ -593,8 +634,8 @@ export class AutoTiler {
             fork.right = node.Node.stacked(win.entity, win.stack);
             fork.measure(this.forest, ext, fork.area, this.forest.on_record());
         } else if (fork.right?.is_in_stack(win.entity)) {
-            const node = stack_toggle(fork, fork.right);
-            if (node) fork.right = node;
+            const n = stack_toggle(fork, fork.right, false);
+            if (n) fork.right = n;
         }
 
         this.tile(ext, fork, fork.area);
