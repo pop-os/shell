@@ -209,7 +209,7 @@ export class ShellWindow {
     cmdline(): string | null {
         let pid = this.meta.get_pid(),
             out = null;
-        if (-1 === pid) return out;
+        if (0 === pid) return out;
 
         const path = '/proc/' + pid + '/cmdline';
         if (!utils.exists(path)) return out;

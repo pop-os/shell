@@ -29,7 +29,7 @@ export const DEFAULT_FLOAT_RULES: Array<FloatRule> = [
     { class: 'Conky' },
     { title: 'Discord Updater' },
     { class: 'Enpass', title: 'Enpass Assistant' },
-    { class: 'Floating Window Exceptions' },
+    { class: 'pop-shell-exceptions' },
     { class: 'Gjs', title: 'Settings' },
     { class: 'Gnome-initial-setup' },
     { class: 'Gnome-terminal', title: 'Preferences – General' },
@@ -45,6 +45,7 @@ export const DEFAULT_FLOAT_RULES: Array<FloatRule> = [
     { class: 'TelegramDesktop', title: 'Media viewer' },
     { class: 'Zotero', title: 'Quick Format Citation' },
     { class: 'firefox', title: '^(?!.*Mozilla Firefox).*$' },
+    { class: 'org.mozilla.firefox', title: 'Picture-in-Picture' },
     { class: 'gnome-screenshot' },
     { class: 'ibus-.*' },
     { class: 'jetbrains-toolbox' },
@@ -59,6 +60,8 @@ export const DEFAULT_FLOAT_RULES: Array<FloatRule> = [
     { class: 'zoom' },
     { class: '^.*action=join.*$' },
     { class: 'gjs' },
+    { class: 'git-credential-manager' },
+    { class: 'xwaylandvideobridge' },
 ];
 
 export interface WindowRule {
