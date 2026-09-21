@@ -2595,9 +2595,7 @@ export class Ext extends Ecs.System<ExtEvent> {
             const grab_focus = () => {
                 this.schedule_idle(() => {
                     this.windows.with(entity, (window) => {
-                        window.meta.raise();
-                        window.meta.unminimize();
-                        window.activate(false);
+                        this.register_fn(() => window.activate(false));
                     });
 
                     return false;
