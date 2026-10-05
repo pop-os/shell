@@ -19,6 +19,14 @@ import { Overview } from 'resource:///org/gnome/shell/ui/overview.js';
 
 let overview_toggle: any = null;
 
+function set_vertical_layout(layout: any): void {
+    if (typeof layout.set_orientation === 'function') {
+        layout.set_orientation(Clutter.Orientation.VERTICAL);
+    } else {
+        layout.set_vertical(true);
+    }
+}
+
 export class Search {
     dialog: Shell.ModalDialog = new ModalDialog({
         styleClass: 'pop-shell-search modal-dialog',
@@ -207,8 +215,8 @@ export class Search {
 
         this.list = new St.BoxLayout({
             styleClass: 'pop-shell-search-list',
-            vertical: true,
         });
+        set_vertical_layout(this.list);
 
         const scroller = new St.ScrollView();
         scroller.add_child(this.list);
@@ -435,9 +443,9 @@ export class SearchOption {
 
         const info_box = new St.BoxLayout({
             y_align: Clutter.ActorAlign.CENTER,
-            vertical: true,
             x_expand: true,
         });
+        set_vertical_layout(info_box);
         info_box.add_child(label);
 
         if (description) {
