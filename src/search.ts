@@ -205,10 +205,13 @@ export class Search {
             this.select(this.active_id);
         });
 
-        this.list = new St.BoxLayout({
-            styleClass: 'pop-shell-search-list',
-            vertical: true,
-        });
+        const list_props: any = { styleClass: 'pop-shell-search-list' };
+        if ((Clutter.Orientation as any)?.VERTICAL !== undefined) {
+            list_props.orientation = Clutter.Orientation.VERTICAL;
+        } else {
+            list_props.vertical = true;
+        }
+        this.list = new St.BoxLayout(list_props);
 
         const scroller = new St.ScrollView();
         scroller.add_child(this.list);
