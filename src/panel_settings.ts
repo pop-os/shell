@@ -134,7 +134,8 @@ function floating_window_exceptions(ext: Ext, menu: any): any {
 
     let icon = new St.Icon({ icon_name: 'go-next-symbolic', icon_size: 16 });
 
-    let widget = new St.BoxLayout({ vertical: false });
+    let widget = new St.BoxLayout();
+    Utils.set_box_vertical(widget, false);
     widget.add_child(label);
     widget.add_child(icon);
     widget.set_x_expand(true);

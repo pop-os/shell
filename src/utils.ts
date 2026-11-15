@@ -2,6 +2,7 @@ import * as result from './result.js';
 import * as error from './error.js';
 import * as log from './log.js';
 
+import Clutter from 'gi://Clutter';
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import GObject from 'gi://GObject';
@@ -15,6 +16,21 @@ export function is_wayland(): boolean {
     }
     // GNOME 50+ removed X11 support; always Wayland
     return true;
+}
+
+/**
+ * Sets whether an St.BoxLayout stacks its children vertically or horizontally.
+ *
+ * GNOME 48 deprecated St.BoxLayout's `vertical` property in favour of
+ * `orientation`, while GNOME 45-47 only understand `vertical`. Checking which
+ * property exists keeps the extension working on every version in metadata.json.
+ */
+export function set_box_vertical(box: any, vertical: boolean) {
+    if ('orientation' in box) {
+        box.orientation = vertical ? Clutter.Orientation.VERTICAL : Clutter.Orientation.HORIZONTAL;
+    } else {
+        box.vertical = vertical;
+    }
 }
 
 export function block_signal(object: GObject.Object, signal: SignalID) {

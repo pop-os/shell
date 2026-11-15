@@ -1,5 +1,6 @@
 import * as Lib from './lib.js';
 import * as rect from './rectangle.js';
+import { set_box_vertical } from './utils.js';
 
 import type { JsonIPC } from './launcher_service.js';
 
@@ -207,8 +208,8 @@ export class Search {
 
         this.list = new St.BoxLayout({
             styleClass: 'pop-shell-search-list',
-            vertical: true,
         });
+        set_box_vertical(this.list, true);
 
         const scroller = new St.ScrollView();
         scroller.add_child(this.list);
@@ -435,9 +436,9 @@ export class SearchOption {
 
         const info_box = new St.BoxLayout({
             y_align: Clutter.ActorAlign.CENTER,
-            vertical: true,
             x_expand: true,
         });
+        set_box_vertical(info_box, true);
         info_box.add_child(label);
 
         if (description) {
